@@ -1,0 +1,167 @@
+# Changelog
+
+WholeLife Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
+
+**Current:** Update 8.1 (Dev Testing), build 8.1.8, 2026-10-04. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+
+Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.1.8 · Sys Architecture: Supabase backend schema, photo storage and Git repository
+
+- **Problem:** The app only saved to the browser (or Claude's artifact storage), so data lived on one device and test devs couldn't share it; there was no version control, which let another session overwrite the live build.
+- **Change:** Supabase project 'Whole Life Hub': extended people, meal_logs, snack_logs, workouts, weight_entries to the app's data model (log_date, app_id for offline ids, soft delete, updated_at triggers, meal slot/dish/portion/photo, jsonb extras); added drink_logs and daily_vitals; private 'photos' bucket with per-account folders; owner-only RLS on every table (tested: a second account sees 0 rows and can't write into another account's profile); cascading deletes; locked the rls_auto_enable() function off the API. Git repository prepared with README, CHANGELOG, migrations, versioning rules and a bug-report template.
+- **Where:** Supabase migrations (named before this build was numbered 8.1.8) wlh_8_1_1_core_schema, wlh_8_1_1_lock_rls_auto_enable, wlh_8_1_1_drop_duplicate_indexes (copies in supabase/migrations/ in the repo). The app itself does not talk to Supabase yet.
+- **How to test:** Supabase › Table Editor: 7 tables, RLS on, 1 policy each. Storage: 'photos' bucket is private. Security Advisor: no warnings.
+- **Known limits:** Next: login screens and swapping the app's save layer (schedule()/flush(), lsGet/lsSet) to Supabase, one data type at a time, starting with meals.
+
+## 8.1.7 · Onboarding / help: App tour: first-run offer on Summary, plus Settings › Data & about › App tour & guide
+
+- **Problem:** There was no way to learn how the pieces connect (logging feeds the rings and the coach, Food culture can become the meal plan, workouts fill the Exercise ring) short of finding it all by hand.
+- **Change:** A spotlight tour: the page dims, the real element is cut out and outlined, and a small card explains it with Back / Next / Skip. First time a profile reaches Summary, a card offers a one-minute tour (Show me / Not now); the answer is saved per profile (tourSeen, whitelisted in cleanProfile so it survives a reload), so each person in a household is asked once and never nagged. Settings › Data & about now opens with App tour & guide: replay the 6-step quick tour, or take a short tour of one area (Logging 5, Meal planning 4, Coaching 4, Progress 4, Household & appearance 2, Premium 3, Privacy & data 4). Tours navigate to the right page and open the menu themselves. Keyboard: focus moves into the card and stays there, arrows step, Escape ends. Follows text size, Light/Dark/OLED and Reduced Motion.
+- **Where:** TOUR_DEFS / tourStart() / tourGo() / tourPlace() / tourEnd() / tourAfterRender() / tourGuideCard() (last <script> block before </body>); hook in afterRender(); CSS .tour / .tour-hole / .tour-card / .tour-offer / .tour-topics (after the nav group rules); newProfile()/cleanProfile() tourSeen
+- **How to test:** New or existing profile: open Summary, wait a second, the offer card appears at the bottom. Show me → 6 steps, the menu opens for steps 3–6 and closes at the end. Reload: no second offer. Settings › Data & about › any topic card. Automated: every step of every tour found its real target at 390×844 and 1440×900, the card stayed on screen and never covered the target's centre, 0 axe violations on the offer, card, guide and sidebar in Light/Dark/OLED.
+- **Known limits:** If a page changes and a tour's target disappears, that step shows a centred card with the same words instead of breaking; TOUR_DEFS is the one place to update the copy or targets.
+
+## 8.1.6 · Menu: Sidebar cut from ~30 rows to 11: Summary, Log, Plan, Progress, Premium, Settings
+
+- **Problem:** A tester called the menu hard to navigate. It listed the 11 core destinations plus every one of the 19 Premium features as its own row (7 of them unfinished, 'In Progress'), across five collapsible groups; Eat & train alone had 10 rows mixing cooking, training, cycle tracking and voice logging.
+- **Change:** Three plain labels that say what you do there: Log (Meals, Snacks, Workouts & imports), Plan (Recipes & meal plans, Food culture, Personal coach), Progress (Health data, Achievements & Goals). Premium and Settings sit below a divider. Nothing collapses any more. Premium features are reached through the one Premium row (popup for subscribers, store page otherwise); the popup now hides the 7 unfinished features unless Settings › Data & about › Diagnostics › Show features in testing is on (device-only, wlh.showtesting, listed in the Privacy Policy's storage table).
+- **Where:** sideNav() (groupsHTML/tail); CSS .grp-static / .navgrp-tail; premiumPopupRowsHTML(); showTestingFeatures() + switch in diagCard(); Privacy Policy section 5 table
+- **How to test:** Open the menu on a phone and a laptop: 11 rows in the order above. As a subscriber, tap Premium: 12 features plus a line saying 7 more are being built. Turn on Show features in testing: all 19 return.
+- **Known limits:** On most phones the list still needs a short scroll to reach Premium and Settings when the menu is opened from the top of a page (the large header pushes the drawer's content down); opened from the compact bar after scrolling, it fits on a 390×844 screen. Second pass still to do: put each Premium feature on the page it extends (Pantry/Photo/Restaurant on Meals, etc.) — PREM_GROUP_OF already maps them.
+
+## 8.1.5 · Menu / scroll lock: Reverted 8.1.4's fix — it broke the drawer's position instead
+
+- **Problem:** 8.1.4's attempted fix (below) added transform:translateZ(0) to body while the menu is open, meaning to stop iOS Safari from blanking the screen. Reported back instead: "when you scroll on the home summary page the side menu also scrolls with it ... gets lost at the top." Root cause: per the CSS spec, putting a transform (any transform, including translateZ(0)) on an element makes it the containing block for every position:fixed descendant inside it. .side and .scrim are both position:fixed and both live inside body, so the moment body got a transform, the drawer stopped being pinned to the real viewport and started being positioned against body's own box instead — which itself sits at top:-Ypx (Y = how far you'd scrolled) for the scroll-lock to work. The deeper the scroll, the further the drawer was dragged up and off-screen, matching the report exactly.
+- **Change:** Removed the transform from body. Confirmed in automated testing (Chromium, several scroll depths) that .side now measures top:0/left:0 — pinned to the true viewport — regardless of how far the page had scrolled before the menu opened, which is what broke. The forced reflow 8.1.4 also added (void document.body.offsetHeight after locking) doesn't touch containing blocks and stays, since it's harmless either way. The original blank-screen bug 8.1.4 was trying to fix is NOT yet confirmed fixed — this entry only removes the regression that attempt introduced.
+- **Where:** CSS :root.menu-open body (same rule 8.1.4 touched)
+- **How to test:** On an iPhone: scroll Summary down a long way, open the side menu. The drawer should appear pinned at the left edge of the screen, not shifted down/away. Separately: confirm whether the original blank-screen symptom (nothing at all, not even the dimmed page) still happens — that's the open question this entry doesn't resolve.
+- **Known limits:** Lesson for later changes to this scroll-lock: never add transform, filter, backdrop-filter, will-change:transform, or contain to body or any other ancestor of .side/.scrim while menu-open — each one creates a new containing block for their position:fixed and breaks this the same way, regardless of what else it was meant to fix.
+
+## 8.1.4 · Menu / scroll lock: Side menu no longer blanks the screen when opened after scrolling down Summary
+
+- **Problem:** Reported by a tester: scroll down Summary past the first rings, then open the side menu (☰) — the whole screen goes blank (just the background, no header, cards, or menu) on iPhone. lockPageScroll() holds the page still behind the open drawer by flipping body to position:fixed with a negative top offset equal to the scroll position. On iOS Safari, that sudden position:fixed change can drop the GPU compositing layers of everything under body that uses backdrop-filter (cards, the compact header, the drawer itself) without repainting them — worse the further down the page you'd scrolled, matching the report exactly. Chromium (used for this app's automated tests) doesn't have this WebKit-specific repaint bug, so it passed every existing test and shipped unnoticed; it could not be reproduced in this environment either (no WebKit/Safari available here to confirm against), so this fix is a well-established, low-risk fix for the known bug class rather than a confirmed-fixed repro.
+- **Change:** body is promoted to its own GPU layer (translateZ(0)) together with the position:fixed change, instead of after, which is the standard fix for WebKit dropping a layer's repaint across a sudden containing-block change; lockPageScroll() also forces a synchronous reflow right after so the change lands before the drawer's own slide-in transition starts. Also cleaned up a leftover: a second, dead :root rule (pre-v10) still declared --z-chrome/--z-scrim/--z-menu with different numbers than the real v10 stacking scale (B10) further down the file — it had no effect (CSS cascade meant v10's numbers always won) but was a confusing duplicate, so it's gone and --z-chrome/--z-scrim/--z-menu are declared in the one place now.
+- **Where:** CSS :root.menu-open body (just above the v7.6 scroll-containment comment); lockPageScroll() (above revealActive()); removed duplicate z-index block that used to sit just above .page-head
+- **How to test:** On an iPhone: open Summary, scroll past the rings, tap ☰. Drawer should open with the dimmed page visible behind it, not a blank screen. Could not be confirmed against real iOS/Safari in this environment — please re-test on your phone and report back if it still happens.
+- **Known limits:** This addresses the most common cause of this exact WebKit bug class; if it still reproduces on your phone after this build, the next step would be to drop the position:fixed scroll-lock technique entirely in favor of a touch-event-based lock, which is a bigger change worth doing deliberately rather than as a guess.
+
+## 8.1.3 · Workout import: Oversized import files are rejected with a clear message instead of freezing the tab
+
+- **Problem:** importFiles() read every picked file whole with f.text() before any parsing could happen. A CSV/JSON/TCX workout export is realistically a few MB, so a much larger file (wrong file picked by mistake, a video, a disk image) could read megabytes of text into memory and stall the tab with no feedback.
+- **Change:** A 25 MB cap (IMPORT_FILE_MAX_BYTES) is checked against file.size before f.text() is ever called. An oversized file is skipped, not imported, and the finish message names how many files were too large so it's obvious what happened; any other valid files in the same batch still import normally.
+- **Where:** IMPORT_FILE_MAX_BYTES (just above importFiles()); importFiles() loop
+- **How to test:** Workouts › Import: pick one normal CSV/TCX export plus one file over 25 MB together. The valid one imports; the message calls out the oversized one by count and says to double-check it's the right file.
+- **Known limits:** The cap is a sanity guard, not a format limit — a genuinely huge export (very long history) would need raising it, not a smaller cap.
+
+## 8.1.2 · Privacy & security: Body progress studio opt-in nudges toward setting a passcode
+
+- **Problem:** Body photos are the most sensitive thing this app stores, but like the rest of the profile they only encrypt at rest once a passcode is set (Settings › Privacy & security). Turning the feature on gave no hint that photos sit unencrypted until a passcode exists.
+- **Change:** bodyPhotoLockNudge() shows a one-line toast pointing at Settings › Privacy & security the moment the feature is switched on, but only when no passcode is set yet (CRY.lock is empty) — nothing blocks the feature itself, and the toast doesn't repeat on every visit, only on the opt-in tap.
+- **Where:** bodyPhotoLockNudge() (above bodyState(), section 2.3 Body progress studio); "bd-optin" and "consent-body-toggle" click cases
+- **How to test:** With no passcode set, turn on Body progress studio from its card or from Settings › Privacy & security › Permissions: the tip toast appears. Set a passcode first, then turn it on: no toast.
+- **Known limits:** The nudge only fires on the moment of turning the feature on, not as a standing banner while it stays on.
+
+## 8.1.1 · Accessibility: Dynamic Type-style text size control (Apple Dynamic Type, adapted for the web)
+
+- **Problem:** The app had no way to make its text larger or smaller as a whole; the opacity-style settings controls covered color and motion but not text size, which matters most for anyone who needs larger text to read comfortably.
+- **Change:** One multiplier, --text-scale, is read by every font-size rule in the app (calc(value * var(--text-scale,1))), so a single slider rescales all text together while every rule keeps its own relative size — the same idea as Apple's Dynamic Type, where every text style scales under one Larger Text setting. 12 steps mirror Apple's own named categories (xSmall…XXXLarge, Large default, matching this app's existing sizes) plus AX1–AX5 behind an explicit "Larger accessibility sizes" toggle, with ratios taken from Apple's real Body text-style point sizes. A live preview line in Settings › Appearance shows the effect while dragging.
+- **Where:** TEXT_SIZES, textSizeStep(), applyTextScale() (above applyLook()); textSizeRow() (Settings › Appearance, above themePicker); "ts-reset"/"ts-ax-toggle" click cases; #ui-ts input handler; --text-scale in :root (head.html); cleanProfile() look.textSize/look.largerAX
+- **How to test:** Settings › Appearance › Text size: drag the slider, watch the preview line and the rest of the page scale together; reload the page and confirm the chosen size persisted.
+- **Known limits:** A handful of inline sizes written directly in a few dynamically-generated pieces (e.g. a decorative seasonal motif, one meal-builder total) aren't wired to --text-scale yet — everything else in the app is.
+
+## 8.1 · Versioning: Weekly version numbers start: this build is Update 8.1 (Dev Testing)
+
+- **Problem:** The app showed 'Update 8.0' for every change, so testers couldn't tell builds apart.
+- **Change:** APP_VERSION drives the label. Update number goes up 0.1 each week (Sunday–Saturday); later builds in the same week are 8.1.1, 8.1.2 … in the logs while the app keeps showing 8.1. The channel (Dev Testing) shows next to the number on the profile and in Diagnostics. Earlier entries B3–B14 belong to Update 8.0.
+- **Where:** APP_VERSION (top of the developer-log script); ownerMark(); diagCard(); WLH.build
+- **How to test:** Settings › Profile: the line under the profile card reads 'WholeLife Hub · Update 8.1 (Dev Testing)'. Settings › Data & about › Diagnostics: build 8.1 (Dev Testing) · 2026-10-04.
+- **Known limits:** The number is set when a build is made, not computed from the date: a week with no builds skips nothing, the next week's first build is simply the next 0.1.
+
+## 8.0 · B14 · Cards: BorderGlow colours follow the app theme and Light/Dark/OLED; applied to key cards only
+
+- **Problem:** B13 used the demo's fixed purple/pink/blue and warm glow, which didn't match the app's accent or category colours and looked the same in every mode.
+- **Change:** Glow colours now come from theme tokens in CSS (--bg-c1..3 for the border mesh, --bg-glow for the edge light). Defaults: accent + coach + water. Today at a glance uses the ring colours (nutrition, activity, water); Personal coach advice uses the coach colour; each metric page header uses that metric's colour; Premium headers use the accent. Dark: glow tinted lighter with additive blend; Light: deeper untinted glow, lighter fill, normal blend; OLED: slightly softer.
+- **Where:** CSS .border-glow-card (theme palette block), .rings-card.border-glow-card, #coach-advice.border-glow-card, :root[data-scheme=light|oled] .border-glow-card; JS BG_STYLE (geometry only); coachAdviceCard markup (#coach-advice); metricView() header inline --bg-* vars
+- **How to test:** Change Settings › Appearance › Accent and Display (Light/Dark/OLED), then hover near the edges of: Today at a glance, Personal coach advice, any metric header (e.g. Weight), any Premium feature header.
+- **Known limits:** Hover-driven; on phones it shows while dragging a finger across the card.
+
+## 8.0 · B13 · Cards: BorderGlow on the Today at a glance card and every Premium feature hero
+
+- **Change:** Ported React Bits BorderGlow (no dependencies) with the given config: a mesh-gradient border (#c084fc, #f472b6, #38bdf8) and a warm glow (hsl 40 80% 80%) that follow the pointer's direction and grow near the edge. The card background stays the theme surface. The card's own hover sheen is turned off on these cards so the two effects don't fight. Additive blending is switched to normal in Light mode so the glow doesn't wash out.
+- **Where:** BG_CFG, BG_STYLE, BG_LAYERS and the pointermove handler (above ringsCard()); ringsCard(); every <section class="card hero prem-hero">; CSS .border-glow-card / .bg-border / .bg-fill / .edge-light
+- **How to test:** Desktop: move the pointer toward each edge of Today at a glance (Summary) and any Premium feature header; the glow should track the side nearest the pointer and fade when you leave.
+- **Known limits:** Hover-driven: on phones it shows only while dragging a finger across the card. animated=false as configured, so there's no intro sweep.
+
+## 8.0 · B12 · Header: Header readable over background scenes (Night sky in Light mode)
+
+- **Problem:** On Summary with the Night sky scene in Light mode, the title, date, time and ☰ were dark text on the dark sky. The scene is drawn dark in every mode, while the header used the Light theme's dark text colour with nothing behind it.
+- **Change:** When a scene is showing, the header's right cluster (title, date, time, bell) and the menu toggle sit on frosted chips in the theme's surface colour, so text keeps theme contrast over any scene and mode. On phones the ☰ toggle is also re-centred on the title + date block (alignHeadToggle()).
+- **Where:** CSS .has-scene .page-head .ph-right / .has-scene .page-head .menu-toggle (v10 block, just above the breadcrumb rules)
+- **How to test:** Settings › Appearance › Background: Night sky, Display: Light. Open Summary at 375px and 1440px; repeat with each scene in Light, Dark and OLED.
+- **Known limits:** Applies only where a scene renders (Summary). Other pages have no scene behind the header.
+
+## 8.0 · B11 · Header: Long titles no longer collide with the menu toggle; time no longer cut off
+
+- **Problem:** On phones a long page title (e.g. 'Settings & profiles') spilled left over the ☰ toggle and the time was clipped to '0:53'. The right header cluster sat in an 'auto' grid column, which grows to its content and overflows instead of shrinking.
+- **Change:** Header grid is now 44px | minmax(0,1fr) | minmax(0,max-content); the time and bell never shrink. fitHeadTitle() steps a long title's font down (min 22px); a very long name (some recipes) wraps to 2 lines instead of being cut. On ≤600px the time sits under the title block, still right-aligned beside the bell. Breadcrumbs keep 'Home › Section' and trim only the current-page crumb.
+- **Where:** CSS .ph-row / .ph-right / .ph-text (v10 block); JS fitHeadTitle() (called from afterRender() and on resize)
+- **How to test:** 375px and 320px: open Settings › Coach and the longest recipe. Title must not touch the toggle; time shows in full.
+- **Known limits:** Titles over ~40 characters wrap to two lines on phones.
+
+## 8.0 · B10 · Header / menu / motion: Header moved right, ☰↔← toggle, smooth menu, one motion system, glitch audit
+
+- **Problem:** Header stacked on the left; static '<' arrow; desktop sidebar animated grid column width (whole-page relayout per frame); phone drawer stayed focusable while hidden; mixed durations/easings; sticky hover on touch; will-change on every button; z-index values 60–120 overlapping; 'Last updated' popped out; Profile button on greeting.
+- **Change:** Header grid (toggle left, title/date/time/bell right, quick actions below). One toggle (spec SVG, transform + stroke-dasharray). Desktop rail uses FLIP (transform + clip-path, layout committed at start). Drawer uses translateX + visibility delay; first 3 items stagger 40ms. Motion tokens on :root; 321 durations and 189 easings normalised; 125 hover rules wrapped in (hover:hover) and (pointer:fine); z scale header 30 / scrim 35 / menu 40 / toggle 50 / backdrop 60 / popup 70 / toast 80. DOM order main→sidebar so Tab hits the toggle first.
+- **Where:** moreBtnHTML(), menuIsOpen(), syncMenuToggles(), toggleRail(), setRail(), setMenu(), Escape handler; CSS '/* v10: HEADER, MENU TOGGLE…' block; paintClock()/clockTick(); homeView() greeting + .lu-wrap
+- **How to test:** Toggle 10× fast at 375 and 1440: ends cleanly. Escape closes and refocuses the toggle. Settings › Appearance › Motion: Reduced → everything instant.
+- **Known limits:** JS-driven animations (React Bits ports, count-ups) keep their own timing. No size-adjust font fallbacks (needs exact font metrics).
+
+## 8.0 · B9 · Camera & microphone: In-app camera capture, permission card, VoicePill mic
+
+- **Problem:** Photo buttons went straight to a file picker on desktop; no single place to grant or check camera/mic access.
+- **Change:** mediaAsk()/mediaRefresh() ask the device and report state; Settings › Privacy & security card. Any photo input marked capture (or data-cam) opens a live camera modal (.camshot) and hands the shot to the same <input> via DataTransfer. Voice logging uses the VoicePill: asks for the mic first, live waveform, slide-left to cancel; retries without the meter if a phone won't share the mic with speech-to-text.
+- **Where:** mediaAsk(), mediaCard(), shotOpen()/shotStart()/shotClose(), voicePillHTML(), VoicePill IIFE (begin/end/startSR)
+- **How to test:** Allow/deny camera and mic in Settings; take a profile photo; on Voice coach tap, hold, slide left.
+- **Known limits:** Inside the claude.ai viewer the host page may block camera/mic; the card then says 'Blocked by this page's host' and uploads/typing keep working.
+
+## 8.0 · B8 · Settings: WakeSlider for interface opacity
+
+- **Change:** Plain range input replaced with a 32-bar WakeSlider (spring head + smoothed speed drive the wave). Same 35–100% in 5% steps, saves 400ms after release, Reset animates back.
+- **Where:** wakeSliderHTML(), WS_HANDLERS['ui-op-ws'], WakeSlider IIFE; CSS .wake-slider
+- **How to test:** Drag fast: wave; arrows/Home/End jump; Reset → 100%.
+
+## 8.0 · B7 · Speed: Page updates in place instead of rebuilding; indexed log lookups
+
+- **Problem:** Every click re-created the whole page (700–1,700 elements): pauses, replayed animations, lost scroll/focus. entries()/onDate() merged and filtered every month of logs on every call.
+- **Change:** morphInto() diffs the new HTML into the live DOM (3-way attribute merge keeps runtime classes; enhancer nodes kept). Sidebar skipped when unchanged (data-morph-skip). SVG gradient ids reset per render. Log index per task (logIdx(), dropped on any log change). Badge/celebration checks run after paint (afterPaint()).
+- **Where:** morphInto(), morphChildren(), morphNode(), morphAttrs(), MORPH_SYNC_ATTRS, data-morph-live; entrySlot()/entries()/onDate(); checkAwards()/checkCelebrations()
+- **How to test:** Click around with a year of data: no full-page flashes; scroll position and focused inputs stay put.
+- **Known limits:** State attributes (data-value, aria-valuenow/text, data-state, aria-pressed) always follow the template; other runtime-set attributes survive renders unless the template value changes.
+
+## 8.0 · B6 · Notifications: SwipeToast for all toasts and notifications, theme-matched
+
+- **Problem:** Bell notifications only bumped a badge; nobody saw them arrive.
+- **Change:** toast()/undoToast() now create SwipeToasts (swipe down to dismiss, fuse timer, pause on hover/focus/hidden tab, max 4). notify() also pops a toast with 'View'. Colours from theme tokens.
+- **Where:** swipeToast(), toast(), undoToast(), notify(); CSS .swipe-toast, #st-stack
+- **How to test:** Log a meal, delete a photo (Undo), trigger a reminder.
+
+## 8.0 · B5 · Checklists: StatusMark on grocery list, training ticks, progress and loading
+
+- **Change:** Dashed ring → arc → drawn check; grocery strike-through animates; grocery progress ring replaces the duplicate bar; busy rows and Thinking… buttons use the spinner.
+- **Where:** smGlyph(), smHTML(), StatusMark controller; groceryRow(), programSession, busyRow()
+- **How to test:** Tick grocery items; watch the sorted ring fill.
+
+## 8.0 · B4 · Charts: Day / Week / Month / 3M / Year ranges; OLED toggle contrast
+
+- **Change:** Day = today/yesterday/7-day tiles (entries have no time of day). Year = 12 monthly averages of logged days only.
+- **Where:** RANGES, dayPanel(), yearChart(), metricView()
+- **How to test:** Any metric page, cycle all five ranges.
+- **Known limits:** No hourly Day chart (data is per date).
+
+## 8.0 · B3 · Controls: RubberSegment on single-choice segmented controls
+
+- **Change:** Stretch/squash thumb, drag and flick; enhances existing .seg buttons in place (RS_ACTS list). Respects Motion: Reduced.
+- **Where:** RubberSegment IIFE, RS_ACTS; CSS .rs-on/.rs-thumb
+- **How to test:** Metric range, Appearance › Display.
+- **Known limits:** Controls that wrap onto two lines fall back to the plain style.
