@@ -273,6 +273,44 @@ button,input,select,textarea{font:inherit;color:inherit}
 .tour-topic:active{transform:scale(.98)}
 .tour-topic:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
+/* 8.1.9: Stepper (React Bits), ported. Circles 32px, connectors 2px, theme colours. */
+.wl-stepper{display:flex;flex-direction:column;gap:20px;min-width:0}
+.st-row{list-style:none;margin:0;padding:2px 0 0;display:flex;align-items:center;width:100%}
+.st-item{display:flex;align-items:center;flex:1 1 0;min-width:0}
+.st-item:last-child{flex:0 0 auto}
+.st-dot{all:unset;box-sizing:border-box;flex:none;position:relative;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;
+  font-size:calc(14px * var(--text-scale,1));font-weight:700;font-variant-numeric:tabular-nums;
+  background:var(--raise);color:var(--muted);
+  transition:background-color var(--dur-menu) var(--ease-smooth),color var(--dur-menu) var(--ease-smooth),transform var(--dur-tap) var(--ease-smooth)}
+.st-dot.is-active,.st-dot.is-complete{background:var(--accent);color:var(--accent-ink)}
+button.st-dot{cursor:pointer;-webkit-tap-highlight-color:transparent}
+button.st-dot::before{content:"";position:absolute;inset:-6px;border-radius:50%} /* 44px tap target */
+@media (hover:hover) and (pointer:fine){button.st-dot:hover{transform:scale(1.08)}}
+button.st-dot:active{transform:scale(.94)}
+button.st-dot:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.st-activedot{width:12px;height:12px;border-radius:50%;background:var(--accent-ink);animation:stPop var(--dur-menu) var(--ease-spring) both}
+.st-check{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.st-check path{stroke-dasharray:24;stroke-dashoffset:24;animation:stDraw 360ms var(--ease-smooth) 80ms forwards}
+.st-conn{flex:1 1 auto;height:2px;margin:0 8px;border-radius:2px;background:var(--raise);overflow:hidden;min-width:8px}
+.st-conn i{display:block;height:100%;width:0;background:var(--accent);transition:width var(--dur-page) var(--ease-smooth)}
+.st-conn.is-complete i{width:100%}
+.st-body{min-width:0}
+.st-slide{display:flex;flex-direction:column;gap:20px;min-width:0}
+.st-panel{width:min(760px,100%)}
+.st-panel.coachpanel{width:min(880px,100%)}
+.st-inline .st-row{max-width:420px}
+.st-inline .st-slide{gap:0}
+.st-pane[hidden]{display:none}
+.st-pane .qnum{display:none} /* the step circle already shows the number */
+@keyframes stPop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+@keyframes stDraw{to{stroke-dashoffset:0}}
+/* 8.1.10 bug fix: the coach-advice footnote (.faint) measured 4.27:1 on the dark card, under WCAG AA 4.5:1;
+   it only shows for some advice items, which is why earlier daytime sweeps missed it. */
+:root:is([data-scheme="dark"],[data-scheme="oled"]) .advice-row .faint{color:#A1A1A6}
+:root[data-motion="reduced"] .st-check path{animation:none;stroke-dashoffset:0}
+:root[data-motion="reduced"] .st-activedot{animation:none}
+@media (prefers-reduced-motion: reduce){.st-check path{animation:none;stroke-dashoffset:0}}
+
 /* v9.1 TASK 3: sidebar rows -- 40px tall, 8px radius, 12px horizontal padding, 10px icon/label
    gap, 15px/500 label. Hover/active use a flat neutral tint rather than the accent-soft wash
    this had before, so the accent stays reserved for primary actions/links/the icon tile itself
@@ -3804,6 +3842,18 @@ const APP_VERSION = { update: "8.1", build: "8.1.8", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.1.10", area:"Accessibility", title:"Coach advice footnote readable in Dark mode",
+      bug:"Found by the accessibility sweep after 8.1.9: the small footnote under some coach advice items (e.g. 'From today's water log.') was #8E8E93 on the #2C2C2E card in Dark mode, 4.27:1 against the 4.5:1 WCAG AA minimum. It only renders for certain advice items at certain times of day, which is why earlier sweeps run in the morning passed. Present in 8.1.7 and 8.1.8 too, not caused by the Stepper.",
+      fix:"In Dark and OLED, that footnote uses #A1A1A6 (about 5.4:1 on the same card). Light mode was already fine and is unchanged.",
+      where:"CSS :root:is([data-scheme=dark],[data-scheme=oled]) .advice-row .faint (after the Stepper rules)",
+      test:"Dark mode, Personal coach, afternoon: the grey line under a coach advice item. Automated: 0 axe violations on all 18 mode/route combinations.",
+      limits:"--muted itself (#8E8E93 in Dark) is borderline on #2C2C2E-coloured cards generally; this fixes the one place it fell under, not the token." },
+    { id:"8.1.9", area:"Onboarding / coach", title:"React Bits Stepper for setup (after 'Set up my hub') and the coach's five questions",
+      bug:"Setup showed progress as a thin bar plus 'Step N of 4'; the coach's five starting questions were one long form.",
+      fix:"Ported React Bits' Stepper (React + Framer Motion) to this app's plain JS/CSS: numbered circles joined by connectors, a dot on the current step, a drawn check on finished ones, connectors that fill as you pass them, content that slides in from the direction you're going while the card eases to its new height. Setup: the coach choice and the three steps after it share one Stepper frame; every field, button and check is unchanged (coach required, under-13 gate); tapping a finished circle goes back to it, never forward. Coach's five questions: one question per step, all optional so every circle can be tapped, Enter moves on, the last step saves; all five inputs stay in the form so saving works exactly as before. Focus moves to the new step's heading or field after each change (keyboard and VoiceOver). Theme colours in Light/Dark/OLED, --text-scale sizes, no motion under Reduced Motion. Licenses & credits now lists React Bits (MIT + Commons Clause, David Haz) and every component ported from it, which it hadn't before.",
+      where:"stepperRowHTML(), stepperAfterRender(), OB_STEPS, obStepFrame() (above onboardingView()); onboardingView(); 'ob-goto' click case; baselineCard() + captureBaselineDraft(); 'st-next'/'st-prev'/'st-goto' cases (coach click switch); Enter handler above the baseline submit handler; CSS .wl-stepper / .st-* ; creditsView() Interface components",
+      test:"Fresh device: Set up my hub → four circles; pick a coach → Continue; check, dot and connector update; tap circle 1 or 2 to go back with answers kept. Age 11 on step 3 still blocks. Personal coach › Five quick questions: Enter steps through; Save on step 5. Automated: full setup at 390×844 (light) and 1440×900 (dark), skip path, back-by-circle, under-13 gate, baseline values kept across steps and saved, no animations under Reduced Motion, 0 axe violations.",
+      limits:"The class is .wl-stepper because .stepper already names the sleep-hours +/- control; reusing it would have broken that control's layout. The daily check-in was deliberately left as one screen: it's three quick answers a day and steps would only add taps." },
     { id:"8.1.8", area:"Sys Architecture", title:"Supabase backend schema, photo storage and Git repository",
       bug:"The app only saved to the browser (or Claude's artifact storage), so data lived on one device and test devs couldn't share it; there was no version control, which let another session overwrite the live build.",
       fix:"Supabase project 'Whole Life Hub': extended people, meal_logs, snack_logs, workouts, weight_entries to the app's data model (log_date, app_id for offline ids, soft delete, updated_at triggers, meal slot/dish/portion/photo, jsonb extras); added drink_logs and daily_vitals; private 'photos' bucket with per-account folders; owner-only RLS on every table (tested: a second account sees 0 rows and can't write into another account's profile); cascading deletes; locked the rls_auto_enable() function off the API. Git repository prepared with README, CHANGELOG, migrations, versioning rules and a bug-report template.",
@@ -8943,6 +8993,7 @@ function afterRender(){
   if (typeof paintFooterYear === "function") paintFooterYear();
   revealActive();
   if (typeof tourAfterRender === "function") tourAfterRender(); // 8.1.7 app tour
+  if (typeof stepperAfterRender === "function") stepperAfterRender(); // 8.1.9 stepper motion
   if (typeof applyCanonical === "function") applyCanonical();
   if (typeof applyTheme === "function") applyTheme(P());
   if (typeof applyOpacity === "function") applyOpacity(P());
@@ -9110,43 +9161,108 @@ function welcomeView(){
   </main>`;
 }
 
+// =================== Stepper (React Bits), ported to plain JS/CSS (8.1.9) ===================
+// React Bits' <Stepper> is a React + Framer Motion component; this app is one vanilla-JS file,
+// so its look and behaviour are rebuilt natively rather than imported: a row of numbered step
+// circles joined by connectors (a dot marks the current step, a drawn check marks a finished
+// one, the connector fills as you pass it), step content that slides in from the side you're
+// heading toward while the container eases to the new height, and a Back / Next footer.
+// Differences from the original, on purpose: colours come from the app theme (accent, surface,
+// raise) in Light/Dark/OLED; every size follows --text-scale; motion collapses under Reduced
+// Motion; screen readers get "Step 2 of 4: You and your goals, current" for each circle; and a
+// circle is only clickable where jumping is safe (onboarding: back to a finished step, so no
+// step's checks can be skipped; the coach's optional questions: any step).
+const STEPPER_STATE = {};
+function stepperRowHTML({ sid, labels, current, goto = "st-goto", clickable = "back", label = "Progress" }){
+  const n = labels.length;
+  return `<ol class="st-row" aria-label="${esc(label)}">${labels.map((lab, k) => {
+    const i = k + 1, status = i < current ? "complete" : i === current ? "active" : "inactive";
+    const canClick = i !== current && (clickable === "all" || i < current);
+    const inner = status === "complete"
+      ? `<svg class="st-check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+      : status === "active" ? `<span class="st-activedot" aria-hidden="true"></span>` : `<span class="st-num" aria-hidden="true">${i}</span>`;
+    const sr = `<span class="sr-only">Step ${i} of ${n}: ${esc(lab)}${status === "complete" ? ", done" : status === "active" ? ", current" : ""}</span>`;
+    const dot = canClick
+      ? `<button type="button" class="st-dot is-${status}" data-act="${goto}" data-sid="${sid}" data-v="${i}" title="${esc(lab)}">${inner}${sr}</button>`
+      : `<span class="st-dot is-${status}"${status === "active" ? ' aria-current="step"' : ""}>${inner}${sr}</span>`;
+    return `<li class="st-item is-${status}">${dot}${i < n ? `<span class="st-conn${i < current ? " is-complete" : ""}" aria-hidden="true"><i></i></span>` : ""}</li>`;
+  }).join("")}</ol>`;
+}
+// Runs after every render (see afterRender): when a stepper's step changed since the last
+// render, slide the new content in from the direction of travel and ease the box from its old
+// height to the new one, then move focus to the new step's heading/field (data-st-focus) if
+// focus was on the stepper's own controls -- otherwise a keyboard or VoiceOver user is left on
+// a button that no longer exists.
+function stepperAfterRender(){
+  const seen = new Set();
+  document.querySelectorAll(".wl-stepper[data-sid]").forEach(st => {
+    const sid = st.dataset.sid, cur = +st.dataset.step; seen.add(sid);
+    const slide = st.querySelector(".st-slide");
+    const box = st.closest(".panel") || st;
+    const h = box.getBoundingClientRect().height;
+    const prev = STEPPER_STATE[sid];
+    if (prev && prev.step !== cur) {
+      const dir = cur > prev.step ? 1 : -1;
+      if (typeof motionOK !== "function" || motionOK()) {
+        const ease = "cubic-bezier(0.32,0.72,0,1)";
+        slide?.animate([{ transform:`translateX(${dir * 12}%)`, opacity:0 }, { transform:"none", opacity:1 }], { duration:420, easing:ease });
+        if (Math.abs(prev.h - h) > 2) {
+          const ov = box.style.overflow; box.style.overflow = "hidden";
+          const an = box.animate([{ height:`${prev.h}px` }, { height:`${h}px` }], { duration:380, easing:ease });
+          an.onfinish = an.oncancel = () => { box.style.overflow = ov; };
+        }
+      }
+      const ae = document.activeElement;
+      if (!ae || ae === document.body || !ae.isConnected || !ae.getClientRects().length || ae.closest(".st-foot, .st-row")) slide?.querySelector("[data-st-focus]")?.focus({ preventScroll:true });
+    }
+    STEPPER_STATE[sid] = { step: cur, h };
+  });
+  for (const k of Object.keys(STEPPER_STATE)) if (!seen.has(k)) delete STEPPER_STATE[k];
+}
+const OB_STEPS = ["Your coach", "You and your goals", "Food and body", "Your starting point"];
+// Every onboarding step after "Set up my hub" shares one stepper frame; only the slide's content
+// and the footer change. The fields, actions and checks inside each step are unchanged.
+function obStepFrame(step, content, foot){
+  return `<div class="ob obg">${obGround()}<div class="panel st-panel${step === 1 ? " coachpanel" : ""}">
+    <div class="wl-stepper" data-sid="ob" data-step="${step}">
+      ${stepperRowHTML({ sid:"ob", labels:OB_STEPS, current:step, goto:"ob-goto", clickable:"back", label:"Setup progress" })}
+      <div class="st-body"><div class="st-slide">${content}</div></div>
+      <div class="st-foot modal-foot">${foot}</div>
+    </div>
+  </div></div>`;
+}
 function onboardingView(){
   const d = UI.obDraft || (UI.obDraft = newProfile(""));
-  const step = UI.obStep; const pct = [0, 25, 50, 75, 100][step];
+  const step = UI.obStep;
   if (step === 0) return welcomeView();
   const units = d.units;
   // Step zero: pick a coach. Nothing is personalised and no coaching text is generated
   // until this is answered, so the voice is set before there is anything to say.
   if (step === 1) {
     const sel = UI.coachSel;
-    return `<div class="ob obg">${obGround()}<div class="panel coachpanel">
-      <div class="progress"><i style="width:${pct}%"></i></div>
+    return obStepFrame(1, `
       <div class="row">${logoSVG(46)}<div class="eyebrow">Step 1 of 4</div></div>
-      <h1 class="ob-h1">Choose your coach</h1>
+      <h1 class="ob-h1" tabindex="-1" data-st-focus>Choose your coach</h1>
       <p class="muted">You can switch or rename your coach any time in Settings.</p>
       ${coachCards(d, sel, "coach-pick")}
-      ${sel ? `<div class="stack namewrap">${coachNameField(sel, UI.coachNameDraft || "")}</div>` : ""}
-      <div class="modal-foot"><div class="foot-left"><button class="btn ghost" data-act="ob-back">Back</button></div>
-        <div class="foot-right"><button class="btn primary" data-act="coach-continue"${sel ? "" : " disabled"}>Continue</button></div></div>
-    </div></div>`;
+      ${sel ? `<div class="stack namewrap">${coachNameField(sel, UI.coachNameDraft || "")}</div>` : ""}`,
+      `<div class="foot-left"><button class="btn ghost" data-act="ob-back">Back</button></div>
+        <div class="foot-right"><button class="btn primary" data-act="coach-continue"${sel ? "" : " disabled"}>Continue</button></div>`);
   }
-  if (step === 2) return `<div class="ob obg">${obGround()}<div class="panel">
-    <div class="progress"><i style="width:${pct}%"></i></div>
-    <div><div class="eyebrow">Step 2 of 4 · You and your goals</div><h1 style="margin-top:6px">What would make this useful?</h1></div>
+  if (step === 2) return obStepFrame(2, `
+    <div><div class="eyebrow">Step 2 of 4 · You and your goals</div><h1 style="margin-top:6px" tabindex="-1" data-st-focus>What would make this useful?</h1></div>
     <div class="form">
       <label class="f full">Name<input type="text" id="ob-name" value="${esc(d.name)}" placeholder="What should we call you?" autocomplete="given-name"></label>
       <label class="f">Main goal<select id="ob-goal">${opt(GOALS, d.goal)}</select></label>
       <label class="f">Exercise style<select id="ob-style">${opt(STYLES, d.style)}</select></label>
       <label class="f">Workouts per week<input type="number" id="ob-freq" min="0" max="14" value="${d.freq ?? ""}" placeholder="e.g. 3"></label>
       <label class="f">Level<select id="ob-level">${opt(LEVELS, d.level)}</select></label>
-    </div>
-    <div class="modal-foot"><div class="foot-left"><button class="btn ghost" data-act="ob-back">Back</button></div><div class="foot-right"><button class="btn primary" data-act="ob-next">Continue</button></div></div>
-  </div></div>`;
+    </div>`,
+    `<div class="foot-left"><button class="btn ghost" data-act="ob-back">Back</button></div><div class="foot-right"><button class="btn primary" data-act="ob-next">Continue</button></div>`);
   if (step === 3) {
     const hIn = d.heightCm ? d.heightCm/2.54 : null;
-    return `<div class="ob obg">${obGround()}<div class="panel">
-    <div class="progress"><i style="width:${pct}%"></i></div>
-    <div class="setrow"><div class="setlabel"><div class="eyebrow">Step 3 of 4 · Food and body</div><h1 style="margin-top:6px">Add only what helps</h1></div>
+    return obStepFrame(3, `
+    <div class="setrow"><div class="setlabel"><div class="eyebrow">Step 3 of 4 · Food and body</div><h1 style="margin-top:6px" tabindex="-1" data-st-focus>Add only what helps</h1></div>
       <div class="seg setctl" role="group" aria-label="Units"><button data-act="ob-units" data-v="us" aria-pressed="${units==="us"}">lb / ft</button><button data-act="ob-units" data-v="metric" aria-pressed="${units==="metric"}">kg / cm</button></div></div>
     <p class="small muted">Age, sex, height and weight power the weight gain/loss estimate. Leave them blank and the estimate stays off.</p>
     <div class="form">
@@ -9162,22 +9278,19 @@ function onboardingView(){
            <label class="f">Weight<input type="text" inputmode="decimal" autocomplete="off" id="ob-wt" value="${d.weightKg ? round(kgToLb(d.weightKg),1) : ""}" placeholder="Optional, e.g. 155 or 70 kg"></label>`
         : `<label class="f">Height (cm)<input type="number" id="ob-cm" min="100" max="250" value="${d.heightCm ?? ""}" placeholder="Optional"></label>
            <label class="f">Weight<input type="text" inputmode="decimal" autocomplete="off" id="ob-wt" value="${d.weightKg ? round(d.weightKg,1) : ""}" placeholder="Optional, e.g. 70 or 155 lbs"></label>`}
-    </div>
-    <div class="modal-foot"><div class="foot-left"><button class="btn ghost" data-act="ob-back">Back</button></div><div class="foot-right"><button class="btn primary" data-act="ob-next">Review choices</button></div></div>
-  </div></div>`; }
+    </div>`,
+    `<div class="foot-left"><button class="btn ghost" data-act="ob-back">Back</button></div><div class="foot-right"><button class="btn primary" data-act="ob-next">Review choices</button></div>`); }
   const canEst = d.age && d.sex && d.heightCm && d.weightKg;
-  return `<div class="ob obg">${obGround()}<div class="panel">
-    <div class="progress"><i style="width:${pct}%"></i></div>
-    <div><div class="eyebrow">Step 4 of 4 · Your starting point</div><h1 style="margin-top:6px">How do you want to start?</h1></div>
+  return obStepFrame(4, `
+    <div><div class="eyebrow">Step 4 of 4 · Your starting point</div><h1 style="margin-top:6px" tabindex="-1" data-st-focus>How do you want to start?</h1></div>
     <div class="choice">
       <button data-act="ob-choice" data-v="plan" aria-pressed="${UI.obChoice==="plan"}"><h3>Personalized start</h3><span class="small muted">A 7-day meal plan${d.freq ? `, a ${d.freq}-day workout plan` : ""}${canEst ? " and a suggested daily calorie target" : ""} from your answers. You can change all of it later.</span></button>
       <button data-act="ob-choice" data-v="fresh" aria-pressed="${UI.obChoice==="fresh"}"><h3>Start fresh</h3><span class="small muted">Everything starts at zero. No calorie or workout targets until you set your own in Settings.</span></button>
     </div>
     ${!canEst && UI.obChoice==="plan" ? `<div class="note info">Without age, sex, height and weight there's no calorie target yet. Meals and workouts will still be personalized.</div>` : ""}
     ${d.age == null ? `<label class="f full" style="display:flex;gap:8px;align-items:flex-start;margin-top:4px"><input type="checkbox" id="ob-age-confirm" ${UI.obAgeConfirm ? "checked" : ""} style="margin-top:3px"> I confirm I'm 13 years old or older.</label>` : ""}
-    <p class="tiny faint">Estimates are for personal tracking, not medical or nutrition advice.</p>
-    <div class="modal-foot"><div class="foot-left"><button class="btn ghost" data-act="ob-back">Back</button></div><div class="foot-right"><button class="btn primary" data-act="ob-finish"${UI.obChoice && (d.age != null || UI.obAgeConfirm) ? "" : " disabled"}>Enter WholeLife Hub</button></div></div>
-  </div></div>`;
+    <p class="tiny faint">Estimates are for personal tracking, not medical or nutrition advice.</p>`,
+    `<div class="foot-left"><button class="btn ghost" data-act="ob-back">Back</button></div><div class="foot-right"><button class="btn primary" data-act="ob-finish"${UI.obChoice && (d.age != null || UI.obAgeConfirm) ? "" : " disabled"}>Enter WholeLife Hub</button></div>`);
 }
 function readOnboardingStep(){
   const d = UI.obDraft; const v = id => $("#"+id)?.value?.trim();
@@ -10132,6 +10245,9 @@ document.addEventListener("click", async e => {
     case "coach-prompt-save": { setCoachPersona(UI.coachSel || COACH_DEFAULT, val("coach-name"));
       render(); toast(`${coachName(P())} is your coach.`); break; }
     case "ob-back": readOnboardingStep(); UI.obStep = Math.max(0, UI.obStep-1); render(); break;
+    // 8.1.9 stepper: tapping a finished step's circle goes back to it (never forward, so no
+    // step's checks -- coach chosen, the under-13 gate -- can be jumped over)
+    case "ob-goto": { const to = +t.dataset.v; if (to >= 1 && to < UI.obStep) { readOnboardingStep(); UI.obAgeErr = null; UI.obStep = to; render(); window.scrollTo(0,0); } break; }
     case "ob-cancel": UI.obDraft = null; UI.obStep = 0; UI.obAgeErr = null; UI.obAgeConfirm = false; S.activeId = UI.lastActive && S.profiles.some(x=>x.id===UI.lastActive) ? UI.lastActive : S.profiles[0]?.id; render(); break;
     case "ob-skip": UI.obDraft = UI.obDraft || newProfile(""); finishOnboarding("fresh"); break;
     case "ob-units": readOnboardingStep(); UI.obDraft.units = t.dataset.v; render(); break;
@@ -11448,20 +11564,43 @@ function baselineCard(p){
     </section>`;
   }
   const d = UI.baselineDraft || (UI.baselineDraft = { ...(b || {}) });
+  // 8.1.9: one question at a time in the Stepper (React Bits port, see stepperRowHTML). All five
+  // inputs stay in the form -- only the current one is shown -- so the submit handler below still
+  // reads every answer exactly as before. Each question is optional, so every circle is tappable
+  // and Next never blocks; Enter moves on; the last step's button saves.
+  const n = COACH_Q.length, cur = Math.min(n, Math.max(1, UI.baselineStep || 1));
   return `<section class="card qcard" id="baseline">
     <div class="eyebrow" style="color:var(--c-coach)">Five quick questions</div>
     <h2>So the coach knows where to start you</h2>
     <p class="small muted">Every one of these is optional. Skip anything you'd rather not answer. Rough numbers are fine; the coach only uses them to avoid pushing you too far, too fast.</p>
     <form class="stack lg" data-form="baseline">
-      ${COACH_Q.map((q, i) => `<div class="qrow"><span class="qnum" aria-hidden="true">${i + 1}</span><label class="qlab" for="bq-${q.k}">${esc(q.n)}</label>
-        ${q.kind === "pick"
-          ? `<select id="bq-${q.k}">${opt(q.opts, q.k === "first" ? (d.first === true ? "yes" : d.first === false ? "no" : "") : (d[q.k] ?? ""))}</select>`
-          : `<input type="number" id="bq-${q.k}" min="0" max="${q.max}" value="${d[q.k] ?? ""}" placeholder="${esc(q.ph)}">`}
-        ${q.unit ? `<span class="small muted">${esc(q.unit)}</span>` : ""}</div>`).join("")}
-      <div class="modal-foot"><div class="foot-left"><button class="btn ghost" type="button" data-act="baseline-skip">Skip all of this</button></div>
-        <div class="foot-right"><button class="btn primary" type="submit">Save my starting point</button></div></div>
+      <div class="wl-stepper st-inline" data-sid="baseline" data-step="${cur}">
+        ${stepperRowHTML({ sid:"baseline", labels:COACH_Q.map(q => q.n), current:cur, goto:"st-goto", clickable:"all", label:"Questions" })}
+        <div class="st-body"><div class="st-slide">
+          ${COACH_Q.map((q, i) => `<div class="st-pane" data-pane="${i + 1}"${i + 1 === cur ? "" : " hidden"}><div class="qrow"><span class="qnum" aria-hidden="true">${i + 1}</span><label class="qlab" for="bq-${q.k}">${esc(q.n)}</label>
+            ${q.kind === "pick"
+              ? `<select id="bq-${q.k}"${i + 1 === cur ? " data-st-focus" : ""}>${opt(q.opts, q.k === "first" ? (d.first === true ? "yes" : d.first === false ? "no" : "") : (d[q.k] ?? ""))}</select>`
+              : `<input type="number" id="bq-${q.k}" min="0" max="${q.max}" value="${d[q.k] ?? ""}" placeholder="${esc(q.ph)}"${i + 1 === cur ? " data-st-focus" : ""}>`}
+            ${q.unit ? `<span class="small muted">${esc(q.unit)}</span>` : ""}</div></div>`).join("")}
+        </div></div>
+      </div>
+      <div class="modal-foot st-foot"><div class="foot-left"><button class="btn ghost" type="button" data-act="baseline-skip">Skip all of this</button></div>
+        <div class="foot-right">${cur > 1 ? `<button class="btn" type="button" data-act="st-prev" data-sid="baseline">Back</button>` : ""}${cur < n
+          ? `<button class="btn primary" type="button" data-act="st-next" data-sid="baseline">Next</button>`
+          : `<button class="btn primary" type="submit">Save my starting point</button>`}</div></div>
     </form>
   </section>`;
+}
+// Keep whatever was typed in the (partly hidden) baseline inputs across a step change re-render.
+function captureBaselineDraft(){
+  const d = UI.baselineDraft || (UI.baselineDraft = {});
+  for (const q of COACH_Q) {
+    const el = document.getElementById("bq-" + q.k); if (!el) continue;
+    const v = el.value;
+    if (q.k === "first") d.first = v === "yes" ? true : v === "no" ? false : null;
+    else if (q.kind === "pick") d[q.k] = v;
+    else d[q.k] = v === "" ? null : v;
+  }
 }
 
 // ---------- B6. Goal in your own words, then a plan the coach checks with you ----------
@@ -11741,8 +11880,15 @@ document.addEventListener("click", async e => {
       checkCelebrations(p);
       break; }
     // ---- B5 baseline ----
-    case "baseline-edit": UI.editBaseline = true; UI.baselineDraft = { ...(baselineOf(p) || {}) }; render(); break;
-    case "baseline-skip": { p.coach = p.coach || {}; p.coach.skipped = true; UI.editBaseline = false; UI.baselineDraft = null; saveProfile(); render(); toast("Skipped. You can answer these any time.", "info"); break; }
+    case "baseline-edit": UI.editBaseline = true; UI.baselineStep = 1; UI.baselineDraft = { ...(baselineOf(p) || {}) }; render(); break;
+    // 8.1.9 Stepper controls for the five questions
+    case "st-next": case "st-prev": case "st-goto": {
+      if (t.dataset.sid !== "baseline") break;
+      captureBaselineDraft();
+      const cur = UI.baselineStep || 1, n = COACH_Q.length;
+      const to = a === "st-next" ? cur + 1 : a === "st-prev" ? cur - 1 : +t.dataset.v;
+      UI.baselineStep = Math.min(n, Math.max(1, to)); render(); break; }
+    case "baseline-skip": { p.coach = p.coach || {}; p.coach.skipped = true; UI.editBaseline = false; UI.baselineDraft = null; UI.baselineStep = null; saveProfile(); render(); toast("Skipped. You can answer these any time.", "info"); break; }
     // ---- B6 plans ----
     case "plan-len": UI.planUI = { ...(UI.planUI || {}), len: +t.dataset.v, text: document.getElementById("goal-text")?.value ?? UI.planUI?.text }; render(); break;
     case "plan-make": {
@@ -11800,6 +11946,11 @@ document.addEventListener("dragleave", e => { const dz = e.target.closest?.(".dr
 document.addEventListener("drop", e => { const dz = e.target.closest?.(".dropzone"); if (!dz) return; e.preventDefault(); dz.classList.remove("over");
   const f = e.dataTransfer?.files?.[0]; if (f) takeShot(dz.id === "dz-food-shot" ? "food" : "gym", f); });
 document.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { const dz = e.target.closest?.(".dropzone"); if (dz && e.target === dz) { e.preventDefault(); dz.querySelector("input[type=file]")?.click(); } } });
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" || !e.target.closest?.('.wl-stepper[data-sid="baseline"] input')) return;
+  const next = document.querySelector('#baseline [data-act="st-next"]');
+  if (next) { e.preventDefault(); next.click(); }
+});
 document.addEventListener("submit", e => {
   const f = e.target.closest("form[data-form='baseline']"); if (!f) return;
   e.preventDefault();
@@ -11811,7 +11962,7 @@ document.addEventListener("submit", e => {
   p.coach.baseline = { pushups: n("pushups", 500), situps: n("situps", 500), plank: n("plank", 3600),
     last: ["today","week","month","longer","never"].includes(g("last")) ? g("last") : "",
     first: first === "yes" ? true : first === "no" ? false : null, at: today() };
-  UI.editBaseline = false; UI.baselineDraft = null;
+  UI.editBaseline = false; UI.baselineDraft = null; UI.baselineStep = null;
   saveProfile(); render();
   toast(hasBaseline(p.coach.baseline) ? "Got it. The coach will build from there." : "Nothing saved. All of those were blank.", hasBaseline(p.coach.baseline) ? "success" : "info");
 });
@@ -13693,6 +13844,9 @@ function creditsView(){
 
     <h3>Icons</h3>
     <p><b>Lucide</b> — icon set, ISC license. Used as inline SVG glyphs inside this app's own gradient icon tiles; the tiles, layout and colour system around them are original to this app.</p>
+
+    <h3>Interface components</h3>
+    <p><b>React Bits</b> by David Haz — open-source React component library (MIT + Commons Clause). Several of its components are ported to this app's plain JavaScript and restyled to its theme: BorderGlow, SwipeToast, StatusMark, WakeSlider, VoicePill and Stepper. The code here is a re-implementation, not the React package, and none of the components is redistributed on its own.</p>
 
     <h3>Fonts</h3>
     <table class="clean small tbl-storage">
