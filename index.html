@@ -6933,9 +6933,10 @@ async function setPasscode(pass){ // turn on or change the lock, then re-save ev
   const salt = b64(crypto.getRandomValues(new Uint8Array(16)));
   const key = await deriveKey(pass, salt, PBKDF2_ITER);
   CRY.key = key; CRY.lock = { salt, iter: PBKDF2_ITER, check: await encryptJSON("wholelife-ok", key), auto: CRY.lock?.auto ?? 15 };
+  sbOnLock(); // 8.1.11: meals stay on this device and are encrypted with the rest; the plain cache goes
   markAll(); await flush();
 }
-async function removePasscode(){ CRY.key = null; CRY.lock = null; markAll(); await flush(); }
+async function removePasscode(){ CRY.key = null; CRY.lock = null; markAll(); await flush(); sbResume(); }
 function lockNow(){ // forget the key and the decrypted data in this tab
   if (!CRY.lock) return;
   flush().then(async () => {
@@ -6952,12 +6953,13 @@ async function eraseEverything(){
   if (DB) { try { const l = await ROOT.collection("logs").get(); for (const d of l.docs) await ROOT.collection("logs").doc(d.id).delete(); await ROOT.delete(); } catch (e) { console.warn(e); } }
   try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_OLD); } catch {}
   Object.assign(S, { profiles:[], activeId:null, logs:{} }); CRY.key = null; CRY.lock = null; CRY.raw = null; dirty.clear();
+  sbOnErase(); // 8.1.11: forget the meal cache and sign out of this browser; meals in the account are not deleted
 }
 
 const dirty = new Set(); let flushTimer = null, flushing = null;
 function markRoot(){ dirty.add("root"); schedule(); }
-function markLog(pid, mon){ if (typeof logIdxDrop === "function") logIdxDrop(); dirty.add(`log:${pid}:${mon}`); schedule(); }
-function markAll(){ if (typeof logIdxDrop === "function") logIdxDrop(); dirty.add("root"); for (const pid in S.logs) for (const m in S.logs[pid]) dirty.add(`log:${pid}:${m}`); schedule(); }
+function markLog(pid, mon){ if (typeof logIdxDrop === "function") logIdxDrop(); sbTrack(pid, mon); dirty.add(`log:${pid}:${mon}`); schedule(); }
+function markAll(){ if (typeof logIdxDrop === "function") logIdxDrop(); dirty.add("root"); for (const pid in S.logs) for (const m in S.logs[pid]) { sbTrack(pid, m); dirty.add(`log:${pid}:${m}`); } schedule(); }
 function schedule(){ clearTimeout(flushTimer); flushTimer = setTimeout(flush, 600); }
 
 // If the account store refuses our writes, this viewer can read the page but not save to it.
@@ -6984,6 +6986,9 @@ function flush(){
   flushing = (async () => {
     let failed = false;
     const local = DB ? null : (lsGet() || { root:null, logs:{} });
+    // Signed in with sync running: meals are saved to the account and the local cache instead of
+    // the month blobs. Only strip them once the cache write has succeeded, so they're never lost.
+    const stripMeals = sbActive() && SB.started && sbCacheSave();
     while (dirty.size) {
       const key = dirty.values().next().value; dirty.delete(key);
       try {
@@ -6991,7 +6996,7 @@ function flush(){
           const body = { v: 62, lock: CRY.lock || null, ...(await pack({ profiles: S.profiles, activeId: S.activeId })) };
           if (DB) await ROOT.set(body); else local.root = body;
         } else {
-          const [, pid, mon] = key.split(":"); const L = S.logs[pid]?.[mon];
+          const [, pid, mon] = key.split(":"); const L = stripMeals && S.logs[pid]?.[mon] ? { ...S.logs[pid][mon], meals: [] } : S.logs[pid]?.[mon];
           const id = `${pid}_${mon}`;
           if (DB) { const ref = ROOT.collection("logs").doc(id); if (!L) await ref.delete(); else await ref.set(await pack({ pid, month: mon, ...L })); }
           else { if (!L) delete local.logs[id]; else local.logs[id] = await pack({ pid, month: mon, ...L }); }
@@ -9051,6 +9056,7 @@ function render(){
   keepNavScroll();
   applyLook();
   if (UI.loading) { morphInto(root, UI.loading === "boot" ? skeletonView() : loaderView(UI.loading)); return; }
+  if (SB.recovery) { morphInto(root, recoveryView()); setMeta("New password", "Choose a new WholeLife Hub password."); afterRender(); return; }
   if (UI.locked) { morphInto(root, lockView()); setMeta("Locked", "WholeLife Hub is locked."); afterRender(); return; }
   const p = P();
   if (!p || !p.onboarded) { morphInto(root, onboardingView()); setMeta("Welcome", "Set up WholeLife Hub."); afterRender(); return; }
@@ -10338,7 +10344,7 @@ function settingsView(p){
   const tabs = `<div class="tabwrap"><nav class="tabs" role="tablist" aria-label="Settings sections">${SET_TABS.map(([k,l]) =>
     `<a role="tab" href="#/settings${k === "profile" ? "" : "/" + k}" data-label="${esc(l)}" aria-selected="${k === tab}"${k === tab ? ' aria-current="page"' : ' tabindex="-1"'}><span>${esc(l)}</span></a>`).join("")}</nav></div>`;
   const sections = {
-    profile: profileTab(p),
+    profile: accountCard() + profileTab(p),
     premium: typeof subscriptionPanel === "function" ? premiumTab(p) : "",
     coach: typeof coachSettingsView === "function" ? coachSettingsView(p) : "",
     appearance: `<section class="card" id="appearance">
@@ -10803,6 +10809,7 @@ document.addEventListener("input", e => {
   await initStorage();
   if ((await openRaw()) === "locked") UI.locked = true;
   if (S.activeId && !P()) S.activeId = S.profiles[0]?.id || null;
+  await sbBoot();                   // 8.1.11: restore the sign-in and the cached meals
   UI.loading = false;
   readRoute();                      // now that the profile exists, the premium gate can judge
   // The week that just ended gets its review written without being asked for. It is cheap, it
