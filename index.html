@@ -1,5 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <script>document.documentElement.lang = "en";</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <!-- Task 7.8 fix: the page is served as a bare head/body fragment (no <html> tag of its own —
      see build.sh and the Artifact publish note above wholelife-hub.html), so there is nowhere to
      write lang="en" as a static attribute. Setting it here, first, works whether the browser's
@@ -7008,6 +7009,294 @@ function flush(){
   return flushing.then(() => dirty.size ? flush() : undefined);
 }
 
+// =================== ACCOUNT + MEAL SYNC (8.1.11) ===================
+// Email login through Supabase Auth. While signed in, meals are saved to the meal_logs table and
+// left out of the month blobs above; every other data type keeps using the save layer above.
+// SB_CACHE is a local copy of the meals (and of changes not sent yet), so the app still works
+// offline. A passcode encrypts data in this browser, which the database can't read, so while a
+// passcode is on, meals stay on this device only and nothing is uploaded or downloaded.
+// Only the project URL and the publishable (anon) key belong in this file.
+const SB_URL = "https://zemxqbinpehkrkyvzlue.supabase.co", SB_KEY = "sb_publishable_sWli_uOByy_C9rg8CE_8vQ_VNglQf0l", SB_CACHE = "wlh.meals.v1";
+const SB = { client:null, user:null, started:false, cacheDirty:false, pend:{}, shadow:new Map(), people:new Map(), state:"idle", err:"", recovery:false, busy:false, lastOk:0, lastPull:0, timers:{}, q:null };
+const sbActive = () => !!(SB.user && !CRY.lock);
+const sbSig = m => JSON.stringify([m.date, m.at || 0, m.slot, m.name, Math.round(m.cal || 0), m.dish || null, m.extras || [], !!m.est]);
+function* sbAllMeals(){ for (const pid in S.logs) for (const mon in S.logs[pid]) for (const m of S.logs[pid][mon].meals || []) yield { pid, mon, m }; }
+const sbDigest = () => [...sbAllMeals()].map(x => x.m.id + sbSig(x.m)).sort().join("|");
+const sbPending = () => Object.keys(SB.pend).length;
+const sbRedirect = () => location.origin + location.pathname;
+
+function sbClient(){
+  if (SB.client) return SB.client;
+  if (!window.supabase?.createClient || location.protocol === "file:") return null;
+  try {
+    // PKCE puts the confirmation/reset code in ?code=, not in the #hash this app's router uses.
+    SB.client = supabase.createClient(SB_URL, SB_KEY, { auth: { flowType:"pkce", persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, storageKey:"wlh.sb.auth" } });
+  } catch (e) { console.warn("Supabase client unavailable", e); return null; }
+  SB.client.auth.onAuthStateChange((ev, session) => {
+    const was = SB.user?.id || null, now = session?.user?.id || null;
+    SB.user = session?.user || null;
+    if (ev === "PASSWORD_RECOVERY") { SB.recovery = true; setTimeout(render, 0); }
+    if (location.search.includes("code=")) { try { history.replaceState(null, "", location.pathname + location.hash); } catch {} }
+    if (ev === "INITIAL_SESSION") return;
+    if (now !== was) setTimeout(() => sbUserChanged(now), 0);
+  });
+  return SB.client;
+}
+
+// ---- local cache ----
+function sbCacheRead(){ try { const c = JSON.parse(localStorage.getItem(SB_CACHE) || "null"); return c && c.v === 1 && typeof c.uid === "string" ? c : null; } catch { return null; } }
+function sbCacheSave(){
+  if (!SB.user) return false;
+  if (!SB.cacheDirty) return true;
+  const meals = {}; for (const { pid, m } of sbAllMeals()) meals[m.id] = { pid, m };
+  try { localStorage.setItem(SB_CACHE, JSON.stringify({ v:1, uid:SB.user.id, pend:SB.pend, meals })); SB.cacheDirty = false; return true; }
+  catch { if (!SB.cacheWarned) { SB.cacheWarned = true; toast("This browser's storage is full, so meals can't be kept offline until you free some space.", "warn"); } return false; }
+}
+function sbCacheDrop(){ try { localStorage.removeItem(SB_CACHE); } catch {} SB.cacheDirty = false; }
+// Put the cached meals back into memory (they win over any copy in the month blobs).
+function sbLoadCache(c){
+  const pids = new Set(S.profiles.map(p => p.id));
+  for (const id in c.pend || {}) if (c.pend[id] === "del") for (const pid in S.logs) for (const mon in S.logs[pid]) S.logs[pid][mon].meals = S.logs[pid][mon].meals.filter(m => m.id !== id);
+  const clean = cleanLog({ meals: Object.values(c.meals || {}).map(x => x.m) }).meals, byId = new Map(clean.map(m => [m.id, m]));
+  for (const { pid, m: raw } of Object.values(c.meals || {})) {
+    const m = byId.get(raw?.id); if (!m || !pids.has(pid)) continue;
+    const L = logFor(pid, monthOf(m.date)); const i = L.meals.findIndex(x => x.id === m.id);
+    if (i > -1) L.meals[i] = m; else L.meals.push(m);
+    SB.shadow.set(m.id, { pid, mon: monthOf(m.date), sig: sbSig(m) });
+  }
+  SB.pend = { ...(c.pend || {}) }; SB.started = true; logIdxDrop();
+}
+// A different account used this browser before: its meals must not be uploaded into this one.
+function sbDropForeign(c){
+  const ids = new Set(Object.keys(c.meals || {}));
+  for (const pid in S.logs) for (const mon in S.logs[pid]) S.logs[pid][mon].meals = S.logs[pid][mon].meals.filter(m => !ids.has(m.id));
+  logIdxDrop(); sbCacheDrop(); markAll();
+}
+
+// ---- change tracking: markLog()/markAll() call this, so every way of changing a meal is seen ----
+function sbTrack(pid, mon){
+  if (!sbActive()) return;
+  const L = S.logs[pid]?.[mon], now = new Map();
+  for (const m of L?.meals || []) now.set(m.id, sbSig(m));
+  for (const [id, sig] of now) { const s = SB.shadow.get(id); if (!s || s.sig !== sig) { SB.shadow.set(id, { pid, mon, sig }); SB.pend[id] = "up"; SB.dirtyMeals = true; } }
+  for (const [id, s] of SB.shadow) if (s.pid === pid && s.mon === mon && !now.has(id)) { SB.shadow.delete(id); SB.pend[id] = "del"; SB.dirtyMeals = true; }
+  if (SB.dirtyMeals) { SB.dirtyMeals = false; SB.cacheDirty = true; clearTimeout(SB.timers.push); SB.timers.push = setTimeout(() => sbRun(sbPush), 1200); }
+}
+
+// ---- talking to the database ----
+function sbRun(fn){ SB.q = (SB.q || Promise.resolve()).then(fn).catch(sbFail); return SB.q; }
+function sbFail(e){
+  console.warn("meal sync failed", e);
+  SB.state = navigator.onLine === false ? "offline" : "error"; SB.err = String(e?.message || e).slice(0, 120); sbPaint();
+  clearTimeout(SB.timers.retry); SB.timers.retry = setTimeout(sbKick, 20000);
+}
+function sbRow(m, personId){
+  return { owner_id: SB.user.id, person_id: personId, app_id: m.id, log_date: m.date, logged_at: new Date(m.at || Date.parse(m.date + "T12:00:00")).toISOString(),
+    slot: m.slot, name: m.name, dish_id: m.dish || null, calories: Math.round(m.cal || 0), extras: m.extras || [], est: !!m.est, deleted_at: null };
+}
+async function sbEnsurePeople(){
+  if (!S.profiles.length) return;
+  const rows = S.profiles.map((p, i) => ({ owner_id: SB.user.id, app_id: p.id, display_name: (p.name || "Me").slice(0, 60), is_primary: i === 0, onboarding_done: !!p.onboarded }));
+  const r = await SB.client.from("people").upsert(rows, { onConflict: "owner_id,app_id" }).select("id,app_id");
+  if (r.error) throw r.error;
+  SB.people = new Map(r.data.map(x => [x.app_id, x.id]));
+}
+async function sbPush(){
+  if (!sbActive() || !sbPending()) return;
+  const where = new Map(); for (const x of sbAllMeals()) where.set(x.m.id, x);
+  const ups = [], dels = [];
+  for (const id of Object.keys(SB.pend)) { if (SB.pend[id] === "del") dels.push(id); else if (where.has(id)) ups.push(where.get(id)); else delete SB.pend[id]; }
+  if (ups.some(x => !SB.people.has(x.pid))) await sbEnsurePeople();
+  for (let i = 0; i < ups.length; i += 200) {
+    const chunk = ups.slice(i, i + 200).filter(x => SB.people.has(x.pid)), sent = chunk.map(x => [x.m.id, sbSig(x.m)]);
+    if (!chunk.length) continue;
+    const r = await SB.client.from("meal_logs").upsert(chunk.map(x => sbRow(x.m, SB.people.get(x.pid))), { onConflict: "owner_id,app_id" });
+    if (r.error) throw r.error;
+    for (const [id, sig] of sent) if (SB.pend[id] === "up" && SB.shadow.get(id)?.sig === sig) delete SB.pend[id];
+  }
+  for (let i = 0; i < dels.length; i += 200) {
+    const chunk = dels.slice(i, i + 200);
+    const r = await SB.client.from("meal_logs").update({ deleted_at: new Date().toISOString() }).in("app_id", chunk).is("deleted_at", null);
+    if (r.error) throw r.error;
+    for (const id of chunk) if (SB.pend[id] === "del") delete SB.pend[id];
+  }
+  SB.cacheDirty = true; sbCacheSave(); SB.lastOk = Date.now(); if (!sbPending()) { SB.state = "idle"; SB.err = ""; } sbPaint();
+}
+async function sbPull(){
+  const c = SB.client, ppl = await c.from("people").select("id,app_id").is("deleted_at", null);
+  if (ppl.error) throw ppl.error;
+  const byUuid = new Map(ppl.data.map(r => [r.id, r.app_id])), rows = [];
+  for (let from = 0; ; from += 1000) {
+    const r = await c.from("meal_logs").select("app_id,person_id,log_date,logged_at,slot,name,dish_id,calories,extras,est").is("deleted_at", null).order("logged_at").order("app_id").range(from, from + 999);
+    if (r.error) throw r.error; rows.push(...r.data); if (r.data.length < 1000) break;
+  }
+  return rows.map(row => ({ pid: byUuid.get(row.person_id), row })).filter(x => x.pid);
+}
+// Database rows are checked like anything else loaded from storage (cleanLog), then replace the
+// synced meals in memory. Meals with a change still waiting to be sent are left alone.
+function sbApplyRemote(list){
+  const pids = new Set(S.profiles.map(p => p.id)), old = new Map();
+  for (const { m } of sbAllMeals()) old.set(m.id, m);
+  for (const pid in S.logs) for (const mon in S.logs[pid]) S.logs[pid][mon].meals = S.logs[pid][mon].meals.filter(m => SB.pend[m.id]);
+  const rows = list.filter(x => pids.has(x.pid) && !SB.pend[x.row.app_id]);
+  const clean = cleanLog({ meals: rows.map(({ row }) => ({ id: row.app_id, date: row.log_date, at: Date.parse(row.logged_at) || undefined, slot: row.slot || "lunch", name: row.name, cal: row.calories ?? 0, dish: row.dish_id, extras: row.extras, est: row.est, photo: old.get(row.app_id)?.photo })) }).meals;
+  const pidOf = new Map(rows.map(x => [x.row.app_id, x.pid]));
+  for (const m of clean) logFor(pidOf.get(m.id), monthOf(m.date)).meals.push(m);
+  SB.shadow.clear(); for (const { pid, mon, m } of sbAllMeals()) SB.shadow.set(m.id, { pid, mon, sig: sbSig(m) });
+  logIdxDrop();
+}
+// Push anything waiting, then pull. The first run after sign-in also uploads this browser's
+// existing meals (everything not yet tracked), keyed by app_id so a repeat never duplicates.
+async function sbSyncBody(){
+  if (!sbActive()) return;
+  SB.state = "syncing"; sbPaint();
+  const first = !SB.started, before = sbDigest();
+  for (const { pid, mon, m } of sbAllMeals()) if (!SB.shadow.has(m.id) && !SB.pend[m.id]) { SB.shadow.set(m.id, { pid, mon, sig: sbSig(m) }); SB.pend[m.id] = "up"; }
+  SB.cacheDirty = true; sbCacheSave();
+  await sbEnsurePeople(); await sbPush();
+  const list = await sbPull();
+  if (!sbActive()) return;
+  sbApplyRemote(list);
+  SB.started = true; SB.cacheDirty = true; sbCacheSave();
+  SB.state = "idle"; SB.err = ""; SB.lastOk = SB.lastPull = Date.now();
+  if (first || sbDigest() !== before) { markAll(); render(); } else sbPaint();
+}
+const sbKick = () => { if (sbActive()) sbRun(sbSyncBody); };
+async function sbUserChanged(now){
+  if (now) {
+    UI.sbMsg = null;
+    if (!CRY.lock) { const c = sbCacheRead(); if (c && c.uid !== now) sbDropForeign(c); else if (c && !SB.started) sbLoadCache(c); }
+    render(); sbKick();
+  } else {
+    // Signed out (explicitly, or the session expired): meals go back into the month blobs.
+    SB.started = false; SB.pend = {}; SB.shadow.clear(); SB.people = new Map(); SB.state = "idle";
+    markAll(); render();
+  }
+}
+async function sbBoot(){
+  const c = sbClient(); if (!c) return;
+  try {
+    const r = await Promise.race([c.auth.getSession(), new Promise(res => setTimeout(() => res(null), 3000))]);
+    SB.user = r?.data?.session?.user || null;
+  } catch { SB.user = null; }
+  if (!SB.user || CRY.lock) return;
+  const cache = sbCacheRead();
+  if (cache && cache.uid === SB.user.id) sbLoadCache(cache);
+  else if (cache) sbDropForeign(cache);
+  setTimeout(sbKick, 0);
+}
+window.addEventListener("online", () => sbKick());
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && sbActive() && SB.started && Date.now() - SB.lastPull > 30000) sbKick(); });
+// Passcode on: meals are encrypted with the rest and stay here. Passcode off: sync starts again.
+function sbOnLock(){ SB.started = false; SB.pend = {}; SB.shadow.clear(); sbCacheDrop(); SB.state = "idle"; }
+function sbResume(){ if (sbActive()) sbKick(); }
+function sbOnErase(){ SB.started = false; SB.pend = {}; SB.shadow.clear(); sbCacheDrop(); try { SB.client?.auth.signOut({ scope:"local" }); } catch {} }
+
+// ---- sign in / out ----
+const SB_ERR = { invalid_credentials:"That email and password don't match.", email_not_confirmed:"Confirm your email first: open the link we sent you, then sign in.", over_request_rate_limit:"Too many tries. Wait a minute and try again.", over_email_send_rate_limit:"Too many emails sent. Wait a few minutes and try again.", weak_password:"Choose a longer, harder-to-guess password.", user_already_exists:"There's already an account for that email. Try signing in." };
+const sbErrText = e => SB_ERR[e?.code] || (navigator.onLine === false ? "You're offline. Connect and try again." : "Something went wrong. Try again in a moment.");
+async function sbAuth(kind){
+  const c = sbClient(); if (!c) return;
+  const email = val("sb-email").toLowerCase(), pass = document.getElementById("sb-pass")?.value || "";
+  UI.sbEmail = email; UI.sbMsg = null;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { UI.sbMsg = { t:"Enter a valid email address." }; return render(); }
+  if (kind !== "reset" && (kind === "up" ? pass.length < 8 : !pass)) { UI.sbMsg = { t: kind === "up" ? "Use at least 8 characters for the password." : "Enter your password." }; return render(); }
+  SB.busy = true; render();
+  try {
+    if (kind === "in") { const r = await c.auth.signInWithPassword({ email, password: pass }); if (r.error) throw r.error; UI.sbMsg = null; toast("Signed in", "success"); }
+    else if (kind === "up") {
+      const r = await c.auth.signUp({ email, password: pass, options: { emailRedirectTo: sbRedirect() } }); if (r.error) throw r.error;
+      UI.sbMsg = r.data.session ? null : { t:"Check your email. Open the link we sent to confirm your account, then sign in here.", ok:true }; UI.acct = "in";
+    } else {
+      const r = await c.auth.resetPasswordForEmail(email, { redirectTo: sbRedirect() }); if (r.error) throw r.error;
+      UI.sbMsg = { t:"If there's an account for that email, a reset link is on its way.", ok:true };
+    }
+  } catch (e) { UI.sbMsg = { t: sbErrText(e) }; }
+  SB.busy = false; render();
+}
+async function sbNewPassword(){
+  const a = document.getElementById("sb-np1")?.value || "", b = document.getElementById("sb-np2")?.value || "";
+  if (a.length < 8) { UI.sbMsg = { t:"Use at least 8 characters." }; return render(); }
+  if (a !== b) { UI.sbMsg = { t:"The two passwords don't match." }; return render(); }
+  SB.busy = true; render();
+  try { const r = await SB.client.auth.updateUser({ password: a }); if (r.error) throw r.error; SB.recovery = false; UI.sbMsg = null; toast("Password changed. You're signed in.", "success"); }
+  catch (e) { UI.sbMsg = { t: sbErrText(e) }; }
+  SB.busy = false; render();
+}
+async function sbSignOut(force){
+  const c = sbClient(); if (!c) return;
+  SB.busy = true; render();
+  if (sbActive() && !force) await sbRun(sbPush);
+  if (sbPending() && !force) { SB.busy = false; UI.sbConfirmOut = sbPending(); render(); return; }
+  // Meals live in the account, not on a shared device: take them out of memory and the cache first.
+  // (Only when sync was running: with a passcode on, or before the first sync, the meals exist only here.)
+  if (SB.started) for (const pid in S.logs) for (const mon in S.logs[pid]) S.logs[pid][mon].meals = [];
+  logIdxDrop(); SB.pend = {}; SB.shadow.clear(); sbCacheDrop(); SB.started = false; markAll(); await flush();
+  try { await c.auth.signOut(); } catch (e) { console.warn(e); }
+  SB.user = null; UI.sbConfirmOut = null; UI.sbMsg = null; SB.busy = false; render();
+  toast("Signed out. Your meals stay in your account, not on this device.");
+}
+function sbStatusText(){
+  if (!sbActive()) return CRY.lock ? "Passcode on: meals stay on this device." : "";
+  const n = sbPending();
+  if (SB.state === "syncing") return "Saving meals…";
+  if (SB.state === "offline") return `Offline. ${n} meal change${n === 1 ? "" : "s"} will upload when you're back online.`;
+  if (SB.state === "error") return `Couldn't reach your account${n ? `, ${n} change${n === 1 ? "" : "s"} waiting` : ""}. Retrying.`;
+  return n ? `${n} meal change${n === 1 ? "" : "s"} waiting to upload.` : SB.started ? "Meals saved to your account." : "Getting your meals…";
+}
+function sbPaint(){ const el = document.getElementById("sb-status"); if (el) el.textContent = sbStatusText(); }
+function accountCard(){
+  const msg = UI.sbMsg ? `<div class="note ${UI.sbMsg.ok ? "info" : ""}" role="status">${esc(UI.sbMsg.t)}</div>` : "";
+  const head = `<h2>Account</h2>`;
+  if (!sbClient()) return `<section class="card" id="sb-account">${head}<p class="small muted">${location.protocol === "file:" ? "Sign-in needs the app to be served over http. Run <code>python3 -m http.server 8080</code> and open localhost:8080." : "Sign-in couldn't load. Check your connection and reload."}</p></section>`;
+  if (SB.user) return `<section class="card" id="sb-account">${head}
+    <p class="small">Signed in as <b>${esc(SB.user.email || "your account")}</b>.</p>
+    <p class="small muted" id="sb-status" role="status">${esc(sbStatusText())}</p>
+    <p class="small muted">Only meals are saved to your account for now. Snacks, workouts and everything else stay on this device.</p>
+    ${CRY.lock ? `<div class="note info">A passcode is on, so meals are encrypted on this device and not uploaded. Meals already in your account stay there.</div>` : ""}
+    ${msg}
+    ${UI.sbConfirmOut ? `<div class="note">${UI.sbConfirmOut} meal change${UI.sbConfirmOut === 1 ? "" : "s"} haven't reached your account yet. Reconnect and try again, or sign out and lose ${UI.sbConfirmOut === 1 ? "it" : "them"}.</div>
+      <div class="row"><button class="btn sm" data-act="sb-out-no">Stay signed in</button><button class="btn sm danger" data-act="sb-out-force">Sign out and discard</button></div>`
+    : `<div class="row"><button class="btn" data-act="sb-out"${SB.busy ? " disabled" : ""}>${SB.busy ? "Signing out…" : "Sign out"}</button></div>`}
+  </section>`;
+  const mode = UI.acct || "in", em = esc(UI.sbEmail || "");
+  const tab = (k, l) => `<button type="button" class="btn sm${mode === k ? " primary" : ""}" data-act="sb-mode" data-v="${k}" aria-pressed="${mode === k}">${l}</button>`;
+  return `<section class="card" id="sb-account">${head}
+    <p class="small muted">Optional. Sign in and your meals are saved to your account. Everything else stays on this device.</p>
+    <div class="row" role="group" aria-label="Account action">${tab("in", "Sign in")}${tab("up", "Create account")}${tab("reset", "Forgot password")}</div>
+    <form class="stack" data-form="sb-auth" data-kind="${mode}" novalidate>
+      <label class="f">Email<input type="email" id="sb-email" autocomplete="email" inputmode="email" value="${em}" required></label>
+      ${mode === "reset" ? "" : `<label class="f">Password<input type="password" id="sb-pass" autocomplete="${mode === "up" ? "new-password" : "current-password"}" ${mode === "up" ? 'minlength="8" ' : ""}required></label>`}
+      ${mode === "up" ? `<p class="tiny muted">At least 8 characters. We'll email you a link to confirm your address.</p>` : ""}
+      ${msg}
+      <button class="btn primary" type="submit"${SB.busy ? " disabled" : ""}>${SB.busy ? "Working…" : mode === "in" ? "Sign in" : mode === "up" ? "Create account" : "Email me a reset link"}</button>
+    </form>
+  </section>`;
+}
+// Shown instead of the app when a password-reset link is opened.
+function recoveryView(){
+  return `<div class="ob pastel">${pastelScene()}<div class="panel lockcard"><div><h1>Choose a new password</h1><p class="muted" style="margin-top:6px">You opened a reset link, so pick a new password for your account.</p></div>
+    <form class="stack" data-form="sb-newpass" novalidate>
+      <label class="f">New password<input type="password" id="sb-np1" autocomplete="new-password" minlength="8" required></label>
+      <label class="f">Repeat it<input type="password" id="sb-np2" autocomplete="new-password" minlength="8" required></label>
+      ${UI.sbMsg ? `<div class="note" role="alert">${esc(UI.sbMsg.t)}</div>` : ""}
+      <button class="btn primary" type="submit"${SB.busy ? " disabled" : ""}>${SB.busy ? "Saving…" : "Save password"}</button>
+    </form></div></div>`;
+}
+document.addEventListener("submit", e => {
+  const f = e.target.closest?.("form[data-form='sb-auth'], form[data-form='sb-newpass']"); if (!f) return;
+  e.preventDefault(); if (SB.busy) return;
+  if (f.dataset.form === "sb-newpass") sbNewPassword(); else sbAuth(f.dataset.kind);
+});
+document.addEventListener("click", e => {
+  const t = e.target.closest?.("[data-act^='sb-']"); if (!t) return;
+  switch (t.dataset.act) {
+    case "sb-mode": UI.acct = t.dataset.v; UI.sbMsg = null; UI.sbEmail = val("sb-email") || UI.sbEmail; render(); break;
+    case "sb-out": sbSignOut(false); break;
+    case "sb-out-force": sbSignOut(true); break;
+    case "sb-out-no": UI.sbConfirmOut = null; render(); break;
+  }
+});
 
 // =================== DATA VALIDATION ===================
 // Everything loaded from storage is re-checked before use, so a damaged or tampered record
