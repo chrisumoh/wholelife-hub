@@ -2,9 +2,17 @@
 
 WholeLife Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.1 (Dev Testing), build 8.1.12, 2026-10-06. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.1 (Dev Testing), build 8.1.13, 2026-10-06. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.1.13 · Food catalog: 26 more West African dishes, 3 snacks and 10 meal-text foods; Togo, Benin, Burkina Faso, Niger, Mauritania, Cabo Verde and Guinea-Bissau now have dishes
+
+- **Problem:** The catalog had 65 West African dishes but none from Togo, Benin, Burkina Faso, Niger, Mauritania, Cabo Verde or Guinea-Bissau, and it was missing well-known Nigerian and Ghanaian dishes such as edikang ikong, oha, bitterleaf soup, ikokore, fante fante and akple. Typing foods like okpa, masa, kilishi or cachupa into Guess the calories found nothing.
+- **Change:** DISHES gains 26 full recipes (ingredients for 4, steps, ways to cook, lighter and higher-protein versions with calories, pairing, meal-prep note): Nigeria 10 (edikang ikong, oha, bitterleaf soup, ikokore, fisherman soup, gizdodo, ekuru, masa, okpa, isi ewu), Ghana 3 (fante fante, akple with fetri detsi, etor), Côte d'Ivoire 2 (garba, alloco with poulet braisé), Burkina Faso 2 (riz gras, tô with okra sauce), Benin 2 (fried yam with wagashi, amiwo), Togo / Benin 1 (grilled fish with aloko), and one each for Niger (fura da nono), Mauritania (couscous with lamb), Cabo Verde (cachupa rica), Guinea-Bissau (caldo de mancarra), Senegal (soupou kandja) and Liberia / Sierra Leone (palava sauce). West African dishes go from 65 to 91 of 266. SNACKS gains kilishi, kunu and garri soakings. Guess the calories (FOODC) now understands cachupa, gbegiri, masa, okpa, kilishi, kunu, fura da nono, ekuru, bitterleaf soup and cassava leaf stew. Everything is text only. Calories and protein are per serving, estimated from the ingredient amounts for a typical home-cooked serving; swallows and rice are included in the dish where it is normally eaten with them.
+- **Where:** DISHES (26 entries appended after chapati-beans, ids edikang … palava); SNACKS (kilishi, kunu, garrisoak, at the end of the first array); FOODC (cachupa … cassavaleaf, at the end of the array)
+- **How to test:** Settings › Food culture: pick Togo, Benin, Burkina Faso, Niger, Mauritania, Cabo Verde or Guinea-Bissau and each now has at least one dish. Log a meal and type 'Edikang' or 'Cachupa' to see the catalog entry and calories. Nutrition › Guess the calories: type 'okpa and ekuru' or 'kilishi and kunu'. Snacks: search 'garri'. Automated: 26 new ids and names are unique; every country resolves; light < normal < higher-protein calories; high-protein tags match protein of 30 g or more; no new units; no emoji; 0 page errors.
+- **Known limits:** Togo, Niger, Mauritania, Cabo Verde and Guinea-Bissau each have one dish, so a strict single-country plan there still repeats quickly; they need more recipes. Calories and protein are careful estimates, not lab values, and vary a lot with oil and portion size (palm oil especially). 'Garri' on its own still isn't a catalog dish: use Garri soakings (snacks) or Gari foto.
 
 ## 8.1.12 · Meal logging: Faster logging: recent and often-eaten meals, repeat yesterday, and spelling variants
 
