@@ -53,13 +53,13 @@ Single "premium: active/inactive" flag is the source of truth. Features stay in 
 
 - docs/PROMPTS/master-prompt.md — the canonical master prompt with tested reference code
 - docs/BUILD_PLAN.md — phase status and the working loop
-- docs/CHANGELOG.md — what shipped, when, and status
+- CHANGELOG.md (repo root) — what shipped, build by build
 - CLAUDE.md (repo root) — Claude Code entry point, points here
 
 ## Working loop
 
 1. User reports a bug/idea (screenshots encouraged)
 2. Perplexity Computer diagnoses, then writes/updates a spec file in docs/PROMPTS/ with exact values and a pass/fail checklist
-3. Claude Code implements on a build-<version> branch, reports a per-file changelog, and updates BUILD_PLAN.md and CHANGELOG.md in the same PR
+3. Claude Code implements on a build-<version> branch, reports a per-file changelog, and updates BUILD_PLAN.md and the root CHANGELOG.md in the same PR
 4. Verification: Perplexity Computer tests the Vercel preview in a real browser (375 / 820 / 1440px). Supabase is checked read-only (migrations in repo vs applied in the live DB, advisors, logs) by whichever tool has the connector
 5. User merges; Vercel deploys main to production

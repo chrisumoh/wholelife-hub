@@ -4,13 +4,13 @@ Project rules for WholeLife Hub. Read this before changing anything.
 
 ## What this repo is
 
-A health and fitness web app that lives in one file, `index.html` (markup, CSS and JS together). It has no build step. `CHANGELOG.md` records every build. `docs/VERSIONING.md` and `docs/DATABASE.md` hold the detailed rules. `supabase/migrations/` holds the SQL for the backend. The app still saves to the browser and does not talk to Supabase yet.
+A health and fitness web app that lives in one file, `index.html` (markup, CSS and JS together). It has no build step. `CHANGELOG.md` records every build, and is the only changelog. `docs/VERSIONING.md` and `docs/DATABASE.md` hold the detailed rules. `supabase/migrations/` holds the SQL for the backend. Since build 8.1.11 the app uses Supabase for email sign-in and for syncing meals to your account (the `meal_logs` table). Everything else (snacks, drinks, workouts, weigh-ins, vitals, profiles, meal photos) still saves in the browser, and with a passcode on, meals stay on the device too.
 
 ## Read first
 
 - docs/CONTEXT.md — stack, Supabase/Vercel setup, versioning, design system, coach personas, hard constraints. Read every session.
 - docs/BUILD_PLAN.md — phase status and verification checklist. Read every session.
-- docs/CHANGELOG.md — read the top few entries to see what shipped last.
+- CHANGELOG.md (repo root) — read the top few entries to see what shipped last.
 - docs/PROMPTS/master-prompt.md — large file. Read only the phase you are working on, plus the reference code that phase points to.
 
 ## 1. Versioning
@@ -64,7 +64,7 @@ A health and fitness web app that lives in one file, `index.html` (markup, CSS a
 - `main` is the live app. Pushing to `main` deploys to wholelife-hub.vercel.app immediately.
 - Do work on a branch named after the build, such as `build-8.1.11`. Push it so Vercel creates a preview link for testers. (If a session names a specific branch, use that one.)
 - **Never push or merge to `main` without asking me first.**
-- Don't open a pull request unless I ask.
+- You may open a pull request into `main` when a build branch is ready. Never merge it. I merge.
 - Run the app locally by opening `index.html`, or serve it with `python3 -m http.server 8080`.
 
 ## 7. Single source
@@ -76,8 +76,8 @@ A health and fitness web app that lives in one file, `index.html` (markup, CSS a
 
 - Targeted edits only. Report a per-file changelog.
 - Port the reference code's values into existing components; do not paste reference files over the app.
-- Every build also updates `docs/BUILD_PLAN.md` status and adds a `docs/CHANGELOG.md` entry, alongside the `CHANGELOG.md` entry required in section 2.
+- Every build also updates `docs/BUILD_PLAN.md` status. Its changelog entry goes in the root `CHANGELOG.md`, as section 2 requires.
 - Run the `docs/BUILD_PLAN.md` verification checklist before asking me to merge.
 - Never invent data, prices, or health claims.
 - Database changes follow section 5: new file in `supabase/migrations/` only, never edit an applied migration, and new tables get RLS and an owner-only policy in the same migration.
-- Branch and merge rules follow section 6: never commit to `main`, work on a `build-<version>` branch, and I do the merge. Don't open a pull request unless I ask.
+- Branch and merge rules follow section 6: never commit to `main`, work on a `build-<version>` branch, you may open a pull request when the branch is ready, and I do the merge.
