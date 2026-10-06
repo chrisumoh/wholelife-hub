@@ -1,0 +1,39 @@
+# Whole Life Hub — Build Plan
+
+Phase status legend: DONE (merged), IN PROGRESS (branch open), PROMPTED (spec ready in docs/PROMPTS/master-prompt.md, not yet executed), IDEA (not specced).
+
+Update statuses in the same PR that changes them. Each phase ships on its own build-<version> branch; note the build number next to the status (e.g. "IN PROGRESS — build-8.2").
+
+## Phases (spec: docs/PROMPTS/master-prompt.md)
+
+| Phase | Contents | Status |
+|---|---|---|
+| 1 | Bug fixes: duplicate avatar, clipped text, menu-over-Settings layering glitch, Settings tabs | PROMPTED |
+| 2 | Premium system: purchase-gated flag, badges, Telegram-style premium screen | PROMPTED |
+| 3 | Coach: full data access + personalized advice card (9 rules) | PROMPTED |
+| 4 | Font system: 8 options, Perplexity-style default | PROMPTED |
+| 5 | UI cleanup: blue outlines, compact appearance controls, clean layout, gradient sidebar icons | PROMPTED |
+| 6 | Space + arrow: centered arrow morph (tested code in prompt), 12-col grid, one-row headers, two-pane Settings, sidebar grouping | PROMPTED |
+| 7 | Legal/compliance: privacy+terms updates, refunds/contact/credits, consent flows, age gate, delete/export, accessibility pass, dark-pattern sweep | PROMPTED |
+| 8 | App Store readiness — RUN ONLY IF submitting to iOS App Store (Apple IAP, reviewer account, iPad, UGC safety) | IDEA (skip while web-only) |
+
+## Standing backlog
+
+- Payment provider integration (Stripe): premium CTA is currently "Coming soon" or hidden; prices and discount % are TODO placeholders
+- Real photos/illustrations: any AI-generated imagery flagged for replacement
+- App Store screenshots: retake after redesign settles
+- Review legal pages with a lawyer before charging money
+- Supabase: turn on leaked password protection (Auth settings)
+- Supabase GitHub integration: connect with working directory ".", production branch main, production deploys off until one merge goes through cleanly
+
+## Verification checklist (run for every phase, before merge)
+
+- 375px, 820px, 1440px: no horizontal scroll, no clipped text, nothing under the tab bar
+- Arrow/menu: morph centered (|glyph center - button center| <= 0.5px), scrim full-viewport in drawer mode, no scrim/freeze on desktop rail
+- Space ratio: main content width / (viewport - sidebar) >= 0.9 up to 1440px
+- Premium flag verified locked AND unlocked via dev override
+- Coach advice non-generic in all three voices; culture constraint holds
+- All five themes + light/dark + all fonts render; contrast passes
+- Feature regression sweep: logging, plans, workouts, Summary, health integrations
+- Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
+- Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
