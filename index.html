@@ -3829,7 +3829,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.1", build: "8.1.11", channel: "Dev Testing", date: "2026-10-05", week: "Sun 4 Oct – Sat 10 Oct 2026" };
+const APP_VERSION = { update: "8.1", build: "8.1.12", channel: "Dev Testing", date: "2026-10-06", week: "Sun 4 Oct – Sat 10 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3843,6 +3843,12 @@ const APP_VERSION = { update: "8.1", build: "8.1.11", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.1.12", area:"Meal logging", title:"Faster logging: recent and often-eaten meals, repeat yesterday, and spelling variants",
+      bug:"Logging a meal meant typing the name every time, even for food eaten most days, and the catalog only matched one spelling, so 'Moin moin' did not find 'Moi moi'.",
+      fix:"Log a meal now shows text-only chips for your recent meals (last 30 days, one per food) and ones you often eat (twice or more); tapping one fills the name, calories and meal slot, and you still press Log meal. A Repeat yesterday's meals button copies the previous day's meals (with their extras) onto the day you're viewing and skips any already logged, so a double tap adds nothing. Spelling variants (gari/garri, moi moi/moin moin/moimoi, koose/kose) now match the same dish when you log, and the other spellings are offered as you type. Portion tags like (1.5× portion) are stripped from the chip and the calories are scaled back to one portion.",
+      where:"FOOD_SPELLINGS, foodKey(), findDish(), dishAltOptions(), quickFoods(), quickLogBlock() (just above nutritionView()); nutritionView() Log a meal card; click cases 'quick-food' and 'repeat-day' (beside 'extras'); 'log-meal' now uses findDish()",
+      test:"Serve the app (python3 -m http.server 8080). Log a couple of meals on a day, open Log a meal the next day: Recent chips appear, a chip fills the form, Repeat yesterday's meals copies them once. Type 'Moin moin' and leave calories empty: it logs as Moi moi with the catalog calories. Automated at 390×844: chips are text only (0 images or icons), repeat adds each meal once, 0 page errors.",
+      limits:"Chips only look at meals on this device's profile; they do not yet reach across devices. Only spelling variants listed in FOOD_SPELLINGS are folded, so add new pairs there. No plain 'Gari' entry exists in the catalog, so typing 'Garri' alone still needs calories (Gari foto matches normally)." },
     { id:"8.1.11", area:"Login / Meals sync", title:"Email login (Supabase) and meals saved to your account instead of this browser",
       bug:"The app saved only in this browser: clearing site data lost everything, nothing followed you to another device, and there was no way to sign in. The Supabase schema from 8.1.8 had no login or save code in front of it.",
       fix:"Email and password sign-in through Supabase Auth: sign in, create account and forgot password (email confirmation is on; a reset link opens a 'Choose a new password' screen). Signed in with no passcode, meals are saved to the meal_logs table and a local cache (wlh.meals.v1) instead of the month blobs in browser storage; snacks, drinks, workouts, weigh-ins, vitals and profiles still save exactly as before. The first sign-in uploads this device's existing meals, keyed by app_id so a repeat never duplicates. Changes made offline are queued and sent when the connection returns. Deleting a meal is a soft delete (deleted_at). Signing out takes the account's meals off the device; if changes haven't uploaded yet you're asked before they are discarded. With a passcode on, meals stay on this device, encrypted with everything else, and nothing is uploaded or downloaded. Migration wlh_8_1_11_meal_est adds meal_logs.est (the app's estimated-meal flag). The repo also gets the missing copy of migration wlh_8_1_9_full_unique_sync_keys, already applied to the remote project (plain unique indexes on owner_id, app_id so upserts work); adding the file changed nothing remotely.",
@@ -9695,6 +9701,55 @@ function weekChart(p){
     ${goal ? `<line x1="${L}" x2="${W-6}" y1="${y(goal)}" y2="${y(goal)}" stroke="var(--gold)" stroke-dasharray="5 4" stroke-width="1.5"/><text x="${W-8}" y="${y(goal)-5}" text-anchor="end" font-size="11" font-weight="600" fill="var(--gold)">Target ${goal.toLocaleString()}</text>` : ""}
   </svg></div>`;
 }
+// ---------- 8.1.12: faster meal logging (text-only chips, spelling variants) ----------
+// Spelling variants of the same food. foodKey() folds each to one form so "Garri" finds "Gari".
+const FOOD_SPELLINGS = [["garri","gari"],["moin moin","moi moi"],["moimoi","moi moi"],["kose","koose"]];
+function foodKey(s){
+  let k = String(s || "").toLowerCase().replace(/\([^)]*\)/g, " ").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+  for (const [from, to] of FOOD_SPELLINGS) k = k.replace(new RegExp("\\b" + from + "\\b", "g"), to);
+  return k;
+}
+function findDish(name){ const k = foodKey(name); return DISHES.find(d => d.n.toLowerCase() === String(name).toLowerCase()) || DISHES.find(d => foodKey(d.n) === k); }
+// Extra datalist entries so typing the other spelling still suggests the dish.
+let _dishAlt = null;
+function dishAltOptions(){
+  if (_dishAlt) return _dishAlt;
+  const have = new Set(DISHES.map(d => d.n.toLowerCase())), out = [];
+  for (const d of DISHES) for (const [alt, canon] of FOOD_SPELLINGS) {
+    const re = new RegExp("\\b" + canon + "\\b", "i");
+    if (re.test(d.n)) { const v = d.n.replace(re, m => m[0] === m[0].toUpperCase() ? alt[0].toUpperCase() + alt.slice(1) : alt);
+      if (!have.has(v.toLowerCase())) { have.add(v.toLowerCase()); out.push({ n: v, cal: d.cal }); } }
+  }
+  return (_dishAlt = out);
+}
+// Recent and frequent meals from the last 30 days, one per food. Names lose any "(1.5× portion)" tag.
+function quickFoods(){
+  const since = addDays(today(), -30), by = new Map();
+  for (const m of entries("meals")) {
+    if (!m.date || m.date < since) continue;
+    const pm = /\s*\((\d+(?:\.\d+)?)× portion\)$/.exec(m.name || ""), portion = pm ? parseFloat(pm[1]) || 1 : 1;
+    const name = (m.name || "").replace(/\s*\(\d+(?:\.\d+)?× portion\)$/, "").trim(); if (!name) continue;
+    const k = foodKey(name), at = m.at || 0, e = by.get(k) || { name, count: 0, last: "", at: 0, cal: 0, slot: m.slot };
+    e.count++;
+    if (m.date > e.last || (m.date === e.last && at >= e.at)) { e.last = m.date; e.at = at; e.name = name; e.cal = Math.round((m.cal || 0) / portion); e.slot = m.slot; }
+    by.set(k, e);
+  }
+  const all = [...by.values()], recent = all.sort((a, b) => b.last.localeCompare(a.last) || b.at - a.at).slice(0, 6);
+  const shown = new Set(recent.map(r => foodKey(r.name)));
+  const often = all.filter(e => e.count >= 2 && !shown.has(foodKey(e.name))).sort((a, b) => b.count - a.count || b.last.localeCompare(a.last)).slice(0, 6);
+  return { recent, often };
+}
+function quickLogBlock(date){
+  const { recent, often } = quickFoods();
+  const chip = e => `<button type="button" class="chip" data-act="quick-food" data-name="${esc(e.name)}" data-cal="${e.cal}" data-slot="${esc(e.slot)}">${esc(e.name)}</button>`;
+  const prev = onDate("meals", addDays(date, -1)).length;
+  if (!recent.length && !prev) return "";
+  return `<div class="quicklog">
+    ${recent.length ? `<div class="eyebrow" style="margin-top:12px">Recent</div><div class="chips" role="group" aria-label="Recent meals">${recent.map(chip).join("")}</div>` : ""}
+    ${often.length ? `<div class="eyebrow" style="margin-top:12px">Often</div><div class="chips" role="group" aria-label="Meals you log often">${often.map(chip).join("")}</div>` : ""}
+    ${prev ? `<div class="row" style="margin-top:12px"><button type="button" class="btn" data-act="repeat-day" data-date="${date}">Repeat ${date === today() ? "yesterday's" : fmtDay(addDays(date, -1)) + "'s"} meals</button></div>` : ""}
+  </div>`;
+}
 function nutritionView(p){
   const date = UI.navDate || today();
   const meals = onDate("meals", date).sort((a,b) => SLOTS.findIndex(s=>s[0]===a.slot) - SLOTS.findIndex(s=>s[0]===b.slot));
@@ -9713,7 +9768,8 @@ function nutritionView(p){
         <label class="f">Calories<input type="number" id="m-cal" min="0" max="5000" value="${UI.prefill?.cal ?? ""}" placeholder="Filled from the catalog"></label>
         <label class="f">Portion<select id="m-portion">${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
       </div>
-      <datalist id="dishlist">${DISHES.map(d => `<option value="${esc(d.n)}">${d.cal} cal</option>`).join("")}</datalist>
+      <datalist id="dishlist">${DISHES.concat(dishAltOptions()).map(d => `<option value="${esc(d.n)}">${d.cal} cal</option>`).join("")}</datalist>
+      ${quickLogBlock(date)}
       <div class="row"><button class="btn primary" data-act="log-meal">Log meal</button><button class="btn" data-act="mb-guess">${icon("spark")} Guess the calories</button>${
         typeof isPremium === "function" && isPremium() ? `<label class="btn photo-btn">${icon("camera","",16)} From a photo<input type="file" id="meal-shot-in" accept="image/*" capture="environment" hidden></label><a class="btn" href="#/premium/restaurant">${icon("food","",16)} Eating out</a>` : ""}</div>
       ${typeof voiceMealButton === "function" ? voiceMealButton(p) : ""}
@@ -10557,7 +10613,7 @@ document.addEventListener("click", async e => {
     // nutrition
     case "log-meal": {
       const name = val("m-name"); if (!name) { toast("Add what you ate first."); document.getElementById("m-name")?.focus(); return; }
-      const dish = DISHES.find(d => d.n.toLowerCase() === name.toLowerCase());
+      const dish = findDish(name);
       const portion = parseFloat(val("m-portion")) || 1;
       let base = numv("m-cal"); if (base == null) base = dish ? dish.cal : null;
       if (base == null) { toast("Add the calories for this meal."); document.getElementById("m-cal")?.focus(); return; }
@@ -10565,6 +10621,13 @@ document.addEventListener("click", async e => {
       const m = { id: uid(), date: val("m-date") || today(), slot: val("m-slot"), name: portion !== 1 ? `${name} (${portion}× portion)` : name, cal: Math.round(cal), dish: dish?.id || null, extras: [] };
       if (UI.mealShot?.data) { m.photo = UI.mealShot.data; UI.mealShot = null; }
       addEntry("meals", m); UI.pendingExtras = m.id; UI.navDate = m.date; UI.prefill = null; render(); toast("Meal logged", "success"); checkCelebrations(); checkAwards(); break; }
+    case "quick-food": UI.prefill = { name: t.dataset.name, cal: t.dataset.cal ? +t.dataset.cal : "", slot: t.dataset.slot }; render(); document.getElementById("m-name")?.focus(); break;
+    case "repeat-day": {
+      const date = t.dataset.date || today(), src = onDate("meals", addDays(date, -1)), have = onDate("meals", date);
+      const fresh = src.filter(m => !have.some(h => h.slot === m.slot && h.name === m.name));
+      if (!fresh.length) { toast(src.length ? "Those meals are already logged for this day." : "No meals to repeat."); return; }
+      fresh.forEach(m => { const c = { id: uid(), date, slot: m.slot, name: m.name, cal: m.cal, dish: m.dish || null, extras: (m.extras || []).map(x => ({ ...x })) }; if (m.est) c.est = true; addEntry("meals", c); });
+      UI.pendingExtras = null; UI.navDate = date; render(); toast(`${fresh.length} meal${fresh.length === 1 ? "" : "s"} repeated`, "success"); checkCelebrations(); checkAwards(); break; }
     case "extras": UI.pendingExtras = t.dataset.id; render(); window.scrollTo(0,0); break;
     case "add-extra": { const x = EXTRAS[+t.dataset.i]; updateEntry("meals", UI.pendingExtras, m => m.extras.push({ name: x.n === "Second serving" ? "Second serving" : x.n, cal: x.cal === "same" ? m.cal : x.cal })); render(); break; }
     case "add-custom-extra": { const n = val("x-name"), c = numv("x-cal"); if (!n || c == null) { toast("Add a name and calories."); return; } updateEntry("meals", UI.pendingExtras, m => m.extras.push({ name:n, cal:Math.round(c) })); render(); break; }

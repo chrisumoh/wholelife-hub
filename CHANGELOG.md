@@ -2,9 +2,17 @@
 
 WholeLife Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.1 (Dev Testing), build 8.1.11, 2026-10-05. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.1 (Dev Testing), build 8.1.12, 2026-10-06. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.1.12 · Meal logging: Faster logging: recent and often-eaten meals, repeat yesterday, and spelling variants
+
+- **Problem:** Logging a meal meant typing the name every time, even for food eaten most days, and the catalog only matched one spelling, so 'Moin moin' did not find 'Moi moi'.
+- **Change:** Log a meal now shows text-only chips for your recent meals (last 30 days, one per food) and ones you often eat (twice or more); tapping one fills the name, calories and meal slot, and you still press Log meal. A Repeat yesterday's meals button copies the previous day's meals (with their extras) onto the day you're viewing and skips any already logged, so a double tap adds nothing. Spelling variants (gari/garri, moi moi/moin moin/moimoi, koose/kose) now match the same dish when you log, and the other spellings are offered as you type. Portion tags like (1.5× portion) are stripped from the chip and the calories are scaled back to one portion.
+- **Where:** FOOD_SPELLINGS, foodKey(), findDish(), dishAltOptions(), quickFoods(), quickLogBlock() (just above nutritionView()); nutritionView() Log a meal card; click cases 'quick-food' and 'repeat-day' (beside 'extras'); 'log-meal' now uses findDish()
+- **How to test:** Serve the app (python3 -m http.server 8080). Log a couple of meals on a day, open Log a meal the next day: Recent chips appear, a chip fills the form, Repeat yesterday's meals copies them once. Type 'Moin moin' and leave calories empty: it logs as Moi moi with the catalog calories. Automated at 390×844: chips are text only (0 images or icons), repeat adds each meal once, 0 page errors.
+- **Known limits:** Chips only look at meals on this device's profile; they do not yet reach across devices. Only spelling variants listed in FOOD_SPELLINGS are folded, so add new pairs there. No plain 'Gari' entry exists in the catalog, so typing 'Garri' alone still needs calories (Gari foto matches normally).
 
 ## 8.1.11 · Login / Meals sync: Email login (Supabase) and meals saved to your account instead of this browser
 
