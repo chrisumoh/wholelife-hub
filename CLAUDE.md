@@ -10,6 +10,8 @@ A health and fitness web app that lives in one file, `index.html` (markup, CSS a
 
 - docs/CONTEXT.md — stack, Supabase/Vercel setup, versioning, design system, coach personas, hard constraints. Read every session.
 - docs/BUILD_PLAN.md — phase status and verification checklist. Read every session.
+- docs/SECURITY.md — security rules (RLS, keys, storage, rendering user text, logs, SRI, auth redirects). Read before touching sign-in, storage, rendering or anything that handles health data.
+- docs/DATABASE.md — tables, owner_id/person_id, sync keys, migrations. Read before touching anything that talks to Supabase.
 - CHANGELOG.md (repo root) — read the top few entries to see what shipped last.
 - docs/PROMPTS/master-prompt.md — large file. Read only the phase you are working on, plus the reference code that phase points to.
 
@@ -81,3 +83,20 @@ A health and fitness web app that lives in one file, `index.html` (markup, CSS a
 - Never invent data, prices, or health claims.
 - Database changes follow section 5: new file in `supabase/migrations/` only, never edit an applied migration, and new tables get RLS and an owner-only policy in the same migration.
 - Branch and merge rules follow section 6: never commit to `main`, work on a `build-<version>` branch, you may open a pull request when the branch is ready, and I do the merge.
+
+## 9. Code style
+
+Match what `index.html` already does. These are the patterns it follows now; don't introduce a new one beside them.
+
+- Vanilla JS in one file. No framework, no build step, no modules. Browser features and supabase-js only.
+- Two-space indent, double quotes, semicolons. `const` by default, `let` only when reassigned. Arrow functions for small helpers (`const esc = s => …`), `function` declarations for named features.
+- Names: camelCase for functions and variables, UPPER_CASE for constants and data tables (`DISHES`, `SNACKS`, `LS_KEY`). Supabase code uses an `sb` prefix (`sbPush`, `sbPull`, `sbTrack`). Storage keys start with `wlh.`.
+- Group code under a `// ---- section ----` comment. Comments say why, not what, and are short. Don't add banner comments for obvious code.
+- Markup is built with template literals and set with `innerHTML`. Every piece of user text goes through `esc()` (see SECURITY.md section 4). Prefer `textContent` for new code that sets plain text.
+- Clicks are handled by delegation: elements carry `data-act="…"` (and `data-id` or `data-v`), and one handler switches on the act. Add a new `case` there, don't attach a listener per element.
+- State lives in the shared objects (`S` for data, `UI` for screen state). Change state, then call `render()`. Save through `markLog()`, `markRoot()` or `markAll()`, not by writing storage directly.
+- Wrap `localStorage` access in `try/catch` and fall back quietly (`try { … } catch {}`), because storage can be blocked.
+- Show messages with `toast()`. Use `console.warn` only for failures, with no health data (SECURITY.md section 5).
+- Dates are `YYYY-MM-DD` strings from `today()` and `addDays()`. Ids come from `uid()`.
+- Styling uses the CSS custom properties and the existing classes (`card`, `btn`, `small`, `muted`). Colors, radii and spacing come from the tokens in docs/CONTEXT.md, not new hard-coded values.
+- Food data entries are text only (section 4) and keep the spellings already in the catalog (section 3).

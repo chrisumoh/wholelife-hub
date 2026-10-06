@@ -9,10 +9,9 @@ Deployed health, fitness, and nutrition web app: Personal Coach, meal and snack 
 ## Stack
 
 - Frontend: deployed web app, Apple Health-inspired flat design system (see docs/PROMPTS/master-prompt.md for exact tokens). Actual setup: no framework and no build step. The whole app is one file, `index.html` (markup, CSS and vanilla JS together), with self-hosted fonts in `fonts/`. The only dependency is supabase-js 2.117.2, loaded from jsDelivr by a pinned script tag with SRI. Run it by serving the folder (`python3 -m http.server 8080`); Supabase sign-in does not work from file://. Tests are node scripts in `tests/browser/` plus SQL in `tests/`.
-- Backend/database: Supabase project "Whole Life Hub" (Postgres 17). Tables: people, meal_logs, snack_logs, workouts, weight_entries, drink_logs, daily_vitals. RLS on for all seven, each with one owner-only policy. Supabase Auth with email confirmation.
-- Migrations: supabase/migrations/ in this repo. The repo is the source of truth for schema; see hard constraint 7.
+- Backend/database: Supabase (Postgres 17), email sign-in. Tables, ownership, sync keys, RLS, migrations and the migrations-only rule all live in [DATABASE.md](DATABASE.md). Security rules are in [SECURITY.md](SECURITY.md).
 - Hosting/deploy: Vercel. Production = main at wholelife-hub.vercel.app. Every branch gets a preview at wholelife-hub-git-<branch>-wholifehub.vercel.app (dots in the branch name are dropped).
-- Auth redirects: every URL a sign-in email can land on must be in Supabase Auth → URL Configuration → Redirect URLs, with /** on the end (production URL, plus preview URLs or the *-wholifehub.vercel.app/** wildcard).
+- Auth redirects: see "Auth redirect URLs" in [SECURITY.md](SECURITY.md).
 - Repo: github.com/chrisumoh/wholelife-hub. Branch + PR workflow, user merges. main is the live app; never commit to it directly.
 
 ## Versioning
@@ -46,13 +45,15 @@ Single "premium: active/inactive" flag is the source of truth. Features stay in 
 4. Never invent user data, metrics, health claims, prices, or reviews
 5. Accessibility non-negotiable: WCAG AA contrast, keyboard nav, focus-visible only, prefers-reduced-motion, 44px touch targets
 6. Safe areas (Dynamic Island, home indicator) respected on all iOS widths
-7. No tool changes the database directly. Every schema change is a new migration file in supabase/migrations/, written by Claude Code on the build branch and merged through a PR. Never edit tables in the Supabase dashboard or apply SQL that isn't also committed as a migration. Never edit a migration that has already been applied; add a new one. Other tools connect to Supabase read-only.
-8. New tables ship with RLS enabled and an owner-only policy in the same migration.
+7. No tool changes the database directly. Schema changes are migration files only; see "Migrations" in [DATABASE.md](DATABASE.md).
+8. New tables ship with RLS and an owner-only policy in the same migration; see [DATABASE.md](DATABASE.md) and [SECURITY.md](SECURITY.md).
 
 ## Where things live
 
 - docs/PROMPTS/master-prompt.md — the canonical master prompt with tested reference code
 - docs/BUILD_PLAN.md — phase status and the working loop
+- docs/DATABASE.md — tables, ownership, sync keys, migrations
+- docs/SECURITY.md — security rules for the browser app and the database
 - CHANGELOG.md (repo root) — what shipped, build by build
 - CLAUDE.md (repo root) — Claude Code entry point, points here
 
