@@ -121,9 +121,10 @@ await ev(`removePasscode().then(()=>true)`); await synced();
 ok("passcode removed: sync resumes and uploads the offline-period meal", (await remote("u_axcom")) === 4, await remote("u_axcom"));
 
 console.log("--- 9. expired session, then a different account");
-await ev(`window.__old = 1; __fake.expireNow(); true`);
-ok("expired: page reloads signed out", await waitFor(`window.__old === undefined && ${READY}`, 15000));
-ok("expired: A's local data is removed from the device", await ev(`!SB.user && S.profiles.length === 0`) && (await blobMeals("wlh.v62@u_axcom")) === 0 && (await cacheN()) === -1);
+await ev(`window.__old = 1; __fake.expireNow(); true`); await sleep(1500);
+ok("expired: no reload, sign-in screen shown", await ev(`window.__old === 1 && UI.sessionExpired === true && !SB.user`));
+ok("expired: A's meals stay on the device (back in the saved months)", (await blobMeals("wlh.v62@u_axcom")) === 4, await blobMeals("wlh.v62@u_axcom"));
+ok("expired: still in memory", (await memMeals()) === 4);
 ok("expired: A's meals are still in the account", (await remote("u_axcom")) === 4, await remote("u_axcom"));
 ok("sign in B (page reloads)", await signIn("b@x.com"));
 await sleep(800);

@@ -150,6 +150,33 @@ ok("keys exist before erase", (await userKeys()).some(k => k.startsWith("wlh.not
 await ev(`window.__old = 1; eraseEverything().then(()=>true)`); await waitFor(`window.__old === undefined && ${ready}`, 15000);
 ok("no wlh.v62 / wlh.notif.* / wlh.rem.* keys left", (await userKeys()).length === 0, JSON.stringify(await userKeys()));
 
+console.log("--- (c) an expired session keeps the data and shows the sign-in screen");
+ok("sign in as A", await signIn("a@x.com"));
+await waitFor(`S.profiles.length === 1 && SB.started`, 10000);
+await ev(`addEntry("snacks", { id: uid(), date: today(), name: "Local snack", qty: 1, cal: 100 }); true`); await sleep(1200);
+await ev(`window.__old = 1; __fake.expireNow(); true`); await sleep(1500);
+ok("the page did not reload", await ev(`window.__old === 1`));
+ok("the sign-in screen is shown", await ev(`UI.sessionExpired === true && /Sign in again/.test(document.body.textContent) && !!document.getElementById("sb-email")`));
+ok("data kept in memory", await ev(`S.profiles.length === 1 && Object.values(S.logs).some(m => Object.values(m).some(l => l.snacks.some(x => x.name === "Local snack")))`));
+ok("data kept on disk under A's key", (await userKeys()).includes("wlh.v62@u_axcom") && await lsHas("Local snack"));
+await ev(`SB.client.auth.signInWithPassword({email:"a@x.com",password:"password1"}).then(()=>true)`);
+ok("same account signs back in: no reload, data still there", await waitFor(`window.__old === 1 && !UI.sessionExpired && SB.started`, 10000) && await ev(`Object.values(S.logs).some(m => Object.values(m).some(l => l.snacks.some(x => x.name === "Local snack")))`));
+
+console.log("--- (c2) sign-out while offline warns first, and Cancel keeps everything");
+await ev(`P().coachPrompted = true; P().tourSeen = "dismissed"; location.hash = "#/settings"; __fake.offline = true; addEntry("meals", { id: uid(), date: today(), slot: "dinner", name: "Offline egusi", cal: 500, dish: null, extras: [], est: false, photo: null }); render(); true`); await waitFor(`!!document.querySelector('[data-act="sb-out"]')`);
+await ev(`document.querySelector('[data-act="sb-out"]').click(); true`);
+ok("warning shown, still signed in", await waitFor(`!!UI.sbConfirmOut && !!SB.user && !!document.querySelector('[data-act="sb-out-force"]')`));
+ok("warning says unsynced data will be deleted", await ev(`/unsynced data will be deleted/.test(document.getElementById("sb-account").textContent)`));
+ok("buttons are Cancel and Sign out anyway", await ev(`(() => { const b = [...document.querySelectorAll("#sb-account button")].map(x => x.textContent.trim()); return b.includes("Cancel") && b.includes("Sign out anyway"); })()`));
+await ev(`document.querySelector('[data-act="sb-out-no"]').click(); true`);
+ok("Cancel: still signed in and the data is kept", await ev(`!UI.sbConfirmOut && !!SB.user && STORE_UID === "u_axcom"`) && (await userKeys()).includes("wlh.v62@u_axcom"));
+await ev(`document.querySelector('[data-act="sb-out"]').click(); true`);
+await waitFor(`!!document.querySelector('[data-act="sb-out-force"]')`);
+await ev(`window.__old = 1; document.querySelector('[data-act="sb-out-force"]').click(); true`);
+ok("Sign out anyway: page reloads signed out", await waitFor(`window.__old === undefined && ${ready} && !SB.user`, 15000));
+ok("Sign out anyway: device is cleared", (await userKeys()).length === 0 && !(await lsHas("Offline egusi")) && !(await lsHas("Local snack")));
+ok("the meal that never uploaded is not in the account", (await ev(`JSON.stringify(__fake.DB).includes("Offline egusi")`)) === false);
+
 console.log("--- no uncaught exceptions, no alert()");
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 400));
 ok("alert() never fired", dialogs.length === 0, JSON.stringify(dialogs));
