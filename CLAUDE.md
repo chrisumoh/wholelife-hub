@@ -6,6 +6,13 @@ Project rules for WholeLife Hub. Read this before changing anything.
 
 A health and fitness web app that lives in one file, `index.html` (markup, CSS and JS together). It has no build step. `CHANGELOG.md` records every build. `docs/VERSIONING.md` and `docs/DATABASE.md` hold the detailed rules. `supabase/migrations/` holds the SQL for the backend. The app still saves to the browser and does not talk to Supabase yet.
 
+## Read first
+
+- docs/CONTEXT.md — stack, Supabase/Vercel setup, versioning, design system, coach personas, hard constraints. Read every session.
+- docs/BUILD_PLAN.md — phase status and verification checklist. Read every session.
+- docs/CHANGELOG.md — read the top few entries to see what shipped last.
+- docs/PROMPTS/master-prompt.md — large file. Read only the phase you are working on, plus the reference code that phase points to.
+
 ## 1. Versioning
 
 - The update number goes up by **0.1 per week that has a build**: 8.1, then 8.2, then 8.3.
@@ -64,3 +71,13 @@ A health and fitness web app that lives in one file, `index.html` (markup, CSS a
 
 - This repo is the only copy of the app. Don't pull code from Claude artifacts, Codex folders or ChatGPT sites.
 - If I paste code from elsewhere, compare it to `index.html` and ask before replacing anything.
+
+## 8. Build plan and docs workflow
+
+- Targeted edits only. Report a per-file changelog.
+- Port the reference code's values into existing components; do not paste reference files over the app.
+- Every build also updates `docs/BUILD_PLAN.md` status and adds a `docs/CHANGELOG.md` entry, alongside the `CHANGELOG.md` entry required in section 2.
+- Run the `docs/BUILD_PLAN.md` verification checklist before asking me to merge.
+- Never invent data, prices, or health claims.
+- Database changes follow section 5: new file in `supabase/migrations/` only, never edit an applied migration, and new tables get RLS and an owner-only policy in the same migration.
+- Branch and merge rules follow section 6: never commit to `main`, work on a `build-<version>` branch, and I do the merge. Don't open a pull request unless I ask.
