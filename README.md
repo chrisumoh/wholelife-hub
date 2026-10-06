@@ -1,6 +1,6 @@
-# WholeLife Hub
+# Whole Life Hub
 
-A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.1 (Dev Testing), build 8.1.14**.
+A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.1 (Dev Testing), build 8.1.15**.
 
 ## What's in this repository
 

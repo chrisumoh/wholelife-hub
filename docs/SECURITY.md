@@ -1,6 +1,6 @@
 # Security
 
-Security rules for WholeLife Hub. They describe what this project actually is: one `index.html`, vanilla JS, supabase-js running in the browser, and no server of our own. Anything running in the browser can be read and changed by whoever is using it, so the rules below assume the client is **not trusted**. The database is described in [DATABASE.md](DATABASE.md).
+Security rules for Whole Life Hub. They describe what this project actually is: one `index.html`, vanilla JS, supabase-js running in the browser, and no server of our own. Anything running in the browser can be read and changed by whoever is using it, so the rules below assume the client is **not trusted**. The database is described in [DATABASE.md](DATABASE.md).
 
 Health data is the sensitive part: meals, weight, vitals, workouts, photos, age and height. Treat all of it as private.
 
@@ -30,6 +30,8 @@ A browser can be shared. What one account leaves behind must not show up for the
 - Anything cached from the account is tagged with the user id and ignored (and dropped) if it belongs to a different user. The meal cache `wlh.meals.v1` stores `uid` and is checked on sign-in.
 - Sign-out removes the account's health data from memory and from browser storage, then calls `auth.signOut()`. If changes haven't uploaded yet, ask before discarding them.
 - "Erase" clears every health-data key the app owns, not only the main one.
+- Signed in, every user-data key ends in `@<user id>` (`wlh.v62@<id>`, `wlh.notif.<profile>@<id>`, `wlh.rem.<profile>.<reminder>@<id>`). Keys with no suffix are the guest store. Boot reads the session first and loads only that account's keys. When the account changes the page reloads, so nothing in memory carries over.
+- Guest data found after sign-in is never attached silently: the person is asked to import it or discard it. Add new data keys to `LS_USER_BASES` so sign-out and erase remove them.
 - New code that stores health data in `localStorage`, `sessionStorage` or IndexedDB must either key it by user id or be listed in the sign-out and erase paths. Add the key to the same function that clears the others.
 - Non-health preferences (theme, rail state, tour progress) may stay.
 - The Supabase session lives in `localStorage` (`wlh.sb.auth`) with `persistSession` on. That means any script running on the page can read the token, which is the reason for the script and XSS rules below.

@@ -17,6 +17,12 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 | 7 | Legal/compliance: privacy+terms updates, refunds/contact/credits, consent flows, age gate, delete/export, accessibility pass, dark-pattern sweep | PROMPTED |
 | 8 | App Store readiness — RUN ONLY IF submitting to iOS App Store (Apple IAP, reviewer account, iPad, UGC safety) | IDEA (skip while web-only) |
 
+## Builds outside the phases
+
+| Build | Contents | Status |
+|---|---|---|
+| 8.1.15 | Audit fixes from PR #5: coach text escaped, per-account local storage with sign-out clearing, guest import/discard, Erase removes notif/rem keys, short error logs, db account path removed, privacy text matches the code, "Whole Life Hub" name, browser tests | IN PROGRESS: build-8.1.15, pull request open, not merged |
+
 ## Standing backlog
 
 - Payment provider integration (Stripe): premium CTA is currently "Coming soon" or hidden; prices and discount % are TODO placeholders
@@ -37,3 +43,10 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.1.15
+
+- Done: `node tests/browser/security.mjs` (53 checks) and `node tests/browser/meal-sync.mjs` (51 checks), both against a fake Supabase in headless Chrome; no uncaught exceptions. Supabase files were not touched, so the migrations and the security advisor are unchanged.
+- Not run: the 375/820/1440px layout sweep, theme and font sweep, premium flag, coach voices, and the feature regression sweep (the build changes storage, sign-in and text, not layout). The new Import / Discard screen has not been checked at 375px.
+- Not run (needs the deployed preview and a real account): sign up with the confirmation link, log in, refresh stays logged in, and the Supabase read-only checks.
+
