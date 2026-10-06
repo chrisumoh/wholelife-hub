@@ -6,6 +6,14 @@ WholeLife Hub, newest first. Generated from the in-app change log (`WLH.changelo
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
 
+## 8.1.14 · Docs: Security rules, database doc consolidated, code style (no app change)
+
+- **Problem:** There was no written security policy for a browser app that talks straight to the database, and the database details were split between docs/CONTEXT.md and docs/DATABASE.md.
+- **Change:** Added docs/SECURITY.md (RLS as the only authorization layer, publishable key only, per-user browser storage cleared on sign-out, user text rendered as text, no health data in logs or to third parties without consent, SRI-pinned scripts, auth redirect URL rules). Updated docs/DATABASE.md with the owner_id / person_id model, app_id as the sync key, updated_at for incremental sync, the cascade chain and the migrations-only rule, and moved the database text out of docs/CONTEXT.md, which now points to it. CLAUDE.md gains a "Code style" section and lists SECURITY.md and DATABASE.md under "Read first". index.html was audited against SECURITY.md and not changed: the violations are in the pull request description, to be fixed in a later build. This is a docs-only change, so there is no new build number and no entry in the in-app log (`WLH.changelog`), which would have meant editing index.html.
+- **Where:** docs/SECURITY.md (new), docs/DATABASE.md, docs/CONTEXT.md, CLAUDE.md, CHANGELOG.md
+- **How to test:** Read the docs. Check that docs/CONTEXT.md no longer lists tables, RLS or migration rules, and that its links to DATABASE.md and SECURITY.md work. `git diff main -- index.html supabase` is empty.
+- **Known limits:** The audit is a read-through with grep, not a test run. SECURITY.md describes rules the app doesn't fully follow yet (see the audit list). Dashboard settings (redirect URLs, site URL) were not checked, because that needs the Supabase dashboard. Section 2 of CLAUDE.md asks for the in-app log first; it was left out on purpose so index.html stays untouched in this branch.
+
 ## 8.1.14 · Food catalog: 25 dishes from the United Kingdom, Spain and the United States, plus 6 meal-text foods
 
 - **Problem:** Outside Africa the catalog was thin for three popular cuisines: 3 British dishes, 3 Spanish and 6 American. Typing foods like fish and chips, tikka masala, pancakes, tortilla or mac and cheese into Guess the calories found nothing.
