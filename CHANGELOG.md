@@ -2,9 +2,17 @@
 
 WholeLife Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.1 (Dev Testing), build 8.1.13, 2026-10-06. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.1 (Dev Testing), build 8.1.14, 2026-10-06. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.1.14 · Food catalog: 25 dishes from the United Kingdom, Spain and the United States, plus 6 meal-text foods
+
+- **Problem:** Outside Africa the catalog was thin for three popular cuisines: 3 British dishes, 3 Spanish and 6 American. Typing foods like fish and chips, tikka masala, pancakes, tortilla or mac and cheese into Guess the calories found nothing.
+- **Change:** DISHES gains 25 full recipes (ingredients for 4, steps, ways to cook, lighter and higher-protein versions with calories, pairing, meal-prep note). United Kingdom 8: baked fish and chips with mushy peas, grilled full English breakfast, chicken tikka masala (London), Sunday roast chicken, cullen skink and Scottish porridge (Scotland), bangers and mash, Lancashire hotpot. Spain 8: tortilla española, gazpacho, pollo al ajillo, gambas al ajillo, fabada asturiana, cocido madrileño, pisto manchego, merluza en salsa verde. United States 9: grilled chicken Caesar, turkey burger with sweet potato fries, buttermilk pancakes, New England clam chowder, chicken and sausage gumbo (Louisiana), BBQ pulled pork sandwich, mac and cheese with cauliflower, Cobb salad, avocado toast with eggs. FOODC gains fish and chips, chicken tikka masala, pancakes, Spanish omelette, gazpacho and mac and cheese. Everything is text only. Calories and protein are per serving, estimated from the ingredient amounts. These are supporting entries: West African dishes stay 91 of 291 (31%), and the default Food focus, West African first, still draws 60% of suggestions from West Africa.
+- **Where:** DISHES (25 entries appended at the end, ids uk-*, es-*, us-*); FOODC (fishchips, tikkamasala, pancakes, tortillaes, gazpacho, macncheese, at the end of the array)
+- **How to test:** Settings › Food culture: choose United Kingdom, Spain or United States and the new dishes appear. Log a meal and type 'Fabada' or 'Cullen skink'. Nutrition › Guess the calories: type 'fish and chips' or 'spanish omelette and gazpacho'. Automated: 25 new ids and names unique; every country resolves to the right region; light < normal < higher-protein calories; high-protein tags match 30 g or more; no new units; no emoji; allergens checked against ingredients; 0 page errors.
+- **Known limits:** Calories and protein are careful estimates, not lab values, and vary with portion and oil. The allergen lists are checked against the ingredient text but not by a dietitian; check any dish for a serious allergy. Other countries (for example France, Italy, India, China, Mexico, Brazil) still have only a few dishes each; say which to add next.
 
 ## 8.1.13 · Food catalog: 26 more West African dishes, 3 snacks and 10 meal-text foods; Togo, Benin, Burkina Faso, Niger, Mauritania, Cabo Verde and Guinea-Bissau now have dishes
 
