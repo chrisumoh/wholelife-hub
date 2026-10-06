@@ -44,7 +44,7 @@ const signIn = async email => {
   return waitFor(`window.__old === undefined && ${ready}`, 15000);
 };
 const signOutViaApp = async () => {
-  await ev(`window.__old = 1; sbSignOut(false).then(()=>true)`);
+  await ev(`window.__old = 1; sbSignOut(false).then(() => UI.sbConfirmOut ? sbSignOut(true) : 0).then(()=>true)`);
   return waitFor(`window.__old === undefined && ${ready}`, 15000);
 };
 const mkGuest = (name, extra = "") => ev(`(async () => {
@@ -135,7 +135,7 @@ ok("prompt shown", await ev(`!!UI.guestPrompt`));
 await ev(`document.querySelector('[data-act="sb-guest-discard"]').click(); true`);
 ok("discard: guest key removed", await waitFor(`!localStorage.getItem("wlh.v62")`));
 ok("discard: nothing of Gary's reached B or the database", !(await lsHas("Gary")) && (await ev(`JSON.stringify(__fake.DB).includes("Gary")`)) === false);
-await ev(`window.__old = 1; sbSignOut(false).then(()=>true)`); await waitFor(`window.__old === undefined && ${ready}`, 15000);
+await ev(`window.__old = 1; sbSignOut(false).then(() => UI.sbConfirmOut ? sbSignOut(true) : 0).then(()=>true)`); await waitFor(`window.__old === undefined && ${ready}`, 15000);
 
 console.log("--- (b3) A signs back in: name and meals return from the account, local-only data does not");
 ok("sign in as A", await signIn("a@x.com"));
@@ -166,7 +166,7 @@ console.log("--- (c2) sign-out while offline warns first, and Cancel keeps every
 await ev(`P().coachPrompted = true; P().tourSeen = "dismissed"; location.hash = "#/settings"; __fake.offline = true; addEntry("meals", { id: uid(), date: today(), slot: "dinner", name: "Offline egusi", cal: 500, dish: null, extras: [], est: false, photo: null }); render(); true`); await waitFor(`!!document.querySelector('[data-act="sb-out"]')`);
 await ev(`document.querySelector('[data-act="sb-out"]').click(); true`);
 ok("warning shown, still signed in", await waitFor(`!!UI.sbConfirmOut && !!SB.user && !!document.querySelector('[data-act="sb-out-force"]')`));
-ok("warning says unsynced data will be deleted", await ev(`/unsynced data will be deleted/.test(document.getElementById("sb-account").textContent)`));
+ok("warning says what will be deleted, including the unsent meal", await ev(`/Signing out will delete data from this device/.test(document.getElementById("sb-account").textContent) && /waiting to upload and will be deleted too/.test(document.getElementById("sb-account").textContent)`));
 ok("buttons are Cancel and Sign out anyway", await ev(`(() => { const b = [...document.querySelectorAll("#sb-account button")].map(x => x.textContent.trim()); return b.includes("Cancel") && b.includes("Sign out anyway"); })()`));
 await ev(`document.querySelector('[data-act="sb-out-no"]').click(); true`);
 ok("Cancel: still signed in and the data is kept", await ev(`!UI.sbConfirmOut && !!SB.user && STORE_UID === "u_axcom"`) && (await userKeys()).includes("wlh.v62@u_axcom"));
@@ -176,6 +176,65 @@ await ev(`window.__old = 1; document.querySelector('[data-act="sb-out-force"]').
 ok("Sign out anyway: page reloads signed out", await waitFor(`window.__old === undefined && ${ready} && !SB.user`, 15000));
 ok("Sign out anyway: device is cleared", (await userKeys()).length === 0 && !(await lsHas("Offline egusi")) && !(await lsHas("Local snack")));
 ok("the meal that never uploaded is not in the account", (await ev(`JSON.stringify(__fake.DB).includes("Offline egusi")`)) === false);
+
+console.log("--- (d) the sign-out dialog lists local-only data");
+ok("sign in as A", await signIn("a@x.com"));
+await waitFor(`S.profiles.length === 1 && SB.started && !sbPending()`, 10000);
+await ev(`(() => { const p = P(); p.coachPrompted = true; p.tourSeen = "dismissed"; p.goal = "lose"; p.age = 30;
+  addEntry("snacks", { id: uid(), date: today(), name: "Dialog snack", qty: 1, cal: 100 });
+  addEntry("drinks", { id: uid(), date: today(), k: "beer", name: "Beer", qty: 1, cal: 150, units: 1 });
+  addEntry("workouts", { id: uid(), date: today(), type: "strength", minutes: 30, cal: 100, note: null, src: null, equip: null, photo: null });
+  addEntry("weights", { id: uid(), date: today(), kg: 70 });
+  const L = logFor(p.id, monthOf(today())); L.vitals[today()] = { steps: 1000 }; markLog(p.id, monthOf(today())); saveProfile();
+  location.hash = "#/settings"; render(); return true; })()`);
+await waitFor(`!!document.querySelector('[data-act="sb-out"]')`);
+await ev(`document.querySelector('[data-act="sb-out"]').click(); true`);
+ok("dialog shown although nothing is waiting to upload", await waitFor(`!!UI.sbConfirmOut && !!document.querySelector('[data-act="sb-out-force"]')`) && (await ev(`sbPending()`)) === 0);
+const dlg = await ev(`document.getElementById("sb-account").textContent`);
+for (const want of ["1 snack", "1 drink", "1 workout", "1 weigh-in", "1 day of vitals", "settings for 1 profile"]) ok(`dialog lists "${want}"`, dlg.includes(want), dlg.slice(0, 300));
+ok("dialog has Cancel and Sign out anyway", await ev(`(() => { const b = [...document.querySelectorAll("#sb-account button")].map(x => x.textContent.trim()); return b.includes("Cancel") && b.includes("Sign out anyway"); })()`));
+await ev(`document.querySelector('[data-act="sb-out-no"]').click(); true`);
+await ev(`flush().then(() => true)`);
+ok("Cancel keeps the data and the session", await ev(`!UI.sbConfirmOut && !!SB.user`) && await lsHas("Dialog snack"));
+
+console.log("--- (e) export and calendar downloads work without window.claude");
+ok("window.claude is absent", await ev(`typeof window.claude === "undefined"`));
+await ev(`window.__dl = []; HTMLAnchorElement.prototype.click = function () { window.__dl.push({ name: this.download, text: fetch(this.href).then(r => r.text()) }); }; location.hash = "#/settings/about"; render(); true`);
+await waitFor(`!!document.querySelector('[data-act="export"]')`);
+ok("Download (JSON) button is enabled", await ev(`!document.querySelector('[data-act="export"]').disabled`));
+await ev(`document.querySelector('[data-act="export"]').click(); true`); await sleep(500);
+const exp = await ev(`(async () => { const d = window.__dl[0]; return d ? { name: d.name, text: await d.text } : null; })()`);
+ok("a .json file was handed to the browser", !!exp && /^wholelife-.*\.json$/.test(exp.name), JSON.stringify(exp)?.slice(0, 120));
+const parsed = exp ? JSON.parse(exp.text) : {};
+ok("the file holds the profile and the logs", parsed.profile?.name === "Alice Secret" && JSON.stringify(parsed.logs).includes("Dialog snack"));
+await ev(`window.__dl.length = 0; const b = document.createElement("button"); b.dataset.act = "rem-ics"; document.body.append(b); b.click(); b.remove(); true`); await sleep(500);
+const ics = await ev(`(async () => { const d = window.__dl[0]; return d ? { name: d.name, text: await d.text } : null; })()`);
+ok("an .ics file was handed to the browser", !!ics && ics.name === "wholelife-reminders.ics" && /^BEGIN:VCALENDAR/.test(ics.text), JSON.stringify(ics)?.slice(0, 120));
+
+console.log("--- (f) a tab that sees the account signed out elsewhere drops its memory and writes nothing");
+const tgt = await (await fetch("http://127.0.0.1:9334/json/new?about:blank", { method: "PUT" })).json();
+const ws2 = new WebSocket(tgt.webSocketDebuggerUrl); await new Promise(r => ws2.onopen = r);
+let id2 = 0; const pend2 = new Map();
+ws2.onmessage = m => { const d = JSON.parse(m.data); if (d.id && pend2.has(d.id)) { pend2.get(d.id)(d); pend2.delete(d.id); } };
+const send2 = (method, params = {}) => new Promise(r => { const i = ++id2; pend2.set(i, r); ws2.send(JSON.stringify({ id: i, method, params })); });
+const ev2 = async expr => { const r = await send2("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true }); if (r.result.exceptionDetails) throw new Error("tab2: " + (r.result.exceptionDetails.exception?.description || expr)); return r.result.result.value; };
+const waitFor2 = async (expr, ms = 15000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { try { if (await ev2(expr)) return true; } catch {} await sleep(150); } return false; };
+// Records every localStorage write the page makes (the log lives in window.name so it survives a reload).
+const SPY = `(() => { window.__prevWrites = []; try { window.__prevWrites = JSON.parse(window.name || "[]"); } catch {} const log = []; window.__spyReset = () => { log.length = 0; window.name = "[]"; };
+  for (const m of ["setItem", "removeItem", "clear"]) { const o = Storage.prototype[m]; Storage.prototype[m] = function (k, ...r) { if (this === localStorage && !String(k).startsWith("__fake")) { log.push(m + ":" + k); window.name = JSON.stringify(log); } return o.call(this, k, ...r); }; } })();`;
+await send2("Runtime.enable"); await send2("Page.enable"); await send2("Network.enable");
+await send2("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
+await send2("Page.addScriptToEvaluateOnNewDocument", { source: FAKE + SPY });
+await send2("Page.navigate", { url: "http://127.0.0.1:8766/index.html" });
+ok("second tab boots signed in as A with A's data", await waitFor2(`${ready} && STORE_UID === "u_axcom" && Object.values(S.logs).some(m => Object.values(m).some(l => l.snacks.some(x => x.name === "Dialog snack")))`));
+await ev2(`window.__old = 1; dirty.add("root"); window.__spyReset(); true`); // unsaved work: a pagehide flush would write it
+await ev(`window.__old = 1; sbSignOut(true).then(()=>true)`);
+ok("tab 1 signs out and reloads", await waitFor(`window.__old === undefined && ${ready} && !SB.user`, 15000));
+ok("tab 2 reloads on its own", await waitFor2(`window.__old === undefined && ${ready}`));
+ok("tab 2 wrote nothing to local storage while discarding", JSON.stringify(await ev2(`window.__prevWrites`)) === "[]", JSON.stringify(await ev2(`window.__prevWrites`)));
+ok("tab 2 holds no profile and no account", await ev2(`S.profiles.length === 0 && STORE_UID === null && !SB.user`));
+ok("A's data did not come back to this browser", (await userKeys()).length === 0 && !(await lsHas("Dialog snack")) && !(await lsHas("Alice")), JSON.stringify(await userKeys()));
+await fetch(`http://127.0.0.1:9334/json/close/${tgt.id}`); ws2.close();
 
 console.log("--- no uncaught exceptions, no alert()");
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 400));

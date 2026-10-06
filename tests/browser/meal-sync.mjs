@@ -33,7 +33,7 @@ const boot = async () => { await send("Page.navigate", { url: "http://127.0.0.1:
 // 8.1.15: the app reloads itself when the signed-in account changes, so wait for the fresh page.
 const reloaded = async fn => { await ev(`window.__old = 1; ${fn}`); return waitFor(`window.__old === undefined && ${READY}`, 15000); };
 const signIn = email => reloaded(`SB.client.auth.signInWithPassword({email:${JSON.stringify(email)},password:"password1"}).then(()=>true)`);
-const signOut = () => reloaded(`sbSignOut(false).then(()=>true)`);
+const signOut = () => reloaded(`sbSignOut(false).then(() => UI.sbConfirmOut ? sbSignOut(true) : 0).then(()=>true)`);
 
 // helpers inside the page
 const blobMeals = (key = "wlh.v62") => ev(`(() => { const l = JSON.parse(localStorage.getItem(${JSON.stringify(key)})||"null")?.logs||{}; return Object.values(l).reduce((n,b)=>n+(b.meals?b.meals.length:0),0); })()`);

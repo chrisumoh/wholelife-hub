@@ -31,6 +31,7 @@ A browser can be shared. What one account leaves behind must not show up for the
 - Sign-out removes the account's health data from memory and from browser storage, then calls `auth.signOut()`. If changes haven't uploaded yet, ask before discarding them.
 - "Erase" clears every health-data key the app owns, not only the main one.
 - Signed in, every user-data key ends in `@<user id>` (`wlh.v62@<id>`, `wlh.notif.<profile>@<id>`, `wlh.rem.<profile>.<reminder>@<id>`). Keys with no suffix are the guest store. Boot reads the session first and loads only that account's keys. When the account changes the page reloads, so nothing in memory carries over.
+- Only an explicit sign-out (or Erase) deletes an account's local data. An expired session keeps it and shows the sign-in screen. A tab that sees another tab sign out (the `wlh.signedout` marker) drops its memory and reloads without writing anything.
 - Guest data found after sign-in is never attached silently: the person is asked to import it or discard it. Add new data keys to `LS_USER_BASES` so sign-out and erase remove them.
 - New code that stores health data in `localStorage`, `sessionStorage` or IndexedDB must either key it by user id or be listed in the sign-out and erase paths. Add the key to the same function that clears the others.
 - Non-health preferences (theme, rail state, tour progress) may stay.
