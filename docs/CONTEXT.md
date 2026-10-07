@@ -29,6 +29,15 @@ Version goes up 0.1 per week (8.1, 8.2, ...). Extra builds inside the same week 
 - Motion: spring cubic-bezier(0.32, 0.72, 0, 1), 150-450ms, max 3 staggered items, all disabled under prefers-reduced-motion
 - The centered hamburger/back-arrow morph is spec'd and tested in the master prompt (Task 6.1) — port that exact implementation
 
+### Approved exception: BoardUI-style form controls (8.1.19)
+
+Form controls (inputs, selects, textareas, date picker, buttons, button groups, segmented controls and the sign-in card) are rebuilt in plain CSS and vanilla JS to match BoardUI's look. BoardUI is not installed; there is no React or Tailwind and no copied code. These controls are exempt from two rules above:
+
+- **Shadows:** a soft control shadow (`--bu-shadow`, 1px blur) is allowed on fields, buttons and the selected segment, and a floating shadow (`--bu-pop`) on listboxes, the calendar and the sign-in card. Cards, rows and everything else stay flat.
+- **Radius:** controls use 10px, pills 999px, the listbox, calendar and sign-in card 12px and 20px. All are in the allowed set; nothing new is added.
+- Primary and destructive buttons use a light top-to-bottom gradient of `--accent` and `--bad`. Colors still come from the tokens, so every scheme, accent and theme follows.
+- Every control is at least 44px tall. The styles live in one block at the end of the stylesheet (`8.1.19 form controls`) and the script before `</body>`.
+
 ## Coach personas
 
 Three selectable-before-personalization, renamable personas: The Motivator (streaks, "Wins & next steps"), The Enforcer (adherence score, "Deviations"), The Strategist (intensity dial Recover/Standard/Push, "Adjustments"). Each has its own question set and voice. The daily advice card must satisfy all 9 personalization rules in the master prompt (Phase 3).

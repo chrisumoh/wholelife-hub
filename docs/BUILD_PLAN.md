@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.1.19 | Form controls restyled to BoardUI's look (input, textarea auto-resize, select listbox, date picker, segmented control, button and button group, sign-in card), 44px touch targets. Date range picker not found, skipped | IN PROGRESS: build-8.1.19, pushed, not merged |
 | 8.1.18 | Compact account row with sign-in popup, tighter spacing, Premium in Ctrl+K, Snap your plate copy. 8.1.16 and 8.1.17 were closed and never released; sidebar rework and legal pages are not in this build | IN PROGRESS: build-8.1.18 from main, not merged |
 | 8.1.15 | Audit fixes from PR #5: coach text escaped, per-account local storage with sign-out clearing, guest import/discard, Erase removes notif/rem keys, short error logs, db account path removed, privacy text matches the code, "Whole Life Hub" name, browser tests | IN PROGRESS: build-8.1.15, pull request open, not merged |
 
@@ -44,6 +45,12 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.1.19
+
+- Done: `node tests/browser/controls.mjs` (52): select keyboard and ARIA, native select under touch emulation, date picker, textarea 2 to 8 rows, password reveal, auth popup focus, 44px on seven routes, no horizontal scroll at 375/820/1440px. `security.mjs` (87), `meal-sync.mjs` (55), `meal-upload.mjs` (14) still pass.
+- Done: screenshots at 375/820/1440px in light, dark, OLED and the Forest, Ocean, Sunset and Midnight themes, checked by eye on Meals and Settings.
+- Not run: a real phone, Halloween/season themes, font sweep, feature regression sweep beyond the tests above, the Vercel preview with a real account.
 
 ### Checklist run for 8.1.18
 
