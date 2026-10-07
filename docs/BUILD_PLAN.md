@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.1.18 | Compact account row with sign-in popup, tighter spacing, Premium in Ctrl+K, Snap your plate copy. 8.1.16 and 8.1.17 were closed and never released; sidebar rework and legal pages are not in this build | IN PROGRESS: build-8.1.18 from main, not merged |
 | 8.1.15 | Audit fixes from PR #5: coach text escaped, per-account local storage with sign-out clearing, guest import/discard, Erase removes notif/rem keys, short error logs, db account path removed, privacy text matches the code, "Whole Life Hub" name, browser tests | IN PROGRESS: build-8.1.15, pull request open, not merged |
 
 ## Standing backlog
@@ -43,6 +44,12 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.1.18
+
+- Done: `node tests/browser/security.mjs` (87), `meal-sync.mjs` (55) and `meal-upload.mjs` (14), all passing against a fake Supabase in headless Chrome.
+- Done: at 1440px the signed-out account row is 68px, .card padding 16px, .wrap gap 12px on Summary, Meals and Settings.
+- Not run: 375/820px sweep, theme and font sweep, feature regression sweep, sign-in on the Vercel preview with a real account.
 
 ### Checklist run for 8.1.15
 

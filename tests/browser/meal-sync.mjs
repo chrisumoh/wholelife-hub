@@ -49,7 +49,12 @@ await ev(`(async()=>{ const p=newProfile("Ada"); p.onboarded=true; p.coachPrompt
 await addMeal("Jollof rice"); await addMeal("Waakye"); await ev(`flush()`);
 ok("signed out: meals saved in the local blob", (await blobMeals()) === 2, await blobMeals());
 await ev(`location.hash="#/settings"; true`); await sleep(500);
-ok("signed out: account card shows sign-in form", await ev(`(()=>{ render(); return !!document.getElementById("sb-email") && UI.route==="settings"; })()`), await ev(`UI.route+" "+document.title`));
+ok("signed out: account card is one compact row with Sign in and Create account", await ev(`(()=>{ render(); return !!document.querySelector('#sb-account [data-act="sb-open"][data-v="in"]') && !!document.querySelector('#sb-account [data-act="sb-open"][data-v="up"]') && !document.getElementById("sb-email") && UI.route==="settings"; })()`), await ev(`UI.route+" "+document.title`));
+ok("Sign in opens a dialog with the form", await ev(`(()=>{ document.querySelector('[data-act="sb-open"][data-v="in"]').click(); const d = document.querySelector('#pop-auth [role=dialog]'); return !!d && d.getAttribute("aria-modal")==="true" && !!document.getElementById(d.getAttribute("aria-labelledby")) && !!document.getElementById("sb-email") && !!document.querySelector('form[data-form="sb-auth"][data-kind="in"]'); })()`));
+await sleep(400);
+ok("focus is in the email field", await ev(`document.activeElement && document.activeElement.id === "sb-email"`));
+await ev(`document.dispatchEvent(new KeyboardEvent("keydown", { key:"Escape" })); true`); await sleep(500);
+ok("Escape closes it and focus returns to Sign in", await ev(`!document.getElementById("pop-auth") && document.activeElement?.dataset?.act === "sb-open" && document.activeElement?.dataset?.v === "in"`));
 
 console.log("--- 2. sign in A: first upload");
 ok("sign in A (page reloads)", await signIn("a@x.com"));
