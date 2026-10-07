@@ -3817,6 +3817,88 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 /* light surfaces: no additive blending (it would wash out to white) */
 :root[data-scheme="light"] .border-glow-card>.bg-fill,:root[data-scheme="light"] .border-glow-card>.edge-light{mix-blend-mode:normal}
 
+/* =================== 8.1.16: SIDEBAR AS A FLOATING CARD =================== */
+/* Layout after BoardUI's Sidebar, rebuilt here: profile switcher, search, grouped nav with count
+   badges, then Support, Settings and the account card. 260px card, 20px radius, hairline border,
+   no shadow. Everything is scoped under #app so it outranks the older .side rules above without
+   !important. Phones and tablets (<=1024px) keep the drawer, scrim and menu-toggle morph. */
+:root{--sb-w:260px;--sb-rail:64px;--sb-gap:12px}
+#app .side [hidden]{display:none!important}
+#app .side{border:1px solid var(--line);border-radius:20px;box-shadow:none;gap:0;padding-inline:10px}
+#app .side :focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:10px}
+@media (min-width:1025px){
+  #app .app{grid-template-columns:calc(var(--sb-w) + 2*var(--sb-gap)) 1fr}
+  #app .app.rail{grid-template-columns:calc(var(--sb-rail) + 2*var(--sb-gap)) 1fr}
+  #app .app>.side{margin:var(--sb-gap);top:var(--sb-gap);align-self:start;height:calc(100vh - 2*var(--sb-gap));height:calc(100dvh - 2*var(--sb-gap));padding-top:12px;padding-bottom:12px}
+}
+@media (max-width:1024px){
+  #app .side{left:max(8px,env(safe-area-inset-left,0px));top:max(8px,env(safe-area-inset-top,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));right:auto;height:auto;max-height:none;
+    width:min(var(--sb-w),calc(100vw - 16px));transform:translateX(calc(-100% - 24px));padding-bottom:12px}
+  #app .side.open{transform:none}
+}
+
+/* profile switcher */
+.sb-prof{position:relative;flex:none}
+.sb-prof-btn{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.sb-prof-btn[aria-expanded="true"]{background:rgba(128,128,128,.12)}
+.sb-who{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.sb-who b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc((14px) * var(--text-scale,1));font-weight:600}
+.sb-chev{flex:none;color:var(--muted)}
+.sb-menu{position:absolute;z-index:5;top:calc(100% + 6px);left:0;right:0;display:flex;flex-direction:column;gap:2px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:none;max-height:min(60vh,340px);overflow-y:auto}
+.sb-menu-h{padding:6px 10px 4px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.sb-menu-sep{height:1px;margin:4px 0;background:var(--line)}
+.sb-menu button,.sb-menu a{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:var(--text);font:inherit;font-size:calc((14px) * var(--text-scale,1));font-weight:500;text-align:left;text-decoration:none;cursor:pointer;width:100%;box-sizing:border-box}
+.sb-menu .sb-mi-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-menu .sb-mi-on{flex:none;color:var(--accent)}
+.sb-menu [aria-checked="true"]{font-weight:600}
+
+/* search */
+.sb-search{position:relative;flex:none;margin:12px 0 2px}
+.sb-search input{width:100%;box-sizing:border-box;min-height:44px;padding:0 62px 0 36px;border:1px solid var(--line);border-radius:12px;background:var(--raise);color:var(--text);font-size:calc((14px) * var(--text-scale,1))}
+.sb-search input:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:12px}
+.sb-s-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.sb-kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);padding:2px 6px;border:1px solid var(--line2);border-radius:8px;font-size:11px;font-weight:600;line-height:1.4;color:var(--text);pointer-events:none}
+.sb-search:has(input:not(:placeholder-shown)) .sb-kbd{display:none}
+@media (hover:none),(max-width:600px){.sb-kbd{display:none}.sb-search input{padding-right:10px}}
+
+/* nav: small section labels, 44px rows, count badges */
+#app .side .nav{padding-block:4px;gap:0}
+#app .side .nav .grp{padding:14px 10px 6px;font-size:calc((11px) * var(--text-scale,1))}
+#app .side .navgrp:first-child .grp{padding-top:8px}
+#app .side .nav a,#app .side .nav button.prem-trigger,#app .side .sb-links a{min-height:44px;padding:0 10px;border-radius:10px}
+.sb-links{display:flex;flex-direction:column;gap:2px}
+/* short screens: Support and Settings share a row so the nav keeps more room */
+@media (max-height:820px){.sb-links{flex-direction:row}.sb-links a{flex:1 1 0;min-width:0}.app.rail .sb-links{flex-direction:column}}
+.sb-links a{display:flex;gap:10px;align-items:center;text-decoration:none;color:var(--muted);font-weight:500;font-size:calc((15px) * var(--text-scale,1))}
+@media (hover:hover) and (pointer:fine){.sb-links a:hover{background:rgba(128,128,128,.10);color:var(--text)}}
+.sb-links a[aria-current="page"]{background:rgba(128,128,128,.16);color:var(--text);font-weight:600}
+.sb-links .si-tile svg{color:#fff}
+.sb-lab{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-badge{flex:none;min-width:22px;height:22px;padding:0 7px;box-sizing:border-box;border-radius:999px;display:inline-grid;place-items:center;background:rgba(128,128,128,.18);color:var(--text);font-size:calc((12px) * var(--text-scale,1));font-weight:700;font-variant-numeric:tabular-nums}
+.sb-none{padding:14px 10px;margin:0}
+
+/* bottom: Support, Settings, account card */
+.sb-foot{flex:none;display:flex;flex-direction:column;gap:8px;padding-top:8px;border-top:1px solid var(--line)}
+.sb-acct{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px}
+.sb-acct-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sb-email{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc((13px) * var(--text-scale,1));font-weight:600}
+.sb-acct #save-state{display:block;font-size:calc((11.5px) * var(--text-scale,1));line-height:1.35;font-variant-numeric:tabular-nums}
+.sb-acct .dot{width:7px;height:7px;border-radius:50%;background:var(--good);display:inline-block;margin-right:6px;vertical-align:middle}
+.sb-acct .dot.saving{background:var(--warn)}.sb-acct .dot.error{background:var(--bad)}
+.sb-acct-act{display:flex;gap:6px;align-items:center}
+#app .side .sb-acct .btn{min-height:44px;border-radius:10px}
+#app .side .sb-mini{width:44px;padding:0;justify-content:center;flex:none}
+#app .side .sb-out{flex:1;min-width:0;gap:6px;justify-content:center;white-space:nowrap}
+
+/* collapsed desktop rail: avatar, icons, and the account actions stacked */
+.app.rail .sb-who,.app.rail .sb-chev,.app.rail .sb-search,.app.rail .sb-acct-t,.app.rail .sb-out span,.app.rail .sb-lab,.app.rail .sb-none{display:none}
+.app.rail .side{padding-inline:8px}
+.app.rail .sb-prof-btn{justify-content:center;padding:0;min-height:44px;border-color:transparent}
+.app.rail .sb-links a{justify-content:center;padding:0}
+.app.rail .sb-acct{padding:6px 0;border-color:transparent;align-items:center}
+.app.rail .sb-acct-act{flex-direction:column}
+.app.rail .sb-out{flex:none;width:44px;padding:0}
+@media (prefers-reduced-motion:reduce){.side *,.sb-menu{transition:none!important;animation:none!important}}
 </style><div id="app"></div>
 <script>
 // =================== DEVELOPER LOG + CHANGE LOG (for testers) ===================
@@ -3829,7 +3911,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.1", build: "8.1.15", channel: "Dev Testing", date: "2026-10-06", week: "Sun 4 Oct – Sat 10 Oct 2026" };
+const APP_VERSION = { update: "8.1", build: "8.1.16", channel: "Dev Testing", date: "2026-10-06", week: "Sun 4 Oct – Sat 10 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3843,6 +3925,12 @@ const APP_VERSION = { update: "8.1", build: "8.1.15", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.1.16", area:"Sidebar", title:"Sidebar restyled as a floating card: profile switcher, search with Ctrl+K, grouped nav with count badges, account card",
+      bug:"The sidebar was a flat full-height panel with the brand on top, a long nav, and a small profile block at the bottom. There was no quick way to switch household profiles from it, no way to find a destination by typing, Settings sat inside the nav, and sign-out was only reachable inside Settings.",
+      fix:"Layout follows the structure of BoardUI's Sidebar, rebuilt in plain HTML/CSS/JS (no BoardUI, React, Tailwind or other dependency, and no code, icons or assets copied). A floating card, 260px wide, 20px radius, 1px hairline border, no shadow, 12px from the screen edge. Top: the current profile (avatar and name) as a button that opens a menu to switch household profiles, add a profile or open Manage profiles. Then a search field with a Ctrl K hint that filters the nav rows as you type. Then the nav under small section labels (Overview, Log, Plan, Progress, Premium), keeping the gradient icon tiles, with a count badge on Meals, Snacks and Workouts & imports showing how many were logged today; a badge only appears when the number is above zero, and no other row has one. Bottom: Support (the Contact page) and Settings, then an account card with the signed-in email, the save status, the light/dark switch, the passcode lock button and Sign out (Sign in when signed out). Every previous destination and route is kept; Settings moved from the nav to the bottom block. Phones and tablets (1024px and under) keep the drawer with the full-screen scrim and the centred hamburger/arrow morph; the drawer is now the same floating card, and is out of the tab order while closed. Desktop keeps the collapsible icon rail (now a 64px card; clicking the avatar or pressing Ctrl+K expands it). Profile names and the email go through esc(). Rows and buttons are at least 44px tall, the profile menu has arrow-key, Home/End and Escape support, and animation follows prefers-reduced-motion. Ctrl+K now focuses the sidebar search (opening the drawer or expanding the rail first); the quick-jump palette moved to Ctrl+Shift+K. Tapping the page you are already on in the drawer now closes it (before, nothing happened and the drawer stayed open). The wordmark no longer appears in the sidebar.",
+      where:"index.html: sideNav() (count badges, Overview and Premium groups, Settings removed), sideProfile(), sideSearch(), sideFoot() (all new), render() (sidebar markup), icons chevUD, search, help, signout; sbProfMenu(), sbFilter(), sbFocusSearch() and their listeners after the Escape handler; click cases switch (closes the drawer), sb-prof, sb-add-prof, side-out; palette Ctrl+K handler; setRail() widths (card 260 to 64); rail tooltip selectors; tour step for the bottom block; CSS block 8.1.16: SIDEBAR AS A FLOATING CARD at the end of the style sheet. tests/browser/sidebar.mjs (new). CHANGELOG.md, docs/BUILD_PLAN.md, README.md.",
+      test:"node tests/browser/sidebar.mjs (96 checks; set SHOTS=<folder> to save screenshots). It checks the 260px card, radius, border and no shadow; the order of the blocks; every old destination; count badges with real numbers (1 meal and 2 snacks shown, none for workouts); a profile named <img src=x onerror=alert(1)> shown as text with no alert; the profile menu (open, arrow keys, Escape, switch, add, click outside); search (filter, no-match message, Escape, Enter, Ctrl+K, Ctrl+Shift+K); the account card as guest and signed in; 44px targets; the collapsed rail; Forest, Ocean, Sunset and Midnight in light, dark and OLED at 1440px (label contrast at least 4.5:1, no horizontal scroll); and at 820px and 375px the closed drawer, the open card, the scrim, glyph centring, Escape, scrim tap and navigation, in Forest light and in Ocean, Sunset and Midnight light and dark. security.mjs (87), meal-sync.mjs (52) and meal-upload.mjs (14) still pass. By hand: open the app, press Ctrl+K and type 'rec'; open the profile menu with a keyboard (Enter, arrows, Escape).",
+      limits:"Checked in headless Chrome only (Chrome on Windows); not on a real phone, Safari or Firefox. The tests drive the page with a fake sign-in, so the real email sign-in was not exercised. Count badges show today's numbers for the active profile only and update when the page re-renders. Seasonal scenes and font choices were not tested. On phones the drawer's content still starts below the menu button, as before, so on a short screen the nav list scrolls inside the card. Sign-out from the sidebar opens Settings > Profile when the warning about data that is only on this device has to be shown. Ctrl+K no longer opens the quick-jump palette (Ctrl+Shift+K does), which is a change from earlier builds. Support opens the Contact page; there is no separate support section. security.mjs has a timing flake in its cross-tab checks that also fails on the previous commit; it passed on two runs here." },
     { id:"8.1.15", area:"Sync", title:"Meals not uploading: sweep for untracked meals, visible person errors, sign-out uploads everything",
       bug:"Testing the build-8.1.15 preview with a real account: signed in, logged one meal, signed out. Supabase logs showed POSTs to /rest/v1/people but no POST to /rest/v1/meal_logs, so the meal never uploaded. The same logs also showed 38 failed POSTs to /rest/v1/people (409, foreign key people_owner_id_fkey) about 21 seconds apart, from a session whose user no longer existed in auth.users.",
       fix:"Cause, as far as the evidence goes: the upload only ever sent meals that sbTrack() had queued. A meal that was not queued when it was logged was never sent, and sign-out found nothing pending, so it only ran sbEnsurePeople() (the people POST) and deleted the device copy. Fixes: sbSweep() queues any meal on screen that is not in the account yet or differs from what was sent. It runs at the start of sbPush() (so sign-out uploads everything) and inside flush(), before the cache write that lets meals leave the month blob. In sbPush(), a meal whose person did not come back from the people upload used to be skipped silently and stayed pending with no retry. It now throws (person_missing) so it shows and retries; meals of a profile that no longer exists are dropped. A 23503 failure now says 'Your account session is no longer valid. Sign out, then sign in again.' and retries every 2 minutes instead of every 20 seconds. Not reproduced: with the real supabase-js, a new account and request latency up to 700ms, a meal logged through the normal button uploaded within about 2 seconds on this branch and on main (8.1.14), so no build was found to introduce the miss. What the new test does prove is that a meal that skipped sbTrack() was never uploaded before this change and is now.",
@@ -9352,6 +9440,10 @@ const I = {
  moonfill:'<path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.6 8.6 0 1 0 10.7 10.7z" fill="currentColor" stroke="none"/>',
  sunmoon:'<circle cx="6.9" cy="12" r="3.1"/><path d="M6.9 5.9v1.3M6.9 16.8v1.3M1.8 12h1.3M4 9.1l.9.9M4 14.9l.9-.9"/><path d="M21.5 14.7a4.7 4.7 0 0 1-5.8-5.8 4.9 4.9 0 1 0 5.8 5.8z"/>',
  chevR:'<path d="M9 5l7 7-7 7"/>',
+ chevUD:'<path d="M8 9l4-4 4 4M8 15l4 4 4-4"/>',
+ search:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+ help:'<circle cx="12" cy="12" r="9"/><path d="M9.4 9.5a2.7 2.7 0 0 1 5.2 1c0 1.8-2.6 2.2-2.6 3.8"/><path d="M12 17.6v.1"/>',
+ signout:'<path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3"/><path d="M15 8l4 4-4 4M19 12H9"/>',
  arrowL:'<path d="M19 12H5M11 6l-6 6 6 6"/>',
  arrowR:'<path d="M5 12h14M13 6l6 6-6 6"/>',
  alert:'<path d="M12 4.5l9 16H3z"/><path d="M12 10v4M12 17.4v.2"/>',
@@ -9762,20 +9854,10 @@ function render(){
     </main>
     ${(() => { // SPEED: the sidebar is ~half the page markup and rarely changes, so it is only re-diffed when it did
       const inner = `
-      ${wordmark()}
-      <nav class="nav">${sideNav()}</nav>
-      <div class="who stack">
-        <div class="who-top">
-          <a class="who-row" href="#/settings/profile" title="${esc(p.name || "Profile")}" aria-label="${esc(p.name || "Profile")}, view profile">${avatarHTML(p, 32)}<span class="grow"><b>${esc(p.name || "Profile")}</b><span class="tiny muted">View profile ${icon("chevR","go",13)}</span></span></a>
-          <div class="side-tools">
-            ${(() => { const m = p.look?.mode || "auto";
-              const ic = m === "light" ? "sun" : m === "dark" ? "moon" : m === "oled" ? "moonfill" : "sunmoon";
-              const lab = m === "light" ? "Light" : m === "dark" ? "Dark" : m === "oled" ? "OLED" : "Auto";
-              return `<button class="btn sm mode-btn" data-act="theme-toggle" title="Appearance: ${lab}" aria-label="Appearance: ${lab}. Switch mode">${icon(ic,"mode-ico",18)} <span>${lab}</span></button>`; })()}
-          </div>
-        </div>
-        <div class="who-status"><span id="save-state">${saveStateHTML()}</span>${CRY.lock ? `<button class="btn lock-mini" data-act="lock-now" aria-label="Lock now" title="Lock now">${icon("lock")}</button>` : ""}</div>
-      </div>
+      ${sideProfile(p)}
+      ${sideSearch()}
+      <nav class="nav" aria-label="Sections">${sideNav()}</nav>
+      ${sideFoot(p)}
 `;
       const same = inner === UI._sideHTML && !!document.querySelector("#app .side .nav");
       UI._sideHTML = inner;
@@ -9939,6 +10021,7 @@ function afterRender(){
   if (typeof placeNotifPanel === "function") placeNotifPanel();
   if (typeof paintFooterYear === "function") paintFooterYear();
   revealActive();
+  sbFilter(document.getElementById("sb-q")?.value);
   if (typeof tourAfterRender === "function") tourAfterRender(); // 8.1.7 app tour
   if (typeof stepperAfterRender === "function") stepperAfterRender(); // 8.1.9 stepper motion
   if (typeof applyCanonical === "function") applyCanonical();
@@ -10026,7 +10109,10 @@ function toggleNavGroup(id){
   render();
 }
 function sideNav(){
-  const link = (href, on, ic, grad, label) => `<a href="${href}" data-anim="${ic}" data-label="${esc(label)}" title="${esc(label)}"${on ? ' aria-current="page"' : ""}>${siTile(grad, cicon(ic, "#fff", 22, UI.animIcon === ic && UI.motionOk !== false ? "zap" : ""))}<span>${label}</span></a>`;
+  // 8.1.16: a count badge only where the log holds a real number for today; zero shows nothing.
+  const badge = n => n > 0 ? `<span class="sb-badge"><span aria-hidden="true">${n}</span><span class="sr-only">, ${n} today</span></span>` : "";
+  const link = (href, on, ic, grad, label, n = 0) => `<a href="${href}" data-anim="${ic}" data-label="${esc(label)}" title="${esc(label)}"${on ? ' aria-current="page"' : ""}>${siTile(grad, cicon(ic, "#fff", 22, UI.animIcon === ic && UI.motionOk !== false ? "zap" : ""))}<span class="sb-lab">${label}</span>${badge(n)}</a>`;
+  const todayN = k => onDate(k, today()).length;
   const premOn = typeof isPremium === "function" && isPremium();
   const here = UI.route + "/" + (UI.param || "");
   // v11.0 TASK 7: readiness badge, same green/neutral pill the Premium popup shows, driven by
@@ -10064,17 +10150,50 @@ function sideNav(){
       <div class="navgrp-items">${itemsHTML}</div>
     </div>`;
   const groupsHTML =
-    group("log", "Log", link("#/nutrition", UI.route === "nutrition", "apple", SI_GRAD.meals, "Meals")
-      + link("#/snacks", UI.route === "snacks", "cookie", SI_GRAD.snacks, "Snacks")
-      + link("#/workouts", UI.route === "workouts", "dumbbell", SI_GRAD.workouts, "Workouts & imports"))
+    group("overview", "Overview", link("#/home", UI.route === "home", "heartecg", SI_GRAD.summary, "Summary"))
+    + group("log", "Log", link("#/nutrition", UI.route === "nutrition", "apple", SI_GRAD.meals, "Meals", todayN("meals"))
+      + link("#/snacks", UI.route === "snacks", "cookie", SI_GRAD.snacks, "Snacks", todayN("snacks"))
+      + link("#/workouts", UI.route === "workouts", "dumbbell", SI_GRAD.workouts, "Workouts & imports", todayN("workouts")))
     + group("plan", "Plan", link("#/recipes", UI.route === "recipes", "book", SI_GRAD.recipes, "Recipes & meal plans")
       + link("#/culture", UI.route === "culture", "globe", SI_GRAD.culture, "Food culture")
       + link("#/coach", UI.route === "coach", "stopwatch", SI_GRAD.coach, "Personal coach"))
     + group("progress", "Progress", link("#/health", inHealth, "grid", SI_GRAD.health, "Health data")
       + link("#/awards", UI.route === "awards", "medal", SI_GRAD.awards, "Achievements & Goals"));
-  const tail = `<div class="navgrp navgrp-static navgrp-tail" data-grp="more"><div class="navgrp-items">${premHub}
-      ${link("#/settings", UI.route === "settings", "gear", SI_GRAD.settings, "Settings")}</div></div>`;
-  return link("#/home", UI.route === "home", "heartecg", SI_GRAD.summary, "Summary") + groupsHTML + tail;
+  // Settings moved to the sidebar's bottom block (sideFoot) in 8.1.16; Premium keeps its group.
+  const tail = `<div class="navgrp navgrp-static navgrp-tail" role="group" aria-labelledby="ngl-more" data-grp="more"><span class="grp grp-static" id="ngl-more">Premium</span><div class="navgrp-items">${premHub}</div></div>`;
+  return groupsHTML + tail + `<p class="sb-none tiny muted" role="status" hidden>No menu items match.</p>`;
+}
+
+// ---- sidebar: profile switcher, search, bottom block (8.1.16) ----
+function sideProfile(p){
+  const n = S.profiles.length;
+  const items = S.profiles.map(x => `<button type="button" role="menuitemradio" aria-checked="${x.id === p.id}" data-act="switch" data-id="${esc(x.id)}">${avatarHTML(x, 24)}<span class="sb-mi-t">${esc(x.name || "Unnamed")}</span>${x.id === p.id ? icon("check", "sb-mi-on", 16) : ""}</button>`).join("");
+  return `<div class="sb-prof">
+    <button type="button" class="sb-prof-btn" data-act="sb-prof" aria-haspopup="menu" aria-expanded="false" aria-controls="sb-prof-menu" title="${esc(p.name || "Profile")}">${avatarHTML(p, 36)}<span class="sb-who"><b>${esc(p.name || "Profile")}</b><span class="tiny muted">${n > 1 ? `${n} profiles` : "Your profile"}</span></span>${icon("chevUD", "sb-chev", 16)}</button>
+    <div class="sb-menu" id="sb-prof-menu" role="menu" aria-label="Switch profile" hidden>
+      <div class="sb-menu-h tiny muted">Switch profile</div>${items}
+      <div class="sb-menu-sep" role="separator"></div>
+      <a role="menuitem" href="#/settings/household">Manage profiles</a>
+      ${n < 12 ? `<button type="button" role="menuitem" data-act="sb-add-prof">Add a profile</button>` : ""}
+    </div></div>`;
+}
+const sideSearch = () => `<div class="sb-search" role="search">${icon("search", "sb-s-ico", 16)}<input type="search" id="sb-q" placeholder="Search menu" aria-label="Search the menu" autocomplete="off" spellcheck="false" aria-keyshortcuts="Control+K"><kbd class="sb-kbd" aria-hidden="true">Ctrl K</kbd></div>`;
+function sideFoot(p){
+  const row = (href, on, ic, grad, label) => `<a href="${href}" data-label="${esc(label)}" title="${esc(label)}"${on ? ' aria-current="page"' : ""}>${siTile(grad, icon(ic, "", 18))}<span class="sb-lab">${label}</span></a>`;
+  const m = p.look?.mode || "auto";
+  const mi = m === "light" ? "sun" : m === "dark" ? "moon" : m === "oled" ? "moonfill" : "sunmoon";
+  const ml = m === "light" ? "Light" : m === "dark" ? "Dark" : m === "oled" ? "OLED" : "Auto";
+  const email = SB.user?.email;
+  return `<div class="sb-foot">
+    <nav class="sb-links" aria-label="Support and settings">${row("#/contact", UI.route === "contact", "help", SI_GRAD.culture, "Support")}${row("#/settings", UI.route === "settings", "gear", SI_GRAD.settings, "Settings")}</nav>
+    <div class="sb-acct">
+      <div class="sb-acct-top"><span class="sb-acct-t"><b class="sb-email"${email ? ` title="${esc(email)}"` : ""}>${email ? esc(email) : "Not signed in"}</b><span class="tiny muted" id="save-state">${saveStateHTML()}</span></span></div>
+      <div class="sb-acct-act">
+        <button type="button" class="btn sm sb-mini" data-act="theme-toggle" title="Appearance: ${ml}" aria-label="Appearance: ${ml}. Switch mode">${icon(mi, "mode-ico", 18)}</button>
+        ${CRY.lock ? `<button type="button" class="btn sm sb-mini lock-mini" data-act="lock-now" aria-label="Lock now" title="Lock now">${icon("lock", "", 18)}</button>` : ""}
+        ${email ? `<button type="button" class="btn sm sb-out" data-act="side-out"${SB.busy ? " disabled" : ""}>${icon("signout", "", 16)}<span>Sign out</span></button>` : `<a class="btn sm sb-out" href="#/settings/profile">${icon("user", "", 16)}<span>Sign in</span></a>`}
+      </div>
+    </div></div>`;
 }
 
 // =================== LOADER & ONBOARDING ===================
@@ -10475,13 +10594,13 @@ function railTipHide(){ RAILTIP?.classList.remove("on"); }
 function railOn(){ return document.querySelector(".app.rail"); }
 document.addEventListener("pointerover", e => {
   if (!railOn()) return;
-  const a = e.target.closest(".side .nav a");
+  const a = e.target.closest(".side .nav a, .side .sb-links a");
   a ? railTip(a) : railTipHide();
 }, { passive: true });
 document.addEventListener("pointerleave", () => railTipHide(), { capture: true, passive: true });
 document.addEventListener("focusin", e => {
   if (!railOn()) return railTipHide();
-  const a = e.target.closest(".side .nav a");
+  const a = e.target.closest(".side .nav a, .side .sb-links a");
   a ? railTip(a) : railTipHide();
 });
 document.addEventListener("focusout", () => railTipHide());
@@ -11389,7 +11508,10 @@ document.addEventListener("click", async e => {
       saveProfile(); render();
       toast(p.targetKg ? `Targets saved. Goal weight ${fmtWeight(p.targetKg, p)}.` : "Targets saved", "success"); break; }
     case "new-profile": UI.lastActive = p?.id; UI.obDraft = newProfile(""); UI.obStep = 0; S.activeId = null; render(); break;
-    case "switch": S.activeId = t.dataset.id; saveProfile(); resetUI(); render(); toast(`Switched to ${P().name || "profile"}`); break;
+    case "switch": S.activeId = t.dataset.id; saveProfile(); resetUI(); render(); toast(`Switched to ${P().name || "profile"}`); if (UI.menu) setMenu(false); break;
+    case "sb-prof": if (UI.rail && !matchMedia("(max-width:1024px)").matches) { setRail(false); break; } sbProfMenu(document.getElementById("sb-prof-menu")?.hidden !== false); break;
+    case "sb-add-prof": UI.obDraft = newProfile(""); UI.obStep = 0; S.activeId = null; UI.lastActive = p?.id; if (UI.menu) setMenu(false); render(); break;
+    case "side-out": await sbSignOut(false); if (UI.sbConfirmOut && !(UI.route === "settings" && UI.param === "profile")) location.hash = "#/settings/profile"; break;
     case "del-profile": UI.confirmDel = t.dataset.id; render(); break;
     case "del-profile-no": UI.confirmDel = null; render(); break;
     case "del-profile-yes": { const id = t.dataset.id; S.profiles = S.profiles.filter(x => x.id !== id); for (const m in (S.logs[id]||{})) { delete S.logs[id][m]; markLog(id, m); } delete S.logs[id]; if (S.activeId === id) S.activeId = S.profiles[0]?.id || null; UI.confirmDel = null; saveProfile(); render(); toast("Profile deleted"); break; }
@@ -11845,7 +11967,8 @@ function closePalette(){
   setTimeout(() => { back.hidden = pal.hidden = true; }, 200);
 }
 document.addEventListener("keydown", e => {
-  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); PAL.open ? closePalette() : openPalette(); return; }
+  // 8.1.16: Ctrl+K focuses the sidebar search; Ctrl+Shift+K (or no sidebar on screen) opens this palette.
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); if (!PAL.open && !e.shiftKey && sbFocusSearch()) return; PAL.open ? closePalette() : openPalette(); return; }
   if (!PAL.open) return;
   if (e.key === "Escape") { e.preventDefault(); closePalette(); }
   if (e.key === "ArrowDown") { e.preventDefault(); PAL.index = Math.min(PAL.index + 1, (PAL.matches?.length || 1) - 1); highlightPalette(); }
@@ -13903,18 +14026,19 @@ function setRail(collapse){
   syncMenuToggles();
   if (reduce) { app.classList.toggle("rail", UI.rail); app.classList.remove("rail-out"); return; }
   // where the content will end up once the new layout is in place
-  const finalLeft = collapse ? before.left - (sideW0 - 76) : before.left + (280 - sideW0);
-  const dx = before.left - finalLeft, wFinal = before.width + (collapse ? sideW0 - 76 : -(280 - sideW0));
+  // the card is 260px wide expanded and 64px as a rail (the grid column adds the same 24px gap to both)
+  const finalLeft = collapse ? before.left - (sideW0 - 64) : before.left + (260 - sideW0);
+  const dx = before.left - finalLeft, wFinal = before.width + (collapse ? sideW0 - 64 : -(260 - sideW0));
   // first frame: the old look, drawn on the new layout (no transition yet)
   if (collapse) { main.style.width = `${wFinal}px`; main.style.marginRight = `${-(wFinal - before.width)}px`; }
   main.style.transform = collapse ? "translateX(0px)" : `translateX(${dx}px)`;
-  side.style.clipPath = collapse ? "inset(0 0 0 0)" : `inset(0 ${280 - 76}px 0 0)`;
+  side.style.clipPath = collapse ? "inset(0 0 0 0)" : `inset(0 ${260 - 64}px 0 0)`;
   main.style.willChange = "transform"; side.style.willChange = "clip-path";
   void main.offsetWidth;
   app.classList.add("rail-anim");
   requestAnimationFrame(() => {
     main.style.transform = collapse ? `translateX(${-dx}px)` : "translateX(0px)";
-    side.style.clipPath = collapse ? `inset(0 ${sideW0 - 76}px 0 0)` : "inset(0 0 0 0)";
+    side.style.clipPath = collapse ? `inset(0 ${sideW0 - 64}px 0 0)` : "inset(0 0 0 0)";
   });
   const done = () => {
     if (!RAIL_ANIM) return; RAIL_ANIM = null; clearTimeout(t);
@@ -13965,6 +14089,67 @@ document.addEventListener("keydown", e => {
     const t = [...document.querySelectorAll(".menu-toggle")].find(b => b.offsetParent !== null && b.getBoundingClientRect().bottom > 0);
     t?.focus({ preventScroll: true });
   }
+});
+
+// ---- sidebar: profile menu, search, Ctrl+K (8.1.16) ----
+function sbProfMenu(open){
+  const m = document.getElementById("sb-prof-menu"), b = document.querySelector(".sb-prof-btn"); if (!m || !b) return;
+  m.hidden = !open; b.setAttribute("aria-expanded", String(open));
+  if (open) (m.querySelector('[aria-checked="true"]') || m.querySelector("button,a"))?.focus({ preventScroll: true });
+}
+// Filters the nav rows by label and hides a group when none of its rows match. Rows are hidden
+// with the hidden attribute only, so clearing the field always brings every row back.
+function sbFilter(q){
+  q = (q || "").trim().toLowerCase();
+  const nav = document.querySelector(".side .nav"); if (!nav) return;
+  let shown = 0;
+  nav.querySelectorAll("[data-label]").forEach(a => { const hit = !q || (a.dataset.label || "").toLowerCase().includes(q); a.hidden = !hit; if (hit) shown++; });
+  nav.querySelectorAll(".navgrp").forEach(g => { g.hidden = !!q && !g.querySelector("[data-label]:not([hidden])"); });
+  const none = nav.querySelector(".sb-none"); if (none) none.hidden = !q || shown > 0;
+}
+function sbFocusSearch(){
+  const q = document.getElementById("sb-q"); if (!q) return false;
+  if (matchMedia("(max-width:1024px)").matches) { if (!UI.menu) setMenu(true); }
+  else if (UI.rail) setRail(false);
+  requestAnimationFrame(() => { q.focus({ preventScroll: true }); q.select(); });
+  return true;
+}
+document.addEventListener("input", e => { if (e.target.id === "sb-q") sbFilter(e.target.value); });
+document.addEventListener("keydown", e => {
+  const t = e.target;
+  if (e.key === "Escape") {
+    // Closes the profile menu or clears the search first; only then does Escape fall through to
+    // the drawer / rail handler above.
+    const m = document.getElementById("sb-prof-menu");
+    if (m && !m.hidden) { e.stopImmediatePropagation(); sbProfMenu(false); document.querySelector(".sb-prof-btn")?.focus({ preventScroll: true }); return; }
+    if (t.id === "sb-q" && t.value) { e.stopImmediatePropagation(); t.value = ""; sbFilter(""); }
+    return;
+  }
+  if (t.id === "sb-q") {
+    const first = () => document.querySelector('.side .nav [data-label]:not([hidden])');
+    if (e.key === "Enter") { e.preventDefault(); first()?.click(); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); first()?.focus(); }
+    return;
+  }
+  const menu = t.closest?.("#sb-prof-menu");
+  if (menu && ["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) {
+    e.preventDefault();
+    const items = [...menu.querySelectorAll("button,a")], i = items.indexOf(t);
+    items[e.key === "Home" ? 0 : e.key === "End" ? items.length - 1 : (i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+  }
+}, true);
+document.addEventListener("click", e => {
+  const m = document.getElementById("sb-prof-menu");
+  if (m && !m.hidden && (!e.target.closest(".sb-prof") || e.target.closest("#sb-prof-menu a, #sb-prof-menu [data-act]"))) sbProfMenu(false);
+  // choosing a destination ends the search so the next visit starts with the full list; choosing
+  // the page you are already on fires no hashchange, so the drawer is closed here instead
+  const dest = e.target.closest(".side .nav a, .side .sb-links a");
+  if (dest && UI.menu && dest.getAttribute("href") === location.hash) setMenu(false);
+  if (dest) { const q = document.getElementById("sb-q"); if (q?.value) { q.value = ""; sbFilter(""); } }
+});
+document.addEventListener("focusin", e => {
+  const m = document.getElementById("sb-prof-menu");
+  if (m && !m.hidden && !e.target.closest(".sb-prof")) sbProfMenu(false);
 });
 
 // Section 5: notifications live behind a bell with an unread count.
@@ -20400,7 +20585,7 @@ const TOUR_DEFS = {
       body:"Recipes & meal plans builds a 3- or 7-day plan from the dish library. Food culture suggests meals from where your food comes from and can become that plan. Your coach builds a weekly workout plan from your goal." },
     { menu:true, sel:'.side [data-grp="progress"]', title:"Progress",
       body:"Health data keeps every measurement with its history, from steps and sleep to heart rate. Achievements & Goals has badges and a monthly challenge you can take on with your household." },
-    { menu:true, sel:".side .navgrp-tail", title:"Premium and Settings",
+    { menu:true, sel:".side .sb-foot", title:"Settings and your account",
       body:"Settings holds household profiles, your passcode, text size and theme. Replay this tour, or tour one area in detail, from Settings › Data & about." }
   ]},
   logging: { name:"Logging", blurb:"Meals, snacks and workouts", steps:[
