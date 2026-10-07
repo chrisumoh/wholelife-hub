@@ -38,6 +38,16 @@ Form controls (inputs, selects, textareas, date picker, buttons, button groups, 
 - Primary and destructive buttons use a light top-to-bottom gradient of `--accent` and `--bad`. Colors still come from the tokens, so every scheme, accent and theme follows.
 - Every control is at least 44px tall. The styles live in one block at the end of the stylesheet (`8.1.19 form controls`) and the script before `</body>`.
 
+### Approved exception: liquid glass, caustics and the beam (8.1.20)
+
+Cards are frosted glass again, at the owner's request. This replaces "no shadows" and the "Liquid Glass stays retired" notes for these surfaces only:
+
+- **Glass:** cards, widgets, health tiles, recipe cards, tab bars and profile strips get `backdrop-filter: blur(14px) saturate(1.4)` (outermost surface only, never blur inside blur), a 1px inset rim (`--glass-line`) and a lit top edge (`--glass-hi`). The Interface opacity slider (`--ui-op`) still sets how much surface colour sits in the glass.
+- **Streak and press:** a light streak crosses a card on hover (mouse only); tappable cards scale to 0.97 when pressed.
+- **Caustics:** widgets and health tiles carry two blurred light pools drifting behind their content.
+- **Beam:** Today at a glance and the coach advice card have a 2px accent light running round the border. It always uses `--accent`, so it follows the theme and accent picker.
+- Reduced motion stops the caustics, beam and springs; Reduce transparency removes the blur. The styles live in one block at the end of the stylesheet (`8.1.20`).
+
 ## Coach personas
 
 Three selectable-before-personalization, renamable personas: The Motivator (streaks, "Wins & next steps"), The Enforcer (adherence score, "Deviations"), The Strategist (intensity dial Recover/Standard/Push, "Adjustments"). Each has its own question set and voice. The daily advice card must satisfy all 9 personalization rules in the master prompt (Phase 3).

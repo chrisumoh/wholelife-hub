@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.1.20 | Liquid glass cards with a hover streak and press, caustics on widgets, an accent beam on Today at a glance and the coach card (replacing the green glow), and a rubber-band Interface opacity slider | IN PROGRESS: build-8.1.20 (branched from build-8.1.19), pull request open, not merged |
 | 8.1.19 | Form controls restyled to BoardUI's look (input, textarea auto-resize, select listbox, date picker, segmented control, button and button group, sign-in card), 44px touch targets. Date range picker not found, skipped | IN PROGRESS: build-8.1.19, pushed, not merged |
 | 8.1.18 | Compact account row with sign-in popup, tighter spacing, Premium in Ctrl+K, Snap your plate copy. 8.1.16 and 8.1.17 were closed and never released; sidebar rework and legal pages are not in this build | IN PROGRESS: build-8.1.18 from main, not merged |
 | 8.1.15 | Audit fixes from PR #5: coach text escaped, per-account local storage with sign-out clearing, guest import/discard, Erase removes notif/rem keys, short error logs, db account path removed, privacy text matches the code, "Whole Life Hub" name, browser tests | IN PROGRESS: build-8.1.15, pull request open, not merged |
@@ -45,6 +46,12 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.1.20
+
+- Done: `node tests/browser/glass.mjs` (36 checks, headless Chrome) at 1440px and 375px, dark and light, beam colour in Forest, Ocean, Sunset and Midnight; no horizontal scroll at 375px; no page errors.
+- Done: `security.mjs` (87) and `meal-sync.mjs` (55) still pass. `controls.mjs` and `meal-upload.mjs` were run on the Windows laptop (see the pull request).
+- Not run: 820px, OLED, fonts, seasonal scenes, premium flag, coach voices, real phones (scroll smoothness with the blur is the main thing to check), Safari and Firefox, and the deployed-preview checks. No Supabase files were touched.
 
 ### Checklist run for 8.1.19
 
