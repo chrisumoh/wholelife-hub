@@ -67,6 +67,9 @@ A health and fitness web app that lives in one file, `index.html` (markup, CSS a
 - Do work on a branch named after the build, such as `build-8.1.11`. Push it so Vercel creates a preview link for testers. (If a session names a specific branch, use that one.)
 - **Never push or merge to `main` without asking me first.**
 - You may open a pull request into `main` when a build branch is ready. Never merge it. I merge.
+- When you open a pull request, end your report with two blocks I can paste into GitHub's merge boxes:
+  - **Merge title**: `<version>: <short summary> (#<PR number>)`, for example `8.1.15: sign-in storage, sign-out warning and meal upload fixes (#6)`.
+  - **Merge description**: a short list of the changes, then one line on how it was tested.
 - Run the app locally by opening `index.html`, or serve it with `python3 -m http.server 8080`.
 
 ## 7. Single source
