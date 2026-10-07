@@ -23,6 +23,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 |---|---|---|
 | 8.1.15 | Audit fixes from PR #5: coach text escaped, per-account local storage with sign-out clearing, guest import/discard, Erase removes notif/rem keys, short error logs, db account path removed, privacy text matches the code, "Whole Life Hub" name, browser tests | IN PROGRESS: build-8.1.15, pull request open, not merged |
 | 8.1.16 | Sidebar restyle: floating 260px card, profile switcher, search with Ctrl+K, grouped nav with count badges, Support / Settings / account card; drawer, scrim and arrow morph kept | IN PROGRESS: build-8.1.16, pull request open, not merged |
+| 8.1.17 | BoardUI-style components in plain HTML/CSS/JS: labelled fields (sign-in, passcode, every text box), Announcement-style tour offer, tour card and warning cards, breadcrumb with icons, link buttons, a date picker on all 9 date fields, dropdowns on 26 selects | IN PROGRESS: build-8.1.17 (branched from build-8.1.16), pull request open, not merged |
 
 ## Standing backlog
 
@@ -57,3 +58,9 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Done: `node tests/browser/sidebar.mjs` (96 checks, headless Chrome). 375px, 820px and 1440px: no horizontal scroll, nothing sticking out of the card, 44px controls. Drawer mode (375 and 820): scrim covers the viewport, the arrow glyph is centred on its button (within 0.5px), Escape and scrim tap close it, no scrim on the desktop card. Themes: Forest, Ocean, Sunset and Midnight, each in light, dark and OLED at 1440px (nav label contrast at least 4.5:1); the drawer was checked at 375 and 820 in Forest light and in Ocean, Sunset and Midnight light and dark.
 - Done: `security.mjs` (87), `meal-sync.mjs` (52), `meal-upload.mjs` (14) still pass. The cross-tab checks in security.mjs are timing-flaky and fail the same way on the previous commit.
 - Not run: the full theme x font sweep (fonts were not varied), the premium locked/unlocked check, coach voices, the feature regression sweep, seasonal scenes, real phones, Safari and Firefox, and the deployed-preview checks that need a real account. No Supabase files were touched.
+
+### Checklist run for 8.1.17
+
+- Done: `node tests/browser/components.mjs` (65 checks, headless Chrome) at 1440px and 375px, light and dark: no page errors, 44px field heights and close buttons, the date picker is a bottom sheet with 44px days on phones, the dropdown menu fits the screen, the breadcrumb stays on one line.
+- Done: `sidebar.mjs` (96), `security.mjs` (87) and `meal-sync.mjs` (52) still pass, so the sign-out warning, sidebar and sync behave as before.
+- Not run in the build sandbox: `meal-upload.mjs` (needs the supabase-js CDN). Not run: 820px for the new popups, the theme x font sweep, seasonal scenes, premium flag, coach voices, real phones, Safari and Firefox, and the deployed-preview checks that need a real account. No Supabase files were touched.

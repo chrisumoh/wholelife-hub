@@ -3899,6 +3899,198 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 .app.rail .sb-acct-act{flex-direction:column}
 .app.rail .sb-out{flex:none;width:44px;padding:0}
 @media (prefers-reduced-motion:reduce){.side *,.sb-menu{transition:none!important;animation:none!important}}
+/* =================== 8.1.17: FIELDS, ANNOUNCEMENT CARDS, BREADCRUMB, LINK BUTTONS, DATE PICKER, DROPDOWN ===================
+   Layouts follow BoardUI's Input, Announcement, Breadcrumb, Link Button, Date Picker and Dropdown docs,
+   rebuilt in plain CSS on this app's tokens. No BoardUI or Tailwind code is copied. */
+:root{--field-bg:var(--surface);--field-line:var(--line2);--field-ring:color-mix(in srgb,var(--accent) 26%,transparent);--field-ring-bad:color-mix(in srgb,var(--bad) 24%,transparent)}
+
+/* ---- every text field: one box, one focus ring that fades in, an invalid state ---- */
+:is(input[type=text],input[type=email],input[type=password],input[type=number],input[type=date],input[type=time],input[type=search],input[type=tel],input[type=url],select,textarea):where(:not(#palette-input):not(.sb-search input)){
+  background:var(--field-bg);border:1px solid var(--field-line);border-radius:12px;min-height:44px;padding:0 12px;color:var(--text);
+  box-shadow:0 0 0 0 transparent;outline:none;transition:border-color var(--dur-tap) var(--ease-smooth),box-shadow var(--dur-tap) var(--ease-smooth),background-color var(--dur-tap) var(--ease-smooth)}
+textarea:is([class],:not([class])):where(:not(#palette-input)){padding:10px 12px;min-height:88px}
+@media (hover:hover) and (pointer:fine){
+  :is(input[type=text],input[type=email],input[type=password],input[type=number],input[type=date],input[type=time],input[type=search],input[type=tel],input[type=url],select,textarea):where(:not(#palette-input):not(.sb-search input)):hover:not(:focus):not(:disabled):not([aria-invalid=true]):not(:user-invalid){border-color:var(--muted)}
+}
+:is(input[type=text],input[type=email],input[type=password],input[type=number],input[type=date],input[type=time],input[type=search],input[type=tel],input[type=url],select,textarea):where(:not(#palette-input):not(.sb-search input)):focus-visible{
+  border-color:var(--accent);box-shadow:0 0 0 4px var(--field-ring);outline:none}
+:is(input,select,textarea):where(:not(#palette-input):not(.sb-search input)):is([aria-invalid=true],:user-invalid){border-color:var(--bad)}
+:is(input,select,textarea):where(:not(#palette-input):not(.sb-search input)):is([aria-invalid=true],:user-invalid):focus-visible{border-color:var(--bad);box-shadow:0 0 0 4px var(--field-ring-bad)}
+:is(input,select,textarea):disabled{opacity:.55;cursor:not-allowed}
+
+/* ---- labelled field (field()) ---- */
+.fx{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fx-l{font-size:calc(13px * var(--text-scale,1));font-weight:600;color:var(--muted)}
+.fx-req{color:var(--bad);margin-left:3px}
+.fx-box{position:relative;display:flex;align-items:center;min-width:0}
+.fx-box>input{flex:1 1 auto;width:100%;min-width:0}
+.fx-box.has-lead>input{padding-left:40px}
+.fx-box.has-trail>input{padding-right:48px}
+.fx-lead{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;transition:color var(--dur-tap) var(--ease-smooth)}
+.fx-box:focus-within .fx-lead{color:var(--accent)}
+.fx-box:has(:is([aria-invalid=true],:user-invalid)) .fx-lead{color:var(--bad)}
+.fx-eye{all:unset;box-sizing:border-box;position:absolute;right:2px;top:50%;transform:translateY(-50%);width:44px;height:40px;display:grid;place-items:center;border-radius:10px;color:var(--muted);cursor:pointer}
+@media (hover:hover) and (pointer:fine){.fx-eye:hover{color:var(--text)}}
+.fx-eye:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.fx-hint{font-size:calc(13px * var(--text-scale,1));color:var(--muted);line-height:1.4}
+.fx-err{font-size:calc(13px * var(--text-scale,1));color:var(--bad);font-weight:600}
+.fx:has(:is([aria-invalid=true],:user-invalid)) .fx-hint{color:var(--bad)}
+
+/* ---- announcement card: tour offer, tour steps, warnings ---- */
+.ann{position:relative;display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:16px;background:var(--surface);border:1px solid var(--line);color:var(--text);text-align:left}
+.ann-head{display:flex;gap:12px;align-items:flex-start;padding-right:36px;min-width:0}
+.ann-ic{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.ann-txt{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ann-t{font-size:calc(16px * var(--text-scale,1));font-weight:700;line-height:1.3;margin:0}
+.ann-d{font-size:calc(14px * var(--text-scale,1));line-height:1.45;color:var(--muted);margin:0}
+.ann-d a{color:var(--accent)}
+.ann-x{all:unset;box-sizing:border-box;position:absolute;top:6px;right:6px;width:44px;height:44px;display:grid;place-items:center;border-radius:12px;color:var(--muted);cursor:pointer;transition:background-color var(--dur-tap) var(--ease-smooth),color var(--dur-tap) var(--ease-smooth)}
+@media (hover:hover) and (pointer:fine){.ann-x:hover{background:var(--raise);color:var(--text)}}
+.ann-x:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.ann-act{width:100%;justify-content:center}
+.ann-acts{display:flex;gap:8px;flex-wrap:wrap}
+.ann-acts>.btn{flex:1 1 140px;justify-content:center}
+.ann-bad{border-color:color-mix(in srgb,var(--bad) 30%,var(--line));background:color-mix(in srgb,var(--bad-soft) 55%,var(--surface))}
+.ann-bad .ann-ic{background:var(--bad-soft);color:var(--bad)}
+.ann-bad .ann-d,.ann-bad .small{color:var(--text)}
+.ann-bad ul.clean{margin:2px 0 4px}
+.li+.ann{margin:4px 0 8px}
+@keyframes annIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes annOut{to{opacity:0;transform:scale(.96);filter:blur(2px)}}
+.ann[role=alert]{animation:annIn var(--dur-popup) var(--ease-spring) both}
+
+/* the first-run tour offer, bottom centre */
+.tour-offer.ann{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:calc(var(--z-popup) + 4);
+  width:min(360px,calc(100vw - 32px));display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.18);animation:tourUp var(--dur-popup) var(--ease-spring) both}
+.tour-offer.ann.out{animation:tourOut 220ms var(--ease-smooth) both;pointer-events:none}
+@keyframes tourOut{from{opacity:1;transform:translate(-50%,0) scale(1)}to{opacity:0;transform:translate(-50%,6px) scale(.96);filter:blur(2px)}}
+/* the tour step card */
+.tour-card.ann{padding:16px;gap:10px;border-radius:16px}
+.tour-card.ann .tour-count{font-size:calc(11px * var(--text-scale,1))}
+.tour-card.ann h2.ann-t{font-size:calc(17px * var(--text-scale,1));margin:0}
+.tour-card.ann p.ann-d{font-size:calc(15px * var(--text-scale,1));color:var(--text)}
+.tour-card.ann .tour-actions{margin-top:2px}
+.tour-dots{display:flex;gap:5px;align-items:center}
+.tour-dots i{width:6px;height:6px;border-radius:999px;background:var(--line2);transition:width var(--dur-tap) var(--ease-spring),background-color var(--dur-tap) var(--ease-smooth)}
+.tour-dots i.done{background:color-mix(in srgb,var(--accent) 45%,var(--line2))}
+.tour-dots i.on{width:18px;background:var(--accent)}
+
+/* ---- warnings (.note): soft tinted card with a leading icon instead of the left bar ---- */
+.note{position:relative;border:1px solid color-mix(in srgb,var(--warn) 30%,var(--line));border-left-width:1px;background:color-mix(in srgb,var(--warn-soft) 70%,var(--surface));
+  border-radius:12px;padding:12px 14px 12px 44px;color:var(--text);line-height:1.45}
+.note::before{content:"";position:absolute;left:14px;top:13px;width:18px;height:18px;background:var(--warn);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4.5l9 16H3z'/%3E%3Cpath d='M12 10v4M12 17.4v.2'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4.5l9 16H3z'/%3E%3Cpath d='M12 10v4M12 17.4v.2'/%3E%3C/svg%3E") center/contain no-repeat}
+.note.info{border-color:color-mix(in srgb,var(--accent) 28%,var(--line));background:color-mix(in srgb,var(--accent-soft) 70%,var(--surface))}
+.note.info::before{background:var(--accent);
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5M12 8h.01'/%3E%3C/svg%3E");
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5M12 8h.01'/%3E%3C/svg%3E")}
+.note>b:first-child{display:block;margin-bottom:2px}
+
+/* ---- breadcrumb ---- */
+.crumbs{gap:2px}
+.crumbs .crumb{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 8px;border-radius:8px;color:var(--muted);text-decoration:none;font-weight:500;
+  transition:background-color var(--dur-tap) var(--ease-smooth),color var(--dur-tap) var(--ease-smooth)}
+.crumbs a.crumb:first-child{margin-left:-8px}
+.crumbs .crumb-i{flex:none;opacity:.85}
+@media (hover:hover) and (pointer:fine){.crumbs a.crumb:hover{background:color-mix(in srgb,var(--text) 7%,transparent);color:var(--text);text-decoration:none}}
+.crumbs a.crumb:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.crumbs .crumb[aria-current]{color:var(--text);font-weight:600;cursor:default}
+.crumbs .crumb-sep{display:inline-flex;color:var(--chevron);flex:none}
+.ph-text .crumbs>.crumb[aria-current]{display:block;line-height:32px}
+.ph-text .crumbs{flex-wrap:nowrap}
+@media (max-width:600px){.crumbs .crumb{padding:0 4px;min-height:28px;gap:4px}.ph-text .crumbs>.crumb[aria-current]{line-height:28px}.crumbs .crumb-i{display:none}.crumbs a.crumb:first-child{margin-left:-4px}}
+
+/* ---- link button ---- */
+.lbtn{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--accent);font-weight:600;white-space:nowrap;
+  font-size:calc(15px * var(--text-scale,1));min-height:36px;border-radius:6px;text-decoration:none;transition:color var(--dur-tap) var(--ease-smooth)}
+.lbtn-sm{font-size:calc(14px * var(--text-scale,1));gap:5px;min-height:32px}
+.lbtn-xs{font-size:calc(13px * var(--text-scale,1));gap:4px;min-height:28px}
+.lbtn-2{color:var(--muted)}
+.lbtn>span{text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;text-decoration-thickness:1.5px;transition:text-decoration-color var(--dur-tap) var(--ease-smooth)}
+@media (hover:hover) and (pointer:fine){.lbtn:hover>span{text-decoration-color:currentColor}.lbtn-2:hover{color:var(--text)}}
+.lbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lbtn .lbtn-i{flex:none}
+@media (pointer:coarse){.lbtn{min-height:44px}}
+.links{gap:4px 16px}
+
+/* ---- date picker ---- */
+.dp-wrap{position:relative;display:flex;align-items:center;min-width:0;width:100%}
+.dp-wrap>input[type=date]{padding-right:48px}
+.dp-wrap>input[type=date]::-webkit-calendar-picker-indicator{display:none}
+.dp-btn{all:unset;box-sizing:border-box;position:absolute;right:2px;top:50%;transform:translateY(-50%);width:44px;height:40px;display:grid;place-items:center;border-radius:10px;color:var(--muted);cursor:pointer}
+@media (hover:hover) and (pointer:fine){.dp-btn:hover{color:var(--accent);background:var(--raise)}}
+.dp-btn:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.dp-btn[aria-expanded=true]{color:var(--accent)}
+.dp-pop{position:fixed;z-index:calc(var(--z-popup) + 8);display:grid;grid-template-columns:auto 1fr;grid-template-areas:"side cal" "foot foot";
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.18);overflow:hidden;
+  opacity:0;transform:translateY(-4px) scale(.98);filter:blur(4px);transform-origin:top right;
+  transition:opacity 150ms var(--ease-smooth),transform 150ms var(--ease-smooth),filter 150ms var(--ease-smooth)}
+.dp-pop.on{opacity:1;transform:none;filter:none}
+.dp-side{grid-area:side;display:flex;flex-direction:column;gap:2px;padding:12px 8px;border-right:1px solid var(--line);min-width:128px}
+.dp-pick{all:unset;box-sizing:border-box;min-height:36px;padding:0 10px;border-radius:8px;font-size:calc(14px * var(--text-scale,1));color:var(--text);cursor:pointer;display:flex;align-items:center}
+@media (hover:hover) and (pointer:fine){.dp-pick:hover{background:var(--raise)}}
+.dp-pick.on{background:var(--sel-bg);color:var(--accent);font-weight:600}
+.dp-pick:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.dp-cal{grid-area:cal;padding:12px 14px 10px}
+.dp-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.dp-title{font-size:calc(15px * var(--text-scale,1))}
+.dp-nav{all:unset;box-sizing:border-box;width:36px;height:36px;display:grid;place-items:center;border-radius:10px;color:var(--text);cursor:pointer}
+.dp-nav:disabled{opacity:.3;cursor:default}
+@media (hover:hover) and (pointer:fine){.dp-nav:not(:disabled):hover{background:var(--raise)}}
+.dp-nav:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.dp-wd,.dp-grid{display:grid;grid-template-columns:repeat(7,40px);gap:2px 0;justify-content:center}
+.dp-wd span{text-align:center;font-size:calc(12px * var(--text-scale,1));color:var(--muted);font-weight:600;padding:4px 0}
+.dp-day{all:unset;box-sizing:border-box;width:40px;height:40px;display:grid;place-items:center;border-radius:999px;font-size:calc(14px * var(--text-scale,1));font-variant-numeric:tabular-nums;color:var(--text);cursor:pointer;position:relative}
+@media (hover:hover) and (pointer:fine){.dp-day:not(:disabled):not(.on):hover{background:var(--raise)}}
+.dp-day.now{color:var(--accent);font-weight:700}
+.dp-day.now::after{content:"";position:absolute;bottom:6px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:999px;background:currentColor}
+.dp-day.on{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.dp-day:disabled{color:var(--faint);opacity:.45;cursor:default}
+.dp-day:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.dp-foot{grid-area:foot;display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line);flex-wrap:wrap}
+.dp-foot .grow{flex:1}
+.dp-chip{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line);font-size:calc(13px * var(--text-scale,1));font-weight:600;font-variant-numeric:tabular-nums}
+@media (max-width:600px){
+  .dp-pop{left:8px!important;right:8px;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom,0px));grid-template-columns:1fr;grid-template-areas:"cal" "side" "foot";transform-origin:bottom center;transform:translateY(12px)}
+  .dp-pop.on{transform:none}
+  .dp-side{flex-direction:row;overflow-x:auto;border-right:0;border-top:1px solid var(--line);padding:8px}
+  .dp-pick{flex:none;border:1px solid var(--line);border-radius:999px;min-height:44px;padding:0 14px}
+  .dp-wd,.dp-grid{grid-template-columns:repeat(7,minmax(40px,1fr))}
+  .dp-day{width:44px;height:44px;justify-self:center}
+}
+
+/* ---- dropdown ---- */
+select[data-dd][data-dd]{position:absolute!important;width:1px!important;height:1px!important;min-height:0!important;padding:0!important;border:0!important;opacity:0;pointer-events:none;overflow:hidden;clip-path:inset(50%)}
+label:has(>select[data-dd]){position:relative}
+.dd-trig{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:0 10px 0 12px;
+  background:var(--field-bg);border:1px solid var(--field-line);border-radius:12px;color:var(--text);cursor:pointer;font-size:calc(var(--t-base,15px) * var(--text-scale,1));font-weight:500;
+  transition:border-color var(--dur-tap) var(--ease-smooth),box-shadow var(--dur-tap) var(--ease-smooth)}
+.dd-trig.dd-auto{width:auto;display:inline-flex;max-width:100%}
+.dd-v{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dd-chev{flex:none;color:var(--muted);transition:transform var(--dur-tap) var(--ease-spring)}
+.dd-trig[aria-expanded=true] .dd-chev{transform:rotate(180deg)}
+@media (hover:hover) and (pointer:fine){.dd-trig:hover:not(:disabled){border-color:var(--muted)}}
+.dd-trig:focus-visible,.dd-trig[aria-expanded=true]{border-color:var(--accent);box-shadow:0 0 0 4px var(--field-ring);outline:none}
+.dd-trig:disabled{opacity:.55;cursor:not-allowed}
+.dd-pop{position:fixed;z-index:calc(var(--z-popup) + 8);display:flex;flex-direction:column;gap:1px;padding:6px;max-width:min(360px,calc(100vw - 24px));overflow-y:auto;overscroll-behavior:contain;
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.16);outline:none;
+  opacity:0;transform:scale(.96);filter:blur(4px);transform-origin:top left;transition:opacity 150ms var(--ease-smooth),transform 150ms var(--ease-smooth),filter 150ms var(--ease-smooth)}
+.dd-pop.up{transform-origin:bottom left}
+.dd-pop.on{opacity:1;transform:none;filter:none}
+.dd-gl{padding:8px 10px 4px;font-size:calc(11px * var(--text-scale,1));font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.dd-sep{height:1px;background:var(--line);margin:4px 6px}
+.dd-item{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px;padding:0 10px;border-radius:10px;cursor:pointer;font-size:calc(14px * var(--text-scale,1));color:var(--text);flex:none}
+.dd-item.act{background:color-mix(in srgb,var(--accent) 10%,var(--raise))}
+.dd-item.on{font-weight:600}
+.dd-item[aria-disabled]{opacity:.45;cursor:default}
+.dd-tick{flex:none;color:var(--accent);opacity:0}
+.dd-item.on .dd-tick{opacity:1}
+@media (pointer:coarse){.dd-item{min-height:44px}}
+
+@media (prefers-reduced-motion:reduce){
+  .dp-pop,.dd-pop,.dd-chev,.ann,.tour-offer.ann,.tour-dots i,.lbtn,.crumbs .crumb{transition:none!important;animation:none!important;filter:none!important}
+}
 </style><div id="app"></div>
 <script>
 // =================== DEVELOPER LOG + CHANGE LOG (for testers) ===================
@@ -3911,7 +4103,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.1", build: "8.1.16", channel: "Dev Testing", date: "2026-10-06", week: "Sun 4 Oct – Sat 10 Oct 2026" };
+const APP_VERSION = { update: "8.1", build: "8.1.17", channel: "Dev Testing", date: "2026-10-06", week: "Sun 4 Oct – Sat 10 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3925,6 +4117,12 @@ const APP_VERSION = { update: "8.1", build: "8.1.16", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.1.17", area:"Components", title:"BoardUI-style fields, tour card, warnings, breadcrumb, link buttons, date picker and dropdowns",
+      bug:"Email and password boxes on the sign-in, new-password and passcode forms had no app styling at all (plain browser boxes), and fields had no required marks, hint text or invalid state. The first-run tour offer and the tour step card were plain cards with text buttons. Warnings (.note) were a thin left bar, and the sign-out, delete-profile and delete-everything confirmations were loose text with buttons beside them. Breadcrumbs were plain text links, inline actions like Edit widgets and Build a plan were mixed button and underlined-link styles, dates used each browser's own picker, and every choice list was a native select.",
+      fix:"Six patterns from BoardUI's docs (Input, Announcement, Breadcrumb, Link Button, Date Picker, Dropdown), rebuilt in plain HTML/CSS/JS. The BoardUI CLI was not run: it installs React components and this repo has no React, Tailwind or package.json (CLAUDE.md section 9). No BoardUI code, icons or assets were copied. Fields: every text box, select and textarea now shares one look (12px radius, 1px border, 44px tall, a focus ring that fades in, a red border when invalid). Sign-in, new password, unlock and the passcode forms use field(): a label with a red required mark, a leading mail or lock icon, a show/hide password button, hint text tied to the box with aria-describedby, and aria-invalid on the email or password box the error is about. Tour: the first-run offer is an Announcement card (spark icon, title, description, a close button for Not now, one full-width Take the tour button) that fades out when closed. The tour step card uses the same layout with step dots, Back/Next with arrows and a close button (Skip tour, or Close tour on the last step, which counts as finished). Warnings: .note is a tinted card with a warning or info icon. The sign-out warning, Delete profile (Settings, Household) and Delete everything (Settings, Privacy) confirmations, plus Erase on the lock screen, are red Announcement cards via warnCard() with a close button that cancels and two full-width choices. Breadcrumb: Home and the parent section carry their menu icon, items get a soft hover pill, chevron separators, the current page is plain text; it stays on one line and drops the icons on phones. Link buttons: linkBtn() for Edit widgets, Build a plan / Meal plan, Add a target line, Set a weekly goal, and the Google / YouTube / Reddit recipe links (with an external-link icon and a screen-reader note that they open a new tab). Date picker: all 9 date fields keep the native input (it can still be typed in) and gain a calendar button that opens a one-month picker with quick picks (Today, Yesterday, 2 days ago, A week ago), the picked date in the footer, Cancel and Apply. Nothing changes until Apply; future days are disabled where the field's max is today. Arrow keys, Home/End and PageUp/PageDown move, Enter picks, Escape cancels; on phones it is a bottom sheet with 44px days. Dropdown: 26 selects (meal slot, portion, recipe region/meal/diet, food culture country, coach level and sport, reminder type, workout type, estimate and meal-builder slots, drink type, and the profile and onboarding goal, style, level, diet, culture, sex and sport) keep the real select hidden and show a button with a chevron that turns; its menu (16px radius, 150ms scale and blur in) lists the options with a tick on the current one and group labels for optgroups. Arrow keys, Home/End, Enter, Escape and type-to-jump work. Picking fires the select's change event, so every existing handler runs unchanged. Food options stay text only.",
+      where:"index.html: field(), linkBtn(), warnCard(), dpBtn(), ddBtn(), the date picker (DP, dpOpen, dpPaint, dpPlace, dpMove, dpClose, dpApply) and dropdown (DD, ddSync, ddOpen, ddPlace, ddActive, ddPick, ddClose) and their listeners, all after closePopover(); ddSync() in afterRender(); icons chevD, mail, eye, eyeOff, info, ext; accountCard(), recoveryView(), lockView(), sbAuth() (bad field), the passcode forms, the household and Your data cards; render() breadcrumb; searchLinks(), the meals widget, Pinned header, Last 7 days and weekly goal cards; tourOffer(), tourOfferClose(), tourPaint(), tourStart(), the tour-skip click; the 9 date inputs and 26 selects. CSS block 8.1.17 at the end of the main style sheet. tests/browser/components.mjs (new). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"node tests/browser/components.mjs (65 checks; SHOTS=<folder> saves screenshots): the offer's parts, 44px close and full-width action, Not now saved as dismissed; tour card close, dots, Next/Back, Escape, last-step close; field labels, required marks, icons, 44px/12px, show/hide keeps the value, focus ring, bad email marked invalid in the bad colour, the sign-up hint linked by aria-describedby, passcode boxes fit their columns, coach and meal boxes styled; date picker open/focus, quick picks, future days off, arrow keys, Enter is pending until Apply, Escape cancels and returns focus, Yesterday + Apply updates the page, click outside closes, every date field has a button; every dropdown button shows its option, opens a listbox with the current one selected, arrow + Enter changes it and fires change (recipe filter applies), Escape returns focus, ArrowDown opens; link buttons have no fill or border and recipe links open a new tab; the breadcrumb's links, icons and current page; delete-profile warning shows a markup profile name as text, close keeps the profile; delete-everything has Cancel and Confirm delete; at 375px the date sheet is 8px from the edges with 44px days, the dropdown fits and the breadcrumb is one line; a dark-mode field is dark with light text; no page errors or alerts. sidebar.mjs (96), security.mjs (87) and meal-sync.mjs (52) still pass. By hand: Meals, tap the calendar button, pick Yesterday, Apply; Recipes, open Region with the keyboard.",
+      limits:"Checked in headless Chrome only, not on a real phone, Safari or Firefox. Firefox shows its own small calendar icon inside date boxes next to the new button (it has no way to hide it). Only the single-date picker is used: no screen picks a date range today, so BoardUI's range picker was not wired in. The 14 selects not listed above stay native (servings, auto-lock, equipment, body-test, voice, rest, export and share pickers and similar). Breadcrumb items are 32px tall (28px on phones), under the 44px target, as the old text links were. The dropdown menu has a shadow and the warning cards a tint, which the flat design notes allow only for popovers and alerts. Field styles were checked in Forest light and dark; the other themes, OLED and seasonal scenes were not looked at one by one. meal-upload.mjs needs the supabase-js CDN file and could not run in the build sandbox; run it locally before merge." },
     { id:"8.1.16", area:"Sidebar", title:"Sidebar restyled as a floating card: profile switcher, search with Ctrl+K, grouped nav with count badges, account card",
       bug:"The sidebar was a flat full-height panel with the brand on top, a long nav, and a small profile block at the bottom. There was no quick way to switch household profiles from it, no way to find a destination by typing, Settings sat inside the nav, and sign-out was only reachable inside Settings.",
       fix:"Layout follows the structure of BoardUI's Sidebar, rebuilt in plain HTML/CSS/JS (no BoardUI, React, Tailwind or other dependency, and no code, icons or assets copied). A floating card, 260px wide, 20px radius, 1px hairline border, no shadow, 12px from the screen edge. Top: the current profile (avatar and name) as a button that opens a menu to switch household profiles, add a profile or open Manage profiles. Then a search field with a Ctrl K hint that filters the nav rows as you type. Then the nav under small section labels (Overview, Log, Plan, Progress, Premium), keeping the gradient icon tiles, with a count badge on Meals, Snacks and Workouts & imports showing how many were logged today; a badge only appears when the number is above zero, and no other row has one. Bottom: Support (the Contact page) and Settings, then an account card with the signed-in email, the save status, the light/dark switch, the passcode lock button and Sign out (Sign in when signed out). Every previous destination and route is kept; Settings moved from the nav to the bottom block. Phones and tablets (1024px and under) keep the drawer with the full-screen scrim and the centred hamburger/arrow morph; the drawer is now the same floating card, and is out of the tab order while closed. Desktop keeps the collapsible icon rail (now a 64px card; clicking the avatar or pressing Ctrl+K expands it). Profile names and the email go through esc(). Rows and buttons are at least 44px tall, the profile menu has arrow-key, Home/End and Escape support, and animation follows prefers-reduced-motion. Ctrl+K now focuses the sidebar search (opening the drawer or expanding the rail first); the quick-jump palette moved to Ctrl+Shift+K. Tapping the page you are already on in the drawer now closes it (before, nothing happened and the drawer stayed open). The wordmark no longer appears in the sidebar.",
@@ -7916,8 +8114,8 @@ async function sbAuth(kind){
   const c = sbClient(); if (!c) return;
   const email = val("sb-email").toLowerCase(), pass = document.getElementById("sb-pass")?.value || "";
   UI.sbEmail = email; UI.sbMsg = null;
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { UI.sbMsg = { t:"Enter a valid email address." }; return render(); }
-  if (kind !== "reset" && (kind === "up" ? pass.length < 8 : !pass)) { UI.sbMsg = { t: kind === "up" ? "Use at least 8 characters for the password." : "Enter your password." }; return render(); }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { UI.sbMsg = { t:"Enter a valid email address.", bad:"email" }; return render(); }
+  if (kind !== "reset" && (kind === "up" ? pass.length < 8 : !pass)) { UI.sbMsg = { t: kind === "up" ? "Use at least 8 characters for the password." : "Enter your password.", bad:"pass" }; return render(); }
   SB.busy = true; render();
   try {
     if (kind === "in") { const r = await c.auth.signInWithPassword({ email, password: pass }); if (r.error) throw r.error; UI.sbMsg = null; toast("Signed in", "success"); }
@@ -7992,11 +8190,12 @@ function accountCard(){
     <p class="small muted">Only meals (and each profile's name) are saved to your account for now. Snacks, workouts and everything else stay on this device, and signing out removes them from it.</p>
     ${CRY.lock ? `<div class="note info">A passcode is on, so meals are encrypted on this device and not uploaded. Meals already in your account stay there.</div>` : ""}
     ${msg}
-    ${UI.sbConfirmOut ? `<div class="note" role="alert"><b>Signing out will delete data from this device.</b>
+    ${UI.sbConfirmOut ? `<div class="ann ann-bad" role="alert"><button type="button" class="ann-x" data-act="sb-out-no" aria-label="Cancel sign-out">${icon("x", "", 18)}</button>
+      <div class="ann-head"><span class="ann-ic" aria-hidden="true">${icon("alert", "", 18)}</span><div class="ann-txt"><b class="ann-t">Signing out will delete data from this device</b></div></div>
       ${UI.sbConfirmOut.local?.length ? `<p class="small" style="margin:6px 0 2px">Saved only on this device, not in your account, so it will be deleted:</p><ul class="clean small">${UI.sbConfirmOut.local.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
       ${[UI.sbConfirmOut.failed ? "You're offline or the upload failed." : "", UI.sbConfirmOut.n ? `${UI.sbConfirmOut.n} meal change${UI.sbConfirmOut.n === 1 ? " is" : "s are"} waiting to upload and will be deleted too.` : "", UI.sbConfirmOut.heldBack ? "A passcode is on, so your meals are only on this device and will be deleted too." : ""].filter(Boolean).map(x => `<p class="small" style="margin:2px 0">${esc(x)}</p>`).join("")}
-      <p class="small" style="margin:2px 0">This can't be undone.</p></div>
-      <div class="row"><button class="btn sm" data-act="sb-out-no">Cancel</button><button class="btn sm danger" data-act="sb-out-force">Sign out anyway</button></div>`
+      <p class="small" style="margin:2px 0">This can't be undone.</p>
+      <div class="ann-acts"><button type="button" class="btn sm" data-act="sb-out-no">Cancel</button><button type="button" class="btn sm danger" data-act="sb-out-force">Sign out anyway</button></div></div>`
     : `<div class="row"><button class="btn" data-act="sb-out"${SB.busy ? " disabled" : ""}>${SB.busy ? "Signing out…" : "Sign out"}</button></div>`}
   </section>`;
   const mode = UI.acct || "in", em = esc(UI.sbEmail || "");
@@ -8005,9 +8204,10 @@ function accountCard(){
     <p class="small muted">Optional. Sign in and your meals are saved to your account. Everything else stays on this device.</p>
     <div class="row" role="group" aria-label="Account action">${tab("in", "Sign in")}${tab("up", "Create account")}${tab("reset", "Forgot password")}</div>
     <form class="stack" data-form="sb-auth" data-kind="${mode}" novalidate>
-      <label class="f">Email<input type="email" id="sb-email" autocomplete="email" inputmode="email" value="${em}" required></label>
-      ${mode === "reset" ? "" : `<label class="f">Password<input type="password" id="sb-pass" autocomplete="${mode === "up" ? "new-password" : "current-password"}" ${mode === "up" ? 'minlength="8" ' : ""}required></label>`}
-      ${mode === "up" ? `<p class="tiny muted">At least 8 characters. We'll email you a link to confirm your address.</p>` : ""}
+      ${field({ id:"sb-email", label:"Email", type:"email", value:UI.sbEmail || "", lead:"mail", req:true, bad:UI.sbMsg?.bad === "email", attrs:'autocomplete="email" inputmode="email" placeholder="you@example.com"' })}
+      ${mode === "reset" ? "" : field({ id:"sb-pass", label:"Password", type:"password", lead:"lock", req:true, reveal:true, bad:UI.sbMsg?.bad === "pass",
+        hint: mode === "up" ? "At least 8 characters. We'll email you a link to confirm your address." : "",
+        attrs:`autocomplete="${mode === "up" ? "new-password" : "current-password"}"${mode === "up" ? ' minlength="8"' : ""}` })}
       ${msg}
       <button class="btn primary" type="submit"${SB.busy ? " disabled" : ""}>${SB.busy ? "Working…" : mode === "in" ? "Sign in" : mode === "up" ? "Create account" : "Email me a reset link"}</button>
     </form>
@@ -8017,8 +8217,8 @@ function accountCard(){
 function recoveryView(){
   return `<div class="ob pastel">${pastelScene()}<div class="panel lockcard"><div><h1>Choose a new password</h1><p class="muted" style="margin-top:6px">You opened a reset link, so pick a new password for your account.</p></div>
     <form class="stack" data-form="sb-newpass" novalidate>
-      <label class="f">New password<input type="password" id="sb-np1" autocomplete="new-password" minlength="8" required></label>
-      <label class="f">Repeat it<input type="password" id="sb-np2" autocomplete="new-password" minlength="8" required></label>
+      ${field({ id:"sb-np1", label:"New password", type:"password", lead:"lock", req:true, reveal:true, hint:"At least 8 characters.", attrs:'autocomplete="new-password" minlength="8"' })}
+      ${field({ id:"sb-np2", label:"Repeat it", type:"password", lead:"lock", req:true, reveal:true, attrs:'autocomplete="new-password" minlength="8"' })}
       ${UI.sbMsg ? `<div class="note" role="alert">${esc(UI.sbMsg.t)}</div>` : ""}
       <button class="btn primary" type="submit"${SB.busy ? " disabled" : ""}>${SB.busy ? "Saving…" : "Save password"}</button>
     </form></div></div>`;
@@ -8577,7 +8777,8 @@ function goalNote(d, p = P()){
 }
 const searchLinks = q => {
   const e = encodeURIComponent(q);
-  return `<div class="links"><a href="https://www.google.com/search?q=${e}" target="_blank" rel="noopener">Google recipes</a><a href="https://www.youtube.com/results?search_query=${e}" target="_blank" rel="noopener">YouTube videos</a><a href="https://www.reddit.com/search/?q=${e}" target="_blank" rel="noopener">Reddit ideas</a></div>`;
+  return `<div class="links">${[["Google recipes", `https://www.google.com/search?q=${e}`], ["YouTube videos", `https://www.youtube.com/results?search_query=${e}`], ["Reddit ideas", `https://www.reddit.com/search/?q=${e}`]]
+    .map(([l, u]) => linkBtn(l, { href:u, size:"sm", trail:"ext", ext:true })).join("")}</div>`;
 };
 
 // amounts: ingredient quantities are for 4 servings
@@ -8796,7 +8997,7 @@ function profileTab(p){
     factRow("Name", esc(p.name || "Not set")) + factRow("Age", p.age ?? "Not set") + factRow("Sex", lab([["female","Female"],["male","Male"]], p.sex, "Prefer not to say")),
     `<div class="form"><label class="f">Name<input type="text" id="pe-name" maxlength="40" value="${esc(p.name)}" autocomplete="given-name"></label>
      <label class="f">Age<input type="number" id="pe-age" min="13" max="110" value="${p.age ?? ""}"></label>
-     <label class="f">Sex (for calorie estimates)<select id="pe-sex">${opt([["","Prefer not to say"],["female","Female"],["male","Male"]], p.sex)}</select></label></div>`)}
+     <label class="f">Sex (for calorie estimates)<select id="pe-sex" data-dd tabindex="-1" aria-hidden="true">${opt([["","Prefer not to say"],["female","Female"],["male","Male"]], p.sex)}</select>${ddBtn()}</label></div>`)}
   ${profileGroup(p, "body", "Body",
     factRow("Height", fmtHeight(p.heightCm)) + factRow("Starting weight", fmtWeight(p.weightKg)) + factRow("Latest weigh-in", fmtWeight(kg)) + factRow("Goal weight", p.targetKg ? fmtWeight(p.targetKg) : "Not set"),
     `<div class="form">${us ? `<label class="f">Height (ft)<input type="number" id="pe-ft" min="3" max="8" value="${hIn ? Math.floor(hIn/12) : ""}"></label><label class="f">Height (in)<input type="number" id="pe-in" min="0" max="11" value="${hIn ? round(hIn%12) : ""}"></label>`
@@ -8806,15 +9007,15 @@ function profileTab(p){
      <p class="tiny muted">Log regular weigh-ins on <a href="#/nutrition">Daily nutrition</a>.</p>`)}
   ${profileGroup(p, "training", "Training",
     factRow("Main goal", lab(GOALS, p.goal)) + factRow("Exercise style", lab(STYLES, p.style)) + factRow("Level", lab(LEVELS, p.level)) + factRow("Workouts per week", p.freq ?? "Not set") + factRow("Sport", p.sport ? esc(SPORTS[p.sport]?.n) : "None"),
-    `<div class="form"><label class="f">Main goal<select id="pe-goal">${opt(GOALS, p.goal)}</select></label>
-     <label class="f">Exercise style<select id="pe-style">${opt(STYLES, p.style)}</select></label>
-     <label class="f">Level<select id="pe-level">${opt(LEVELS, p.level)}</select></label>
+    `<div class="form"><label class="f">Main goal<select id="pe-goal" data-dd tabindex="-1" aria-hidden="true">${opt(GOALS, p.goal)}</select>${ddBtn()}</label>
+     <label class="f">Exercise style<select id="pe-style" data-dd tabindex="-1" aria-hidden="true">${opt(STYLES, p.style)}</select>${ddBtn()}</label>
+     <label class="f">Level<select id="pe-level" data-dd tabindex="-1" aria-hidden="true">${opt(LEVELS, p.level)}</select>${ddBtn()}</label>
      <label class="f">Workouts per week<input type="number" id="pe-freq" min="0" max="14" value="${p.freq ?? ""}"></label>
-     <label class="f">Sport<select id="pe-sport">${opt([["","None"], ...Object.entries(SPORTS).map(([k,v]) => [k, v.n])], p.sport)}</select></label></div>`)}
+     <label class="f">Sport<select id="pe-sport" data-dd tabindex="-1" aria-hidden="true">${opt([["","None"], ...Object.entries(SPORTS).map(([k,v]) => [k, v.n])], p.sport)}</select>${ddBtn()}</label></div>`)}
   ${profileGroup(p, "food", "Food",
     factRow("Preference", lab(DIETS, p.diet, "No preference")) + factRow("Food culture", esc(p.culture || "Not set")) + factRow("Avoid", esc(p.allergies || "Nothing listed")),
-    `<div class="form"><label class="f">Food preference<select id="pe-diet">${opt(DIETS, p.diet)}</select></label>
-     <label class="f">Food culture<select id="pe-culture">${coverageOptions(p.culture)}</select></label>
+    `<div class="form"><label class="f">Food preference<select id="pe-diet" data-dd tabindex="-1" aria-hidden="true">${opt(DIETS, p.diet)}</select>${ddBtn()}</label>
+     <label class="f">Food culture<select id="pe-culture" data-dd tabindex="-1" aria-hidden="true">${coverageOptions(p.culture)}</select>${ddBtn()}</label>
      <label class="f full">Allergies or foods to avoid<input type="text" id="pe-all" maxlength="200" value="${esc(p.allergies)}" placeholder="e.g. peanuts, shellfish"></label></div>`)}
   </div>
   <section class="card">
@@ -9059,7 +9260,7 @@ function widgetTools(i, n, w){
 }
 function mealsWidget(p, w, tools){
   const picks = dailyPicks(today(), p); const Tag = tools ? "div" : "section";
-  return `<${Tag} class="mcard meals-w${w.size === "l" ? " wide" : w.size === "m" ? " med" : ""}${tools ? " editing" : ""}"><div class="mhead" style="color:var(--c-nutrition)">${cicon("apple","var(--c-nutrition)")}<b>Today's meals</b><span class="when">${tools ? "" : `<a href="#/recipes" class="small">${p.plan ? "Meal plan" : "Build a plan"} ${icon("chevR","go",13)}</a>`}</span></div>
+  return `<${Tag} class="mcard meals-w${w.size === "l" ? " wide" : w.size === "m" ? " med" : ""}${tools ? " editing" : ""}"><div class="mhead" style="color:var(--c-nutrition)">${cicon("apple","var(--c-nutrition)")}<b>Today's meals</b><span class="when">${tools ? "" : `${linkBtn(p.plan ? "Meal plan" : "Build a plan", { href:"#/recipes", size:"xs", trail:"chevR" })}`}</span></div>
     <div class="wrow-tag">${cultureTag(p)}</div>
     <div class="grid ${w.size === "l" ? "g3" : ""}" style="gap:10px">${picks.map((d,i) => tools ? `<div class="dish"><span class="slot">${SLOTS[i]?.[1]}</span><b>${esc(d.n)}</b></div>` : `<a class="dish" href="${dishLink(d)}"><span class="slot">${SLOTS[i]?.[1]}</span><b>${esc(d.n)}</b><span class="tiny muted">${esc(originTag(d,p)?.txt || d.c)} · ≈${d.cal} cal</span></a>`).join("")}</div>${tools || ""}</${Tag}>`;
 }
@@ -9105,7 +9306,7 @@ function homeView(p){
     </div>
   </div>
   ${glanceCard(p)}
-  <div class="row between"><h2 class="sec-title">Pinned</h2><button class="btn${editing ? " primary" : " ghost link-btn"}" data-act="edit-pins">${editing ? "Done" : "Edit widgets"}</button></div>
+  <div class="row between"><h2 class="sec-title">Pinned</h2>${editing ? `<button class="btn primary" data-act="edit-pins">Done</button>` : linkBtn("Edit widgets", { act:"edit-pins", lead:"pencil" })}</div>
   ${editing ? `<section class="card"><div class="row between"><b>Add widgets</b><button class="btn sm ghost" data-act="w-reset">Reset to default</button></div>
     <div class="addtray">${unused.map(k => `<button class="chip" data-act="w-add" data-v="${k}">+ ${widgetIcon(k)} ${esc(widgetName(k))}</button>`).join("") || `<span class="small muted">Every widget is already on your Summary.</span>`}</div>
     <p class="tiny muted">Use the arrows to reorder, pick Small or Wide, and tap − to remove.</p></section>` : ""}
@@ -9339,7 +9540,7 @@ function metricView(p){
   <div class="grid g2">
     <section class="card"><h3>Add data</h3>
       <form class="form" data-form="metric-${k}">
-        <label class="f">Date<input type="date" id="md-date" value="${today()}" max="${today()}" required></label>
+        <label class="f">Date<span class="dp-wrap"><input type="date" id="md-date" value="${today()}" max="${today()}" required>${dpBtn("md-date")}</span></label>
         ${m.fields(p).map(([id, label, lo, hi]) => (m.text || []).includes(id)
           ? `<label class="f">${esc(label)}<input type="text" inputmode="decimal" autocomplete="off" id="md-${id}" placeholder="${esc(weightPlaceholder(p))}" required></label>`
           : `<label class="f">${esc(label)}<input type="number" id="md-${id}" min="${lo}" max="${hi}" step="${id === "weight" || id === "water" ? "0.1" : "1"}" ${id === "sleepM" ? "" : "required"}></label>`).join("")}
@@ -9440,6 +9641,12 @@ const I = {
  moonfill:'<path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.6 8.6 0 1 0 10.7 10.7z" fill="currentColor" stroke="none"/>',
  sunmoon:'<circle cx="6.9" cy="12" r="3.1"/><path d="M6.9 5.9v1.3M6.9 16.8v1.3M1.8 12h1.3M4 9.1l.9.9M4 14.9l.9-.9"/><path d="M21.5 14.7a4.7 4.7 0 0 1-5.8-5.8 4.9 4.9 0 1 0 5.8 5.8z"/>',
  chevR:'<path d="M9 5l7 7-7 7"/>',
+ chevD:'<path d="M6 9l6 6 6-6"/>',
+ mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/>',
+ eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+ eyeOff:'<path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.8 3.7M6.6 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2M3 3l18 18"/>',
+ info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+ ext:'<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
  chevUD:'<path d="M8 9l4-4 4 4M8 15l4 4 4-4"/>',
  search:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
  help:'<circle cx="12" cy="12" r="9"/><path d="M9.4 9.5a2.7 2.7 0 0 1 5.2 1c0 1.8-2.6 2.2-2.6 3.8"/><path d="M12 17.6v.1"/>',
@@ -9542,6 +9749,298 @@ function openPopover(id, { label, width, bodyHTML, triggerEl } = {}){
   return POPOVERS[id];
 }
 function closePopover(id){ const p = POPOVERS[id]; const open = document.querySelector(`#pop-${id}`); if (p) p.shut(); else if (open) open.remove(); }
+// ---- 8.1.17: fields, link buttons, date picker and dropdown ----
+// Layout and behaviour follow BoardUI's Input, Link Button, Date Picker and Dropdown docs, rebuilt
+// in plain HTML/CSS/JS. No BoardUI, React, React Aria or Tailwind code is copied in.
+
+// A labelled text field: optional leading icon, a show/hide button for passwords, hint text,
+// a required mark and an invalid state. value is raw text; it is escaped here.
+function field({ id, label, type = "text", value = "", attrs = "", lead = "", hint = "", req = false, reveal = false, bad = false, err = "", cls = "" }){
+  const desc = [hint ? `${id}-hint` : "", err ? `${id}-err` : ""].filter(Boolean).join(" ");
+  return `<div class="f fx${cls ? " " + cls : ""}">
+    <label class="fx-l" for="${id}">${esc(label)}${req ? `<span class="fx-req" aria-hidden="true">*</span>` : ""}</label>
+    <span class="fx-box${lead ? " has-lead" : ""}${reveal ? " has-trail" : ""}">${lead ? icon(lead, "fx-lead", 18) : ""}<input type="${type}" id="${id}" value="${esc(value)}"${req ? " required" : ""}${bad ? ' aria-invalid="true"' : ""}${desc ? ` aria-describedby="${desc}"` : ""} ${attrs}>${reveal ? `<button type="button" class="fx-eye" data-fx-eye="${id}" aria-label="Show password" aria-pressed="false">${icon("eye", "", 18)}</button>` : ""}</span>
+    ${hint ? `<span class="fx-hint" id="${id}-hint">${esc(hint)}</span>` : ""}
+    ${err ? `<span class="fx-err" id="${id}-err">${esc(err)}</span>` : ""}
+  </div>`;
+}
+
+// An inline text action: no fill or border, underline on hover. An <a> when given href, a
+// <button> otherwise. size: "md" | "sm" | "xs"; variant: "primary" | "secondary".
+function linkBtn(label, { href = "", act = "", v = "", size = "md", variant = "primary", lead = "", trail = "", ext = false, attrs = "" } = {}){
+  const cls = `lbtn lbtn-${size}${variant === "secondary" ? " lbtn-2" : ""}`;
+  const isz = size === "xs" ? 14 : 16;
+  const inner = `${lead ? icon(lead, "lbtn-i", isz) : ""}<span>${esc(label)}</span>${trail ? icon(trail, "lbtn-i", isz) : ""}${ext ? '<span class="sr-only"> (opens in a new tab)</span>' : ""}`;
+  if (href) return `<a class="${cls}" href="${esc(href)}"${ext ? ' target="_blank" rel="noopener"' : ""} ${attrs}>${inner}</a>`;
+  return `<button type="button" class="${cls}"${act ? ` data-act="${act}"` : ""}${v ? ` data-v="${esc(v)}"` : ""} ${attrs}>${inner}</button>`;
+}
+
+// A warning laid out like BoardUI's Announcement: alert icon, title, description, a close button
+// that cancels, and the two choices. title/body are raw text; html is trusted markup from this file.
+function warnCard({ title, body = "", html = "", no, noLabel = "Cancel", yes, yesLabel, id = "" }){
+  const did = id ? ` data-id="${esc(id)}"` : "";
+  return `<div class="ann ann-bad" role="alert">
+    <button type="button" class="ann-x" data-act="${no}" aria-label="${esc(noLabel)}">${icon("x", "", 18)}</button>
+    <div class="ann-head"><span class="ann-ic" aria-hidden="true">${icon("alert", "", 18)}</span>
+      <div class="ann-txt"><b class="ann-t">${esc(title)}</b><span class="ann-d">${html || esc(body)}</span></div></div>
+    <div class="ann-acts"><button type="button" class="btn sm" data-act="${no}">${esc(noLabel)}</button><button type="button" class="btn sm danger" data-act="${yes}"${did}>${esc(yesLabel)}</button></div>
+  </div>`;
+}
+
+// The button that sits after a date input and opens the calendar.
+const dpBtn = id => `<button type="button" class="dp-btn" data-dp="${id}" aria-label="Choose date from calendar" aria-haspopup="dialog" aria-expanded="false">${icon("calendar", "", 18)}</button>`;
+// The trigger that stands in for a <select data-dd>. Its text is filled by ddSync() after render.
+const ddBtn = (auto = false) => `<button type="button" class="dd-trig${auto ? " dd-auto" : ""}" aria-haspopup="listbox" aria-expanded="false"><span class="dd-v"></span>${icon("chevD", "dd-chev", 16)}</button>`;
+
+document.addEventListener("click", e => {
+  const eye = e.target.closest?.("[data-fx-eye]");
+  if (!eye) return;
+  const inp = document.getElementById(eye.dataset.fxEye); if (!inp) return;
+  const show = inp.type === "password";
+  inp.type = show ? "text" : "password";
+  eye.setAttribute("aria-pressed", String(show));
+  eye.setAttribute("aria-label", show ? "Hide password" : "Show password");
+  eye.innerHTML = icon(show ? "eyeOff" : "eye", "", 18);
+});
+
+// ---- date picker ----
+// One month, quick picks on the side, the pending date in the footer, Cancel and Apply. Nothing
+// changes until Apply; Cancel or Escape keeps the date the field had. The native date input stays
+// (it can still be typed into, and the form code reads its value), this only fills it in.
+const DP = { el:null, input:null, trig:null, view:"", sel:"", min:"", max:"", focus:"" };
+const DP_WD = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+const dpOk = d => DATE_RE.test(d) && (!DP.min || d >= DP.min) && (!DP.max || d <= DP.max);
+const dpLong = d => parseYmd(d).toLocaleDateString(undefined, { weekday:"long", month:"long", day:"numeric", year:"numeric" });
+function dpLabel(input){ const l = input.closest("label"); return (l?.firstChild?.nodeType === 3 ? l.firstChild.textContent.trim() : "") || input.getAttribute("aria-label") || "date"; }
+function dpOpen(trig){
+  const input = document.getElementById(trig.dataset.dp); if (!input) return;
+  dpClose();
+  const has = DATE_RE.test(input.value);
+  Object.assign(DP, { input, trig, min: input.min || "", max: input.max || "", sel: has ? input.value : "" });
+  DP.focus = has ? input.value : (DP.max && today() > DP.max ? DP.max : today());
+  DP.view = DP.focus.slice(0, 7);
+  const el = document.createElement("div");
+  el.className = "dp-pop"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true");
+  el.setAttribute("aria-label", `Choose ${dpLabel(input).toLowerCase()}`);
+  document.body.append(el); DP.el = el;
+  trig.setAttribute("aria-expanded", "true");
+  dpPaint(); dpPlace();
+  requestAnimationFrame(() => el.classList.add("on"));
+  el.querySelector('.dp-day[tabindex="0"]')?.focus({ preventScroll:true });
+}
+function dpPaint(){
+  if (!DP.el) return;
+  const [y, m] = DP.view.split("-").map(Number);
+  const first = new Date(y, m - 1, 1), days = new Date(y, m, 0).getDate();
+  const title = first.toLocaleDateString(undefined, { month:"long", year:"numeric" });
+  const prevOk = !DP.min || ymd(new Date(y, m - 1, 0)) >= DP.min, nextOk = !DP.max || ymd(new Date(y, m, 1)) <= DP.max;
+  if (!DP.focus.startsWith(DP.view)) DP.focus = `${DP.view}-01`;
+  const cells = [];
+  for (let i = 0; i < first.getDay(); i++) cells.push(`<span class="dp-pad" aria-hidden="true"></span>`);
+  for (let d = 1; d <= days; d++) {
+    const k = `${DP.view}-${String(d).padStart(2, "0")}`, ok = dpOk(k);
+    cells.push(`<button type="button" class="dp-day${k === DP.sel ? " on" : ""}${k === today() ? " now" : ""}" data-dp-day="${k}" tabindex="${k === DP.focus ? 0 : -1}" aria-label="${esc(dpLong(k))}" aria-pressed="${k === DP.sel}"${k === today() ? ' aria-current="date"' : ""}${ok ? "" : " disabled"}>${d}</button>`);
+  }
+  const picks = [["Today", 0], ["Yesterday", -1], ["2 days ago", -2], ["A week ago", -7]]
+    .map(([l, n]) => [l, addDays(today(), n)]).filter(([, d]) => dpOk(d));
+  DP.el.innerHTML = `<div class="dp-side" role="group" aria-label="Quick picks">${picks.map(([l, d]) => `<button type="button" class="dp-pick${d === DP.sel ? " on" : ""}" data-dp-pick="${d}" aria-pressed="${d === DP.sel}">${l}</button>`).join("")}</div>
+    <div class="dp-cal">
+      <div class="dp-head">
+        <button type="button" class="dp-nav" data-dp-mon="-1" aria-label="Previous month"${prevOk ? "" : " disabled"}>${icon("chevL", "", 18)}</button>
+        <b class="dp-title" aria-live="polite">${esc(title)}</b>
+        <button type="button" class="dp-nav" data-dp-mon="1" aria-label="Next month"${nextOk ? "" : " disabled"}>${icon("chevR", "", 18)}</button>
+      </div>
+      <div class="dp-wd" aria-hidden="true">${DP_WD.map(w => `<span>${w}</span>`).join("")}</div>
+      <div class="dp-grid">${cells.join("")}</div>
+    </div>
+    <div class="dp-foot">
+      <span class="dp-chip">${icon("calendar", "", 14)}<span>${DP.sel ? esc(fmtDay(DP.sel)) : "No date picked"}</span></span>
+      <span class="grow"></span>
+      <button type="button" class="btn sm" data-dp-cancel>Cancel</button>
+      <button type="button" class="btn sm primary" data-dp-apply${DP.sel ? "" : " disabled"}>Apply</button>
+    </div>`;
+}
+function dpPlace(){
+  const el = DP.el, t = DP.trig; if (!el || !t?.isConnected) return;
+  if (matchMedia("(max-width:600px)").matches) { el.style.left = el.style.top = ""; return; } // a bottom sheet on phones (CSS)
+  const box = (t.closest(".dp-wrap") || t).getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight, M = 12;
+  const left = Math.min(Math.max(M, box.right - w), innerWidth - w - M);
+  const top = innerHeight - box.bottom >= h + 8 + M ? box.bottom + 8 : Math.max(M, box.top - 8 - h);
+  el.style.left = `${left}px`; el.style.top = `${top}px`;
+}
+function dpMove(d){
+  if (!DP.el || !DATE_RE.test(d)) return;
+  if (DP.min && d < DP.min) d = DP.min;
+  if (DP.max && d > DP.max) d = DP.max;
+  DP.focus = d;
+  if (!d.startsWith(DP.view)) { DP.view = d.slice(0, 7); dpPaint(); }
+  DP.el.querySelectorAll(".dp-day").forEach(b => b.tabIndex = b.dataset.dpDay === d ? 0 : -1);
+  DP.el.querySelector(`[data-dp-day="${d}"]`)?.focus({ preventScroll:true });
+}
+function dpClose(back = false){
+  if (!DP.el) return;
+  const el = DP.el, trig = DP.trig, id = trig?.dataset.dp;
+  DP.el = null; DP.input = null;
+  el.classList.remove("on");
+  setTimeout(() => el.remove(), motionOK() ? 160 : 0);
+  trig?.setAttribute("aria-expanded", "false");
+  if (back) (trig?.isConnected ? trig : document.querySelector(`[data-dp="${id}"]`))?.focus({ preventScroll:true });
+}
+function dpApply(){
+  const input = DP.input, d = DP.sel; if (!input || !dpOk(d)) return;
+  input.value = d;
+  dpClose(true);
+  input.dispatchEvent(new Event("input", { bubbles:true }));
+  input.dispatchEvent(new Event("change", { bubbles:true }));
+}
+document.addEventListener("click", e => {
+  const open = e.target.closest?.("[data-dp]");
+  if (open) { e.preventDefault(); if (DP.el && DP.trig === open) dpClose(true); else dpOpen(open); return; }
+  if (!DP.el) return;
+  if (!DP.el.contains(e.target)) { dpClose(); return; }
+  const t = e.target.closest("button"); if (!t || t.disabled) return;
+  if (t.dataset.dpDay) { DP.sel = DP.focus = t.dataset.dpDay; dpPaint(); DP.el.querySelector(`[data-dp-day="${DP.sel}"]`)?.focus({ preventScroll:true }); }
+  else if (t.dataset.dpPick) { DP.sel = DP.focus = t.dataset.dpPick; DP.view = DP.sel.slice(0, 7); dpPaint(); DP.el.querySelector(`[data-dp-pick="${DP.sel}"]`)?.focus({ preventScroll:true }); }
+  else if (t.dataset.dpMon) { const [y, m] = DP.view.split("-").map(Number); DP.view = ymd(new Date(y, m - 1 + Number(t.dataset.dpMon), 1)).slice(0, 7); DP.focus = ""; dpPaint(); dpPlace(); DP.el.querySelector(`[data-dp-mon="${t.dataset.dpMon}"]`)?.focus({ preventScroll:true }); }
+  else if ("dpCancel" in t.dataset) dpClose(true);
+  else if ("dpApply" in t.dataset) dpApply();
+});
+document.addEventListener("keydown", e => {
+  if (!DP.el) return;
+  if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); dpClose(true); return; }
+  if (e.key === "Tab") {
+    const f = [...DP.el.querySelectorAll("button:not([disabled])")].filter(b => b.tabIndex !== -1);
+    if (!f.length) return;
+    const i = f.indexOf(document.activeElement);
+    if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && (i === f.length - 1 || i === -1)) { e.preventDefault(); f[0].focus(); }
+    return;
+  }
+  const day = e.target.closest?.(".dp-day"); if (!day) return;
+  const d = day.dataset.dpDay, wd = parseYmd(d).getDay();
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!day.disabled) day.click(); return; }
+  const step = { ArrowLeft:-1, ArrowRight:1, ArrowUp:-7, ArrowDown:7, Home:-wd, End:6 - wd }[e.key];
+  if (step !== undefined) { e.preventDefault(); dpMove(addDays(d, step)); return; }
+  if (e.key === "PageUp" || e.key === "PageDown") {
+    e.preventDefault(); const x = parseYmd(d); x.setMonth(x.getMonth() + (e.key === "PageUp" ? -1 : 1)); dpMove(ymd(x));
+  }
+}, true);
+addEventListener("resize", () => { if (DP.el) dpPlace(); if (DD.el) ddPlace(); }, { passive:true });
+addEventListener("scroll", e => { if (DP.el && !DP.el.contains(e.target)) dpPlace(); if (DD.el && !DD.el.contains(e.target)) ddPlace(); }, { passive:true, capture:true });
+addEventListener("hashchange", () => { dpClose(); ddClose(); });
+
+// ---- dropdown ----
+// A <select data-dd> stays in the page as the real form control (hidden, so the form code and
+// the change handlers keep working); the button after it opens a menu of its options. Picking
+// one sets the select and fires change, exactly as the native control would.
+const DD = { el:null, sel:null, trig:null, find:"", i:0, q:"", qt:0 };
+function ddName(s){ const l = s.closest("label"); return s.getAttribute("aria-label") || (l?.firstChild?.nodeType === 3 ? l.firstChild.textContent.trim() : "") || ""; }
+function ddSync(){
+  document.querySelectorAll("select[data-dd]").forEach(s => {
+    const b = s.nextElementSibling; if (!b?.classList.contains("dd-trig")) return;
+    const o = s.selectedOptions[0], name = ddName(s);
+    b.querySelector(".dd-v").textContent = o ? o.text : "";
+    b.setAttribute("aria-label", name ? `${name}: ${o ? o.text : "none"}` : (o ? o.text : "Choose"));
+    b.disabled = s.disabled;
+  });
+}
+function ddOpen(trig){
+  const s = trig.previousElementSibling; if (!s?.matches("select[data-dd]")) return;
+  ddClose();
+  const opts = [...s.options];
+  DD.sel = s; DD.trig = trig; DD.i = Math.max(0, s.selectedIndex);
+  DD.find = s.id ? `#${CSS.escape(s.id)}` : s.dataset.rem ? `select[data-rem="${CSS.escape(s.dataset.rem)}"]` : "";
+  const el = document.createElement("div");
+  el.className = "dd-pop"; el.setAttribute("role", "listbox"); el.tabIndex = -1;
+  el.setAttribute("aria-label", ddName(s) || "Options");
+  let html = "", grp = null;
+  opts.forEach((o, i) => {
+    const g = o.parentElement.tagName === "OPTGROUP" ? o.parentElement : null;
+    if (g !== grp) { if (g) html += `<div class="dd-gl" role="presentation">${esc(g.label)}</div>`; else if (grp) html += `<div class="dd-sep" role="presentation"></div>`; grp = g; }
+    html += `<div class="dd-item${i === s.selectedIndex ? " on" : ""}" role="option" id="dd-o-${i}" data-dd-i="${i}" aria-selected="${i === s.selectedIndex}"${o.disabled ? ' aria-disabled="true"' : ""}><span>${esc(o.text)}</span>${icon("check", "dd-tick", 16)}</div>`;
+  });
+  el.innerHTML = html;
+  document.body.append(el); DD.el = el;
+  trig.setAttribute("aria-expanded", "true");
+  ddPlace(); ddActive(DD.i);
+  requestAnimationFrame(() => el.classList.add("on"));
+  el.focus({ preventScroll:true });
+}
+function ddPlace(){
+  const el = DD.el, t = DD.trig; if (!el || !t?.isConnected) return;
+  const r = t.getBoundingClientRect(), M = 12;
+  el.style.minWidth = `${Math.max(180, r.width)}px`;
+  const w = el.offsetWidth;
+  const below = innerHeight - r.bottom - M - 6, above = r.top - M - 6;
+  const up = below < Math.min(240, el.scrollHeight) && above > below;
+  el.style.maxHeight = `${Math.max(140, Math.min(360, up ? above : below))}px`;
+  el.style.left = `${Math.min(Math.max(M, r.left), innerWidth - w - M)}px`;
+  el.style.top = up ? `${Math.max(M, r.top - 6 - el.offsetHeight)}px` : `${r.bottom + 6}px`;
+  el.classList.toggle("up", up);
+}
+function ddActive(i){
+  if (!DD.el) return;
+  const items = [...DD.el.querySelectorAll(".dd-item")]; if (!items.length) return;
+  DD.i = Math.max(0, Math.min(items.length - 1, i));
+  items.forEach((n, k) => n.classList.toggle("act", k === DD.i));
+  DD.el.setAttribute("aria-activedescendant", items[DD.i].id);
+  items[DD.i].scrollIntoView({ block:"nearest" });
+}
+function ddStep(from, dir){
+  const items = [...DD.el.querySelectorAll(".dd-item")];
+  for (let i = from + dir; i >= 0 && i < items.length; i += dir) if (!items[i].hasAttribute("aria-disabled")) return i;
+  return from;
+}
+function ddClose(back = false){
+  if (!DD.el) return;
+  const el = DD.el, trig = DD.trig, find = DD.find;
+  DD.el = null; DD.sel = null;
+  el.classList.remove("on");
+  setTimeout(() => el.remove(), motionOK() ? 150 : 0);
+  trig?.setAttribute("aria-expanded", "false");
+  if (back) (trig?.isConnected ? trig : find ? document.querySelector(find)?.nextElementSibling : null)?.focus({ preventScroll:true });
+}
+function ddPick(i){
+  const s = DD.sel, o = s?.options[i]; if (!o || o.disabled) return;
+  const changed = s.selectedIndex !== i;
+  s.selectedIndex = i;
+  ddSync();
+  ddClose(true);
+  if (changed) { s.dispatchEvent(new Event("input", { bubbles:true })); s.dispatchEvent(new Event("change", { bubbles:true })); }
+  ddSync();
+}
+document.addEventListener("click", e => {
+  const trig = e.target.closest?.(".dd-trig");
+  if (trig) { e.preventDefault(); if (DD.el && DD.trig === trig) ddClose(true); else ddOpen(trig); return; }
+  // tapping a field's label text focuses the menu button, not the hidden select
+  const lab = e.target.closest?.("label");
+  if (lab && lab.querySelector(":scope > select[data-dd]") && !e.target.closest("select")) { e.preventDefault(); lab.querySelector(".dd-trig")?.focus(); }
+  if (!DD.el) return;
+  const it = e.target.closest?.(".dd-item");
+  if (it && DD.el.contains(it)) ddPick(Number(it.dataset.ddI));
+  else if (!DD.el.contains(e.target)) ddClose();
+});
+document.addEventListener("pointermove", e => { const it = DD.el && e.target.closest?.(".dd-item"); if (it && DD.el.contains(it) && !it.hasAttribute("aria-disabled")) ddActive(Number(it.dataset.ddI)); }, { passive:true });
+document.addEventListener("keydown", e => {
+  const trig = e.target.closest?.(".dd-trig");
+  if (!DD.el && trig && (e.key === "ArrowDown" || e.key === "ArrowUp")) { e.preventDefault(); ddOpen(trig); return; }
+  if (!DD.el) return;
+  const n = DD.el.querySelectorAll(".dd-item").length;
+  if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); ddClose(true); return; }
+  if (e.key === "Tab") { ddClose(); return; }
+  if (e.key === "ArrowDown") { e.preventDefault(); ddActive(ddStep(DD.i, 1)); return; }
+  if (e.key === "ArrowUp") { e.preventDefault(); ddActive(ddStep(DD.i, -1)); return; }
+  if (e.key === "Home") { e.preventDefault(); ddActive(ddStep(-1, 1)); return; }
+  if (e.key === "End") { e.preventDefault(); ddActive(ddStep(n, -1)); return; }
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ddPick(DD.i); return; }
+  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    // type the first letters of an option to jump to it
+    clearTimeout(DD.qt); DD.q += e.key.toLowerCase(); DD.qt = setTimeout(() => DD.q = "", 600);
+    const items = [...DD.el.querySelectorAll(".dd-item")];
+    const k = items.findIndex(x => !x.hasAttribute("aria-disabled") && x.textContent.trim().toLowerCase().startsWith(DD.q));
+    if (k >= 0) ddActive(k);
+  }
+}, true);
 const dishLink = d => `#/recipes/${d.id}`;
 
 const NAV = [
@@ -9815,7 +10314,10 @@ function render(){
   const premF = UI.route === "premium" && UI.param ? PREMIUM_BY_ID[UI.param] : null;
   const pageTitle = dish ? dish.n : catP ? catP.n : metP ? metP.n : premF ? premF.name : titles[UI.route];
   const sub = dish ? ["#/recipes","Recipes",dish.n] : setTab ? ["#/settings","Settings",setTab[1]] : premF ? ["#/premium","Premium",premF.name] : metP ? ["#/health", "Health data", metP.n] : catP ? ["#/health", "Health data", catP.n] : null;
-  const crumbs = UI.route === "home" ? "" : `<nav class="crumbs" aria-label="Breadcrumb"><a href="#/home">Home</a><span aria-hidden="true">${icon("chevR","go",13)}</span>${sub ? `<a href="${sub[0]}">${sub[1]}</a><span aria-hidden="true">${icon("chevR","go",13)}</span><span aria-current="page">${esc(sub[2])}</span>` : `<span aria-current="page">${esc(pageTitle)}</span>`}</nav>`;
+  // 8.1.17: BoardUI-style trail. Home and the parent section carry their menu icon; the current page is plain text.
+  const crumbSep = `<span class="crumb-sep" aria-hidden="true">${icon("chevR","",14)}</span>`;
+  const crumbIco = r => { const n = NAV.flatMap(g => g[1]).find(x => x[0] === r); return n && n[2] && I[n[2]] ? icon(n[2], "crumb-i", 15) : ""; };
+  const crumbs = UI.route === "home" ? "" : `<nav class="crumbs" aria-label="Breadcrumb"><a class="crumb" href="#/home">${icon("home","crumb-i",15)}<span>Home</span></a>${crumbSep}${sub ? `<a class="crumb" href="${sub[0]}">${crumbIco(sub[0].slice(2))}<span>${sub[1]}</span></a>${crumbSep}<span class="crumb" aria-current="page">${esc(sub[2])}</span>` : `<span class="crumb" aria-current="page">${esc(pageTitle)}</span>`}</nav>`;
   setMeta(setTab ? `${setTab[1]} · Settings` : premF ? `${premF.name} · Premium` : pageTitle, dish ? `${dish.n} (${dish.c}): ${dish.d}` : DESCS[UI.route] || DESCS.home, dish ? recipeLD(dish) : null);
   const routeKey = location.hash; const animate = UI.lastKey !== routeKey; UI.lastKey = routeKey;
   morphInto(root, `
@@ -10022,6 +10524,7 @@ function afterRender(){
   if (typeof paintFooterYear === "function") paintFooterYear();
   revealActive();
   sbFilter(document.getElementById("sb-q")?.value);
+  ddSync(); // 8.1.17 dropdown buttons show their select's current option
   if (typeof tourAfterRender === "function") tourAfterRender(); // 8.1.7 app tour
   if (typeof stepperAfterRender === "function") stepperAfterRender(); // 8.1.9 stepper motion
   if (typeof applyCanonical === "function") applyCanonical();
@@ -10038,12 +10541,12 @@ function lockView(){
   return `<div class="ob pastel">${pastelScene()}<div class="panel lockcard" id="lockcard">
     <div class="row">${logoSVG(48)}<div class="shield">${icon("lock")}</div></div>
     <div><h1>Whole Life Hub is locked</h1><p class="muted" style="margin-top:6px">Your data is encrypted. Enter your passcode to open it on this device.</p></div>
-    <form class="stack" data-form="unlock"><label class="f">Passcode<input type="password" id="unlock-pass" autocomplete="current-password" required minlength="6"></label>
+    <form class="stack" data-form="unlock">${field({ id:"unlock-pass", label:"Passcode", type:"password", lead:"lock", req:true, reveal:true, bad:!!UI.unlockErr, attrs:'autocomplete="current-password" minlength="6"' })}
     <div class="pinrow" id="pinrow" aria-hidden="true">${[0,1,2,3,4,5,6,7].map(i => `<span class="pindot" data-i="${i}"></span>`).join("")}</div>
     ${UI.unlockErr ? `<div class="note">${esc(UI.unlockErr)}</div>` : ""}
     <button class="btn primary" type="submit"${UI.unlocking ? " disabled" : ""}>${UI.unlocking ? "Unlocking…" : "Unlock"}</button></form>
     <details class="how"><summary>Forgot your passcode?</summary><p class="small">The passcode is never stored, so there's no way to recover it. You can erase all WholeLife data and start over.</p>
-    ${UI.confirmErase ? `<div class="modal-foot"><div class="foot-left"><button class="btn sm" data-act="erase-no">Cancel</button></div><div class="foot-right"><button class="btn sm danger" data-act="erase-yes">Erase everything</button></div></div>` : `<button class="btn sm danger" data-act="erase-ask">Erase and start over</button>`}</details>
+    ${UI.confirmErase ? warnCard({ title:"Erase everything and start over?", body:"Every profile and log saved on this device is deleted, along with the passcode. This can't be undone.", no:"erase-no", yes:"erase-yes", yesLabel:"Erase everything" }) : `<button class="btn sm danger" data-act="erase-ask">Erase and start over</button>`}</details>
   </div></div>`;
 }
 
@@ -10319,10 +10822,10 @@ function onboardingView(){
     <div><div class="eyebrow">Step 2 of 4 · You and your goals</div><h1 style="margin-top:6px" tabindex="-1" data-st-focus>What would make this useful?</h1></div>
     <div class="form">
       <label class="f full">Name<input type="text" id="ob-name" value="${esc(d.name)}" placeholder="What should we call you?" autocomplete="given-name"></label>
-      <label class="f">Main goal<select id="ob-goal">${opt(GOALS, d.goal)}</select></label>
-      <label class="f">Exercise style<select id="ob-style">${opt(STYLES, d.style)}</select></label>
+      <label class="f">Main goal<select id="ob-goal" data-dd tabindex="-1" aria-hidden="true">${opt(GOALS, d.goal)}</select>${ddBtn()}</label>
+      <label class="f">Exercise style<select id="ob-style" data-dd tabindex="-1" aria-hidden="true">${opt(STYLES, d.style)}</select>${ddBtn()}</label>
       <label class="f">Workouts per week<input type="number" id="ob-freq" min="0" max="14" value="${d.freq ?? ""}" placeholder="e.g. 3"></label>
-      <label class="f">Level<select id="ob-level">${opt(LEVELS, d.level)}</select></label>
+      <label class="f">Level<select id="ob-level" data-dd tabindex="-1" aria-hidden="true">${opt(LEVELS, d.level)}</select>${ddBtn()}</label>
     </div>`,
     `<div class="foot-left"><button class="btn ghost" data-act="ob-back">Back</button></div><div class="foot-right"><button class="btn primary" data-act="ob-next">Continue</button></div>`);
   if (step === 3) {
@@ -10332,11 +10835,11 @@ function onboardingView(){
       <div class="seg setctl" role="group" aria-label="Units"><button data-act="ob-units" data-v="us" aria-pressed="${units==="us"}">lb / ft</button><button data-act="ob-units" data-v="metric" aria-pressed="${units==="metric"}">kg / cm</button></div></div>
     <p class="small muted">Age, sex, height and weight power the weight gain/loss estimate. Leave them blank and the estimate stays off.</p>
     <div class="form">
-      <label class="f">Food preference<select id="ob-diet">${opt(DIETS, d.diet)}</select></label>
-      <label class="f">Food culture<select id="ob-culture">${coverageOptions(d.culture)}</select></label>
+      <label class="f">Food preference<select id="ob-diet" data-dd tabindex="-1" aria-hidden="true">${opt(DIETS, d.diet)}</select>${ddBtn()}</label>
+      <label class="f">Food culture<select id="ob-culture" data-dd tabindex="-1" aria-hidden="true">${coverageOptions(d.culture)}</select>${ddBtn()}</label>
       <label class="f full">Allergies or foods to avoid<input type="text" id="ob-allergies" value="${esc(d.allergies)}" placeholder="e.g. peanuts, shellfish"></label>
       <label class="f">Age<input type="number" id="ob-age" min="13" max="110" value="${d.age ?? ""}" placeholder="Optional"></label>
-      <label class="f">Sex (for calorie estimates)<select id="ob-sex">${opt([["","Prefer not to say"],["female","Female"],["male","Male"]], d.sex)}</select></label>
+      <label class="f">Sex (for calorie estimates)<select id="ob-sex" data-dd tabindex="-1" aria-hidden="true">${opt([["","Prefer not to say"],["female","Female"],["male","Male"]], d.sex)}</select>${ddBtn()}</label>
       ${UI.obAgeErr ? `<div class="note full">${esc(UI.obAgeErr)}</div>` : ""}
       ${units === "us"
         ? `<label class="f">Height (ft)<input type="number" id="ob-ft" min="3" max="8" value="${hIn ? Math.floor(hIn/12) : ""}" placeholder="ft"></label>
@@ -10521,11 +11024,11 @@ function nutritionView(p){
     <section class="card">
       <h2>Log a meal</h2>
       <div class="form">
-        <label class="f">Meal<select id="m-slot">${opt(SLOTS, UI.prefill?.slot || slotGuess)}</select></label>
-        <label class="f">Date<input type="date" id="m-date" value="${date}" max="${today()}"></label>
+        <label class="f">Meal<select id="m-slot" data-dd tabindex="-1" aria-hidden="true">${opt(SLOTS, UI.prefill?.slot || slotGuess)}</select>${ddBtn()}</label>
+        <label class="f">Date<span class="dp-wrap"><input type="date" id="m-date" value="${date}" max="${today()}">${dpBtn("m-date")}</span></label>
         <label class="f full">What did you eat?<input type="text" id="m-name" list="dishlist" value="${esc(UI.prefill?.name || "")}" placeholder="Start typing: jollof, waakye, egusi…"></label>
         <label class="f">Calories<input type="number" id="m-cal" min="0" max="5000" value="${UI.prefill?.cal ?? ""}" placeholder="Filled from the catalog"></label>
-        <label class="f">Portion<select id="m-portion">${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
+        <label class="f">Portion<select id="m-portion" data-dd tabindex="-1" aria-hidden="true">${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select>${ddBtn()}</label>
       </div>
       <datalist id="dishlist">${DISHES.concat(dishAltOptions()).map(d => `<option value="${esc(d.n)}">${d.cal} cal</option>`).join("")}</datalist>
       ${quickLogBlock(date)}
@@ -10551,10 +11054,10 @@ function nutritionView(p){
       </div><div class="row" style="gap:6px">${m.photo && !UI.locked ? `<button class="mealthumb" data-act="ms-view" data-id="${m.id}" aria-label="Photo of ${esc(m.name)}"><img src="${m.photo}" alt=""></button>` : ""}<span class="tab"><b>${mealTotal(m)}</b></span><button class="btn sm ghost" data-act="extras" data-id="${m.id}">Extras</button><button class="btn sm ghost" data-act="del-meal" data-id="${m.id}" aria-label="Delete ${esc(m.name)}">${icon("x","")}</button></div></div>`).join("")}</div>`
       : `${emptyState("meals", `No meals logged${date === today() ? " yet today" : ""}. Log one above, or let the coach pick from your food culture.`, ["See today's menu","#/culture"])}`}
   </section>
-  <section class="card"><div class="row between"><h2>Last 7 days</h2>${p.calorieGoal ? "" : `<a class="small" href="#/settings">Add a target line</a>`}</div>${weekChart(p)}</section>
+  <section class="card"><div class="row between"><h2>Last 7 days</h2>${p.calorieGoal ? "" : linkBtn("Add a target line", { href:"#/settings", size:"sm", variant:"secondary", lead:"plus" })}</div>${weekChart(p)}</section>
   <div class="grid g2">${projectionCard(p)}
     <section class="card"><h2>Log your weight</h2>
-      <div class="form"><label class="f">Weight<input type="text" inputmode="decimal" autocomplete="off" id="w-val" placeholder="${esc(weightPlaceholder(p))}"></label><label class="f">Date<input type="date" id="w-date" value="${today()}" max="${today()}"></label></div>
+      <div class="form"><label class="f">Weight<input type="text" inputmode="decimal" autocomplete="off" id="w-val" placeholder="${esc(weightPlaceholder(p))}"></label><label class="f">Date<span class="dp-wrap"><input type="date" id="w-date" value="${today()}" max="${today()}">${dpBtn("w-date")}</span></label></div>
       <p class="tiny muted">Type it however you like: <b>155</b>, <b>70 kg</b>, <b>11 st 4</b>. Without a unit it's read as ${p.units === "metric" ? "kilograms" : "pounds"}.</p>
       ${UI.weightErr ? `<div class="note">${esc(UI.weightErr)}</div>` : ""}
       <button class="btn" data-act="log-weight">Save weight</button>
@@ -10626,9 +11129,9 @@ function workoutsView(p){
     <section class="card"><div class="eyebrow">Manual entry</div><h3>Log a workout</h3>
       <div class="form">
         <label class="f full">Activity<span class="actpick">${ACTIVITIES.map(a => `<button type="button" class="actbtn" data-act="pick-act" data-v="${a.k}" aria-pressed="${(UI.prefillW?.type || UI.pickAct || "strength") === a.k}" title="${esc(a.n)}">${wicon(a.k, 34)}<span class="tiny">${esc(a.n)}</span></button>`).join("")}</span>
-          <select id="w-type" class="visually-tight">${opt(ACTIVITIES.map(a=>[a.k,a.n]), UI.prefillW?.type || UI.pickAct || "strength")}</select></label>
+          <select id="w-type" class="visually-tight" data-dd tabindex="-1" aria-hidden="true">${opt(ACTIVITIES.map(a=>[a.k,a.n]), UI.prefillW?.type || UI.pickAct || "strength")}</select>${ddBtn()}</label>
         <label class="f">Minutes<input type="number" id="w-min" min="1" max="600" value="${UI.prefillW?.minutes ?? ""}" placeholder="45"></label>
-        <label class="f">Date<input type="date" id="w-d" value="${today()}" max="${today()}"></label>
+        <label class="f">Date<span class="dp-wrap"><input type="date" id="w-d" value="${today()}" max="${today()}">${dpBtn("w-d")}</span></label>
         <label class="f">Calories (optional)<input type="number" id="w-cal" min="0" max="5000" placeholder="Estimated if blank"></label>
         <label class="f full">Notes<input type="text" id="w-note" value="${esc(UI.prefillW?.note || "")}" placeholder="e.g. legs, 5K, pickup soccer"></label>
       </div>
@@ -10637,7 +11140,7 @@ function workoutsView(p){
   </div>
   ${imp ? `<section class="card"><div class="row between"><h3>${esc(imp.label)}</h3>${imp.done ? `<button class="btn sm ghost" data-act="imp-close">Dismiss</button>` : ""}</div>${imp.done ? "" : `<div class="bar"><i style="width:${imp.pct||0}%"></i></div>`}<p class="small muted">${esc(imp.msg || "")}</p></section>` : ""}
   <section class="card">
-    <div class="setrow"><div class="setlabel"><div class="eyebrow">Weekly goal</div><h2 style="margin-top:4px">${weekWorkouts(p).length}${p.workoutGoal ? ` of ${p.workoutGoal}` : ""} workouts this week</h2></div>${p.workoutGoal ? "" : `<a class="small" href="#/settings">Set a weekly goal</a>`}</div>
+    <div class="setrow"><div class="setlabel"><div class="eyebrow">Weekly goal</div><h2 style="margin-top:4px">${weekWorkouts(p).length}${p.workoutGoal ? ` of ${p.workoutGoal}` : ""} workouts this week</h2></div>${p.workoutGoal ? "" : linkBtn("Set a weekly goal", { href:"#/settings", size:"sm", variant:"secondary", lead:"plus" })}</div>
     ${p.workoutGoal ? ringHTML(weekWorkouts(p).length / p.workoutGoal, `<span class="rc-main">${weekWorkouts(p).length}</span><span class="rc-sub">of ${p.workoutGoal}</span>`, `${weekWorkouts(p).length} of ${p.workoutGoal} workouts this week`, "var(--c-activity)", 104) : ""}
     <p class="small muted">${esc(motivation(p))}</p>
   </section>
@@ -10865,9 +11368,9 @@ function recipesView(p){
     <div class="row between"><h2>Recipe library</h2><span class="small muted">${list.length} of ${DISHES.length} dishes</span></div>
     <div class="form">
       <label class="f">Search<input type="search" id="rf-q" value="${esc(f.q)}" placeholder="Dish or ingredient: egusi, plantain…"></label>
-      <label class="f">Region<select id="rf-r">${opt([["","All regions"],...REGIONS.map(r=>[r.k,r.n])], f.r)}</select></label>
-      <label class="f">Meal<select id="rf-s">${opt([["","Any meal"],...SLOTS], f.s)}</select></label>
-      <label class="f">Diet<select id="rf-d">${opt([["","Any"],["vegan","Vegan"],["veg","Vegetarian"],["gf","Gluten-free"],["hp","High protein"],["lc","Lower carb"]], f.d)}</select></label>
+      <label class="f">Region<select id="rf-r" data-dd tabindex="-1" aria-hidden="true">${opt([["","All regions"],...REGIONS.map(r=>[r.k,r.n])], f.r)}</select>${ddBtn()}</label>
+      <label class="f">Meal<select id="rf-s" data-dd tabindex="-1" aria-hidden="true">${opt([["","Any meal"],...SLOTS], f.s)}</select>${ddBtn()}</label>
+      <label class="f">Diet<select id="rf-d" data-dd tabindex="-1" aria-hidden="true">${opt([["","Any"],["vegan","Vegan"],["veg","Vegetarian"],["gf","Gluten-free"],["hp","High protein"],["lc","Lower carb"]], f.d)}</select>${ddBtn()}</label>
     </div>
     <div class="grid g3">${list.map(d => { const hits = allergyHits(d,p); return `<a class="dish" href="${dishLink(d)}"><span class="slot">${esc(d.c)}</span><h3>${esc(d.n)}</h3><span class="small muted">≈${d.cal} cal · ${d.t[1]} min cook · ${d.s.join(", ")}</span><span class="tiny muted">${esc(d.d)}</span>${hits.length ? `<span class="tag bad" style="align-self:flex-start">Contains ${esc(hits.join(", "))}</span>` : ""}</a>`; }).join("") || `<div class="empty">Nothing matches. Clear a filter.</div>`}</div>
   </section>
@@ -10893,7 +11396,7 @@ function cultureView(p){
   
   <section class="card">
     <div class="setrow"><div class="setlabel"><div class="eyebrow">Your food culture</div><h2 style="margin-top:4px">${c ? esc(c) : "Choose where your food comes from"}</h2></div>
-      <label class="f" style="min-width:240px">Country or region<select id="cu-country">${countryOptions(c)}</select></label></div>
+      <label class="f" style="min-width:240px">Country or region<select id="cu-country" data-dd tabindex="-1" aria-hidden="true">${countryOptions(c)}</select>${ddBtn()}</label></div>
     <p class="small muted">Optional and self-described. It shapes suggestions only${S.mode === "browser" ? " and is saved in this browser" : ""}.${c && !local.length && rk ? ` The catalog doesn't have dishes from ${esc(c)} yet, so these come from ${REGION_NAME[rk]} and nearby cuisines. Try "Ask for something different" on Recipes for ${esc(c)}-specific dishes.` : ""}</p>
   </section>
   <section class="card"><div class="eyebrow">Today</div><h2>Three meals for ${fmtDay(today())}</h2>
@@ -10935,7 +11438,7 @@ function coachView(p){
     <div class="setrow"><div class="setlabel"><div class="eyebrow">Workout advice</div><h2 style="margin-top:4px">Your weekly plan</h2></div>
       <div class="setctl">
         <label class="f" style="flex-direction:row;align-items:center;gap:8px">Days<input type="number" id="c-freq" min="1" max="6" value="${p.freq || 3}" style="width:70px"></label>
-        <select id="c-level" aria-label="Level" style="width:auto">${opt(LEVELS, p.level)}</select>
+        <select id="c-level" aria-label="Level" style="width:auto" data-dd tabindex="-1" aria-hidden="true">${opt(LEVELS, p.level)}</select>${ddBtn(true)}
         <button class="btn primary" data-act="build-wplan">${plan ? "Rebuild" : "Build my plan"}</button>
       </div></div>
     ${plan ? `<div class="grid g3">${plan.days.map(d => { const date = dateFor(d.dow); const done = doneDates.has(`${date}|${d.type}`); const isToday = d.dow === dow; return `<div class="dish"${isToday ? ' style="border-color:var(--accent)"' : ""}>
@@ -10948,7 +11451,7 @@ function coachView(p){
 
   <section class="card">
     <div class="setrow"><div class="setlabel"><div class="eyebrow">Sports</div><h2 style="margin-top:4px">${sport ? `Training for ${esc(sport.n)}` : "Train for a sport"}</h2></div>
-      <select class="setctl" id="c-sport" aria-label="Sport" style="width:auto">${opt([["","Choose a sport"], ...Object.entries(SPORTS).map(([k,v]) => [k, v.n])], p.sport)}</select></div>
+      <select class="setctl" id="c-sport" aria-label="Sport" style="width:auto" data-dd tabindex="-1" aria-hidden="true">${opt([["","Choose a sport"], ...Object.entries(SPORTS).map(([k,v]) => [k, v.n])], p.sport)}</select>${ddBtn(true)}</div>
     ${sport ? `<div class="grid g3">${sport.days.map(([t, items]) => `<div class="well stack" style="gap:6px"><b>${esc(t)}</b><ul class="clean small">${items.map(([n,r]) => `<li>${esc(n)} <span class="muted">${esc(r)}</span></li>`).join("")}</ul></div>`).join("")}</div>
       <p class="small muted">Rebuild your weekly plan and these sessions replace some of the general ones.</p>` : `<p class="small muted">Soccer, basketball, running, American football, swimming or tennis: get conditioning and skill sessions for it.</p>`}
   </section>
@@ -11232,7 +11735,8 @@ function settingsView(p){
     <p class="small muted">Each profile has its own goals, logs and plans. Switch any time from the menu.</p>
     <div class="list">${S.profiles.map(x => `<div class="li"><div class="grow"><b>${esc(x.name || "Unnamed")}</b>${x.id === p.id ? ` <span class="tag good">Active</span>` : ""}<div class="small muted">${esc(GOALS.find(g=>g[0]===x.goal)?.[1] || "No goal")} · since ${fmtDay(x.created)}</div></div>
       <div class="row" style="gap:6px">${x.id !== p.id ? `<button class="btn sm" data-act="switch" data-id="${x.id}">Switch</button>` : ""}
-      ${UI.confirmDel === x.id ? `<span class="small">Delete ${esc(x.name || "this profile")} and all its logs?</span><button class="btn sm danger" data-act="del-profile-yes" data-id="${x.id}">Delete</button><button class="btn sm" data-act="del-profile-no">Keep</button>` : S.profiles.length > 1 ? `<button class="btn sm ghost" data-act="del-profile" data-id="${x.id}">Delete</button>` : ""}</div></div>`).join("")}</div>
+      ${UI.confirmDel !== x.id && S.profiles.length > 1 ? `<button class="btn sm ghost" data-act="del-profile" data-id="${x.id}">Delete</button>` : ""}</div></div>
+      ${UI.confirmDel === x.id ? warnCard({ title:`Delete ${x.name || "this profile"}?`, body:"Every log saved under this profile is deleted with it.", no:"del-profile-no", noLabel:"Keep", yes:"del-profile-yes", yesLabel:"Delete", id:x.id }) : ""}`).join("")}</div>
   </section>`,
     privacy: `${mediaCard()}<section class="card" id="security">
     <div class="row" style="gap:12px"><div class="shield">${icon("lock")}</div><h2>Privacy and security</h2></div>
@@ -11250,11 +11754,11 @@ function settingsView(p){
     ${CRY.lock ? `
       <div class="setrow"><div class="setlabel row"><button class="btn" data-act="lock-now">${icon("lock")} Lock now</button><span class="small muted">You'll need the passcode each time you open WholeLife.</span></div>
         <label class="f" style="flex-direction:row;align-items:center;gap:8px">Auto-lock<select id="auto-lock" style="width:auto">${opt([["5","After 5 min"],["15","After 15 min"],["30","After 30 min"],["60","After 1 hour"],["0","Never"]], String(CRY.lock.auto ?? 15))}</select></label></div>
-      <form class="form" data-form="change-pass"><label class="f">New passcode<input type="password" id="np1" minlength="8" autocomplete="new-password" required></label><label class="f">Confirm<input type="password" id="np2" minlength="8" autocomplete="new-password" required></label><div class="full"><button class="btn" type="submit">Change passcode</button></div></form>
-      <form class="form" data-form="remove-pass"><label class="f">Current passcode<input type="password" id="rp" autocomplete="current-password" required></label><div class="full"><button class="btn danger" type="submit">Turn off encryption</button></div></form>`
+      <form class="form" data-form="change-pass">${field({ id:"np1", label:"New passcode", type:"password", lead:"lock", req:true, reveal:true, hint:"At least 8 characters.", attrs:'minlength="8" autocomplete="new-password"' })}${field({ id:"np2", label:"Confirm", type:"password", lead:"lock", req:true, reveal:true, attrs:'minlength="8" autocomplete="new-password"' })}<div class="full"><button class="btn" type="submit">Change passcode</button></div></form>
+      <form class="form" data-form="remove-pass">${field({ id:"rp", label:"Current passcode", type:"password", lead:"lock", req:true, reveal:true, attrs:'autocomplete="current-password"' })}<div class="full"><button class="btn danger" type="submit">Turn off encryption</button></div></form>`
     : `<form class="form" data-form="set-pass">
-        <label class="f">Passcode (8+ characters)<input type="password" id="sp1" minlength="8" autocomplete="new-password" required></label>
-        <label class="f">Confirm passcode<input type="password" id="sp2" minlength="8" autocomplete="new-password" required></label>
+        ${field({ id:"sp1", label:"Passcode", type:"password", lead:"lock", req:true, reveal:true, hint:"At least 8 characters. It can't be recovered if you forget it.", attrs:'minlength="8" autocomplete="new-password"' })}
+        ${field({ id:"sp2", label:"Confirm passcode", type:"password", lead:"lock", req:true, reveal:true, attrs:'minlength="8" autocomplete="new-password"' })}
         <label class="full small" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="sp-ack" required style="margin-top:3px"> I understand that if I forget this passcode, my WholeLife data can't be recovered.</label>
         <div class="full"><button class="btn primary" type="submit">Turn on encryption</button></div>
       </form>`}
@@ -11265,11 +11769,9 @@ function settingsView(p){
     <div class="setrow"><div class="setlabel"><b>Export my data</b><span class="small muted">A JSON file with your logs, plans and settings.</span></div>
       <button class="btn" data-act="export">Download (JSON)</button></div>
     <div class="setrow"><div class="setlabel"><b>Delete my account and data</b><span class="small muted">Every profile and everything logged under it, on this device. Meals and profile names saved to your account are not deleted by this: to delete the account and all synced data, email the contact address in the Privacy Policy. Immediate, and cannot be undone.</span></div>
-      ${UI.confirmEraseAll
-        ? `<span class="row" style="gap:6px"><button class="btn sm" data-act="erase-all-no">Cancel</button><button class="btn sm danger" data-act="erase-all-yes">Confirm delete</button></span>`
-        : `<button class="btn danger" data-act="erase-all-ask">Delete everything</button>`}
+      ${UI.confirmEraseAll ? "" : `<button class="btn danger" data-act="erase-all-ask">Delete everything</button>`}
     </div>
-    ${UI.confirmEraseAll ? `<div class="note">This deletes ${S.profiles.length} profile${S.profiles.length === 1 ? "" : "s"} and everything under them: meals, snacks, drinks, workouts, weigh-ins, progress photos, form-check clips, your passcode and encryption key, and any beta or purchase state on this device. It signs you out and returns you to a fresh setup. If you have Premium, cancel it separately first — see <a href="#/refunds">Refunds</a> — since deleting your data here doesn't reach a payment provider.</div>` : ""}
+    ${UI.confirmEraseAll ? warnCard({ title:`Delete ${S.profiles.length} profile${S.profiles.length === 1 ? "" : "s"} and everything under them?`, html:`Meals, snacks, drinks, workouts, weigh-ins, progress photos, form-check clips, your passcode and encryption key, and any beta or purchase state on this device. It signs you out and returns you to a fresh setup. If you have Premium, cancel it separately first (see <a href="#/refunds">Refunds</a>), since deleting your data here doesn't reach a payment provider.`, no:"erase-all-no", yes:"erase-all-yes", yesLabel:"Confirm delete" }) : ""}
   </section>
   <section class="card" id="consent-center">
     <h2>Permissions</h2>
@@ -12620,8 +13122,8 @@ function estimatePanel(p, e){
       <input type="number" id="ei-c-${i}" value="${it.calories}" min="0" max="5000" step="10" aria-label="Calories for item ${i+1}">
       <button class="btn sm ghost" data-act="est-rm" data-i="${i}" aria-label="Remove ${esc(it.name)}">${icon("x")}</button></div>`).join("")}</div>
     <div class="row"><button class="btn sm" data-act="est-add">${icon("plus")} Add an item</button></div>
-    <div class="form"><label class="f">Meal<select id="est-slot">${opt(SLOTS, new Date().getHours() < 11 ? "breakfast" : new Date().getHours() < 16 ? "lunch" : "dinner")}</select></label>
-      <label class="f">Date<input type="date" id="est-date" value="${today()}" max="${today()}"></label></div>
+    <div class="form"><label class="f">Meal<select id="est-slot" data-dd tabindex="-1" aria-hidden="true">${opt(SLOTS, new Date().getHours() < 11 ? "breakfast" : new Date().getHours() < 16 ? "lunch" : "dinner")}</select>${ddBtn()}</label>
+      <label class="f">Date<span class="dp-wrap"><input type="date" id="est-date" value="${today()}" max="${today()}">${dpBtn("est-date")}</span></label></div>
     <div class="row"><button class="btn primary" data-act="est-log">${icon("check")} Log this as a meal</button>
       <button class="btn" data-act="food-clear">Start over</button></div>
     <p class="tiny faint">It's saved as an estimate, marked as one in your history, and you can edit or delete it like any other meal.</p>`}
@@ -12665,7 +13167,7 @@ function equipPanel(p, r, s){
       ${s.mode === "sets" ? `<label class="f">Sets<input type="number" id="eq-sets" min="1" max="20" value="${s.sets}"></label>
         <label class="f">Reps per set<input type="number" id="eq-reps" min="1" max="100" value="${s.reps}"></label>` : ""}
       <label class="f">Minutes<input type="number" id="eq-min" min="1" max="300" value="${s.minutes}"></label>
-      <label class="f">Date<input type="date" id="eq-date" value="${today()}" max="${today()}"></label>
+      <label class="f">Date<span class="dp-wrap"><input type="date" id="eq-date" value="${today()}" max="${today()}">${dpBtn("eq-date")}</span></label>
     </div>
     <div class="row"><button class="btn primary" data-act="equip-log">${icon("check")} Log this workout</button>
       <span class="small muted">≈${est.toLocaleString()} cal from ${s.minutes} minutes of ${esc((ACT[s.type] || ACT.other).n.toLowerCase())}.</span></div>
@@ -12869,7 +13371,7 @@ function remindersCard(p){
     <div class="stack">${items.map(i => { const meta = REM_KINDS.find(k => k[0] === i.kind) || REM_KINDS[0];
       return `<div class="remrow">${icon("bell")}
         <div class="grow"><b>${esc(meta[1])}</b><div class="small muted">${esc(meta[2])}</div></div>
-        <select data-rem="${i.id}" class="rem-kind" aria-label="Reminder type" style="width:auto">${opt(REM_KINDS.map(k => [k[0], k[1]]), i.kind)}</select>
+        <select data-rem="${i.id}" class="rem-kind" aria-label="Reminder type" style="width:auto" data-dd tabindex="-1" aria-hidden="true">${opt(REM_KINDS.map(k => [k[0], k[1]]), i.kind)}</select>${ddBtn(true)}
         <input type="time" class="rem-time" data-rem="${i.id}" value="${esc(i.time)}" aria-label="Reminder time">
         <button class="sw" role="switch" aria-checked="${i.on}" data-act="rem-toggle" data-id="${i.id}" aria-label="${i.on ? "Turn off" : "Turn on"} ${esc(meta[1])}"></button>
         ${items.length > 1 ? `<button class="btn sm ghost" data-act="rem-del" data-id="${i.id}" aria-label="Delete ${esc(meta[1])}">${icon("x")}</button>` : ""}
@@ -13130,8 +13632,8 @@ function mealBuilderCard(p){
     <div class="row"><button class="btn sm" data-act="mb-add">${icon("plus")} Add something</button>
       ${b.items.some(c => !c.known) ? `<span class="small muted">Unknown items start at 120 g of an average mixed dish.</span>` : ""}</div>
     <div class="form">
-      <label class="f">Meal<select id="mb-slot">${opt(SLOTS, b.slot)}</select></label>
-      <label class="f">Date<input type="date" id="mb-date" value="${b.date}" max="${today()}"></label>
+      <label class="f">Meal<select id="mb-slot" data-dd tabindex="-1" aria-hidden="true">${opt(SLOTS, b.slot)}</select>${ddBtn()}</label>
+      <label class="f">Date<span class="dp-wrap"><input type="date" id="mb-date" value="${b.date}" max="${today()}">${dpBtn("mb-date")}</span></label>
     </div>
     <div class="row"><button class="btn primary" data-act="mb-log">${icon("check")} Log this meal</button>
       <button class="btn" data-act="mb-cancel">Cancel</button></div>
@@ -13299,10 +13801,10 @@ function drinksSection(p, opts = {}){
     <div class="setrow"><div class="setlabel">
       <h3 style="margin:0">Log a drink</h3></div></div>
     <p class="small muted">Alcohol carries about 7 calories a gram, which is why drinks add up faster than people expect. Anything you log here counts toward the day's calories alongside your meals and snacks.</p>
-    <label class="f full">Drink<select id="dr-k">${cats.map(c => `<optgroup label="${esc(c)}">${DRINKS.filter(x => x.cat === c).map(x => `<option value="${x.k}"${x.k === sel ? " selected" : ""}>${esc(x.n)}, ${x.ml} ml, ${x.abv}% · ${x.kcal} cal</option>`).join("")}</optgroup>`).join("")}</select></label>
+    <label class="f full">Drink<select id="dr-k" data-dd tabindex="-1" aria-hidden="true">${cats.map(c => `<optgroup label="${esc(c)}">${DRINKS.filter(x => x.cat === c).map(x => `<option value="${x.k}"${x.k === sel ? " selected" : ""}>${esc(x.n)}, ${x.ml} ml, ${x.abv}% · ${x.kcal} cal</option>`).join("")}</optgroup>`).join("")}</select>${ddBtn()}</label>
     <div class="form">
       <label class="f">How many?<input type="number" id="dr-qty" min="0.25" max="30" step="0.25" value="${qty}"></label>
-      <label class="f">Date<input type="date" id="dr-date" value="${date}" max="${today()}"></label>
+      <label class="f">Date<span class="dp-wrap"><input type="date" id="dr-date" value="${date}" max="${today()}">${dpBtn("dr-date")}</span></label>
     </div>
     ${d ? `<div class="well stack" style="gap:4px">
       <div class="pr"><span class="next">${Math.round(d.kcal * qty).toLocaleString()} cal</span><span class="now">${round(stdDrinks(d.ml, d.abv) * qty, 1)} standard drink${round(stdDrinks(d.ml, d.abv) * qty, 1) === 1 ? "" : "s"}</span></div>
@@ -18294,7 +18796,7 @@ function bodyTape(p, st){
       <span class="small muted tab">optional</span></div>
     <form class="form" data-form="bd-tape">
       ${TAPE.map(([k, n]) => `<label class="f">${n} (${u})<input type="number" id="bt-${k}" min="10" max="300" step="0.1" placeholder="—"></label>`).join("")}
-      <label class="f">Date<input type="date" id="bt-date" value="${today()}" max="${today()}"></label>
+      <label class="f">Date<span class="dp-wrap"><input type="date" id="bt-date" value="${today()}" max="${today()}">${dpBtn("bt-date")}</span></label>
     </form>
     <div class="row" style="margin-top:10px"><button class="btn" data-act="bd-tape-save">Save measurements</button></div>
     ${rows.length ? `
@@ -20696,23 +21198,26 @@ function tourAfterRender(){
 function tourOffer(){
   TOUR.offerShown = true;
   const box = document.createElement("div");
-  box.className = "tour-offer";
+  box.className = "tour-offer ann";
   box.setAttribute("role", "dialog");
   box.setAttribute("aria-labelledby", "tour-offer-t");
   box.setAttribute("aria-describedby", "tour-offer-b");
-  box.innerHTML = `<span class="tour-offer-ic" aria-hidden="true">${typeof logoSVG === "function" ? logoSVG(40) : ""}</span>
-    <div class="tour-offer-txt">
-      <b id="tour-offer-t">New to Whole Life Hub?</b>
-      <span id="tour-offer-b">Take a one-minute tour of how logging, plans and your coach connect. You can find it again in Settings any time.</span>
-      <div class="tour-offer-actions">
-        <button type="button" class="btn sm primary" data-act="tour-offer-yes">Show me</button>
-        <button type="button" class="btn sm ghost" data-act="tour-offer-no">Not now</button>
-      </div>
-    </div>`;
+  // 8.1.17: laid out like BoardUI's Announcement: icon, title, description, a close button for
+  // "Not now" and one full-width action.
+  box.innerHTML = `<button type="button" class="ann-x" data-act="tour-offer-no" aria-label="Not now">${icon("x", "", 18)}</button>
+    <div class="ann-head"><span class="ann-ic" aria-hidden="true">${icon("spark", "", 18)}</span>
+      <div class="ann-txt"><b class="ann-t" id="tour-offer-t">New to Whole Life Hub?</b>
+      <span class="ann-d" id="tour-offer-b">Take a one-minute tour of how logging, plans and your coach connect. You can find it again in Settings any time.</span></div></div>
+    <button type="button" class="btn ann-act" data-act="tour-offer-yes">Take the tour ${icon("arrowR", "", 16)}</button>`;
   document.body.append(box);
   window.WLH?.log("tour", "first-run tour offered");
 }
-function tourOfferClose(){ document.querySelectorAll(".tour-offer").forEach(n => n.remove()); }
+function tourOfferClose(){
+  document.querySelectorAll(".tour-offer").forEach(n => {
+    if (!motionOK() || n.classList.contains("out")) { n.remove(); return; }
+    n.classList.add("out"); setTimeout(() => n.remove(), 220); // fades and shrinks away
+  });
+}
 function tourMarkSeen(v){ const p = P(); if (p && !p.tourSeen) { p.tourSeen = v; saveProfile(); } }
 
 // ---------- running a tour ----------
@@ -20725,7 +21230,7 @@ function tourStart(id){
   const layer = document.createElement("div");
   layer.className = "tour";
   layer.innerHTML = `<div class="tour-hole none" aria-hidden="true"></div>
-    <div class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-t" aria-describedby="tour-b" tabindex="-1"></div>`;
+    <div class="tour-card ann" role="dialog" aria-modal="true" aria-labelledby="tour-t" aria-describedby="tour-b" tabindex="-1"></div>`;
   document.body.append(layer);
   TOUR.layer = layer; TOUR.hole = layer.firstElementChild; TOUR.card = layer.lastElementChild;
   document.documentElement.classList.add("tour-on");
@@ -20764,14 +21269,16 @@ async function tourGo(i){
 }
 function tourPaint(s, i){
   const n = TOUR.steps.length, last = i === n - 1;
-  TOUR.card.innerHTML = `<div class="tour-count">${esc(TOUR_DEFS[TOUR.id].name)} · ${i + 1} of ${n}</div>
-    <h2 id="tour-t">${esc(s.title)}</h2>
-    <p id="tour-b">${esc(s.body)}</p>
+  TOUR.card.innerHTML = `<button type="button" class="ann-x" data-act="tour-skip" aria-label="${last ? "Close tour" : "Skip tour"}">${icon("x", "", 18)}</button>
+    <div class="ann-head"><span class="ann-ic" aria-hidden="true">${icon("spark", "", 18)}</span>
+      <div class="ann-txt"><div class="tour-count">${esc(TOUR_DEFS[TOUR.id].name)} · ${i + 1} of ${n}</div>
+      <h2 class="ann-t" id="tour-t">${esc(s.title)}</h2></div></div>
+    <p class="ann-d" id="tour-b">${esc(s.body)}</p>
+    <div class="tour-dots" aria-hidden="true">${TOUR.steps.map((_, k) => `<i${k === i ? ' class="on"' : k < i ? ' class="done"' : ""}></i>`).join("")}</div>
     <div class="tour-actions">
-      ${last ? "" : `<button type="button" class="btn sm ghost" data-act="tour-skip">Skip tour</button>`}
+      ${i > 0 ? `<button type="button" class="btn sm ghost" data-act="tour-back">${icon("arrowL", "", 16)} Back</button>` : ""}
       <span class="grow"></span>
-      ${i > 0 ? `<button type="button" class="btn sm" data-act="tour-back">Back</button>` : ""}
-      <button type="button" class="btn sm primary" data-act="tour-next">${last ? "Done" : "Next"}</button>
+      <button type="button" class="btn sm primary" data-act="tour-next">${last ? "Done" : "Next"}${last ? "" : " " + icon("arrowR", "", 16)}</button>
     </div>`;
   TOUR.card.classList.remove("busy");
   tourPlace();
@@ -20835,7 +21342,7 @@ document.addEventListener("click", e => {
   }
   if (!TOUR.on) return;
   e.preventDefault(); e.stopPropagation();
-  if (a === "tour-skip") tourEnd(false);
+  if (a === "tour-skip") tourEnd(TOUR.i === TOUR.steps.length - 1); // the close button on the last step finishes the tour
   else if (a === "tour-back") { if (TOUR.i > 0) tourGo(TOUR.i - 1); }
   else if (a === "tour-next") { if (TOUR.i < TOUR.steps.length - 1) tourGo(TOUR.i + 1); else tourEnd(true); }
 }, true);
