@@ -3829,7 +3829,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.1", build: "8.1.15", channel: "Dev Testing", date: "2026-10-06", week: "Sun 4 Oct – Sat 10 Oct 2026" };
+const APP_VERSION = { update: "8.1", build: "8.1.18", channel: "Dev Testing", date: "2026-10-06", week: "Sun 4 Oct – Sat 10 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3843,6 +3843,7 @@ const APP_VERSION = { update: "8.1", build: "8.1.15", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.1.18", area:"Settings", title:"Compact account row, auth popup, tighter spacing, Premium in Ctrl+K", bug:"Settings > Profile showed a full-width Account card (heading, description, three tab buttons, two fields, a button) that took about a third of the screen on desktop. Spacing between cards and sections was declared in several places and left a lot of empty space. The Ctrl+K quick-jump list did not include Premium, because Premium is a popup button, not a link. The Snap your plate opt-in said the photo is sent to Claude, but on this site the photo estimate only works inside Claude. Builds 8.1.16 and 8.1.17 were closed and never released, so this build starts from main (8.1.15) and does not include their sidebar or field changes.", fix:"accountCard() is one row: user icon, the title and one line of text, and the buttons on the right. Signed out: Sign in and Create account open the existing popup (openPopover) with the same form, role=dialog, aria-modal, aria-labelledby, focus in the email field, Escape or backdrop closes it and focus returns to the opener (openPopover gained labelledby, focusSel and returnSel for this, since a re-render replaces the opener). The three tabs became text links under the submit button. A successful sign-in closes the popup and shows the toast. Signed in: the email, the sync status (#sb-status) and Sign out; the explanation moved into an info button that opens a small popup (with the passcode note). The red sign-out warning still shows inline under the row. One density block at the end of the stylesheet sets .main, .wrap, .page-head, .card, .stack, .setgroup and #appearance spacing; no earlier rule beat it, so no earlier rule was changed and no !important was used. The palette now lists Premium. The Snap your plate copy says photo estimates only work when the app is opened inside Claude and fall back to an offline estimate on this site. Checked on main: Ctrl+K already opens the palette, which is built from the sidebar links, so it lists every sidebar destination except Premium (now added). Not done in this build: the sidebar rework (needs 8.1.16), the legal pages and consent checkbox (planned for 8.1.19).", where:"index.html: accountCard(), authFormHTML(), openAuthPopup(), openAcctInfo(), sbRender(), sbAuth(), the sb- click cases, openPopover(), the info icon, buildPalette(), photoAiOptIn(), the 8.1.18 CSS blocks at the end of the stylesheet. tests/browser/security.mjs, tests/browser/meal-sync.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.", test:"node tests/browser/security.mjs (87), meal-sync.mjs (55), meal-upload.mjs (14). At 1440px, Settings > Profile signed out: the account row is 68px tall; Sign in and Create account open the popup; Escape closes it and focus returns to the button. Computed .card padding 16px and .wrap gap 12px on Summary, Meals and Settings. Press Ctrl+K and type prem.", limits:"Not tested with a real account on the Vercel preview. The sidebar and legal work are not in this build. The Create account form has no consent checkbox yet. Sign-in buttons are 34px tall (btn sm), as the prompt asked; the info and close buttons are 44px." },
     { id:"8.1.15", area:"Sync", title:"Meals not uploading: sweep for untracked meals, visible person errors, sign-out uploads everything",
       bug:"Testing the build-8.1.15 preview with a real account: signed in, logged one meal, signed out. Supabase logs showed POSTs to /rest/v1/people but no POST to /rest/v1/meal_logs, so the meal never uploaded. The same logs also showed 38 failed POSTs to /rest/v1/people (409, foreign key people_owner_id_fkey) about 21 seconds apart, from a session whose user no longer existed in auth.users.",
       fix:"Cause, as far as the evidence goes: the upload only ever sent meals that sbTrack() had queued. A meal that was not queued when it was logged was never sent, and sign-out found nothing pending, so it only ran sbEnsurePeople() (the people POST) and deleted the device copy. Fixes: sbSweep() queues any meal on screen that is not in the account yet or differs from what was sent. It runs at the start of sbPush() (so sign-out uploads everything) and inside flush(), before the cache write that lets meals leave the month blob. In sbPush(), a meal whose person did not come back from the people upload used to be skipped silently and stayed pending with no retry. It now throws (person_missing) so it shows and retries; meals of a profile that no longer exists are dropped. A 23503 failure now says 'Your account session is no longer valid. Sign out, then sign in again.' and retries every 2 minutes instead of every 20 seconds. Not reproduced: with the real supabase-js, a new account and request latency up to 700ms, a meal logged through the normal button uploaded within about 2 seconds on this branch and on main (8.1.14), so no build was found to introduce the miss. What the new test does prove is that a meal that skipped sbTrack() was never uploaded before this change and is now.",
@@ -7828,11 +7829,11 @@ async function sbAuth(kind){
   const c = sbClient(); if (!c) return;
   const email = val("sb-email").toLowerCase(), pass = document.getElementById("sb-pass")?.value || "";
   UI.sbEmail = email; UI.sbMsg = null;
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { UI.sbMsg = { t:"Enter a valid email address." }; return render(); }
-  if (kind !== "reset" && (kind === "up" ? pass.length < 8 : !pass)) { UI.sbMsg = { t: kind === "up" ? "Use at least 8 characters for the password." : "Enter your password." }; return render(); }
-  SB.busy = true; render();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { UI.sbMsg = { t:"Enter a valid email address." }; return sbRender(); }
+  if (kind !== "reset" && (kind === "up" ? pass.length < 8 : !pass)) { UI.sbMsg = { t: kind === "up" ? "Use at least 8 characters for the password." : "Enter your password." }; return sbRender(); }
+  SB.busy = true; sbRender();
   try {
-    if (kind === "in") { const r = await c.auth.signInWithPassword({ email, password: pass }); if (r.error) throw r.error; UI.sbMsg = null; toast("Signed in", "success"); }
+    if (kind === "in") { const r = await c.auth.signInWithPassword({ email, password: pass }); if (r.error) throw r.error; UI.sbMsg = null; closePopover("auth"); toast("Signed in", "success"); }
     else if (kind === "up") {
       const r = await c.auth.signUp({ email, password: pass, options: { emailRedirectTo: sbRedirect() } }); if (r.error) throw r.error;
       UI.sbMsg = r.data.session ? null : { t:"Check your email. Open the link we sent to confirm your account, then sign in here.", ok:true }; UI.acct = "in";
@@ -7841,7 +7842,7 @@ async function sbAuth(kind){
       UI.sbMsg = { t:"If there's an account for that email, a reset link is on its way.", ok:true };
     }
   } catch (e) { UI.sbMsg = { t: sbErrText(e) }; }
-  SB.busy = false; render();
+  SB.busy = false; sbRender();
 }
 async function sbNewPassword(){
   const a = document.getElementById("sb-np1")?.value || "", b = document.getElementById("sb-np2")?.value || "";
@@ -7894,36 +7895,54 @@ function sbStatusText(){
   return n ? `${n} meal change${n === 1 ? "" : "s"} waiting to upload.` : SB.started ? "Meals saved to your account." : "Getting your meals…";
 }
 function sbPaint(){ const el = document.getElementById("sb-status"); if (el) el.textContent = sbStatusText(); }
+const AUTH_TITLE = { in:"Sign in", up:"Create account", reset:"Reset your password" };
+function authFormHTML(){
+  const mode = UI.acct || "in", em = esc(UI.sbEmail || "");
+  const link = (v, l) => `<button type="button" class="auth-link" data-act="sb-mode" data-v="${v}">${l}</button>`;
+  return `<form class="stack" data-form="sb-auth" data-kind="${mode}" novalidate>
+      <label class="f">Email<input type="email" id="sb-email" autocomplete="email" inputmode="email" value="${em}" required></label>
+      ${mode === "reset" ? "" : `<label class="f">Password<input type="password" id="sb-pass" autocomplete="${mode === "up" ? "new-password" : "current-password"}" ${mode === "up" ? 'minlength="8" ' : ""}required></label>`}
+      ${mode === "up" ? `<p class="tiny muted">At least 8 characters. We'll email you a link to confirm your address.</p>` : ""}
+      ${UI.sbMsg ? `<div class="note ${UI.sbMsg.ok ? "info" : ""}" role="${UI.sbMsg.ok ? "status" : "alert"}">${esc(UI.sbMsg.t)}</div>` : ""}
+      <button class="btn primary" type="submit"${SB.busy ? " disabled" : ""}>${SB.busy ? "Working…" : mode === "in" ? "Sign in" : mode === "up" ? "Create account" : "Email me a reset link"}</button>
+      <div class="auth-links">${mode === "in" ? link("reset", "Forgot password?") + link("up", "Create an account") : mode === "up" ? link("in", "I already have an account") : link("in", "Back to sign in")}</div>
+    </form>`;
+}
+function openAuthPopup(mode, triggerEl){
+  UI.acct = mode; UI.sbMsg = null;
+  openPopover("auth", { labelledby:"auth-title", width:"min(400px, calc(100vw - 32px))", triggerEl, returnSel:`[data-act="sb-open"][data-v="${mode}"]`, focusSel:"#sb-email",
+    bodyHTML: `<div class="auth-pop"><div class="pop-head"><h2 id="auth-title">${AUTH_TITLE[mode]}</h2><button type="button" class="pop-x" data-pop="close" aria-label="Close">${icon("x","",24)}</button></div>
+      <div class="pop-body" id="auth-pop-body">${authFormHTML()}</div></div>` });
+}
+// The page re-renders on every state change, but the popup lives outside #app, so repaint it too.
+function sbRender(){
+  render();
+  const b = document.getElementById("auth-pop-body"); if (!b) return;
+  b.innerHTML = authFormHTML();
+  const t = document.getElementById("auth-title"); if (t) t.textContent = AUTH_TITLE[UI.acct || "in"];
+}
+function openAcctInfo(triggerEl){
+  openPopover("acct-info", { label:"What is saved to my account", width:"min(400px, calc(100vw - 32px))", triggerEl,
+    bodyHTML: `<div class="auth-pop"><div class="pop-head"><h2>What is saved to my account</h2><button type="button" class="pop-x" data-pop="close" aria-label="Close">${icon("x","",24)}</button></div>
+      <div class="pop-body"><p class="small">Only meals (and each profile's name) are saved to your account for now. Snacks, workouts and everything else stay on this device, and signing out removes them from it.</p>
+      ${CRY.lock ? `<div class="note info">A passcode is on, so meals are encrypted on this device and not uploaded. Meals already in your account stay there.</div>` : ""}</div></div>` });
+}
 function accountCard(){
-  const msg = UI.sbMsg ? `<div class="note ${UI.sbMsg.ok ? "info" : ""}" role="status">${esc(UI.sbMsg.t)}</div>` : "";
-  const head = `<h2>Account</h2>`;
-  if (!sbClient()) return `<section class="card" id="sb-account">${head}<p class="small muted">${location.protocol === "file:" ? "Sign-in needs the app to be served over http. Run <code>python3 -m http.server 8080</code> and open localhost:8080." : "Sign-in couldn't load. Check your connection and reload."}</p></section>`;
-  if (SB.user) return `<section class="card" id="sb-account">${head}
-    <p class="small">Signed in as <b>${esc(SB.user.email || "your account")}</b>.</p>
-    <p class="small muted" id="sb-status" role="status">${esc(sbStatusText())}</p>
-    <p class="small muted">Only meals (and each profile's name) are saved to your account for now. Snacks, workouts and everything else stay on this device, and signing out removes them from it.</p>
-    ${CRY.lock ? `<div class="note info">A passcode is on, so meals are encrypted on this device and not uploaded. Meals already in your account stay there.</div>` : ""}
-    ${msg}
+  const row = (title, sub, act) => `<div class="acct-row"><span class="acct-ic">${icon("user","",18)}</span>
+      <div class="acct-txt"><div class="acct-t">${title}</div>${sub}</div><div class="acct-act">${act}</div></div>`;
+  if (!sbClient()) return `<section class="card" id="sb-account">${row("Account", `<div class="acct-s">${location.protocol === "file:" ? "Sign-in needs the app served over http (python3 -m http.server 8080)." : "Sign-in couldn't load. Check your connection and reload."}</div>`, "")}</section>`;
+  if (SB.user) return `<section class="card" id="sb-account">${row(esc(SB.user.email || "your account"),
+      `<div class="acct-s" id="sb-status" role="status">${esc(sbStatusText())}</div>`,
+      `<button type="button" class="pop-x" data-act="sb-info" aria-label="What is saved to my account">${icon("info","",18)}</button>${UI.sbConfirmOut ? "" : `<button class="btn sm" data-act="sb-out"${SB.busy ? " disabled" : ""}>${SB.busy ? "Signing out…" : "Sign out"}</button>`}`)}
+    ${UI.sbMsg ? `<div class="note ${UI.sbMsg.ok ? "info" : ""}" role="status">${esc(UI.sbMsg.t)}</div>` : ""}
     ${UI.sbConfirmOut ? `<div class="note" role="alert"><b>Signing out will delete data from this device.</b>
       ${UI.sbConfirmOut.local?.length ? `<p class="small" style="margin:6px 0 2px">Saved only on this device, not in your account, so it will be deleted:</p><ul class="clean small">${UI.sbConfirmOut.local.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
       ${[UI.sbConfirmOut.failed ? "You're offline or the upload failed." : "", UI.sbConfirmOut.n ? `${UI.sbConfirmOut.n} meal change${UI.sbConfirmOut.n === 1 ? " is" : "s are"} waiting to upload and will be deleted too.` : "", UI.sbConfirmOut.heldBack ? "A passcode is on, so your meals are only on this device and will be deleted too." : ""].filter(Boolean).map(x => `<p class="small" style="margin:2px 0">${esc(x)}</p>`).join("")}
       <p class="small" style="margin:2px 0">This can't be undone.</p></div>
-      <div class="row"><button class="btn sm" data-act="sb-out-no">Cancel</button><button class="btn sm danger" data-act="sb-out-force">Sign out anyway</button></div>`
-    : `<div class="row"><button class="btn" data-act="sb-out"${SB.busy ? " disabled" : ""}>${SB.busy ? "Signing out…" : "Sign out"}</button></div>`}
+      <div class="row"><button class="btn sm" data-act="sb-out-no">Cancel</button><button class="btn sm danger" data-act="sb-out-force">Sign out anyway</button></div>` : ""}
   </section>`;
-  const mode = UI.acct || "in", em = esc(UI.sbEmail || "");
-  const tab = (k, l) => `<button type="button" class="btn sm${mode === k ? " primary" : ""}" data-act="sb-mode" data-v="${k}" aria-pressed="${mode === k}">${l}</button>`;
-  return `<section class="card" id="sb-account">${head}
-    <p class="small muted">Optional. Sign in and your meals are saved to your account. Everything else stays on this device.</p>
-    <div class="row" role="group" aria-label="Account action">${tab("in", "Sign in")}${tab("up", "Create account")}${tab("reset", "Forgot password")}</div>
-    <form class="stack" data-form="sb-auth" data-kind="${mode}" novalidate>
-      <label class="f">Email<input type="email" id="sb-email" autocomplete="email" inputmode="email" value="${em}" required></label>
-      ${mode === "reset" ? "" : `<label class="f">Password<input type="password" id="sb-pass" autocomplete="${mode === "up" ? "new-password" : "current-password"}" ${mode === "up" ? 'minlength="8" ' : ""}required></label>`}
-      ${mode === "up" ? `<p class="tiny muted">At least 8 characters. We'll email you a link to confirm your address.</p>` : ""}
-      ${msg}
-      <button class="btn primary" type="submit"${SB.busy ? " disabled" : ""}>${SB.busy ? "Working…" : mode === "in" ? "Sign in" : mode === "up" ? "Create account" : "Email me a reset link"}</button>
-    </form>
-  </section>`;
+  return `<section class="card" id="sb-account">${row("Account", `<div class="acct-s">Optional. Sign in to save your meals to your account.</div>`,
+    `<button type="button" class="btn sm primary" data-act="sb-open" data-v="in" aria-haspopup="dialog">Sign in</button><button type="button" class="btn sm" data-act="sb-open" data-v="up" aria-haspopup="dialog">Create account</button>`)}</section>`;
 }
 // Shown instead of the app when a password-reset link is opened.
 function recoveryView(){
@@ -7943,7 +7962,9 @@ document.addEventListener("submit", e => {
 document.addEventListener("click", e => {
   const t = e.target.closest?.("[data-act^='sb-']"); if (!t) return;
   switch (t.dataset.act) {
-    case "sb-mode": UI.acct = t.dataset.v; UI.sbMsg = null; UI.sbEmail = val("sb-email") || UI.sbEmail; render(); break;
+    case "sb-open": openAuthPopup(t.dataset.v, t); break;
+    case "sb-info": openAcctInfo(t); break;
+    case "sb-mode": UI.acct = t.dataset.v; UI.sbMsg = null; UI.sbEmail = val("sb-email") || UI.sbEmail; sbRender(); document.getElementById("sb-email")?.focus(); break;
     case "sb-out": sbSignOut(false); break;
     case "sb-out-force": sbSignOut(true); break;
     case "sb-out-no": UI.sbConfirmOut = null; render(); break;
@@ -9337,6 +9358,7 @@ const I = {
  menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
  plus:'<path d="M12 5v14M5 12h14"/>',
  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+ info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
  sun:'<circle cx="12" cy="12" r="4.4"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>',
  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
@@ -9413,12 +9435,12 @@ let toastTimer; function toast(msg){ let t = $("#toast"); if (!t) { t = document
 // existing paywall/photo-viewer/owner-code sheets, so it survives the #app re-render a selection
 // inside it can trigger.
 const POPOVERS = {};
-function openPopover(id, { label, width, bodyHTML, triggerEl } = {}){
+function openPopover(id, { label, labelledby, width, bodyHTML, triggerEl, returnSel, focusSel } = {}){
   closePopover(id);
   const wrap = document.createElement("div");
   wrap.className = "pop-wrap"; wrap.id = `pop-${id}`;
   wrap.innerHTML = `<div class="pop-scrim" data-pop="close"></div>
-    <div class="pop-card" role="dialog" aria-modal="true" aria-label="${esc(label || "")}" style="--pop-w:${esc(width || "min(480px, calc(100vw - 32px))")}">
+    <div class="pop-card" role="dialog" aria-modal="true" ${labelledby ? `aria-labelledby="${esc(labelledby)}"` : `aria-label="${esc(label || "")}"`} style="--pop-w:${esc(width || "min(480px, calc(100vw - 32px))")}">
       ${bodyHTML}
     </div>`;
   document.body.append(wrap);
@@ -9430,7 +9452,9 @@ function openPopover(id, { label, width, bodyHTML, triggerEl } = {}){
   const shut = () => {
     document.removeEventListener("keydown", key);
     wrap.classList.remove("on");
-    if (triggerEl) { triggerEl.setAttribute("aria-expanded", "false"); triggerEl.focus({ preventScroll:true }); }
+    // The opener can be replaced by a re-render while the popup is open, so fall back to a selector.
+    const back = triggerEl?.isConnected ? triggerEl : returnSel ? document.querySelector(returnSel) : null;
+    if (back) { back.setAttribute("aria-expanded", "false"); back.focus({ preventScroll:true }); }
     setTimeout(() => wrap.remove(), 200);
     delete POPOVERS[id];
   };
@@ -9446,7 +9470,7 @@ function openPopover(id, { label, width, bodyHTML, triggerEl } = {}){
   document.addEventListener("keydown", key);
   wrap.addEventListener("click", ev => { if (ev.target.closest('[data-pop="close"]')) shut(); });
   POPOVERS[id] = { wrap, card, shut };
-  setTimeout(() => focusables()[0]?.focus({ preventScroll:true }), 260);
+  setTimeout(() => (focusSel && card.querySelector(focusSel) || focusables()[0])?.focus({ preventScroll:true }), 260);
   return POPOVERS[id];
 }
 function closePopover(id){ const p = POPOVERS[id]; const open = document.querySelector(`#pop-${id}`); if (p) p.shut(); else if (open) open.remove(); }
@@ -11803,6 +11827,7 @@ function buildPalette(){
   const [, pal] = paletteEls();
   const links = [...document.querySelectorAll(".nav a[href]")].map(a => ({ label: a.textContent.trim(), go: () => { location.hash = a.getAttribute("href"); } }));
   const actions = [
+    { label: "Premium", go: () => { const t = document.querySelector(".nav .prem-trigger"); if (t) openPremiumPopup(t); else location.hash = "#/premium"; } },
     { label: "Log a meal", go: () => location.hash = "#/nutrition" },
     { label: "Add a snack", go: () => location.hash = "#/snacks" },
     { label: "Log a workout", go: () => location.hash = "#/workouts" },
@@ -12454,13 +12479,13 @@ const busyRow = msg => `<div class="analysing" role="status">${smHTML({ status: 
 // this screen straight back the next time either feature is opened.
 function photoAiOptIn(kind){
   const copy = kind === "food"
-    ? { h:"Snap your plate", d:"Take a picture of your food and Claude, the AI this app runs on, will guess what's on the plate and how many calories it is." }
+    ? { h:"Snap your plate", d:"Take a picture of your food and the app will guess what's on the plate and how many calories it is. Photo estimates only work when the app is opened inside Claude. On this site they fall back to an offline estimate." }
     : { h:"Log a machine from a photo", d:"Photograph the gym equipment you used and Claude will name it and suggest a safe starting point." };
   return `<section class="card shot" id="${kind}-photo-optin">
     <div class="setrow"><div class="setlabel"><div class="eyebrow" style="color:var(--c-food)">Photo estimate</div><h2 style="margin-top:4px">${esc(copy.h)}</h2></div></div>
     <p class="small muted">${esc(copy.d)} Before the first photo goes anywhere, here is exactly what that means:</p>
     <ul class="clean small optin">
-      <li>${icon("pmShare","",16)}<span>The one photo you choose is sent to Claude for that one answer, along with a short summary of your profile so the answer fits you. It's shrunk and stripped of location data first.</span></li>
+      <li>${icon("pmShare","",16)}<span>Inside Claude, the one photo you choose is sent to Claude for that one answer, along with a short summary of your profile so the answer fits you. It's shrunk and stripped of location data first.</span></li>
       <li>${icon("lock","",16)}<span>Nothing is sent unless you use this. Typing the calories in by hand instead sends nothing anywhere.</span></li>
       <li>${icon("x","",16)}<span>Turn this off any time in Settings &gt; Privacy and security — the rest of the app keeps working without it.</span></li>
     </ul>
@@ -20157,6 +20182,22 @@ PREMIUM_VIEWS.share = p => UI.sharePreview
 .rs-thumb>.rs-copy{position:absolute!important;margin:0!important;flex:none!important;pointer-events:none;background:var(--rs-thumb,var(--surface))!important;color:var(--text)!important;opacity:1!important;box-shadow:none!important;animation:none!important;transform:none!important;border-radius:0!important}
 .rs-thumb>.rs-copy.overruled{opacity:1!important}
 .rs-thumb>.rs-copy>*{opacity:1}
+/* ---- Account row and auth popup (8.1.18) ---- */
+#sb-account{padding:12px 16px}
+.acct-row{display:flex;align-items:center;gap:12px;min-width:0}
+.acct-ic{flex:none;width:32px;height:32px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.acct-txt{flex:1;min-width:0}
+.acct-t{font-size:calc((15px) * var(--text-scale,1));font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acct-s{font-size:calc((13px) * var(--text-scale,1));color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acct-act{flex:none;display:flex;align-items:center;gap:8px}
+@media (max-width:600px){.acct-row{flex-wrap:wrap}.acct-txt{flex-basis:calc(100% - 44px)}.acct-act{margin-left:44px}.acct-s{white-space:normal}}
+.auth-pop .pop-head{padding:20px 12px 0 20px}
+.auth-pop .pop-body{padding:8px 20px 20px}
+.auth-links{display:flex;flex-wrap:wrap;gap:4px 16px}
+.auth-link{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;min-height:44px;cursor:pointer;color:var(--accent);font-size:calc((13px) * var(--text-scale,1));text-decoration:underline}
+.auth-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* ---- 8.1.18 density: one place for spacing ---- */
+.main{padding-block:12px 40px;padding-inline:clamp(12px,2.5vw,28px)}.wrap{gap:12px}.page-head{gap:6px}.page-head-actions{margin-top:0}.card{padding:16px;gap:8px}.card.hero{padding:16px}.card>h2{margin:0}.stack{gap:8px}.stack.lg{gap:12px}.card .form{gap:8px}.setgroup{gap:8px}#appearance{gap:16px}@media (max-width:600px){.main{padding-block:8px 64px}.wrap{gap:10px}.card,.ob .panel{padding:12px}}
 </style>
 <script>
 (() => {

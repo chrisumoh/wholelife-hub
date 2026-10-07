@@ -156,7 +156,7 @@ await waitFor(`S.profiles.length === 1 && SB.started`, 10000);
 await ev(`addEntry("snacks", { id: uid(), date: today(), name: "Local snack", qty: 1, cal: 100 }); true`); await sleep(1200);
 await ev(`window.__old = 1; __fake.expireNow(); true`); await sleep(1500);
 ok("the page did not reload", await ev(`window.__old === 1`));
-ok("the sign-in screen is shown", await ev(`UI.sessionExpired === true && /Sign in again/.test(document.body.textContent) && !!document.getElementById("sb-email")`));
+ok("the sign-in screen is shown", await ev(`UI.sessionExpired === true && /Sign in again/.test(document.body.textContent) && !!document.querySelector('[data-act="sb-open"][data-v="in"]')`));
 ok("data kept in memory", await ev(`S.profiles.length === 1 && Object.values(S.logs).some(m => Object.values(m).some(l => l.snacks.some(x => x.name === "Local snack")))`));
 ok("data kept on disk under A's key", (await userKeys()).includes("wlh.v62@u_axcom") && await lsHas("Local snack"));
 await ev(`SB.client.auth.signInWithPassword({email:"a@x.com",password:"password1"}).then(()=>true)`);
