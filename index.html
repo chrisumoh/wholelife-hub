@@ -3843,6 +3843,12 @@ const APP_VERSION = { update: "8.1", build: "8.1.15", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.1.15", area:"Sync", title:"Meals not uploading: sweep for untracked meals, visible person errors, sign-out uploads everything",
+      bug:"Testing the build-8.1.15 preview with a real account: signed in, logged one meal, signed out. Supabase logs showed POSTs to /rest/v1/people but no POST to /rest/v1/meal_logs, so the meal never uploaded. The same logs also showed 38 failed POSTs to /rest/v1/people (409, foreign key people_owner_id_fkey) about 21 seconds apart, from a session whose user no longer existed in auth.users.",
+      fix:"Cause, as far as the evidence goes: the upload only ever sent meals that sbTrack() had queued. A meal that was not queued when it was logged was never sent, and sign-out found nothing pending, so it only ran sbEnsurePeople() (the people POST) and deleted the device copy. Fixes: sbSweep() queues any meal on screen that is not in the account yet or differs from what was sent. It runs at the start of sbPush() (so sign-out uploads everything) and inside flush(), before the cache write that lets meals leave the month blob. In sbPush(), a meal whose person did not come back from the people upload used to be skipped silently and stayed pending with no retry. It now throws (person_missing) so it shows and retries; meals of a profile that no longer exists are dropped. A 23503 failure now says 'Your account session is no longer valid. Sign out, then sign in again.' and retries every 2 minutes instead of every 20 seconds. Not reproduced: with the real supabase-js, a new account and request latency up to 700ms, a meal logged through the normal button uploaded within about 2 seconds on this branch and on main (8.1.14), so no build was found to introduce the miss. What the new test does prove is that a meal that skipped sbTrack() was never uploaded before this change and is now.",
+      where:"index.html: sbSweep() (new), sbPush(), flush(), sbFail(), sbStatusText(). tests/browser/meal-upload.mjs (new).",
+      test:"node tests/browser/meal-upload.mjs (14 checks) runs the real supabase-js with the network answered like PostgREST: sign in, set up a profile, log a meal, assert a POST to /rest/v1/meal_logs within 5 seconds, then an untracked meal is uploaded, then sign-out uploads a pending meal. It fails on the old code (untracked meal) and passes now. meal-sync.mjs (52) and security.mjs (87) still pass; security.mjs failed 2 checks once in a cross-tab timing test and passed on the next 2 runs.",
+      limits:"The exact trigger in the preview was not found, so the sweep is a safety net, not a proven fix for that one meal. To close it: reload the preview, open the console and run JSON.stringify({pend:SB.pend,active:sbActive(),started:SB.started,state:SB.state,err:SB.err}) right after logging a meal. For the 409 loop, sign out and in again with an account that exists. The test needs internet for the supabase-js CDN file. The 23503 case is not covered by a test." },
     { id:"8.1.15", area:"Security", title:"Last changes before merge: downloads without window.claude, full sign-out warning, other-tab sign-out",
       bug:"(1) Download my data (JSON) and Add reminders to my calendar (.ics) needed window.claude, so on the Vercel site both buttons were disabled and nobody could export their data. (2) The sign-out dialog only appeared when meals were waiting to upload, so snacks, drinks, workouts, weigh-ins, vitals and profile settings could be deleted without being listed. (3) When one tab signed the account out, another tab kept its in-memory copy and could write it back to disk (for example when the page is closed), undoing the sign-out.",
       fix:"Downloads: saveTextFile() builds the file in the browser and hands it over as a Blob link; the export and calendar buttons are always enabled and the host-capability check and its disabled state are gone. Sign-out: sbLocalOnly() counts what the account does not hold (snacks, drinks, workouts, weigh-ins, days of vitals, profiles with settings, meal photos, form-check clips and progress photos). If any exist, or an upload failed, the device is offline, meals are waiting, or a passcode keeps meals local, the dialog lists them and says they will be deleted, with Cancel and Sign out anyway. With nothing to lose it signs out straight away. Other tab: sbLeaveStore() writes a short wlh.signedout marker (account id and time) before clearing. A tab that gets the storage event for it, or sees its session end while a recent marker names its account, runs sbDiscardAndReload(): it sets LEAVING (so flush, the meal cache, notifications and reminder marks write nothing), empties its memory and reloads, without saving. A session that ends with no such marker is still treated as expiry and keeps its data. The marker is removed at the next page load. The privacy page lists it.",
@@ -7478,6 +7484,7 @@ function flush(){
   flushing = (async () => {
     let failed = false;
     const local = lsGet() || { root:null, logs:{} };
+    sbSweep(); // before the cache write below, so a meal that is about to leave the month blob is in the cache first
     // Signed in with sync running: meals are saved to the account and the local cache instead of
     // the month blobs. Only strip them once the cache write has succeeded, so they're never lost.
     const stripMeals = sbActive() && SB.started && sbCacheSave();
@@ -7577,12 +7584,26 @@ function sbTrack(pid, mon){
   if (SB.dirtyMeals) { SB.dirtyMeals = false; SB.cacheDirty = true; clearTimeout(SB.timers.push); SB.timers.push = setTimeout(() => sbRun(sbPush), 1200); }
 }
 
+// Safety net behind sbTrack(): any meal on screen that isn't in the account yet (never tracked, or edited
+// without markLog) is queued, so a meal can't sit on the device unseen by the upload code.
+function sbSweep(){
+  if (!sbActive() || !SB.started) return 0;
+  let n = 0;
+  for (const { pid, mon, m } of sbAllMeals()) {
+    const sig = sbSig(m), s = SB.shadow.get(m.id);
+    if ((!s || s.sig !== sig) && SB.pend[m.id] !== "up") { SB.shadow.set(m.id, { pid, mon, sig }); SB.pend[m.id] = "up"; n++; }
+  }
+  if (n) { SB.cacheDirty = true; clearTimeout(SB.timers.push); SB.timers.push = setTimeout(() => sbRun(sbPush), 1200); }
+  return n;
+}
+
 // ---- talking to the database ----
 function sbRun(fn){ SB.q = (SB.q || Promise.resolve()).then(fn).catch(sbFail); return SB.q; }
 function sbFail(e){
   console.warn("meal sync failed:", e?.code || e?.name || "error"); // never the error object: it can echo the failing row
   SB.state = navigator.onLine === false ? "offline" : "error"; SB.err = String(e?.code || e?.name || "error").slice(0, 40); sbPaint();
-  clearTimeout(SB.timers.retry); SB.timers.retry = setTimeout(sbKick, 20000);
+  // 23503 = the account row this session points at is gone; retrying every 20s only fills the logs.
+  clearTimeout(SB.timers.retry); SB.timers.retry = setTimeout(sbKick, e?.code === "23503" ? 120000 : 20000);
 }
 function sbRow(m, personId){
   return { owner_id: SB.user.id, person_id: personId, app_id: m.id, log_date: m.date, logged_at: new Date(m.at || Date.parse(m.date + "T12:00:00")).toISOString(),
@@ -7596,11 +7617,15 @@ async function sbEnsurePeople(){
   SB.people = new Map(r.data.map(x => [x.app_id, x.id]));
 }
 async function sbPush(){
+  sbSweep();
   if (!sbActive() || !sbPending()) return;
   const where = new Map(); for (const x of sbAllMeals()) where.set(x.m.id, x);
   const ups = [], dels = [];
   for (const id of Object.keys(SB.pend)) { if (SB.pend[id] === "del") dels.push(id); else if (where.has(id)) ups.push(where.get(id)); else delete SB.pend[id]; }
   if (ups.some(x => !SB.people.has(x.pid))) await sbEnsurePeople();
+  // A meal whose person didn't come back used to be skipped without a word and stayed pending. Meals
+  // of a profile that no longer exists are dropped; any other miss is an error, so it shows and retries.
+  for (const x of ups) if (!SB.people.has(x.pid)) { if (S.profiles.some(p => p.id === x.pid)) throw Object.assign(new Error("person_missing"), { code: "person_missing" }); delete SB.pend[x.m.id]; }
   for (let i = 0; i < ups.length; i += 200) {
     const chunk = ups.slice(i, i + 200).filter(x => SB.people.has(x.pid)), sent = chunk.map(x => [x.m.id, sbSig(x.m)]);
     if (!chunk.length) continue;
@@ -7864,6 +7889,7 @@ function sbStatusText(){
   const n = sbPending();
   if (SB.state === "syncing") return "Saving meals…";
   if (SB.state === "offline") return `Offline. ${n} meal change${n === 1 ? "" : "s"} will upload when you're back online.`;
+  if (SB.state === "error" && SB.err === "23503") return "Your account session is no longer valid. Sign out, then sign in again.";
   if (SB.state === "error") return `Couldn't reach your account${n ? `, ${n} change${n === 1 ? "" : "s"} waiting` : ""}. Retrying.`;
   return n ? `${n} meal change${n === 1 ? "" : "s"} waiting to upload.` : SB.started ? "Meals saved to your account." : "Getting your meals…";
 }
