@@ -28,10 +28,15 @@ const ok = (name, cond, extra = "") => { cond ? pass++ : fail++; console.log(`${
 await send("Runtime.enable"); await send("Page.enable"); await send("Network.enable");
 await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
 await send("Page.addScriptToEvaluateOnNewDocument", { source: FAKE });
-const boot = async () => { await send("Page.navigate", { url: "http://127.0.0.1:8765/index.html" }); await sleep(500); return waitFor("typeof S !== 'undefined' && typeof SB !== 'undefined' && UI.loading === false", 15000); };
+const READY = "typeof S !== 'undefined' && typeof SB !== 'undefined' && SB.booted === true && UI.loading === false";
+const boot = async () => { await send("Page.navigate", { url: "http://127.0.0.1:8765/index.html" }); await sleep(500); return waitFor(READY, 15000); };
+// 8.1.15: the app reloads itself when the signed-in account changes, so wait for the fresh page.
+const reloaded = async fn => { await ev(`window.__old = 1; ${fn}`); return waitFor(`window.__old === undefined && ${READY}`, 15000); };
+const signIn = email => reloaded(`SB.client.auth.signInWithPassword({email:${JSON.stringify(email)},password:"password1"}).then(()=>true)`);
+const signOut = () => reloaded(`sbSignOut(false).then(() => UI.sbConfirmOut ? sbSignOut(true) : 0).then(()=>true)`);
 
 // helpers inside the page
-const blobMeals = () => ev(`(() => { const l = JSON.parse(localStorage.getItem("wlh.v62")||"null")?.logs||{}; return Object.values(l).reduce((n,b)=>n+(b.meals?b.meals.length:0),0); })()`);
+const blobMeals = (key = "wlh.v62") => ev(`(() => { const l = JSON.parse(localStorage.getItem(${JSON.stringify(key)})||"null")?.logs||{}; return Object.values(l).reduce((n,b)=>n+(b.meals?b.meals.length:0),0); })()`);
 const memMeals = () => ev(`[...sbAllMeals()].length`);
 const remote = (who) => ev(`__fake.DB.meal_logs.filter(r=>r.owner_id===${JSON.stringify(who)}&&!r.deleted_at).length`);
 const cacheN = () => ev(`(() => { const c = JSON.parse(localStorage.getItem(SB_CACHE)||"null"); return c ? Object.keys(c.meals).length : -1; })()`);
@@ -47,12 +52,14 @@ await ev(`location.hash="#/settings"; true`); await sleep(500);
 ok("signed out: account card shows sign-in form", await ev(`(()=>{ render(); return !!document.getElementById("sb-email") && UI.route==="settings"; })()`), await ev(`UI.route+" "+document.title`));
 
 console.log("--- 2. sign in A: first upload");
-await ev(`SB.client.auth.signInWithPassword({email:"a@x.com",password:"password1"}).then(()=>true)`);
+ok("sign in A (page reloads)", await signIn("a@x.com"));
+ok("guest meals wait for a choice: nothing uploaded yet", (await remote("u_axcom")) === 0 && await ev(`!!UI.guestPrompt`));
+await ev(`document.querySelector('[data-act="sb-guest-import"]').click(); true`);
 ok("sync finishes", await synced());
 ok("2 meals uploaded for A", (await remote("u_axcom")) === 2, await remote("u_axcom"));
 ok("person row created once", (await ev(`__fake.DB.people.length`)) === 1);
 await ev(`flush()`); await sleep(300);
-ok("meals left the local blob", (await blobMeals()) === 0, await blobMeals());
+ok("meals left the local blob", (await blobMeals("wlh.v62@u_axcom")) === 0, await blobMeals("wlh.v62@u_axcom"));
 ok("local cache holds 2 meals", (await cacheN()) === 2, await cacheN());
 ok("memory still shows 2 meals", (await memMeals()) === 2);
 ok("account card shows signed-in email", await ev(`(()=>{ render(); return document.getElementById("sb-account").textContent.includes("a@x.com"); })()`));
@@ -78,10 +85,10 @@ ok("reboot", await boot(), JSON.stringify(errors));
 ok("signed in after reload", await ev(`!!SB.user && SB.user.id==="u_axcom"`));
 ok("meals present after reload (from cache + sync)", await waitFor("[...sbAllMeals()].length===3", 6000), await memMeals());
 await synced();
-ok("blob stays meal-free after reload", (await (async()=>{ await ev(`flush()`); return blobMeals(); })()) === 0);
+ok("blob stays meal-free after reload", (await (async()=>{ await ev(`flush()`); return blobMeals("wlh.v62@u_axcom"); })()) === 0);
 
 console.log("--- 6. sign out clears meals from the device");
-await ev(`sbSignOut(false).then(()=>true)`); await sleep(500);
+ok("sign out (page reloads)", await signOut());
 ok("signed out", await ev(`!SB.user`));
 ok("no meals in memory", (await memMeals()) === 0);
 ok("cache removed", (await cacheN()) === -1);
@@ -89,8 +96,8 @@ ok("no meals in blob", (await blobMeals()) === 0);
 ok("A's meals still in the database", (await remote("u_axcom")) === 3);
 
 console.log("--- 7. account B cannot see A's meals");
-await ev(`SB.client.auth.signInWithPassword({email:"b@x.com",password:"password1"}).then(()=>true)`);
-ok("B sync finishes", await synced());
+ok("sign in B (page reloads)", await signIn("b@x.com"));
+await sleep(800);
 ok("B sees 0 meals", (await memMeals()) === 0, await memMeals());
 ok("B has 0 rows in the database", (await remote("u_bxcom")) === 0);
 ok("A's 3 rows untouched", (await remote("u_axcom")) === 3);
@@ -98,29 +105,31 @@ const attack = await ev(`(async()=>{ const r = await SB.client.from("meal_logs")
 ok("direct select as B returns none of A's rows", attack === 0, attack);
 const attack2 = await ev(`(async()=>{ const pid=__fake.DB.people.find(p=>p.owner_id==="u_axcom").id; const r = await SB.client.from("meal_logs").upsert([{owner_id:"u_bxcom",person_id:pid,app_id:"zz1",log_date:"2026-10-05",name:"x",slot:"lunch"}]); return !!r.error; })()`);
 ok("B cannot write a meal into A's profile", attack2 === true);
-await ev(`sbSignOut(false).then(()=>true)`); await sleep(300);
+ok("sign out B", await signOut());
 
 console.log("--- 8. passcode: meals stay local");
-await ev(`SB.client.auth.signInWithPassword({email:"a@x.com",password:"password1"}).then(()=>true)`);
-ok("A sync finishes (profile id matches: meals come back)", await synced());
-ok("A has 3 meals again", (await memMeals()) === 3, await memMeals());
+ok("sign in A again (page reloads)", await signIn("a@x.com"));
+ok("A sync finishes (profile restored from the account: meals come back)", await synced());
+ok("A has 3 meals again", await waitFor("[...sbAllMeals()].length === 3", 6000), await memMeals());
 await ev(`setPasscode("passcode-123").then(()=>true)`);
 ok("passcode: sync inactive", await ev(`!sbActive()`));
 ok("passcode: plain cache removed", (await cacheN()) === -1);
 await addMeal("Kenkey"); await sleep(2500);
 ok("passcode: new meal not uploaded", (await remote("u_axcom")) === 3, await remote("u_axcom"));
-ok("passcode: meals are in the (encrypted) blob, not plain", await ev(`(()=>{ const l=JSON.parse(localStorage.getItem("wlh.v62")).logs; return Object.values(l).every(b=>b.enc && !b.meals); })()`));
+ok("passcode: meals are in the (encrypted) blob, not plain", await ev(`(()=>{ const l=JSON.parse(localStorage.getItem("wlh.v62@u_axcom")).logs; return Object.values(l).every(b=>b.enc && !b.meals); })()`));
 await ev(`removePasscode().then(()=>true)`); await synced();
 ok("passcode removed: sync resumes and uploads the offline-period meal", (await remote("u_axcom")) === 4, await remote("u_axcom"));
 
 console.log("--- 9. expired session, then a different account");
-await ev(`__fake.expireNow(); true`); await sleep(600);
-ok("expired: meals kept on device (back in blob)", await (async()=>{ await ev(`flush()`); return (await blobMeals()) === 4; })(), await blobMeals());
-ok("expired: cache kept", (await cacheN()) === 4, await cacheN());
-await ev(`SB.client.auth.signInWithPassword({email:"b@x.com",password:"password1"}).then(()=>true)`);
-ok("B sync finishes", await synced());
+await ev(`window.__old = 1; __fake.expireNow(); true`); await sleep(1500);
+ok("expired: no reload, sign-in screen shown", await ev(`window.__old === 1 && UI.sessionExpired === true && !SB.user`));
+ok("expired: A's meals stay on the device (back in the saved months)", (await blobMeals("wlh.v62@u_axcom")) === 4, await blobMeals("wlh.v62@u_axcom"));
+ok("expired: still in memory", (await memMeals()) === 4);
+ok("expired: A's meals are still in the account", (await remote("u_axcom")) === 4, await remote("u_axcom"));
+ok("sign in B (page reloads)", await signIn("b@x.com"));
+await sleep(800);
 ok("A's meals were not uploaded into B", (await remote("u_bxcom")) === 0, await remote("u_bxcom"));
-ok("A's meals removed from memory for B", (await memMeals()) === 0, await memMeals());
+ok("A's meals are not in memory for B", (await memMeals()) === 0, await memMeals());
 
 console.log("--- 10. no console errors");
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 400));
