@@ -55,7 +55,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 ### Checklist run for 8.1.19
 
-- Done: `node tests/browser/controls.mjs` (52): select keyboard and ARIA, native select under touch emulation, date picker, textarea 2 to 8 rows, password reveal, auth popup focus, 44px on seven routes, no horizontal scroll at 375/820/1440px. `security.mjs` (87), `meal-sync.mjs` (55), `meal-upload.mjs` (14) still pass.
+- Done: `node tests/browser/controls.mjs` (53): select keyboard and ARIA, native select and native date input under touch emulation, date picker, textarea 2 to 8 rows, password reveal, auth popup focus, 44px on seven routes, no horizontal scroll at 375/820/1440px. `security.mjs` (87), `meal-sync.mjs` (55), `meal-upload.mjs` (14) still pass.
 - Done: screenshots at 375/820/1440px in light, dark, OLED and the Forest, Ocean, Sunset and Midnight themes, checked by eye on Meals and Settings.
 - Not run: a real phone, Halloween/season themes, font sweep, feature regression sweep beyond the tests above, the Vercel preview with a real account.
 

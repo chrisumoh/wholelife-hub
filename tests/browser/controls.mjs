@@ -158,6 +158,7 @@ await sleep(600);
 ok("pointer is coarse", await ev(`matchMedia("(pointer: coarse)").matches`));
 ok("the native select is shown, with no custom trigger", await ev(`(() => { const s = document.getElementById("m-slot"); return !s._wl && !document.querySelector(".wl-sel") && getComputedStyle(s).display !== "none" && s.offsetHeight >= 44; })()`));
 ok("the native select is styled (custom arrow, border)", await ev(`(() => { const c = getComputedStyle(document.getElementById("m-slot")); return c.appearance === "none" && c.backgroundImage.includes("svg") && c.borderTopWidth === "1px"; })()`));
+ok("dates stay native on touch: a real date input, no custom picker, 44px tall", await ev(`(() => { const d = document.getElementById("m-date"); return d.type === "date" && !d._wl && !document.querySelector(".wl-date") && d.offsetHeight >= 44 && d.max === today(); })()`));
 await shot("form-native-select-375");
 await send("Emulation.setTouchEmulationEnabled", { enabled: false });
 await view(1440);
