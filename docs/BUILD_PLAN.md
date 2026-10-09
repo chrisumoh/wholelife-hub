@@ -21,6 +21,8 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.1.22 | Dropdown list no longer closes itself right after opening (scrolls only the list) | IN PROGRESS: build-8.1.22, pull request open, not merged |
+| 8.1.21 | Polish pass from make-interfaces-feel-better | CLOSED: not shipped at the owner's request (PR #12); only its dropdown fix went on as 8.1.22 |
 | 8.1.20 | Liquid glass cards with a hover streak and press, caustics on widgets, an accent beam on Today at a glance and the coach card (replacing the green glow), and a rubber-band Interface opacity slider | IN PROGRESS: build-8.1.20 (branched from build-8.1.19), pull request open, not merged |
 | 8.1.19 | Form controls restyled to BoardUI's look (input, textarea auto-resize, select listbox, date picker, segmented control, button and button group, sign-in card), 44px touch targets. Date range picker not found, skipped | IN PROGRESS: build-8.1.19, pushed, not merged |
 | 8.1.18 | Compact account row with sign-in popup, tighter spacing, Premium in Ctrl+K, Snap your plate copy. 8.1.16 and 8.1.17 were closed and never released; sidebar rework and legal pages are not in this build | IN PROGRESS: build-8.1.18 from main, not merged |

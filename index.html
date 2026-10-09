@@ -3885,7 +3885,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.1", build: "8.1.20", channel: "Dev Testing", date: "2026-10-07", week: "Sun 4 Oct – Sat 10 Oct 2026" };
+const APP_VERSION = { update: "8.1", build: "8.1.22", channel: "Dev Testing", date: "2026-10-09", week: "Sun 4 Oct – Sat 10 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3899,6 +3899,12 @@ const APP_VERSION = { update: "8.1", build: "8.1.20", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.1.22", area:"Forms", title:"Dropdown list no longer closes itself right after opening",
+      bug:"Found while testing the closed 8.1.21 build: opening a dropdown (for example Meal on the Meals page) with the keyboard or a click could show nothing. The list called scrollIntoView on its active option; when the list ran past the bottom of the window, that scrolled the page too, and the page-scroll listener, which closes the list when the page scrolls, closed it straight away. tests/browser/controls.mjs failed its three select checks whenever the page layout put the list near the bottom of the window.",
+      fix:"The active option is kept in view by scrolling the list itself (its scrollTop), never the page. Nothing else changes: the list still closes when you scroll the page yourself. This is the only change from the 8.1.21 work; the rest of that pass (rounder cards, hit areas, press scale, icon stroke and the other polish) was not shipped.",
+      where:"index.html: setAct() in the 8.1.19 form-controls script (the select listbox). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"node tests/browser/controls.mjs: the select checks (ArrowDown opens the listbox, options have role=option and one is selected, aria-activedescendant points at an option) pass. By hand: Meals, Log a meal, focus Meal, press the down arrow: the list opens and stays open; arrow down through a long list such as Food culture country and the list scrolls inside itself while the page stays put.",
+      limits:"Checked in headless Chrome only. Version 8.1.21 was used by the closed polish pass, so this build is 8.1.22. No Supabase files touched." },
     { id:"8.1.20", area:"Look", title:"Liquid glass cards, caustics on widgets, an accent beam on the top Summary cards, and a rubber-band opacity slider",
       bug:"Cards were flat panels. Today at a glance had a green brand wash and a green BorderGlow on hover that ignored the theme the person picked (the coach advice card had the same glow in the coach colour). The Interface opacity slider was a row of bars (WakeSlider), not a slider thumb you can drag.",
       fix:"Liquid glass: every card, widget, health tile, recipe card, tab bar and profile strip has a 1px rim (white in dark, a faint dark line in light) and a lit top edge. The outermost ones are frosted with backdrop-filter blur(14px) saturate(1.4); cards inside cards are not blurred again. On screens with a mouse, a light streak (105deg, rgba(255,255,255,.35)) slides across a card on hover and eases back when the pointer leaves (.65s, cubic-bezier(0.16,1,0.3,1)), and tappable cards (links and data-act cards) press in to 0.97. The Interface opacity slider still sets how much surface colour sits in the glass, so lower values make every card more see-through. Caustics: every widget and health tile has two soft light pools (accent-tinted and white, blur 10px) drifting behind its content on a 9s alternate loop. Beam: Today at a glance and the coach advice card lose BorderGlow and the green wash and get a 2px light that runs round the border (conic gradient on a rotating angle, 3s per turn) in the theme's accent, so it follows Forest, Ocean, Sunset, Midnight and the accent picker. Slider: the Interface opacity control is a thin track with an accent fill and a 28px round thumb (44px hit area). While dragging, the thumb follows the pointer 1:1 with no transition. Past either end it moves only 32% of the overshoot, eased to a stop about 12px out so it stays on the card; on release the overshoot is dropped and .snap springs it home (left .5s cubic-bezier(0.34,1.56,0.64,1)). The value still snaps to 5% steps and the glass changes live. Arrows, Page Up/Down, Home and End work. Reduced motion (the app setting or the device's) stops the caustics, the beam (it becomes a steady accent outline) and the spring; Reduce transparency turns the blur off and makes cards solid.",
@@ -20945,7 +20951,9 @@ function tourGuideCard(){
     LB.act = Math.max(0, Math.min(items.length - 1, i));
     items.forEach((el, n) => el.classList.toggle("act", n === LB.act));
     const el = items[LB.act]; LB.sel._wl.setAttribute("aria-activedescendant", el.id);
-    if (scroll) el.scrollIntoView({ block: "nearest" });
+    // 8.1.22: scroll only the list. scrollIntoView could also scroll the page when the list ran past
+    // the bottom of the window, and the page-scroll listener below then closed the list it had just opened.
+    if (scroll) { const L = LB.el, top = el.offsetTop, bot = top + el.offsetHeight; if (top < L.scrollTop) L.scrollTop = top; else if (bot > L.scrollTop + L.clientHeight) L.scrollTop = bot - L.clientHeight; }
   }
   const stepAct = (from, dir) => { const items = optItems(); for (let i = from + dir; i >= 0 && i < items.length; i += dir) if (items[i].getAttribute("aria-disabled") !== "true") return i; return from; };
   function commit(sel, idx){
