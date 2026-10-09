@@ -22,7 +22,7 @@ Version goes up 0.1 per week (8.1, 8.2, ...). Extra builds inside the same week 
 
 - Dark default: #000000 canvas, #1C1C1E cards, 16px radius, no shadows, hairline separators only
 - One accent per view; category colors (green meals, orange activity, indigo sleep, cyan water, rose heart, gold achievements) only in charts, icons, labels — never large fills
-- Type scale, 8px spacing grid, allowed radii {8, 10, 12, 16, 20, 999}px
+- Type scale, 8px spacing grid, allowed radii {8, 10, 12, 16, 20, 24, 28, 999}px; nested surfaces are concentric (outer radius = inner radius + padding), so cards holding 12px tiles are 28px (24px on phones) (8.1.21)
 - Fonts: 8-option picker, default system stack (Perplexity-style); metrics use tabular numerals
 - Themes via data-theme tokens: Forest, Ocean, Sunset, Midnight, Halloween; light and dark variants; Auto option
 - Sidebar icons: 30px gradient tiles (two-tone 135deg, white Lucide glyph) — same component everywhere a destination appears
@@ -47,6 +47,15 @@ Cards are frosted glass again, at the owner's request. This replaces "no shadows
 - **Caustics:** widgets and health tiles carry two blurred light pools drifting behind their content.
 - **Beam:** Today at a glance and the coach advice card have a 2px accent light running round the border. It always uses `--accent`, so it follows the theme and accent picker.
 - Reduced motion stops the caustics, beam and springs; Reduce transparency removes the blur. The styles live in one block at the end of the stylesheet (`8.1.20`).
+
+### Polish rules (8.1.21, from make-interfaces-feel-better)
+
+- Press: controls scale to exactly 0.96, whole cards and rows to 0.98. Nothing presses below 0.95.
+- Hit areas: every control is at least 40px with a mouse and 44px on touch; small links grow with padding cancelled by a negative margin, so layout does not move.
+- Icons: 1.5px stroke beside regular text, 2px beside semibold labels and on icon-only buttons. Buttons with an icon are 2px tighter on the icon side.
+- Numbers that change use tabular-nums; body text uses text-wrap: pretty; headings are balanced; font smoothing sits on html.
+- Images get a 1px inset outline: black at 10% in light, white at 10% in dark.
+- No transition: all, and no will-change unless an animation stutters on its first frame.
 
 ## Coach personas
 

@@ -3821,13 +3821,13 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 @media (hover:none),(pointer:coarse){.app :is(.card,.mcard,.cattile)::after{display:none}}
 /* press: tappable glass gives a little */
 .app :is(a.mcard,.mcard[data-act],a.cattile,.cattile[data-act],a.card,.card[data-act],button.card){transition:transform .2s cubic-bezier(.16,1,.3,1)}
-.app :is(a.mcard,.mcard[data-act],a.cattile,.cattile[data-act],a.card,.card[data-act],button.card):active{transform:scale(.97)}
+.app :is(a.mcard,.mcard[data-act],a.cattile,.cattile[data-act],a.card,.card[data-act],button.card):active{transform:scale(.98)}
 
 /* ---- caustics: two soft light pools drifting under the glass of every widget ---- */
 .app :is(.mcard,.cattile){isolation:isolate}
 .app :is(.mcard,.cattile)::before{content:"";position:absolute;inset:-25%;z-index:-1;pointer-events:none;
   background:radial-gradient(38% 30% at 28% 32%,var(--caustic-a),transparent 70%),radial-gradient(34% 28% at 72% 68%,var(--caustic-b),transparent 72%);
-  filter:blur(10px);animation:causticDrift 9s ease-in-out infinite alternate;will-change:transform}
+  filter:blur(10px);animation:causticDrift 9s ease-in-out infinite alternate}
 @keyframes causticDrift{from{transform:translate3d(-6%,-4%,0) rotate(0deg) scale(1)}to{transform:translate3d(6%,5%,0) rotate(8deg) scale(1.08)}}
 
 /* ---- beam: a light that runs round the border of the top Summary cards, in the theme's accent ---- */
@@ -3873,6 +3873,67 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 @media (prefers-reduced-transparency:reduce){
   .app :is(.card,.mcard,.cattile,.dish,.profstrip,.tabs){-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background-color:var(--surface)!important}
 }
+/* =================== 8.1.21: INTERFACE POLISH (make-interfaces-feel-better review) ===================
+   Small rendering, spacing and motion details from Jakub Krehel's make-interfaces-feel-better rules,
+   written in this file's plain CSS. Each group names the rule it follows. */
+
+/* Font smoothing belongs on the root, so every element renders the same weight on macOS */
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+/* Text wrapping: headings are already balanced; short body text avoids one-word last lines.
+   Legal pages are long, so they keep the browser's default wrapping. */
+:is(.app,.ob) :is(p,li,figcaption,blockquote):not(.legal *){text-wrap:pretty}
+/* Tabular numbers on values that change, so digits don't shift as they update */
+.rleg-head b,.pr .next,.app p.tiny b,#sec-recipes .row.between>.small,.setrow>.setlabel>h2,.challenge-card .setlabel,.app svg text{font-variant-numeric:tabular-nums}
+
+/* Concentric radii: outer radius = inner radius + padding. Cards hold 12px tiles (dishes, wells, ring
+   rows, empty states, badges) 16px in plus a 1px rim, so the card is 28px; on phones cards pad 12px,
+   so they are 24px. Buttons and fields keep their 10px control radius (see 8.1.19). */
+.app :is(.card,.mcard,.cattile){border-radius:28px}
+.app .rleg{border-radius:12px}
+/* .stats div also caught the label inside each stat box, giving it a second 12px box and pushing it
+   12px right of the number under it */
+.stats div div{background:none;border-radius:0;padding:0}
+@media (max-width:600px){.app .card{border-radius:24px}}
+
+/* Optical alignment: the side of a button that holds an icon gets 2px less room
+   (arrows and chevrons trail their label; every other icon leads it; icon-only buttons are left alone) */
+:is(.app,.ob) .btn:not([aria-label],.icon-btn)>svg.ico:not([data-icon="arrowR"],[data-icon="chevR"],[data-icon="chevD"],[data-icon="ext"]):first-child{margin-left:-2px}
+:is(.app,.ob) .btn:not([aria-label],.icon-btn)>svg.ico:is([data-icon="arrowR"],[data-icon="chevR"],[data-icon="chevD"],[data-icon="ext"]):last-child{margin-right:-2px}
+
+/* Icon stroke matches the text beside it: 1.5px next to regular text, 2px next to the
+   semibold labels on buttons, chips, tabs and segments, and on icon-only buttons */
+:is(.app,.ob) svg.ico{stroke-width:1.5}
+:is(.app,.ob) :is(.btn,.chip,.tag,.seg button,.tabs a,.actbtn,.sb-acc button)>svg.ico,
+:is(.app,.ob) :is(button,a)[aria-label]>svg.ico:only-child{stroke-width:2}
+
+/* Image outlines: a neutral 1px inset line, pure black in light and pure white in dark */
+:is(.app,.ob) img{outline:1px solid oklch(0 0 0 / .1);outline-offset:-1px}
+:root:is([data-scheme="dark"],[data-scheme="oled"]) :is(.app,.ob) img{outline-color:oklch(1 0 0 / .1)}
+
+/* Hit areas: at least 40px tall with a mouse and 44px on touch, grown with padding that a matching
+   negative margin cancels, so nothing moves on screen */
+.app :is(a.small,a.plain,.crumbs a,.footlinks a,.prem-foot a,.prem-foot button),.app details:not(.drinkbox)>summary{padding-block:11px;margin-block:-11px}
+.app :is(.crumbs a,.footlinks a,.prem-foot a){padding-inline:4px;margin-inline:-4px}
+.app .tag{position:relative}
+.app a.tag::before{content:"";position:absolute;left:0;right:0;top:50%;height:40px;transform:translateY(-50%)}
+.app .chip{min-width:44px;justify-content:center}
+.app .sw::before{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:44px;transform:translateY(-50%)} /* switches are 28px tall; the knob is ::after */
+.app .tsrow input[type=range]{height:40px}
+@media (pointer:coarse){
+  .app :is(a.small,a.plain,.crumbs a,.footlinks a,.prem-foot a,.prem-foot button),.app details:not(.drinkbox)>summary{padding-block:13px;margin-block:-13px}
+  .app a.tag::before{height:44px}
+  .app .chip{min-height:44px}
+  .app .tsrow input[type=range]{height:44px}
+}
+
+/* Scale on press: controls give exactly 0.96; whole cards and rows give 0.98, because 0.96 on a
+   full-width card moves its edges by 30px or more */
+:root :is(.btn,.btn.primary,.chip,.seg button,.tabs a,.actbtn,.sw,.swatch,.ava-link,.menu-toggle,.scenes button,.tour-topic,button.st-dot,.prem-cta,.swipe-toast__action):active:not(:disabled){transform:scale(.96)}
+:root :is(a.card,a.li,a.mcard,.tap-row,a.dish,.mcard,.cattile,.coachcard,.guessrow,.qa-item,.app .card[data-act],.app a.cattile):active{transform:scale(.98)}
+
+/* will-change only where something is animating; a permanent hint on every button and card
+   kept hundreds of extra GPU layers alive */
+.btn,.chip,.nav a,.seg button,.mcard,.cattile,.swatch,.seg-display button,.scenes button{will-change:auto}
 </style><div id="app"></div>
 <script>
 // =================== DEVELOPER LOG + CHANGE LOG (for testers) ===================
@@ -3885,7 +3946,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.1", build: "8.1.20", channel: "Dev Testing", date: "2026-10-07", week: "Sun 4 Oct – Sat 10 Oct 2026" };
+const APP_VERSION = { update: "8.1", build: "8.1.21", channel: "Dev Testing", date: "2026-10-09", week: "Sun 4 Oct – Sat 10 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3899,6 +3960,12 @@ const APP_VERSION = { update: "8.1", build: "8.1.20", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.1.21", area:"Polish", title:"Interface polish pass from the make-interfaces-feel-better rules: radii, hit areas, press scale, icon stroke, text and numbers",
+      bug:"A full review against Jakub Krehel's make-interfaces-feel-better rules found: cards (16px) holding 12px tiles 17px in, so nested corners did not line up (meals widget dish tiles, Today at a glance ring rows at 8px, wells, empty states, badges); 26 controls under 40px tall with a mouse (footer links, breadcrumbs, the Build a plan / Add a target line / Set a weekly goal links, the No food culture tag, dish name links, How to make it and other summaries, the text-size slider, Restore Purchases and the Premium footer links, the reminder switches); press feedback set 30 different ways from scale(.88) to scale(.995) across buttons, chips, tabs and cards; will-change: transform left on every button, chip, nav row, widget and swatch, plus the 8.1.20 caustics; icons at 1.8px stroke everywhere, whatever the text beside them; font smoothing on body instead of the root; no text-wrap: pretty on body text; changing counts (rings, recipe count, achievements, nutrition figures, chart labels) in proportional digits; the stats boxes' label getting a second 12px box from a too-wide .stats div rule; no outline on images.",
+      fix:"One CSS block, 8.1.21, at the end of the main style sheet. Radii: cards, widgets and health tiles are 28px (12px tile + 16px padding), 24px on phones where cards pad 12px; ring rows are 12px like the other tiles. Buttons and fields keep their 10px control radius from 8.1.19. Hit areas: small links, summaries and the Premium footer get 11px of padding cancelled by a matching negative margin (13px on touch screens), so they reach 40px (44px on touch) without moving anything; the tag gets a 40/44px ::before; chips are at least 44px wide (44px tall on touch); switches get a 44px ::before; the text-size slider is 40px (44px on touch) tall. Press: buttons, chips, segments, tabs, swatches and the other small controls press to exactly 0.96; whole cards and rows to 0.98 (0.96 on a full-width card moves its edges 30px or more), including the 8.1.20 glass cards (was 0.97). will-change is back to auto on those elements and removed from the caustics. Icons: 1.5px stroke beside regular text, 2px on buttons, chips, tags, segments, tabs and icon-only buttons. Optical alignment: on a button with a leading icon the icon side is 2px tighter; for trailing arrows and chevrons the right side is. Typography: antialiased smoothing on html; text-wrap: pretty on paragraphs, list items and captions (legal pages excluded); tabular numbers on the rings count, Next meal calories, nutrition figures, the recipe count, the achievements counters and chart labels. The stats label sits flush with its number again. Images get a 1px inset outline, pure black at 10% in light and pure white at 10% in dark.",
+      where:"index.html: CSS block 8.1.21 at the end of the main style sheet; the 8.1.20 caustics rule (will-change removed) and the 8.1.20 card press (0.97 to 0.98); APP_VERSION. tests/browser/polish.mjs (new). docs/CONTEXT.md (radii 24 and 28 allowed, press and stroke rules), CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"node tests/browser/polish.mjs (31 checks): smoothing on the root; pretty body text and balanced headings; tabular rings and recipe counts; meals widget concentric with its dish tiles (outer = inner + gap within 2px), Today at a glance 28px with 12px ring rows, 24px cards on phones; stats label flush; leading-icon button 2px tighter; icon stroke 2px on buttons and 1.5px elsewhere; image outline colour per scheme; every link, button, summary, slider, tab and field at least 40px on 13 pages (inline links in sentences, inputs inside labels and the hidden owner-code line excluded); press scales 0.96 and 0.98; no will-change on buttons, widgets or caustics; no horizontal scroll at 390px; no page errors. glass.mjs (36), security.mjs (87) and meal-sync.mjs (55) still pass.",
+      limits:"Checked in headless Chrome only, not on a real phone, Safari or Firefox; macOS font smoothing was not looked at on a Mac. Not changed, on purpose: the 10px radius on buttons and fields inside cards (they are controls, set in 8.1.19); circles inside rounded boxes (avatars, dots); the workout-type icons that animate twice on hover (a deliberate decorative touch on one screen, mouse only); the light/dark and password-reveal icon swaps (each re-render replaces the icon, so a cross-fade needs a markup change); the owner-code line in Settings (a hidden 29px tap target by design); static numbers such as the year and step numbers. Checkboxes inside a label rely on the label as their hit area. No Supabase files touched." },
     { id:"8.1.20", area:"Look", title:"Liquid glass cards, caustics on widgets, an accent beam on the top Summary cards, and a rubber-band opacity slider",
       bug:"Cards were flat panels. Today at a glance had a green brand wash and a green BorderGlow on hover that ignored the theme the person picked (the coach advice card had the same glow in the coach colour). The Interface opacity slider was a row of bars (WakeSlider), not a slider thumb you can drag.",
       fix:"Liquid glass: every card, widget, health tile, recipe card, tab bar and profile strip has a 1px rim (white in dark, a faint dark line in light) and a lit top edge. The outermost ones are frosted with backdrop-filter blur(14px) saturate(1.4); cards inside cards are not blurred again. On screens with a mouse, a light streak (105deg, rgba(255,255,255,.35)) slides across a card on hover and eases back when the pointer leaves (.65s, cubic-bezier(0.16,1,0.3,1)), and tappable cards (links and data-act cards) press in to 0.97. The Interface opacity slider still sets how much surface colour sits in the glass, so lower values make every card more see-through. Caustics: every widget and health tile has two soft light pools (accent-tinted and white, blur 10px) drifting behind its content on a 9s alternate loop. Beam: Today at a glance and the coach advice card lose BorderGlow and the green wash and get a 2px light that runs round the border (conic gradient on a rotating angle, 3s per turn) in the theme's accent, so it follows Forest, Ocean, Sunset, Midnight and the accent picker. Slider: the Interface opacity control is a thin track with an accent fill and a 28px round thumb (44px hit area). While dragging, the thumb follows the pointer 1:1 with no transition. Past either end it moves only 32% of the overshoot, eased to a stop about 12px out so it stays on the card; on release the overshoot is dropped and .snap springs it home (left .5s cubic-bezier(0.34,1.56,0.64,1)). The value still snaps to 5% steps and the glass changes live. Arrows, Page Up/Down, Home and End work. Reduced motion (the app setting or the device's) stops the caustics, the beam (it becomes a steady accent outline) and the spring; Reduce transparency turns the blur off and makes cards solid.",
