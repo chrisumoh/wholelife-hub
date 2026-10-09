@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.1 (Dev Testing), build 8.1.20, 2026-10-07. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.1 (Dev Testing), build 8.1.22, 2026-10-09. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.1.22 · Forms: Dropdown list no longer closes itself right after opening
+
+- **Problem:** Found while testing the closed 8.1.21 build: opening a dropdown (for example Meal on the Meals page) with the keyboard or a click could show nothing. The list called scrollIntoView on its active option; when the list ran past the bottom of the window, that scrolled the page too, and the page-scroll listener, which closes the list when the page scrolls, closed it straight away. tests/browser/controls.mjs failed its three select checks whenever the page layout put the list near the bottom of the window.
+- **Change:** The active option is kept in view by scrolling the list itself (its scrollTop), never the page. Nothing else changes: the list still closes when you scroll the page yourself. This is the only change from the 8.1.21 work; the rest of that pass (rounder cards, hit areas, press scale, icon stroke and the other polish) was not shipped.
+- **Where:** index.html: setAct() in the 8.1.19 form-controls script (the select listbox). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** node tests/browser/controls.mjs: the select checks (ArrowDown opens the listbox, options have role=option and one is selected, aria-activedescendant points at an option) pass. By hand: Meals, Log a meal, focus Meal, press the down arrow: the list opens and stays open; arrow down through a long list such as Food culture country and the list scrolls inside itself while the page stays put.
+- **Known limits:** Checked in headless Chrome only. Version 8.1.21 was used by the closed polish pass, so this build is 8.1.22. No Supabase files touched.
 
 ## 8.1.20 · Look: Liquid glass cards, caustics on widgets, an accent beam on the top Summary cards, and a rubber-band opacity slider
 
