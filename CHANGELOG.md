@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.1 (Dev Testing), build 8.1.22, 2026-10-09. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.1 (Dev Testing), build 8.1.23, 2026-10-10. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.1.23 · Forms: Segmented control thumb slides on every frame instead of freezing mid-switch
+
+- **Problem:** Switching a segmented control with the sliding thumb (for example lb · ft / kg · cm in Settings › Profile) looked stuck: after a tap the thumb sat stretched across both options, then jumped, and took close to a second to settle, slower still on a phone. The motion engine moved the thumb's edges every frame but only redrew the thumb when the next spring phase started, so it showed two or three jumps instead of a slide, and its last position was a couple of pixels off the chosen option.
+- **Change:** Each animated edge now knows which control it belongs to, and every frame that moves an edge redraws that control. The thumb slides on every frame and lands exactly on the chosen option, starting to move within about 0.1s and reaching it in about 0.5s. The stretch, squash and spring values are unchanged, and the fix covers every control that uses the rubber thumb (units, Appearance › Display, metric range, plan length, servings and the others in RS_ACTS).
+- **Where:** index.html: spring(), tween() and tick() in the RubberSegment script. tests/browser/controls.mjs: new segmented control thumb checks. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** node tests/browser/controls.mjs: the three units checks pass (thumb repaints on every frame, lands on the chosen segment, finishes within a second); against 8.1.22 the first two fail. By hand on a phone: Settings › Profile, tap kg · cm then lb · ft: the highlight slides straight across with no frozen stretch.
+- **Known limits:** Checked in headless Chrome only, not on a real iPhone or in Safari. On this test machine the select checks at the start of controls.mjs fail on 8.1.22 as well (a layout difference from the Windows laptop), so the new checks were run with that section skipped. No Supabase files touched.
 
 ## 8.1.22 · Forms: Dropdown list no longer closes itself right after opening
 

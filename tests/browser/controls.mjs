@@ -162,6 +162,27 @@ ok("dates stay native on touch: a real date input, no custom picker, 44px tall",
 await shot("form-native-select-375");
 await send("Emulation.setTouchEmulationEnabled", { enabled: false });
 await view(1440);
+console.log("--- segmented control thumb (8.1.23)");
+// The thumb used to move only in memory between spring phases, so a tap left it stretched across
+// both segments for most of the switch. It must repaint on every frame and land on the new segment.
+await view(375, 900, true);
+await ev(`(() => { const p = P(); p.units = "us"; markRoot(); render(); return true; })()`);
+await go("#/settings/profile"); await sleep(600);
+const thumbRun = await ev(`(async () => {
+  const seg = document.querySelector('.seg[aria-label="Units"]'); if (!seg || !seg.classList.contains("rs-on")) return { err: "no rubber segment" };
+  const clip = () => document.querySelector('.seg[aria-label="Units"] .rs-thumb')?.style.clipPath || "";
+  const seen = new Set(); const t0 = performance.now(); let last = clip(), settledAt = null;
+  seg.querySelector('button[data-v="metric"]').click();
+  await new Promise(done => { const f = () => { const c = clip(); if (c !== last) { seen.add(c); last = c; settledAt = performance.now() - t0; } if (performance.now() - t0 < 1500) requestAnimationFrame(f); else done(); }; requestAnimationFrame(f); });
+  const s2 = document.querySelector('.seg[aria-label="Units"]'), b = s2.querySelector('button[data-v="metric"]');
+  const left = parseFloat((clip().match(/inset\\(([^)]*)\\)/)?.[1] || "").split(/\\s+/)[3]);
+  return { frames: seen.size, settledAt: Math.round(settledAt), pressed: b.getAttribute("aria-pressed"), left, want: b.offsetLeft };
+})()`);
+ok("units: thumb repaints on every animation frame (not in two or three jumps)", thumbRun.frames >= 15, JSON.stringify(thumbRun));
+ok("units: thumb lands exactly on the chosen segment", thumbRun.pressed === "true" && Math.abs(thumbRun.left - thumbRun.want) < 0.5, JSON.stringify(thumbRun));
+ok("units: switch finishes within a second", thumbRun.settledAt > 0 && thumbRun.settledAt < 1200, JSON.stringify(thumbRun));
+await view(1440);
+
 console.log("--- no uncaught exceptions");
 ok("no exceptions", errors.length === 0, JSON.stringify(errors.slice(0, 3)));
 console.log(`\n${pass} passed, ${fail} failed`);

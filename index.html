@@ -3885,7 +3885,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.1", build: "8.1.22", channel: "Dev Testing", date: "2026-10-09", week: "Sun 4 Oct – Sat 10 Oct 2026" };
+const APP_VERSION = { update: "8.1", build: "8.1.23", channel: "Dev Testing", date: "2026-10-10", week: "Sun 4 Oct – Sat 10 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3899,6 +3899,12 @@ const APP_VERSION = { update: "8.1", build: "8.1.22", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.1.23", area:"Forms", title:"Segmented control thumb slides on every frame instead of freezing mid-switch",
+      bug:"Switching a segmented control with the sliding thumb (for example lb · ft / kg · cm in Settings › Profile) looked stuck: after a tap the thumb sat stretched across both options, then jumped, and took close to a second to settle, slower still on a phone. The motion engine moved the thumb's edges every frame but only redrew the thumb when the next spring phase started, so it showed two or three jumps instead of a slide, and its last position was a couple of pixels off the chosen option.",
+      fix:"Each animated edge now knows which control it belongs to, and every frame that moves an edge redraws that control. The thumb slides on every frame and lands exactly on the chosen option, starting to move within about 0.1s and reaching it in about 0.5s. The stretch, squash and spring values are unchanged, and the fix covers every control that uses the rubber thumb (units, Appearance › Display, metric range, plan length, servings and the others in RS_ACTS).",
+      where:"index.html: spring(), tween() and tick() in the RubberSegment script. tests/browser/controls.mjs: new segmented control thumb checks. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"node tests/browser/controls.mjs: the three units checks pass (thumb repaints on every frame, lands on the chosen segment, finishes within a second); against 8.1.22 the first two fail. By hand on a phone: Settings › Profile, tap kg · cm then lb · ft: the highlight slides straight across with no frozen stretch.",
+      limits:"Checked in headless Chrome only, not on a real iPhone or in Safari. On this test machine the select checks at the start of controls.mjs fail on 8.1.22 as well (a layout difference from the Windows laptop), so the new checks were run with that section skipped. No Supabase files touched." },
     { id:"8.1.22", area:"Forms", title:"Dropdown list no longer closes itself right after opening",
       bug:"Found while testing the closed 8.1.21 build: opening a dropdown (for example Meal on the Meals page) with the keyboard or a click could show nothing. The list called scrollIntoView on its active option; when the list ran past the bottom of the window, that scrolled the page too, and the page-scroll listener, which closes the list when the page scrolls, closed it straight away. tests/browser/controls.mjs failed its three select checks whenever the page layout put the list near the bottom of the window.",
       fix:"The active option is kept in view by scrolling the list itself (its scrollTop), never the page. Nothing else changes: the list still closes when you scroll the page yourself. This is the only change from the 8.1.21 work; the rest of that pass (rounder cards, hit areas, press scale, icon stroke and the other polish) was not shipped.",
@@ -20386,6 +20392,10 @@ input[type=date]::-webkit-calendar-picker-indicator{opacity:.6}
       const a = e.anim; if (!a) { live.delete(e); continue; }
       const dt = Math.min(0.25, (now - a.last) / 1000); a.last = now; // catch up after a slow frame instead of crawling
       const prev = e.x;
+      // 8.1.23: every frame that moves an edge must repaint its control. Before this the edge
+      // moved in memory but the thumb was only redrawn when the next spring started, so a tap
+      // showed the thumb frozen across both segments for most of the switch.
+      if (e.owner) e.owner.dirty = true;
       if (a.kind === "tween") {
         const p = clamp((now - a.start) / (a.dur * 1000), 0, 1);
         e.x = a.from + (a.to - a.from) * bez(p);
@@ -20405,9 +20415,10 @@ input[type=date]::-webkit-calendar-picker-indicator{opacity:.6}
   const spring = (e, to, [dur, bounce], velocity, owner) => new Promise(done => {
     const k = Math.pow(2 * Math.PI / t(dur), 2), c = 2 * (1 - bounce) * Math.sqrt(k);
     if (velocity != null) e.v = velocity;
+    e.owner = owner;
     e.anim = { kind: "spring", to, k, c, last: performance.now(), done }; live.add(e); owner.dirty = true; kick();
   });
-  const tween = (e, to, dur, owner) => { e.anim = { kind: "tween", from: e.x, to, dur, start: performance.now(), last: performance.now() }; live.add(e); owner.dirty = true; kick(); };
+  const tween = (e, to, dur, owner) => { e.owner = owner; e.anim = { kind: "tween", from: e.x, to, dur, start: performance.now(), last: performance.now() }; live.add(e); owner.dirty = true; kick(); };
   const stop = e => { e.anim = null; live.delete(e); };
 
   const SEGS = new Set();

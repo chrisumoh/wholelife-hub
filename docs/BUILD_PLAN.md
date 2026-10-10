@@ -21,7 +21,8 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
-| 8.1.22 | Dropdown list no longer closes itself right after opening (scrolls only the list) | IN PROGRESS: build-8.1.22, pull request open, not merged |
+| 8.1.23 | Segmented control thumb (units and the other rubber-thumb controls) repaints every frame, so switching slides in about 0.5s instead of freezing stretched across both options | IN PROGRESS: build-8.1.23, pull request open, not merged |
+| 8.1.22 | Dropdown list no longer closes itself right after opening (scrolls only the list) | MERGED: PR #13 |
 | 8.1.21 | Polish pass from make-interfaces-feel-better | CLOSED: not shipped at the owner's request (PR #12); only its dropdown fix went on as 8.1.22 |
 | 8.1.20 | Liquid glass cards with a hover streak and press, caustics on widgets, an accent beam on Today at a glance and the coach card (replacing the green glow), and a rubber-band Interface opacity slider | IN PROGRESS: build-8.1.20 (branched from build-8.1.19), pull request open, not merged |
 | 8.1.19 | Form controls restyled to BoardUI's look (input, textarea auto-resize, select listbox, date picker, segmented control, button and button group, sign-in card), 44px touch targets. Date range picker not found, skipped | IN PROGRESS: build-8.1.19, pushed, not merged |
@@ -48,6 +49,11 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.1.23
+
+- Done: `node tests/browser/controls.mjs` with the select section skipped (45 checks, headless Chrome on Linux), including the three new units-thumb checks at 375px touch; they fail against 8.1.22 and pass here. `glass.mjs` (36) passes.
+- Not run: the select section of `controls.mjs` (fails on this Linux machine on 8.1.22 too, so it needs the Windows laptop), real phones and Safari, and the deployed-preview checks. No Supabase files were touched.
 
 ### Checklist run for 8.1.20
 
