@@ -1,0 +1,44 @@
+name: Tests
+
+# Runs on every pull request and every push to main. Needs no secrets: the browser tests use a fake Supabase
+# (or a faked network), so no real account or database is touched. See tests/ and docs/BUILD_PLAN.md.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repo-checks:
+    name: Repo checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Scripts parse, the version agrees everywhere, vercel.json is valid, no secrets, food data is text only.
+      - run: node tests/check-repo.mjs
+
+  browser-tests:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Chrome version
+        run: google-chrome --version
+      # headers, security, meal-sync, meal-upload, controls, glass: one after another, each in its own headless Chrome.
+      - run: node tests/browser/run-all.mjs
+        env:
+          CHROME: /usr/bin/google-chrome

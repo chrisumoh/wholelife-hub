@@ -79,6 +79,17 @@ Sign-up confirmation and password reset emails send the person to a URL the app 
 - The app uses PKCE (`flowType: "pkce"`). The code arrives in `?code=`; don't change this to put tokens in the URL hash.
 - Sign-in does not work from `file://`; serve the folder.
 
+## 8. Response headers (`vercel.json`)
+
+The site sends its own security headers on every response, set in `vercel.json`. They limit where the page can load code from and send data to, so a mistake elsewhere does less harm.
+
+- `Content-Security-Policy`: scripts only from this site and `cdn.jsdelivr.net`; network requests only to this site and the Supabase project; images, media and fonts only from places the app uses; no plugins, no `<base>`, forms post only to this site, and the app cannot be framed.
+- `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and a `Permissions-Policy` that allows the camera and microphone for this site only.
+- The policy still allows inline scripts and styles, because the app is one file built from inline blocks. It limits where code loads from and where data goes, but it does not stop an injected inline script. Section 4 is still the main defence.
+- A change that adds a network destination, an external script, a font from another site, a worker, or an embedded frame must update `vercel.json` in the same build, and the privacy text (section 5). Don't loosen the policy to make something work; allow only the exact host.
+- If the Supabase project URL changes, change `SB_URL` and the `connect-src` and `img-src` entries together.
+- Check it with `node tests/browser/headers.mjs`. It serves the folder with exactly these headers, opens every screen and fails on any violation. After a deploy, confirm the headers on the preview in the browser's Network tab.
+
 ## Reporting a problem
 
 Tell the project owner before writing about a vulnerability in an issue or pull request. Don't paste real keys, tokens or someone's health data into a pull request, issue or chat. If a leak is possible, rotate first.
