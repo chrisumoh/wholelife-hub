@@ -21,6 +21,8 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.1 | Tests run on every pull request (GitHub Actions); browser tests work on Linux; repo checks for scripts, version agreement, secrets and text-only food data | IN PROGRESS: build-8.2.1, stacked on build-8.2, pull request not yet opened |
+| 8.2 | Security headers: content security policy, no framing, nosniff, referrer and permissions policies in `vercel.json`, with a test that serves the app under them | IN PROGRESS: build-8.2, pull request not yet opened |
 | 8.1.22 | Dropdown list no longer closes itself right after opening (scrolls only the list) | IN PROGRESS: build-8.1.22, pull request open, not merged |
 | 8.1.21 | Polish pass from make-interfaces-feel-better | CLOSED: not shipped at the owner's request (PR #12); only its dropdown fix went on as 8.1.22 |
 | 8.1.20 | Liquid glass cards with a hover streak and press, caustics on widgets, an accent beam on Today at a glance and the coach card (replacing the green glow), and a rubber-band Interface opacity slider | IN PROGRESS: build-8.1.20 (branched from build-8.1.19), pull request open, not merged |
@@ -45,9 +47,20 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Premium flag verified locked AND unlocked via dev override
 - Coach advice non-generic in all three voices; culture constraint holds
 - All five themes + light/dark + all fonts render; contrast passes
+- The `Tests` workflow is green on the pull request (Repo checks and Browser tests). Locally: `node tests/check-repo.mjs` and `node tests/browser/run-all.mjs`
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.2.1
+
+- Done: `node tests/check-repo.mjs` (20) and `node tests/browser/run-all.mjs` (headers 17, security 87, meal-sync 55, meal-upload 14, controls 53, glass 36) all pass on Linux in headless Chrome. The repo checks go red when the version or vercel.json is deliberately broken.
+- Not run: the workflow itself on GitHub (its first run is the pull request), 375/820/1440px sweep, theme and font sweep, real phones, deployed-preview checks. The app code did not change apart from APP_VERSION and the change log. No Supabase files were touched.
+
+### Checklist run for 8.2
+
+- Done: `node tests/browser/headers.mjs` (17 checks, headless Chrome, fake Supabase): the five headers are on the response, all 17 menu screens open under the policy with 0 violations and 0 errors, and a foreign script, request, image and iframe are blocked.
+- Not run: `security.mjs`, `meal-sync.mjs`, `meal-upload.mjs`, `controls.mjs` and `glass.mjs` (they serve the app without these headers and the app code did not change), the 375/820/1440px sweep, theme and font sweep, real phones, the camera and voice features on a real device under the new Permissions-Policy, and the deployed-preview checks (headers in the Network tab, sign-in with a real account). No Supabase files were touched.
 
 ### Checklist run for 8.1.20
 

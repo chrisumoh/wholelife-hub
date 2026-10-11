@@ -1,6 +1,6 @@
 # Whole Life Hub
 
-A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.1 (Dev Testing), build 8.1.22**.
+A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.2 (Dev Testing), build 8.2.1**.
 
 ## What's in this repository
 
@@ -11,7 +11,8 @@ A health and fitness web app: meal and snack logging, workouts, health metrics, 
 | `docs/VERSIONING.md` | How version numbers work (8.1, 8.1.1 …). |
 | `docs/DATABASE.md` | The Supabase tables, security rules and photo storage. |
 | `supabase/migrations/` | The SQL that built the database, in the order it was applied. |
-| `.github/` | Bug-report and pull-request templates for testers. |
+| `.github/` | Bug-report and pull-request templates for testers, and the `Tests` workflow. |
+| `tests/` | Browser tests (`tests/browser/`, run with `node tests/browser/run-all.mjs`), fast repo checks (`node tests/check-repo.mjs`) and the SQL isolation test. |
 
 ## Run it locally
 
@@ -43,7 +44,7 @@ Project **Whole Life Hub** (`https://zemxqbinpehkrkyvzlue.supabase.co`, region u
 
 1. Branch from `main` (`feature/meals-sync`, `fix/header-overlap`).
 2. Make the change in `index.html`; add an entry to the in-app change log (`CHANGELOG` array near the top of the developer-log script) with the next version number, then regenerate or edit `CHANGELOG.md`.
-3. Open a pull request using the template; a tester checks the preview link.
+3. Open a pull request using the template. The `Tests` workflow runs on it; a tester checks the preview link.
 4. Merge to `main`, then tag the release: `git tag v8.1.9 && git push --tags`.
 
 **Rule:** `main` is the live app. Nobody publishes a copy that didn't come from the current `main`. In the app, Settings › Data & about › Diagnostics shows which build you're looking at.
