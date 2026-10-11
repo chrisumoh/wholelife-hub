@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.3 | Phone performance measured (`tests/perf/measure.mjs`, `docs/PERFORMANCE.md`); no app change | IN PROGRESS: build-8.2.3, pull request not yet opened |
 | 8.2.2 | Segmented control thumb (units and the other rubber-thumb controls) repaints every frame, so switching slides in about 0.5s instead of freezing stretched across both options | IN PROGRESS: build-8.1.23 (PR #14), main merged in, pull request open, not merged |
 | 8.2.1 | Tests run on every pull request (GitHub Actions); browser tests work on Linux; repo checks for scripts, version agreement, secrets and text-only food data | MERGED: PR #15 (with 8.2) |
 | 8.2 | Security headers: content security policy, no framing, nosniff, referrer and permissions policies in `vercel.json`, with a test that serves the app under them | MERGED: PR #15 (with 8.2.1) |
@@ -52,6 +53,11 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.2.3
+
+- Done: `node tests/check-repo.mjs`, and `node tests/perf/measure.mjs` (5 cold loads at each of three profiles, plus screen-open times with a year of logs). No app behaviour changed.
+- Not run: the browser tests (the app code did not change), real phones, Safari and Firefox, the deployed-preview checks. No Supabase files were touched.
 
 ### Checklist run for 8.2.2
 

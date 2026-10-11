@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.2, 2026-10-11. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.3, 2026-10-11. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.3 · Performance: Phone performance measured: a repeatable test and a report on what to do before considering a split of index.html
+
+- **Problem:** There was no measurement of how fast the app loads or opens screens on a phone, so the question of splitting the 1.9 MB single file had no data behind it.
+- **Change:** New tests/perf/measure.mjs loads the app the way a phone would (390×844 at 3×, touch, 4× or 6× CPU, Fast or Slow 4G, brotli like Vercel) and prints first and largest contentful paint, layout shift, blocking time, script time, transfer, and how long each screen takes to open with a year of logs. New docs/PERFORMANCE.md records the results for build 8.2.2, what the file is made of, and a recommendation. Findings: first paint is 3.7 s on Fast 4G and 12.3 s on Slow 4G, and almost all of it is download time for the 541 KB (brotli) document, not script time (0.3 s); layout is stable; Workouts takes 776 ms to open with a year of data. Recommendation: do not split into modules or add a build step; instead show an inline loading screen on the first bytes, move the four embedded base64 images (125 KB) to files, cap long lists, and cache fonts and later the food catalog. No app behaviour changed in this build.
+- **Where:** tests/perf/measure.mjs (new); docs/PERFORMANCE.md (new); docs/BUILD_PLAN.md; APP_VERSION and the change log in index.html
+- **How to test:** `node tests/perf/measure.mjs` (needs Node 22+ and Chrome; set CHROME to its path, and CI=1 when running as root). It prints two tables and takes a few minutes. Compare against docs/PERFORMANCE.md.
+- **Known limits:** It is headless Chrome on a throttled laptop, so it cannot see GPU cost (backdrop blur, glass, animation), Safari, Firefox or a real phone's heat limits; check those on a phone before judging smoothness. It replaces supabase-js with a fake, so about 130 KB from jsDelivr and a real sign-in are not counted. Every run is a cold load, so repeat-visit caching is not measured, and I could not read the live site's cache headers. The script is not part of the Tests workflow because its numbers vary by machine.
 
 ## 8.2.2 · Forms: Segmented control thumb slides on every frame instead of freezing mid-switch
 
