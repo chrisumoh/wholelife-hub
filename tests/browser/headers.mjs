@@ -36,13 +36,15 @@ const server = createServer((req, res) => {
   if (!file.startsWith(REPO) || !existsSync(file) || /(^|[\\/])\./.test(path)) { res.writeHead(404); res.end("not found"); return; }
   res.writeHead(200, { "content-type": TYPES[extname(file)] || "application/octet-stream", ...HEADERS });
   res.end(readFileSync(file));
-}).listen(8767, "127.0.0.1");
+}).listen(8770, "127.0.0.1");
 const procs = [{ kill: () => server.close() }];
-const chrome = spawn(CHROME, ["--headless=new", "--remote-debugging-port=9335", `--user-data-dir=${mkdtempSync(join(tmpdir(), "wlh-hdr-"))}`, "--no-first-run", "--disable-gpu", ...NO_SANDBOX, "about:blank"], { stdio: "ignore" }); procs.push(chrome);
+const chrome = spawn(CHROME, ["--headless=new", "--remote-debugging-port=9338", `--user-data-dir=${mkdtempSync(join(tmpdir(), "wlh-hdr-"))}`, "--no-first-run", "--disable-gpu", ...NO_SANDBOX, "about:blank"], { stdio: "ignore" }); procs.push(chrome);
 // Wait for Chrome's debugging port instead of a fixed sleep: a cold start on a CI runner can take several seconds.
 let list = null;
-for (let i = 0; i < 80 && !list; i++) { try { const l = await (await fetch("http://127.0.0.1:9335/json/list")).json(); if (l.some(t => t.type === "page")) list = l; } catch {} if (!list) await sleep(250); }
+for (let i = 0; i < 80 && !list; i++) { try { const l = await (await fetch("http://127.0.0.1:9338/json/list")).json(); if (l.some(t => t.type === "page")) list = l; } catch {} if (!list) await sleep(250); }
 if (!list) { console.log("FAIL  Chrome did not start (set CHROME to its path)"); procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(1); }
+// Never leave Chrome or the server running if the test throws: a leftover Chrome on the same port would poison the next test.
+process.on("exit", () => procs.forEach(p => { try { p.kill(); } catch {} }));
 const ws = new WebSocket(list.find(t => t.type === "page").webSocketDebuggerUrl);
 await new Promise(r => ws.onopen = r);
 let id = 0; const pending = new Map(); const errors = [];
@@ -59,11 +61,11 @@ await send("Page.addScriptToEvaluateOnNewDocument", { source: FAKE });
 const READY = "typeof S !== 'undefined' && typeof SB !== 'undefined' && SB.booted === true && UI.loading === false";
 
 console.log("--- 2. the server sends the headers");
-const r = await fetch("http://127.0.0.1:8767/index.html");
+const r = await fetch("http://127.0.0.1:8770/index.html");
 ok("every configured header is on the response", Object.entries(HEADERS).every(([k, v]) => r.headers.get(k) === v));
 
 console.log("--- 3. the app runs under the policy");
-await send("Page.navigate", { url: "http://127.0.0.1:8767/index.html" }); await sleep(500);
+await send("Page.navigate", { url: "http://127.0.0.1:8770/index.html" }); await sleep(500);
 ok("app boots", await waitFor(READY, 15000), errors.join(" | "));
 await ev(`(async()=>{ const p=newProfile("Ada"); p.onboarded=true; p.coachPrompted=true; p.tourSeen="dismissed"; S.profiles=[p]; S.activeId=p.id; saveProfile(); await flush(); return true; })()`);
 await ev(`(async()=>{ addEntry("meals",{id:uid(),date:today(),slot:"lunch",name:"Jollof rice",cal:500,dish:null,extras:[],est:false,photo:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="}); render(); return true; })()`);

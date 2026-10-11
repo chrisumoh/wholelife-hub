@@ -10,14 +10,20 @@ import { join } from "node:path";
 // With a directory argument it also saves screenshots.
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
+const PYTHON = process.env.PYTHON || (process.platform === "win32" ? "python" : "python3");
+const NO_SANDBOX = process.env.CI || process.env.NO_SANDBOX ? ["--no-sandbox"] : [];   // CI runners run Chrome as root
 const FAKE = readFileSync(new URL("./fake-supabase.js", import.meta.url), "utf8");
 const SHOTS = process.argv[2]; if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const procs = [];
-procs.push(spawn("python", ["-m", "http.server", "8769", "--bind", "127.0.0.1"], { cwd: REPO, stdio: "ignore" }));
-procs.push(spawn(CHROME, ["--headless=new", "--remote-debugging-port=9337", `--user-data-dir=${mkdtempSync(join(tmpdir(), "wlh-glass-"))}`, "--no-first-run", "--disable-gpu", "about:blank"], { stdio: "ignore" }));
-await sleep(2500);
-const list = await (await fetch("http://127.0.0.1:9337/json/list")).json();
+procs.push(spawn(PYTHON, ["-m", "http.server", "8769", "--bind", "127.0.0.1"], { cwd: REPO, stdio: "ignore" }));
+procs.push(spawn(CHROME, ["--headless=new", "--remote-debugging-port=9337", `--user-data-dir=${mkdtempSync(join(tmpdir(), "wlh-glass-"))}`, "--no-first-run", "--disable-gpu", ...NO_SANDBOX, "about:blank"], { stdio: "ignore" }));
+// Wait for Chrome's debugging port instead of a fixed sleep: a cold start on a CI runner can take several seconds.
+let list = null;
+for (let i = 0; i < 80 && !list; i++) { try { const l = await (await fetch("http://127.0.0.1:9337/json/list")).json(); if (l.some(t => t.type === "page")) list = l; } catch {} if (!list) await sleep(250); }
+if (!list) { console.log("FAIL  Chrome did not start (set CHROME to its path)"); procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(1); }
+// Never leave Chrome or the server running if the test throws: a leftover Chrome on the same port would poison the next test.
+process.on("exit", () => procs.forEach(p => { try { p.kill(); } catch {} }));
 const ws = new WebSocket(list.find(t => t.type === "page").webSocketDebuggerUrl);
 await new Promise(r => ws.onopen = r);
 let id = 0; const pending = new Map(); const errors = [];

@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -10,12 +10,18 @@ import { join } from "node:path";
 // and the test asserts on the HTTP requests the app actually makes. No real account is touched.
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
+const PYTHON = process.env.PYTHON || (process.platform === "win32" ? "python" : "python3");
+const NO_SANDBOX = process.env.CI || process.env.NO_SANDBOX ? ["--no-sandbox"] : [];   // CI runners run Chrome as root
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const procs = [];
-procs.push(spawn("python", ["-m", "http.server", "8767", "--bind", "127.0.0.1"], { cwd: REPO, stdio: "ignore" }));
-procs.push(spawn(CHROME, ["--headless=new", "--remote-debugging-port=9335", `--user-data-dir=${mkdtempSync(join(tmpdir(), "wlh-up-"))}`, "--no-first-run", "--disable-gpu", "about:blank"], { stdio: "ignore" }));
-await sleep(2500);
-const list = await (await fetch("http://127.0.0.1:9335/json/list")).json();
+procs.push(spawn(PYTHON, ["-m", "http.server", "8767", "--bind", "127.0.0.1"], { cwd: REPO, stdio: "ignore" }));
+procs.push(spawn(CHROME, ["--headless=new", "--remote-debugging-port=9335", `--user-data-dir=${mkdtempSync(join(tmpdir(), "wlh-up-"))}`, "--no-first-run", "--disable-gpu", ...NO_SANDBOX, "about:blank"], { stdio: "ignore" }));
+// Wait for Chrome's debugging port instead of a fixed sleep: a cold start on a CI runner can take several seconds.
+let list = null;
+for (let i = 0; i < 80 && !list; i++) { try { const l = await (await fetch("http://127.0.0.1:9335/json/list")).json(); if (l.some(t => t.type === "page")) list = l; } catch {} if (!list) await sleep(250); }
+if (!list) { console.log("FAIL  Chrome did not start (set CHROME to its path)"); procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(1); }
+// Never leave Chrome or the server running if the test throws: a leftover Chrome on the same port would poison the next test.
+process.on("exit", () => procs.forEach(p => { try { p.kill(); } catch {} }));
 const ws = new WebSocket(list.find(t => t.type === "page").webSocketDebuggerUrl);
 await new Promise(r => ws.onopen = r);
 let id = 0; const pending = new Map(); const errors = [];
@@ -33,6 +39,9 @@ const ok = (name, cond, extra = "") => { cond ? pass++ : fail++; console.log(`${
 
 // ---- a small PostgREST + GoTrue stand-in, reached through Chrome's request interception ----
 const SUPA = "https://zemxqbinpehkrkyvzlue.supabase.co";
+// Optional: SUPABASE_JS=<path to supabase.js> serves the pinned library from disk instead of jsDelivr, for runs without internet.
+// It must be the exact file the app pins (npm pack @supabase/supabase-js@<version>, dist/umd/supabase.js), or the integrity check fails.
+const LOCAL_LIB = process.env.SUPABASE_JS ? readFileSync(process.env.SUPABASE_JS) : null;
 const DB = { people: [], meal_logs: [] }, reqs = [], sim = { delay: 0 };
 const b64u = o => Buffer.from(JSON.stringify(o)).toString("base64url");
 const USER = { id: "11111111-2222-3333-4444-555555555555", aud: "authenticated", role: "authenticated", email: "new@x.com", email_confirmed_at: "2026-10-06T00:00:00Z", app_metadata: {}, user_metadata: {}, created_at: "2026-10-06T00:00:00Z" };
@@ -61,6 +70,7 @@ function answer(method, u, body, prefer) {
 }
 function onPaused(p) {
   const { requestId, request } = p, u = new URL(request.url), method = request.method;
+  if (u.hostname === "cdn.jsdelivr.net") return void send("Fetch.fulfillRequest", { requestId, responseCode: 200, responseHeaders: [{ name: "content-type", value: "text/javascript" }, { name: "access-control-allow-origin", value: "*" }], body: LOCAL_LIB.toString("base64") });
   if (method === "OPTIONS") return void send("Fetch.fulfillRequest", { requestId, responseCode: 204, responseHeaders: CORS });
   const prefer = Object.entries(request.headers).find(([k]) => k.toLowerCase() === "prefer")?.[1] || "";
   const [code, json] = answer(method, u, request.postData, prefer);
@@ -72,7 +82,7 @@ const trail = () => JSON.stringify(reqs.slice(-8).map(r => `${r.method} ${r.path
 const until = async (fn, ms) => { const t = Date.now(); while (Date.now() - t < ms) { if (fn()) return true; await sleep(100); } return false; };
 
 await send("Runtime.enable"); await send("Page.enable"); await send("Network.enable");
-await send("Fetch.enable", { patterns: [{ urlPattern: SUPA + "/*" }] });
+await send("Fetch.enable", { patterns: [{ urlPattern: SUPA + "/*" }, ...(LOCAL_LIB ? [{ urlPattern: "https://cdn.jsdelivr.net/*" }] : [])] });
 const READY = "typeof S !== 'undefined' && typeof SB !== 'undefined' && SB.booted === true && UI.loading === false";
 const boot = async () => { await send("Page.navigate", { url: "http://127.0.0.1:8767/index.html" }); await sleep(500); return waitFor(READY, 15000); };
 // The app reloads itself when the signed-in account changes, so wait for the fresh page.
