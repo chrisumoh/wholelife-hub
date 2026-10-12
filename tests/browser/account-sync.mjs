@@ -393,6 +393,27 @@ await d1.ev(`__fake.failRemove = true; removeEntry("workouts", "${wp}"); true`);
 ok("a delete that fails keeps the file on a retry list", !!files()[wpath] && (await d1.ev(`SB.rmq.length`)) >= 1);
 await d1.ev(`__fake.failRemove = false; true`);
 ok("the next sync removes it and empties the list", await d1.kick() && !files()[wpath] && (await d1.ev(`SB.rmq.length`)) === 0);
+// a photo replaced while Sync photos is off is sent when it comes back on, and is not overwritten by the older account copy
+const rp = await d1.ev(`(() => { const id = uid(); addEntry("workouts", { id, date: today(), type: "run", minutes: 15, cal: 90, note: "replace test", src: null, equip: null, photo: __photo(40, 40, false) }); return id; })()`);
+await d1.synced();
+const rpPath = bare(live("workouts", A).find(r => r.app_id === rp).photo_path), size0 = files()[rpPath]?.size;
+await d1.ev(`S.syncPhotos = false; markRoot(); true`);
+const newPhotoHash = await d1.ev(`(() => { const u = __photo(520, 400, false); updateEntry("workouts", "${rp}", x => { x.photo = u; }); return sbHash(u); })()`);
+await d1.synced();
+ok("with Sync photos off the replacement stays on the device", files()[rpPath]?.size === size0);
+await d1.ev(`S.syncPhotos = true; markRoot(); sbPhotosKick(); true`);
+ok("turning it on sends the replacement", await d1.synced() && files()[rpPath]?.size !== size0, `${files()[rpPath]?.size} vs ${size0}`);
+ok("and this device keeps its own newer picture", await d1.ev(`sbHash([...sbAllOf("workouts")].find(x => x.e.id === "${rp}").e.photo) === "${newPhotoHash}"`));
+// a queued deletion is cancelled when its path is used again
+const rr = await d1.ev(`(() => { const id = uid(); addEntry("workouts", { id, date: today(), type: "run", minutes: 15, cal: 90, note: "retry test", src: null, equip: null, photo: __photo(60, 60, false) }); return id; })()`);
+await d1.synced();
+const rrPath = bare(live("workouts", A).find(r => r.app_id === rr).photo_path);
+await d1.ev(`__fake.failRemove = true; updateEntry("workouts", "${rr}", x => { x.photo = null; }); true`); await d1.synced();
+ok("a failed delete is queued", !!files()[rrPath] && (await d1.ev(`SB.rmq.includes("${rrPath}")`)));
+await d1.ev(`updateEntry("workouts", "${rr}", x => { x.photo = __photo(80, 80, false); }); true`); await d1.synced();
+ok("a new picture for the same entry uses the same path and cancels the queued deletion", !(await d1.ev(`SB.rmq.includes("${rrPath}")`)) && !!live("workouts", A).find(r => r.app_id === rr).photo_path);
+await d1.ev(`__fake.failRemove = false; true`); await d1.kick();
+ok("the retry does not delete the new picture", !!files()[rrPath] && bare(live("workouts", A).find(r => r.app_id === rr).photo_path) === rrPath);
 // a progress photo whose download fails stays on the waiting list and is not lost
 await d1.ev(`P().prem.body.shots.push({ id: "shot0003", at: Date.now(), date: today(), img: __photo(200, 150, false) }); saveProfile(); true`); await d1.synced();
 const shot3 = `${A}/${personId}/progress/shot0003.jpg`;

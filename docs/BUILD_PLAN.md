@@ -69,7 +69,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 ### Checklist run for 8.2.16
 
-- Done: `node tests/browser/account-sync.mjs` (120 checks, two devices for one account and a third for another), `node tests/browser/run-all.mjs`, `node tests/check-repo.mjs`, and mutation checks (later-update rule, photo re-encoding, passcode gate, update cursor and the sign-out rule each make the new test fail when broken). The live schema was read (read-only) earlier to confirm every column used; no `supabase/` file was touched and nothing was applied.
+- Done: `node tests/browser/account-sync.mjs` (126 checks, two devices for one account and a third for another), `node tests/browser/run-all.mjs`, `node tests/check-repo.mjs`, and mutation checks (later-update rule, photo re-encoding, passcode gate, update cursor and the sign-out rule each make the new test fail when broken). The live schema was read (read-only) earlier to confirm every column used; no `supabase/` file was touched and nothing was applied.
 - Not run: a real account on the preview with two real devices (the tests use a fake Supabase), the size and speed gate on GitHub, Safari and a real phone, a lawyer's review of the rewritten privacy policy.
 
 ### Checklist run for 8.2.15
