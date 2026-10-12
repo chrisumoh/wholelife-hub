@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.11 | New workout icons, 44 activities in seven groups, nine more coach sports | IN PROGRESS: build-8.2.11, stacked on build-8.2.10, pull request not yet opened |
 | 8.2.10 | Accessibility pass with axe-core (charts, quick-jump combobox, landmarks, headings, skip link) and an automated check | IN PROGRESS: build-8.2.10, stacked on build-8.2.9, pull request not yet opened |
 | 8.2.9 | Neutral age screen with a 24-hour retry block; Terms and Privacy Policy agreement at sign-up (version and time saved) | IN PROGRESS: build-8.2.9, stacked on build-8.2.8, pull request not yet opened |
 | 8.2.8 | Dish tiles (Food culture, Recipes, Today's menu) use the flat card pattern | IN PROGRESS: build-8.2.8, stacked on build-8.2.7, pull request not yet opened |
@@ -60,6 +61,11 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.2.11
+
+- Done: `node tests/browser/workouts.mjs` (27 checks), `node tests/browser/run-all.mjs` and `node tests/check-repo.mjs`.
+- Not run: a real phone and Safari, a trainer's review of the new sport sessions, a check of the MET values against the Compendium. No Supabase files were touched.
 
 ### Checklist run for 8.2.10
 
