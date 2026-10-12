@@ -5,8 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 // Run from the repo root:  node tests/browser/glass.mjs [screenshot-dir]   (needs Node 22+, Python 3 and Chrome)
-// Checks the 8.1.20 look: liquid glass on cards (and the opacity slider that tints it), caustics
-// on widgets, the accent beam round the top Summary cards, and the rubber-band glass slider.
+// Checks the 8.2.6 look: content cards are flat (no glass, caustics, beam or scene behind them) and blur survives only on the
+// floating bars and menus; plus the rubber-band Interface opacity slider from 8.1.20.
 // With a directory argument it also saves screenshots.
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
@@ -55,47 +55,16 @@ await ev(`(async () => { const p = newProfile("Ada"); p.onboarded = true; p.coac
 await sleep(400);
 const mouse = (type, x, y) => send("Input.dispatchMouseEvent", { type, x, y, button: "left", buttons: type === "mouseReleased" ? 0 : 1, clickCount: 1 });
 
-console.log("--- Summary: beam replaces the green glow");
+console.log("--- Summary: flat cards, glass only on the chrome (8.2.6)");
 ok("summary", await boot("#/home")); await sleep(800);
-const rc = await ev(`(() => { const c = document.getElementById("rings"), b = getComputedStyle(c, "::before"); return { beam: c.classList.contains("beam"), glow: c.classList.contains("border-glow-card") || !!c.querySelector(".bg-border,.edge-light"), anim: b.animationName, bg: b.backgroundImage.slice(0, 40), wash: getComputedStyle(c).backgroundImage, pad: b.paddingTop }; })()`);
-ok("Today at a glance has the beam, no BorderGlow layers", rc.beam && !rc.glow, JSON.stringify(rc));
-ok("beam spins (conic gradient, 2px ring)", rc.anim === "beamSpin" && rc.bg.startsWith("conic-gradient") && rc.pad === "2px", JSON.stringify(rc));
-ok("the green brand wash is gone", rc.wash === "none", rc.wash);
-const a1 = await ev(`getComputedStyle(document.getElementById("rings"), "::before").getPropertyValue("--beam-a")`); await sleep(700);
-const a2 = await ev(`getComputedStyle(document.getElementById("rings"), "::before").getPropertyValue("--beam-a")`);
-ok("beam angle moves over time", a1 !== a2, a1 + " " + a2);
-const accentOf = `(() => { const i = document.createElement("i"); i.style.color = "var(--accent)"; document.getElementById("rings").append(i); const c = getComputedStyle(i).color; i.remove(); return c; })()`;
-const beamOf = `(() => { const i = document.createElement("i"); i.style.color = "var(--beam-c)"; document.getElementById("rings").append(i); const c = getComputedStyle(i).color; i.remove(); return c; })()`;
-for (const th of ["forest", "ocean", "sunset", "midnight"]) {
-  await ev(`(() => { const p = P(); p.look = { ...(p.look || {}), theme: ${JSON.stringify(th)} }; saveProfile(); applyLook(p); render(); })()`); await sleep(300);
-  const [acc, bc] = [await ev(accentOf), await ev(beamOf)];
-  ok(`${th}: beam colour is the theme accent`, acc === bc, acc + " vs " + bc);
-}
 await shot("summary-dark");
-const coach = await ev(`(() => { const c = document.getElementById("coach-advice"); return c ? c.classList.contains("beam") && !c.classList.contains("border-glow-card") : "absent"; })()`);
-ok("coach advice card (when shown) has the beam", coach === true || coach === "absent", String(coach));
-
-console.log("--- glass");
-const g = await ev(`(() => { const top = [...document.querySelectorAll(".app .mcard, .app .card")].filter(e => !e.parentElement.closest(".card,.mcard,.cattile,.dish"));
-  const nested = [...document.querySelectorAll(".app :is(.card,.mcard,.cattile,.dish) :is(.card,.mcard,.cattile,.dish)")];
-  return { n: top.length, blur: top.every(e => /blur\\(14px\\) saturate\\(1.4\\)/.test(getComputedStyle(e).backdropFilter)), rim: top.every(e => /inset/.test(getComputedStyle(e).boxShadow)),
-    nestedBlur: nested.filter(e => getComputedStyle(e).backdropFilter !== "none").length }; })()`);
-ok("every top-level card is frosted glass with a lit rim", g.n > 3 && g.blur && g.rim, JSON.stringify(g));
-ok("no blur inside blur", g.nestedBlur === 0, JSON.stringify(g));
-const alpha = `(() => { const c = getComputedStyle(document.querySelector(".app .mcard")).backgroundColor; const m = c.match(/[\\d.]+/g); return m.length > 3 ? +m[3] : 1; })()`;
-await ev(`(() => { const p = P(); p.look = { ...(p.look || {}), opacity: 1 }; applyOpacity(p); })()`); await sleep(700); const aHi = await ev(alpha);
-await ev(`(() => { const p = P(); p.look = { ...(p.look || {}), opacity: .4 }; applyOpacity(p); })()`); await sleep(700); const aLo = await ev(alpha); // background-color eases over ~420ms
-ok("opacity slider value sets how see-through the glass is", aLo < aHi - 0.3, aHi + " -> " + aLo);
-await ev(`(() => { const p = P(); p.look = { ...(p.look || {}), opacity: 1 }; applyOpacity(p); saveProfile(); })()`);
-ok("streak runs on hover-capable screens", await ev(`getComputedStyle(document.querySelector(".app .mcard"), "::after").transitionDuration.startsWith("0.65")`));
-
-console.log("--- caustics on widgets");
-const ca = await ev(`(() => { const w = [...document.querySelectorAll(".app .mcard")]; return { n: w.length, anim: w.every(e => getComputedStyle(e, "::before").animationName === "causticDrift"), blur: getComputedStyle(w[0], "::before").filter, z: getComputedStyle(w[0], "::before").zIndex, iso: getComputedStyle(w[0]).isolation }; })()`);
-ok("every widget has drifting caustics behind its content", ca.n > 0 && ca.anim && ca.blur === "blur(10px)" && ca.z === "-1" && ca.iso === "isolate", JSON.stringify(ca));
-ok("widget text is still on top (link is clickable)", await ev(`(() => { const w = document.querySelector("a.mcard, .app .mcard"); const r = w.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + 30, r.top + 30); return w.contains(hit); })()`));
-await ev(`document.documentElement.dataset.motion = "reduced"`); await sleep(100);
-ok("Reduced motion stops caustics and the beam", await ev(`getComputedStyle(document.querySelector(".app .mcard"), "::before").animationName === "none" && getComputedStyle(document.getElementById("rings"), "::before").animationName === "none"`));
-await ev(`delete document.documentElement.dataset.motion; applyLook(P())`); await sleep(100);
+const flat = await ev(`(() => { const cs = [...document.querySelectorAll(".app .card, .app .mcard")]; const bad = cs.filter(e => { const c = getComputedStyle(e); return c.backdropFilter !== "none" || c.boxShadow !== "none" || c.borderTopWidth !== "0px" || c.backgroundImage !== "none"; });
+  const pseudo = [...document.querySelectorAll(".app .mcard")].filter(e => getComputedStyle(e, "::before").display !== "none" || getComputedStyle(e, "::after").display !== "none");
+  return { n: cs.length, bad: bad.length, pseudo: pseudo.length }; })()`);
+ok("every content card is solid and flat: no blur, shadow, border or gradient", flat.n > 3 && flat.bad === 0, JSON.stringify(flat));
+ok("no caustic, sheen or beam layer on any card", flat.pseudo === 0 && await ev(`getComputedStyle(document.getElementById("rings"), "::before").display === "none"`), JSON.stringify(flat));
+ok("no aurora, scene or season layer behind the cards", await ev(`[...document.querySelectorAll(".aurora, .scene, .season-layer")].every(e => getComputedStyle(e).display === "none")`));
+ok("blur survives only on the floating bars and menus", await ev(`[...document.querySelectorAll("*")].filter(e => getComputedStyle(e).backdropFilter !== "none").every(e => e.closest(".top, .tabs, .side, .compact-head, .page-head, .scrim, [role=dialog], .pop, .popover, .notif-pop, .palette"))`));
 
 console.log("--- glass slider");
 ok("appearance", await boot("#/settings/appearance")); await sleep(500);
@@ -132,11 +101,11 @@ ok("Reset returns the thumb to 100%", await ev(`document.querySelector("#ui-op-w
 console.log("--- light mode and phone");
 await ev(`(() => { const p = P(); p.look = { ...(p.look || {}), mode: "light", theme: "forest" }; saveProfile(); applyLook(p); render(); })()`);
 ok("summary light", await boot("#/home")); await sleep(600);
-ok("light: rim is a dark hairline, not white", await ev(`getComputedStyle(document.querySelector(".app .mcard")).boxShadow.includes("rgba(0, 0, 0, 0.07)")`));
+ok("light: cards are white on a #F2F2F7 page", await ev(`getComputedStyle(document.querySelector(".app .mcard")).backgroundColor === "rgb(255, 255, 255)" && getComputedStyle(document.body).backgroundColor === "rgb(242, 242, 247)"`));
 await shot("summary-light");
 await view(375, 812, true); await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 }); await boot("#/home"); await sleep(600);
 ok("375px: no horizontal scroll", await ev(`document.documentElement.scrollWidth <= innerWidth`));
-ok("375px: no hover streak on touch screens", await ev(`getComputedStyle(document.querySelector(".app .mcard"), "::after").display === "none"`));
+ok("375px: cards are still flat on touch screens", await ev(`getComputedStyle(document.querySelector(".app .mcard")).boxShadow === "none"`));
 await shot("summary-375");
 
 ok("no uncaught page errors", errors.length === 0, JSON.stringify(errors));

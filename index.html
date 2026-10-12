@@ -129,7 +129,7 @@
     --text:#F5F5F7; --muted:#8E8E93; --faint:#8E8E93; --chevron:#545458;
     --accent:#0A84FF; --accent-ink:#04142E; --accent-soft:#12264A;
     --gold:#FFD60A; --gold-soft:color-mix(in srgb,#FFD60A 16%,#000000); --gold-ink:#141200; --good:#34C77B; --good-soft:#12301F; --warn:#F5A04F; --warn-soft:#3A2715; --bad:#FF6961; --bad-soft:#3D1A19;
-    --cat-activity:#FF6937; --cat-sleep:#5E5CE6; --cat-coach:#64D2FF; --cat-heart:#FF2D55; --cat-food:#30D158; --cat-water:#30B0C7; --cat-gold:#FFD60A; --cat-secondary:#8E8E93;
+    --cat-activity:#FF6937; --cat-sleep:#7D7AFF; --cat-coach:#64D2FF; --cat-heart:#FF2D55; --cat-food:#30D158; --cat-water:#30B0C7; --cat-gold:#FFD60A; --cat-secondary:#8E8E93;
     --chrome-glass:rgba(28,28,30,.72); --scrim:rgba(0,0,0,.55); --shadow:none;
   }
 }
@@ -138,7 +138,7 @@
     --text:#F5F5F7; --muted:#8E8E93; --faint:#8E8E93; --chevron:#545458;
     --accent:#0A84FF; --accent-ink:#04142E; --accent-soft:#12264A;
     --gold:#FFD60A; --gold-soft:color-mix(in srgb,#FFD60A 16%,#000000); --gold-ink:#141200; --good:#34C77B; --good-soft:#12301F; --warn:#F5A04F; --warn-soft:#3A2715; --bad:#FF6961; --bad-soft:#3D1A19;
-    --cat-activity:#FF6937; --cat-sleep:#5E5CE6; --cat-coach:#64D2FF; --cat-heart:#FF2D55; --cat-food:#30D158; --cat-water:#30B0C7; --cat-gold:#FFD60A; --cat-secondary:#8E8E93;
+    --cat-activity:#FF6937; --cat-sleep:#7D7AFF; --cat-coach:#64D2FF; --cat-heart:#FF2D55; --cat-food:#30D158; --cat-water:#30B0C7; --cat-gold:#FFD60A; --cat-secondary:#8E8E93;
     --chrome-glass:rgba(28,28,30,.72); --scrim:rgba(0,0,0,.55); --shadow:none;
 }
 /* Once the app runs, it stamps data-scheme from the profile's Appearance setting */
@@ -154,7 +154,7 @@
   --ground:#000000; --surface:#1C1C1E; --raise:#2C2C2E; --line:#2E2E33; --line2:#3A3A40;
   --text:#F5F5F7; --muted:#8E8E93; --faint:#8E8E93; --chevron:#545458;
   --gold:#FFD60A; --gold-soft:color-mix(in srgb,#FFD60A 16%,#000000); --gold-ink:#141200; --good:#34C77B; --good-soft:#12301F; --warn:#F5A04F; --warn-soft:#3A2715; --bad:#FF6961; --bad-soft:#3D1A19;
-  --cat-activity:#FF6937; --cat-sleep:#5E5CE6; --cat-coach:#64D2FF; --cat-heart:#FF2D55; --cat-food:#30D158; --cat-water:#30B0C7; --cat-gold:#FFD60A; --cat-secondary:#8E8E93;
+  --cat-activity:#FF6937; --cat-sleep:#7D7AFF; --cat-coach:#64D2FF; --cat-heart:#FF2D55; --cat-food:#30D158; --cat-water:#30B0C7; --cat-gold:#FFD60A; --cat-secondary:#8E8E93;
   --chrome-glass:rgba(28,28,30,.72); --scrim:rgba(0,0,0,.55); --shadow:none;
 }
 /* OLED: true black everywhere, hairline edges instead of lighter panels */
@@ -162,7 +162,7 @@
   --ground:#000000; --surface:#000000; --raise:#0E0E10; --line:#1F1F23; --line2:#2C2C31;
   --text:#F5F5F7; --muted:#8E8E93; --faint:#8E8E98; --chevron:#545458;
   --gold:#FFD60A; --gold-soft:color-mix(in srgb,#FFD60A 14%,#000000); --gold-ink:#141200; --good:#34C77B; --good-soft:#0B1F14; --warn:#F5A04F; --warn-soft:#24180C; --bad:#FF6961; --bad-soft:#260F0E;
-  --cat-activity:#FF6937; --cat-sleep:#5E5CE6; --cat-coach:#64D2FF; --cat-heart:#FF2D55; --cat-food:#30D158; --cat-water:#30B0C7; --cat-gold:#FFD60A; --cat-secondary:#8E8E93;
+  --cat-activity:#FF6937; --cat-sleep:#7D7AFF; --cat-coach:#64D2FF; --cat-heart:#FF2D55; --cat-food:#30D158; --cat-water:#30B0C7; --cat-gold:#FFD60A; --cat-secondary:#8E8E93;
   --chrome-glass:rgba(0,0,0,.78); --scrim:rgba(0,0,0,.7); --shadow:none;
 }
 /* Accent palettes: light values, then dark/OLED values */
@@ -3883,6 +3883,44 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 @media (prefers-reduced-transparency:reduce){
   .app :is(.card,.mcard,.cattile,.dish,.profstrip,.tabs){-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background-color:var(--surface)!important}
 }
+
+/* =================== 8.2.6: DASHBOARD CARD, one flat Apple Health-style pattern (original code, Lucide and the app's own icons) ===================
+   Supersedes the glass, caustic, sheen, beam, season-tint and aurora rules above for content cards and for the page behind them.
+   Glass stays only on the floating top bar (.top), the tab bar (.tabs) and menus (.side, popovers). Rule is recorded in docs/CONTEXT.md.
+   The two :not() filler selectors lift specificity above the per-theme token blocks, so every theme gets the same card and page colours. */
+:root{--chart-gray:#D1D1D6}
+:root:is([data-scheme="dark"],[data-scheme="oled"]){--chart-gray:#3A3A3C}
+:root[data-scheme="light"]:not(.x1):not(.x2){--ground:#F2F2F7;--surface:#FFFFFF}
+:root[data-scheme="dark"]:not(.x1):not(.x2){--ground:#000000;--surface:#1C1C1E}
+:root[data-scheme="oled"]:not(.x1):not(.x2){--ground:#000000;--surface:#101012}  /* true black page; a little lighter than the page so cards show without a border */
+.aurora,.scene,.season-layer{display:none!important}
+.app :is(.card,.mcard,.cattile,.profstrip,.who-head){background:var(--surface)!important;background-image:none!important;border:0!important;box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;border-radius:20px}
+.app :is(.mcard,.cattile)::before,.app :is(.card,.mcard,.cattile)::after,.app .card.beam::before{display:none!important}
+.app :is(.card,.mcard,.cattile,.profstrip){transition:none}
+@media (hover:hover) and (pointer:fine){.app :is(.card,.mcard,.cattile):hover{transform:none!important;box-shadow:none!important}}
+/* The card: header, at least 48px of space, then the value at the bottom left and an optional chart at the bottom right. */
+.app .mgrid{gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}
+.app .mcard{position:relative;display:flex;flex-direction:column;gap:0;min-height:0;padding:16px;overflow:hidden;color:var(--text);text-decoration:none}
+.app a.mcard:active{opacity:.85;transform:none!important}
+.app .mhead{display:flex;align-items:center;gap:8px;min-height:24px;font-size:calc((17px) * var(--text-scale,1))}
+.app .mhead b{font-size:calc((17px) * var(--text-scale,1));font-weight:600}
+.app .mhead svg.ci,.app .mhead>svg.ico{flex:none;width:18px;height:18px}
+.app .mhead .when{margin-left:auto;display:flex;align-items:center;gap:4px;color:var(--muted);font-size:calc((15px) * var(--text-scale,1));font-weight:400;white-space:nowrap}
+.app .mhead .chev{display:inline-flex;align-items:center;color:var(--chevron)}
+.app .mhead .chev svg{width:16px;height:16px}
+.app .mbody{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:auto;padding-top:48px}
+.app .mmain{min-width:0;display:flex;flex-direction:column;gap:2px}
+.app .mval{font-family:var(--display);font-size:calc((34px) * var(--text-scale,1));font-weight:700;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.app .mval small{font-size:calc((17px) * var(--text-scale,1));font-weight:600;color:var(--muted);letter-spacing:0}
+.app .mval.nodata{font-size:calc((26px) * var(--text-scale,1));font-weight:600;color:var(--muted)}
+.app .msub{font-size:calc((15px) * var(--text-scale,1));font-weight:400;line-height:1.3;color:var(--muted)}
+.app .mbody .spark{flex:none;align-self:flex-end;max-width:120px;max-height:64px}
+.app .sec-title{font-size:calc((22px) * var(--text-scale,1));font-weight:700}
+/* "Edit widgets" / "Done": plain accent text, no background. */
+.link-btn{background:none;border:0;padding:0 2px;min-height:44px;color:var(--accent);font-size:calc((17px) * var(--text-scale,1));font-weight:500;cursor:pointer;box-shadow:none}
+/* No underlines, except real links in the legal pages. */
+.app a:not(.legal a),.app a:not(.legal a):hover,.app a:not(.legal a):focus{text-decoration:none!important}
 </style><div id="app"></div>
 <script>
 // =================== DEVELOPER LOG + CHANGE LOG (for testers) ===================
@@ -3895,7 +3933,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.5", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.6", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3909,6 +3947,12 @@ const APP_VERSION = { update: "8.2", build: "8.2.5", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.6", area:"Dashboard cards", title:"One flat Apple Health-style card for every dashboard card; Meals card; glass, caustics, beam and scene backgrounds removed from content",
+      bug:"Dashboard cards were frosted glass with caustics, a sheen, a hover lift, a border and a rim light, on top of an animated aurora or scene, and each kind of card laid itself out differently: the Today's meals card held a list of dishes and a Build a plan button, the Coach card a paragraph, the premium cards their own layout. 'Edit widgets' was a filled button, and links were underlined in places.",
+      fix:"Every dashboard card (the Summary pins, the same card on Nutrition and Health data, the per-page widgets, Trends, and the three premium cards) is built by one function, dcard(), and follows one pattern in original code with Lucide and the app's own icons. Surface: solid, opaque, flat, 20px radius, 16px padding, 12px between cards, no border, glow, gradient, glass, shadow or inner cards; dark #1C1C1E on a #000 page, light #FFFFFF on #F2F2F7, and OLED a black page with #101012 cards. The page and card colours are now the same in every theme (a theme changes only accent and text). Layout: header row with an 18px category icon and the name in the category colour (17px, 600) and, on the right, Today or the last-updated day in gray (15px) and a chevron, the whole card being one link to the metric's page; at least 48px of space; the value bottom left (34px bold tabular numerals, 17px gray unit, one optional 15px gray line); an optional chart at most 120×64px bottom right with gray bars and the latest bar in the category colour; 'No Data' in the value position when empty, with no buttons or chips. Today's meals is now Meals: the value is today's planned calories, the sub-line 'N planned · N logged', the chart one bar per meal; the Breakfast, Lunch and Dinner list, Build a plan and the 'No food culture set' prompt moved to a Today's meals section on the Meals detail page (Nutrition). The Coach card shows the workout streak with the coaching line under it; Micronutrients, Recovery and Pantry use the same card. 'Edit widgets', 'Done' and 'Customise' are plain accent text; section titles are 22px bold; no link is underlined except in the legal text. The aurora, home scenes, seasonal layers, caustics, sheen and beam are gone from behind and on the cards, and the Scene and Season pickers were removed from Settings (the stored choices are kept, not drawn). Glass stays only on the floating top bar, the tab bar and menus. Dark Sleep indigo moved from #5E5CE6 to #7D7AFF so the Sleep name reaches 4.5:1 on its card. The rule is recorded in docs/CONTEXT.md.",
+      where:"index.html: dcard(), NODATA, sizeCls(), metricCard(), barsSVG(), spark(), mealsWidget(), coachWidget(), trendsSection(), microWidget(), recoveryWidget(), pantryWidget(), mealsTodayCard() (now used on nutritionView), pageWidgetHTML(), homeView(); render() (no aurora or scene layer); Settings Appearance (no Scene or Season picker); the 8.2.6 block at the end of the stylesheet; --cat-sleep in the dark token blocks. docs/CONTEXT.md (Dashboard card section; the 8.1.20 glass exception narrowed). tests/browser/cards.mjs (new, 143 checks), glass.mjs (rewritten for flat cards), run-all.mjs. docs/BUILD_PLAN.md.",
+      test:"Open Summary in light, dark and OLED, in each theme: every pinned card has the same header, a big number bottom left, an optional gray line and a small chart bottom right, on a flat surface with no border, shadow or blur. Tap anywhere on a card: it opens that metric's page. Meals shows planned calories and 'N planned · N logged'; open it and the Nutrition page has Today's meals with Breakfast, Lunch and Dinner, Build a plan and, with no food culture set, the prompt. Empty profile: every card says No Data. Edit widgets: tools appear on each card, resize and remove still work, and it is plain blue text. Check 375, 820 and 1440px. Automated: `node tests/browser/cards.mjs` (143: three widths, light, dark and OLED, four themes, three pages, plus content, empty state, tap target and Edit widgets) and the rewritten `glass.mjs`.",
+      limits:"(1) Today at a glance (the rings card), the coach advice card and other non-dashboard cards share the flat surface but keep their own inner layout; the rings card still has coloured rows inside it. (2) The Interface opacity slider now tints only the top bar, tab bar and menus, since cards are solid. (3) OLED cards are #101012, my choice, because a true-black card on a true-black page would vanish without a border; say if you want #1C1C1E there. (4) Scene and Season choices already saved are kept but not shown, and there is no way to switch them on again in this build. (5) The Coach card shows the streak as its value because it has no natural number otherwise; the coaching line is the sub-line and may wrap. (6) Hover and press are minimal (the card fades slightly while pressed): there is no lift or glow. (7) Checked in headless Chrome only; not on a real iPhone or in Safari, where text-size settings can change the 34px and 17px sizes." },
     { id:"8.2.5", area:"Performance", title:"A boot screen on the first bytes, and the four embedded images moved out of index.html",
       bug:"docs/PERFORMANCE.md (8.2.3) found that nothing painted until all 541 KB of index.html had arrived: 3.7 s to first paint on Fast 4G and 12.3 s on Slow 4G. The file also carried 125 KB of base64 images (three coach photos and the home-screen icon) that a first visit rarely needs, which brotli cannot shrink.",
       fix:"A small boot screen (the app's name and a thin progress bar) sits at the top of <body> with its CSS in the tiny <style> in <head>, so it paints as soon as the first bytes arrive. render() removes it the first time it runs. It follows the system light or dark setting, respects reduced motion, and after 15 seconds shows 'Still loading. Check your connection, then reload the page.' with no script needed. The apple-touch-icon and the three coach portraits are now files: img/apple-touch-icon.png, img/coach-motivator.webp, img/coach-enforcer.webp, img/coach-strategist.webp (byte for byte what was embedded). index.html drops 127 KB raw and 91 KB with brotli (541 to 450 KB). Measured on a mid-range phone profile (4x CPU, Fast 4G): first paint 3,708 ms to 264 ms, app usable 3,698 ms to 2,920 ms; Slow 4G: first paint 12,304 ms to 636 ms, usable 12,300 ms to 10,088 ms.",
@@ -9087,14 +9131,19 @@ function latestOf(k){
   return null;
 }
 const whenLabel = d => d === today() ? "Today" : d === addDays(today(), -1) ? "Yesterday" : fmtDay(d).replace(/^\w+, /, "");
-function spark(k, days = 7){
-  const m = METRICS[k]; const vals = Array.from({length:days}, (_,i) => { const v = m.get(addDays(today(), i - days + 1)); return v == null ? null : (m.num ? m.num(v) : v); });
+// 8.2.6: one bar chart for every dashboard card: at most 120x64, gray bars, the latest bar in the card's colour.
+function barsSVG(vals, color, bw = 7, gap = 4, h = 64){
   const nums = vals.filter(v => v != null); if (!nums.length) return "";
-  const max = Math.max(...nums), min = m.chartMin ? Math.min(...nums) * 0.9 : 0; const span = Math.max(1e-6, max - min);
-  const bw = 7, gap = 4, h = 40;
-  return `<svg class="spark" width="${days*(bw+gap)}" height="${h}" viewBox="0 0 ${days*(bw+gap)} ${h}" aria-hidden="true">${vals.map((v,i) => {
-    const bh = v == null ? 2 : Math.max(3, (v - min) / span * (h - 4)); const last = i === days - 1;
-    return `<rect x="${i*(bw+gap)}" y="${h - bh}" width="${bw}" height="${bh}" rx="2" fill="${v == null ? "var(--line2)" : last ? mColor(k) : "var(--line2)"}" style="transition-delay:${i * 30}ms"/>`; }).join("")}</svg>`;
+  const max = Math.max(...nums), min = vals.min ?? 0, span = Math.max(1e-6, max - min), w = vals.length * (bw + gap) - gap;
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">${vals.map((v,i) => {
+    const bh = v == null ? 2 : Math.max(3, (v - min) / span * (h - 4)), last = i === vals.length - 1;
+    return `<rect x="${i*(bw+gap)}" y="${h - bh}" width="${bw}" height="${bh}" rx="2" fill="${v != null && last ? color : "var(--chart-gray)"}" style="transition-delay:${i * 30}ms"/>`; }).join("")}</svg>`;
+}
+function spark(k, days = 7){
+  const m = METRICS[k], vals = Array.from({length:days}, (_,i) => { const v = m.get(addDays(today(), i - days + 1)); return v == null ? null : (m.num ? m.num(v) : v); });
+  const nums = vals.filter(v => v != null); if (!nums.length) return "";
+  vals.min = m.chartMin ? Math.min(...nums) * 0.9 : 0;
+  return barsSVG(vals, mColor(k), days > 7 ? 5 : 7, days > 7 ? 3 : 4);
 }
 // v9.0: chart draw-in, extending the exact IntersectionObserver + motionOK() pattern already
 // used for the activity rings (initRings, above) and the counter animation (counterIO, app7):
@@ -9111,21 +9160,30 @@ function initSparks(){
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("drawn"); io.unobserve(e.target); } }), { threshold: 0.4 });
   els.forEach(el => io.observe(el));
 }
+// ---- dashboard card (8.2.6): the one flat card every Summary pin, Nutrition and Health data card uses ----
+// Header (category icon and name in the category colour, "Today" and a chevron in gray), then at the bottom the main value,
+// one optional gray line, and an optional small chart. The whole card is one link to that metric's detail page.
+// Edit mode renders a div instead of a link and appends the widget tools.
+function dcard(o){
+  const Tag = o.tools ? "div" : "a", href = o.tools ? "" : ` href="${o.href}"`;
+  return `<${Tag} class="mcard dcard${o.cls ? " " + o.cls : ""}${o.tools ? " editing" : ""}"${href}><div class="mhead" style="color:${o.color}">${o.iconHTML || cicon(o.icon, o.color, 18)}<b>${esc(o.name)}</b><span class="when">${esc(o.when || "")}${o.tools ? "" : `<span class="chev">${icon("chevR","go",16)}</span>`}</span></div>
+    <div class="mbody"><div class="mmain">${o.val}${o.sub ? `<div class="msub">${esc(o.sub)}</div>` : ""}</div>${o.chart || ""}</div>${o.tools || ""}</${Tag}>`;
+}
+const NODATA = `<div class="mval nodata">No Data</div>`;
+const sizeCls = o => o.wide ? "wide" : o.med ? "med" : "";
 function metricCard(p, k, o = {}){
-  const wide = o.wide ? " wide" : o.med ? " med" : "", tools = o.tools || "", Tag = tools ? "div" : "a";
-  const m = METRICS[k]; const color = mColor(k); const href = m.link || `#/metric/${k}`;
+  const tools = o.tools || "", m = METRICS[k], color = mColor(k), href = m.link || `#/metric/${k}`, base = { cls: sizeCls(o), tools, href, color, icon: m.icon, name: m.n };
   if (k === "estimate") {
-    const pr = projection(p); let big = "No Data", sub = "", right = "";
+    const pr = projection(p); let val = NODATA, sub = "", when = "";
     if (!pr.ready) sub = `Add ${pr.missing.join(", ")} to turn this on`;
     else if (!pr.days) sub = "Starts after a full day of logging";
     else { const per = p.units === "metric" ? `${round(Math.abs(pr.kgPerWeek),2)} kg` : `${round(Math.abs(pr.lbPerWeek),1)} lb`; const dir = Math.abs(pr.lbPerWeek) < 0.1 ? "steady" : pr.lbPerWeek < 0 ? "loss" : "gain";
-      big = dir === "steady" ? "About steady" : `≈ ${per} ${dir}`; sub = dir === "steady" ? `Last ${pr.days} logged days` : `per week · last ${pr.days} logged days`; right = "Now"; }
-    return `<${Tag} class="mcard${wide}${tools ? " editing" : ""}"${tools ? "" : ` href="${href}"`}><div class="mhead" style="color:${color}">${cicon(m.icon, color)}<b>${m.n}</b><span class="when">${right}${tools ? "" : `<span class="chev">${icon("chevR","go",13)}</span>`}</span></div>
-      <div class="mbody"><div><div class="mval${big === "No Data" ? " nodata" : ""}">${big}</div>${sub ? `<div class="small muted">${esc(sub)}</div>` : ""}</div></div>${tools}</${Tag}>`;
+      val = `<div class="mval">${dir === "steady" ? "About steady" : `≈ ${per}<small> ${dir}</small>`}</div>`; sub = dir === "steady" ? `Last ${pr.days} logged days` : `per week · last ${pr.days} logged days`; when = "Now"; }
+    return dcard({ ...base, when, val, sub });
   }
   const L = latestOf(k);
-  return `<${Tag} class="mcard${wide}${tools ? " editing" : ""}"${tools ? "" : ` href="${href}"`}><div class="mhead" style="color:${color}">${cicon(m.icon, color)}<b>${m.n}</b><span class="when">${L ? whenLabel(L.date) : ""}${tools ? "" : `<span class="chev">${icon("chevR","go",13)}</span>`}</span></div>
-    <div class="mbody">${L ? `<div class="mval">${m.html ? m.fmt(L.v,p) : `${countUp(m.fmt(L.v,p))}<small> ${esc(m.unit(p))}</small>`}</div>${spark(k, o.wide ? 14 : 7)}` : `<div class="mval nodata">No Data</div>`}</div>${tools}</${Tag}>`;
+  const goal = k === "calories" && p.calorieGoal ? `Goal ${p.calorieGoal.toLocaleString()} cal` : "";
+  return dcard({ ...base, when: L ? whenLabel(L.date) : "", val: L ? `<div class="mval">${m.html ? m.fmt(L.v,p) : `${countUp(m.fmt(L.v,p))}<small> ${esc(m.unit(p))}</small>`}</div>` : NODATA, sub: L ? goal : "", chart: L ? spark(k, o.wide ? 14 : 7) : "" });
 }
 
 // =================== PROFILE PHOTO ===================
@@ -9192,16 +9250,17 @@ function widgetTools(i, n, w){
   <div class="wtools"><span class="btn-group" role="group" aria-label="Move"><button class="btn sm icon-btn" data-act="w-move" data-i="${i}" data-d="-1"${i === 0 ? " disabled" : ""} aria-label="Move earlier">${icon("arrowL","",15)}</button><button class="btn sm icon-btn" data-act="w-move" data-i="${i}" data-d="1"${i === n-1 ? " disabled" : ""} aria-label="Move later">${icon("arrowR","",15)}</button></span>
   <div class="seg" role="group" aria-label="Size"><button data-act="w-size" data-i="${i}" data-v="s" aria-pressed="${w.size==="s"}">Small</button><button data-act="w-size" data-i="${i}" data-v="m" aria-pressed="${w.size==="m"}">Medium</button><button data-act="w-size" data-i="${i}" data-v="l" aria-pressed="${w.size==="l"}">Wide</button></div></div>`;
 }
+// Meals (8.2.6): the planned calories for today. The Breakfast, Lunch and Dinner list, "Build a plan" and the food-culture prompt live on the Meals detail page (#/nutrition).
 function mealsWidget(p, w, tools){
-  const picks = dailyPicks(today(), p); const Tag = tools ? "div" : "section";
-  return `<${Tag} class="mcard meals-w${w.size === "l" ? " wide" : w.size === "m" ? " med" : ""}${tools ? " editing" : ""}"><div class="mhead" style="color:var(--c-nutrition)">${cicon("apple","var(--c-nutrition)")}<b>Today's meals</b><span class="when">${tools ? "" : `<a href="#/recipes" class="small">${p.plan ? "Meal plan" : "Build a plan"} ${icon("chevR","go",13)}</a>`}</span></div>
-    <div class="wrow-tag">${cultureTag(p)}</div>
-    <div class="grid ${w.size === "l" ? "g3" : ""}" style="gap:10px">${picks.map((d,i) => tools ? `<div class="dish"><span class="slot">${SLOTS[i]?.[1]}</span><b>${esc(d.n)}</b></div>` : `<a class="dish" href="${dishLink(d)}"><span class="slot">${SLOTS[i]?.[1]}</span><b>${esc(d.n)}</b><span class="tiny muted">${esc(originTag(d,p)?.txt || d.c)} · ≈${d.cal} cal</span></a>`).join("")}</div>${tools || ""}</${Tag}>`;
+  const picks = dailyPicks(today(), p), planned = picks.reduce((a, d) => a + (d.cal || 0), 0), logged = onDate("meals", today()).length;
+  return dcard({ cls: sizeCls({ wide: w.size === "l", med: w.size === "m" }), tools, href: "#/nutrition", color: "var(--c-nutrition)", icon: "apple", name: "Meals", when: "Today",
+    val: picks.length ? `<div class="mval">${countUp(planned.toLocaleString())}<small> cal</small></div>` : NODATA,
+    sub: picks.length ? `${picks.length} planned · ${logged} logged` : "", chart: picks.length ? barsSVG(picks.map(d => d.cal || 0), "var(--c-nutrition)", 14, 6) : "" });
 }
 function coachWidget(p, w, tools){
-  const Tag = tools ? "div" : "a";
-  return `<${Tag} class="mcard${w.size === "l" ? " wide" : w.size === "m" ? " med" : ""}${tools ? " editing" : ""}"${tools ? "" : ' href="#/coach"'}><div class="mhead" style="color:var(--c-coach)">${cicon("stopwatch","var(--c-coach)")}<b>Coach</b><span class="when">${tools ? "" : `<span class="chev">${icon("chevR","go",13)}</span>`}</span></div>
-    <p style="font-family:var(--display);font-size:18px;font-weight:600">${esc(motivation(p))}</p>${tools || ""}</${Tag}>`;
+  const streak = typeof currentStreak === "function" ? currentStreak(p) : 0;
+  return dcard({ cls: sizeCls({ wide: w.size === "l", med: w.size === "m" }), tools, href: "#/coach", color: "var(--c-coach)", icon: "stopwatch", name: "Coach", when: "Today",
+    val: `<div class="mval">${streak}<small> ${streak === 1 ? "day" : "days"} in a row</small></div>`, sub: motivation(p) });
 }
 function renderWidget(p, w, i, n, editing){
   const tools = editing ? widgetTools(i, n, w) : "";
@@ -9240,7 +9299,7 @@ function homeView(p){
     </div>
   </div>
   ${glanceCard(p)}
-  <div class="row between"><h2 class="sec-title">Pinned</h2><button class="btn${editing ? " primary" : " ghost link-btn"}" data-act="edit-pins">${editing ? "Done" : "Edit widgets"}</button></div>
+  <div class="row between"><h2 class="sec-title">Pinned</h2><button class="link-btn" data-act="edit-pins">${editing ? "Done" : "Edit widgets"}</button></div>
   ${editing ? `<section class="card"><div class="row between"><b>Add widgets</b><button class="btn sm ghost" data-act="w-reset">Reset to default</button></div>
     <div class="addtray">${unused.map(k => `<button class="chip" data-act="w-add" data-v="${k}">+ ${widgetIcon(k)} ${esc(widgetName(k))}</button>`).join("") || `<span class="small muted">Every widget is already on your Summary.</span>`}</div>
     <p class="tiny muted">Use the arrows to reorder, pick Small or Wide, and tap − to remove.</p></section>` : ""}
@@ -9256,11 +9315,7 @@ function homeView(p){
 // that data and chart rather than inventing new numbers. "Show All Trends" routes to the full
 // health-data browse page, which already lists every metric's own chart.
 function trendsSection(p){
-  const cards = ["calories","steps"].filter(k => METRICS[k]).map(k => {
-    const m = METRICS[k], color = mColor(k), L = latestOf(k), href = m.link || `#/metric/${k}`;
-    return `<a class="mcard" href="${href}"><div class="mhead" style="color:${color}">${cicon(m.icon, color)}<b>${m.n}</b><span class="when"><span class="chev">${icon("chevR","go",13)}</span></span></div>
-      <div class="mbody"><div>${L ? `<div class="mval">${m.html ? m.fmt(L.v,p) : `${m.fmt(L.v,p)}<small> ${esc(m.unit(p))}</small>`}</div>` : `<div class="mval nodata">No Data</div>`}${spark(k, 7)}</div></div></a>`;
-  });
+  const cards = ["calories","steps"].filter(k => METRICS[k]).map(k => metricCard(p, k));
   if (!cards.length) return "";
   return `<h2 class="sec-title">Trends</h2>
   <div class="mgrid">${cards.join("")}</div>
@@ -9954,8 +10009,7 @@ function render(){
   setMeta(setTab ? `${setTab[1]} · Settings` : premF ? `${premF.name} · Premium` : pageTitle, dish ? `${dish.n} (${dish.c}): ${dish.d}` : DESCS[UI.route] || DESCS.home, dish ? recipeLD(dish) : null);
   const routeKey = location.hash; const animate = UI.lastKey !== routeKey; UI.lastKey = routeKey;
   morphInto(root, `
-  ${sceneLayer(p) || `<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>`}
-  <div class="app${sceneLayer(p) ? " has-scene" : ""}${UI.rail ? " rail" : ""}${UI.menu ? " menu-on" : ""}">
+  <div class="app${UI.rail ? " rail" : ""}${UI.menu ? " menu-on" : ""}">
     <div class="scrim${UI.menu ? " on" : ""}" data-act="menu" aria-hidden="${!UI.menu}"></div>
     <main class="main">
       <div class="wrap">
@@ -10526,12 +10580,13 @@ function projectionCard(p, compact){
     <p class="tiny faint">Estimate uses the Mifflin-St Jeor equation, your logged workouts and about 3,500 calories per pound. It's a guide, not a measurement.</p>
   </section>`;
 }
+// The Meals detail page (Nutrition): today's planned Breakfast, Lunch and Dinner, the plan link and the food-culture prompt.
 function mealsTodayCard(p){
   const picks = dailyPicks(today(), p);
-  return `<section class="card">
+  return `<section class="card" id="meals-today">
     <div class="setrow"><div class="setlabel"><div class="eyebrow">Picked for you today</div><h2 style="margin-top:4px">Today's meals</h2>
-      ${cultureTag(p)}</div><a class="btn sm" href="#/recipes">${p.plan ? "See full plan" : "Build a meal plan"}</a></div>
-    <div class="grid g3">${picks.map((d,i) => `<a class="dish" href="${dishLink(d)}"><span class="slot">${SLOTS[i]?.[1] || ""}</span><h3>${esc(d.n)}</h3><span class="small muted">${esc(d.c)} · ≈${d.cal} cal · ${d.t[1]} min cook</span>${goalNote(d,p) ? `<span class="tiny muted">${esc(goalNote(d,p))}</span>` : ""}</a>`).join("")}</div>
+      ${cultureTag(p)}</div><a class="btn sm" href="#/recipes">${p.plan ? "See full plan" : "Build a plan"}</a></div>
+    <div class="list">${picks.map((d,i) => `<a class="li tap-row" href="${dishLink(d)}"><span class="grow"><span class="eyebrow">${SLOTS[i]?.[1] || ""}</span><b>${esc(d.n)}</b><span class="tiny muted">${esc(d.c)} · ≈${d.cal} cal · ${d.t[1]} min cook${goalNote(d,p) ? " · " + esc(goalNote(d,p)) : ""}</span></span>${icon("chevR","row-chev",16)}</a>`).join("")}</div>
     <p class="tiny faint">Changes daily. ${p.diet || p.allergies ? "Filtered for your food preference and allergies." : "Add food preferences or allergies in Settings to filter these."}</p>
   </section>`;
 }
@@ -10625,6 +10680,7 @@ function nutritionView(p){
   const slotGuess = new Date().getHours() < 11 ? "breakfast" : new Date().getHours() < 16 ? "lunch" : "dinner";
   return `
   <div class="mgrid">${metricCard(p, "water")}${metricCard(p, "estimate")}</div>
+  ${mealsTodayCard(p)}
   <div class="grid g2">
     <section class="card">
       <h2>Log a meal</h2>
@@ -11300,9 +11356,7 @@ function settingsView(p){
     ${fontPicker(p)}
     ${textSizeRow(p)}
     ${typeof themePicker === "function" ? themePicker(p) : ""}
-    ${scenePicker(p)}
     ${opacityRow(p)}
-    ${seasonPicker(p)}
     <div class="setgroup"><div class="setlabel">Motion</div>
       <div class="seg" role="group" aria-label="Motion"><button data-act="look-motion" data-v="full" aria-pressed="${(p.look?.motion||"full")==="full"}">Bouncy</button><button data-act="look-motion" data-v="reduced" aria-pressed="${p.look?.motion==="reduced"}">Reduced</button></div>
       <span class="tiny muted">Bouncy adds the spring animations. Reduced turns them off, and your device's own "reduce motion" setting always wins.</span></div>
@@ -14430,7 +14484,7 @@ function pageWidgetHTML(p, page){
   if (!lay.length && !editing) return "";
   return `<div class="pagewidgets">
     <div class="setrow"><span class="setlabel eyebrow">Your widgets</span>
-      <button class="btn sm setctl${editing ? " primary" : " ghost"}" data-act="edit-page" data-v="${page}">${editing ? "Done" : "Customise"}</button></div>
+      <button class="link-btn" data-act="edit-page" data-v="${page}">${editing ? "Done" : "Customise"}</button></div>
     <div class="mgrid">${lay.map((w, i) => renderPageWidget(p, page, w, i, editing)).join("")}</div>
     ${editing ? pageWidgetTray(p, page) : ""}
   </div>`;
@@ -16992,17 +17046,10 @@ document.addEventListener("input", e => {
 
 // Summary widget: what tonight could be, without opening the pantry.
 function pantryWidget(p){
-  const st = pantryState(p);
-  const n = (st.have || []).length + (st.extra || []).length;
-  if (!n) return `<a class="card widgetlink" href="#/premium/pantry">${icon("chevR","row-chev",16)}
-    <div class="eyebrow">${icon("jar","",14)} Pantry</div>
-    <div class="num mid" style="margin-top:4px">Empty</div>
-    <span class="small muted">tick what you have and see what you can cook</span></a>`;
+  const st = pantryState(p), n = (st.have || []).length + (st.extra || []).length, base = { href: "#/premium/pantry", color: "var(--c-snack)", iconHTML: icon("jar","",18), name: "Pantry", when: "Today" };
+  if (!n) return dcard({ ...base, val: NODATA, sub: "tick what you have and see what you can cook" });
   const ready = pantryMatches(p).filter(r => !r.missing.length).length;
-  return `<a class="card widgetlink" href="#/premium/pantry">${icon("chevR","row-chev",16)}
-    <div class="eyebrow">${icon("jar","",14)} Pantry</div>
-    <div class="num mid" style="margin-top:4px">${ready}</div>
-    <span class="small muted">${ready === 1 ? "dish" : "dishes"} you can cook right now from ${n} item${n === 1 ? "" : "s"}</span></a>`;
+  return dcard({ ...base, val: `<div class="mval">${ready}<small> ${ready === 1 ? "dish" : "dishes"}</small></div>`, sub: `you can cook now from ${n} item${n === 1 ? "" : "s"}` });
 }
 
 // A toast that can be taken back. Five seconds, one action, dismissed by either.
@@ -17623,18 +17670,10 @@ function microHead(p, w){
 }
 // Summary widget: the one line worth seeing without opening the page.
 function microWidget(p){
-  const w = microWeek(p);
-  if (!w.meals) return `<section class="card"><div class="eyebrow">${icon("pmChart","",14)} Micronutrients</div>
-    <p class="small muted" style="margin-top:6px">Log a few meals this week and your micronutrient report fills in.</p></section>`;
+  const w = microWeek(p), base = { href: "#/premium/micros", color: "var(--c-nutrition)", iconHTML: icon("pmChart","",18), name: "Micronutrients", when: "This week" };
+  if (!w.meals) return dcard({ ...base, val: NODATA, sub: "Log a few meals this week and your report fills in" });
   const g = w.rows.filter(r => r.gap > 0).sort((a, b) => b.gap - a.gap)[0];
-  const fix = g ? microFixes(p, g.k, 1)[0] : null;
-  return `<a class="card widgetlink" href="#/premium/micros">${icon("chevR","row-chev",16)}
-    <div class="eyebrow">${icon("pmChart","",14)} Micronutrients</div>
-    <div class="num mid" style="margin-top:4px">${g ? esc(g.n) : "All steady"}</div>
-    <span class="small muted">${g ? (g.good ? "the week's biggest gap" : "running high this week") : "nothing obviously short"}</span>
-    ${fix ? `<div class="wfix">${icon(g.good ? "check" : "alert", "", 14)}<span class="tiny">${g.good ? "Try" : "Lighter"}: <b>${esc(fix.n)}</b></span></div>` : ""}
-    <span class="tiny faint">Estimates, not medical advice</span>
-  </a>`;
+  return dcard({ ...base, val: `<div class="mval">${g ? esc(g.n) : "All steady"}</div>`, sub: g ? (g.good ? "the week's biggest gap" : "running high this week") : "nothing obviously short" });
 }
 
 // ---------- Phase 1 features take over their premium routes ----------
@@ -18675,23 +18714,9 @@ function recoCheckinCard(p){
 }
 // Summary widget: the verdict and the single reason behind it.
 function recoveryWidget(p){
-  const r = recoveryScore(p);
-  if (r.score == null) {
-    const ask = recoNextAsk(r);
-    return `<a class="card widgetlink" href="#/premium/recovery">${icon("chevR","row-chev",16)}
-      <div class="eyebrow">${icon("pmEcg","",14)} Recovery</div>
-      <div class="num mid" style="margin-top:4px">—</div>
-      <span class="small muted">${ask ? `needs ${esc(ask.n)} first` : "nothing logged yet"}</span>
-    </a>`;
-  }
-  const top = r.reasons[0];
-  return `<a class="card widgetlink" href="#/premium/recovery">${icon("chevR","row-chev",16)}
-    <div class="eyebrow">${icon("pmEcg","",14)} Recovery</div>
-    <div class="num mid" style="margin-top:4px">${r.score}<small> / 100</small></div>
-    <span class="small muted">${esc(r.verdict.n.toLowerCase())} today</span>
-    ${top ? `<div class="wfix">${icon(top.v >= 65 ? "check" : "alert", "", 14)}<span class="tiny">${esc(top.n)}: ${esc(recoPhrase(top))}</span></div>` : ""}
-    <span class="tiny faint">From your own logs, not medical advice</span>
-  </a>`;
+  const r = recoveryScore(p), base = { href: "#/premium/recovery", color: "var(--c-heart)", iconHTML: icon("pmEcg","",18), name: "Recovery", when: "Today" };
+  if (r.score == null) { const ask = recoNextAsk(r); return dcard({ ...base, val: NODATA, sub: ask ? `needs ${ask.n} first` : "nothing logged yet" }); }
+  return dcard({ ...base, val: `<div class="mval">${r.score}<small> / 100</small></div>`, sub: `${r.verdict.n.toLowerCase()} today` });
 }
 document.addEventListener("click", e => {
   const t = e.target.closest('[data-act^="reco-"]'); if (!t) return;
