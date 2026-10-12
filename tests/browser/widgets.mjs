@@ -64,6 +64,16 @@ const uiSize = async (page, k, v) => {
 const measure = (page, k) => ev(`(() => { const g = document.querySelector('.wgrid[data-page="${page}"]'), c = g.querySelector('.dcard[data-k="${k}"]'); if (!c) return null; const r = c.getBoundingClientRect(), gr = g.getBoundingClientRect(); const lc = c.querySelector(".lchart");
   return { w: r.width, h: r.height, gw: gr.width, cls: [...c.classList].filter(x => /^ws-/.test(x)).join(), tag: c.tagName, html: c.innerHTML, text: c.textContent.replace(/\\s+/g, " ").trim(), when: !!c.querySelector(".when"), sub: !!c.querySelector(".msub"), spark: !!c.querySelector(".mbody .spark"), lx: !!c.querySelector(".lx"), secs: [...c.querySelectorAll(".lh")].map(x => x.textContent), lbars: c.querySelectorAll(".lc-bar").length, llabels: [...c.querySelectorAll(".lc-l")].filter(x => x.textContent).length, lchart: !!lc, cover: !!c.querySelector(":scope > a.cover") }; })()`);
 
+
+// A real mouse click at the middle of the element. The point must hit that element (or something inside it), so a cover layer that blocks an inner link fails here.
+const clickReal = async sel => {
+  await ev(`document.querySelector(${JSON.stringify(sel)}).scrollIntoView({ block: "center" }); true`); await sleep(150);
+  const pt = await ev(`(() => { const el = document.querySelector(${JSON.stringify(sel)}); if (!el) return null; const r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, hit = document.elementFromPoint(x, y); return { x, y, hits: !!hit && (el === hit || el.contains(hit)), href: el.getAttribute("href") }; })()`);
+  if (!pt) return { ok: false, why: "no such element " + sel };
+  if (!pt.hits) return { ok: false, why: "something else covers " + sel, href: pt.href };
+  await send("Input.dispatchMouseEvent", { type: "mousePressed", x: pt.x, y: pt.y, button: "left", buttons: 1, clickCount: 1 }); await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: pt.x, y: pt.y, button: "left", clickCount: 1 }); await sleep(450);
+  return { ok: true, href: pt.href, hash: await ev(`location.hash`) };
+};
 const EXPECT = { calories: ["Today by meal", "Top 3 foods today", "Remaining today", "Last 7 days"], meals: ["Planned for today", "Logged today", "Logged meals, last 7 days"], water: ["Last drink", "Last 7 days", "Last 3 readings"], weight: ["Last 30 days", "Since you started"],
   steps: ["Today by hour", "Best day this week", "Last 7 days"], workouts: ["Last workout", "This week", "Streak", "Last 7 days"], coach: ["Today's advice", "Streak", "Next action", "Workout minutes, last 7 days"], snacks: ["Top 3 snacks today", "Last 7 days"],
   estimate: ["Where you could be", "What it is based on"], sleep: ["Last 7 days", "Last 3 readings"], rhr: ["Last 7 days", "Last 3 readings"], active: ["Last 7 days", "Last 3 readings"], spo2: ["Last 7 days", "Last 3 readings"], bp: ["Last 7 days", "Last 3 readings"] };
@@ -89,10 +99,32 @@ for (const w of [375, 820, 1440]) {
     ok(`${tag}: three sizes, three different layouts and contents`, new Set([m.s.html, m.m.html, m.l.html]).size === 3 && m.s.text !== m.m.text && m.m.text !== m.l.text && m.s.h !== m.l.h, "");
     if (k !== "estimate" && k !== "coach" && k !== "meals") ok(`${tag}: Large has a labelled chart`, m.l.lchart && m.l.lbars >= 7 && m.l.llabels >= 3, `${m.l.lbars} bars, ${m.l.llabels} labels`);
     ok(`${tag}: no invented numbers (no NaN, undefined or Infinity)`, !/NaN|undefined|Infinity|null/.test(m.s.text + m.m.text + m.l.text), m.l.text.slice(0, 200));
-    if (k === "meals" || k === "coach") ok(`${tag}: Large is a div with one stretched link, and its inner links work`, m.l.tag === "DIV" && m.l.cover, m.l.tag);
+    if (k === "meals" || k === "coach") ok(`${tag}: Large is a div with one stretched link`, m.l.tag === "DIV" && m.l.cover, m.l.tag);
   }
 }
 ok("sizes changed live: the page never reloaded", await ev(`window.__noReload === 1`));
+
+console.log("--- 1b. links inside Large Meals and Coach work with a real click, and the cover link still opens the page");
+await view(1440); await seed(true); await goto("#/home");
+await ev(`(() => { const p = P(); p.plan = null; p.wv = 2; p.widgets = [{ k: "meals", size: "l" }]; UI.editPage = null; saveProfile(); render(); return true; })()`); await sleep(250);
+const linkCheck = async (name, sel, want) => { await goto("#/home"); const r = await clickReal(sel); ok(name, r.ok && r.hash === want(r), JSON.stringify(r)); };
+await linkCheck("Meals Large: 'Build a plan' opens the recipes page", '.wgrid .dcard[data-k="meals"] .lbtn', () => "#/recipes");
+await linkCheck("Meals Large: a planned dish opens that dish's page", '.wgrid .dcard[data-k="meals"] .lx .lrows li a', r => r.href);
+await linkCheck("Meals Large: a tap on the card body (the cover link) opens Nutrition", '.wgrid .dcard[data-k="meals"] > a.cover', () => "#/nutrition");
+await ev(`(() => { const p = P(); p.plan = buildPlan(3, p); saveProfile(); location.hash = "#/home"; render(); return true; })()`); await sleep(450);
+ok("Meals Large: with a saved plan the link says 'See full plan'", await ev(`document.querySelector('.wgrid .dcard[data-k="meals"] .lbtn').textContent.trim() === "See full plan"`));
+await ev(`(() => { const p = P(); p.plan = null; return true; })()`);
+// Coach: no plan, then a saved workout plan with today's session not yet logged (seed(false) so nothing is logged today)
+await seed(false); await ev(`(() => { const p = P(); p.wv = 2; p.widgets = [{ k: "coach", size: "l" }]; saveProfile(); render(); return true; })()`); await sleep(250);
+ok("Coach Large without a plan offers 'Set up a workout plan'", await ev(`/Set up a workout plan/.test(document.querySelector('.wgrid .dcard[data-k="coach"]').textContent)`));
+await linkCheck("Coach Large: 'Set up a workout plan' opens the Coach page", '.wgrid .dcard[data-k="coach"] .lx .lrows li a', () => "#/coach");
+await ev(`(() => { const p = P(); p.freq = 3; p.level = "beginner"; const days = buildWorkoutPlan(p).filter(d => d.dow !== new Date().getDay()); days.unshift({ ...days[0], dow: new Date().getDay(), title: "Push day", minutes: 40 }); p.workoutPlan = { created: today(), days }; saveProfile(); location.hash = "#/home"; render(); return true; })()`); await sleep(450);
+ok("Coach Large with a saved plan shows today's session as the next action", await ev(`/Today: Push day · 40 min/.test(document.querySelector('.wgrid .dcard[data-k="coach"] .lx').textContent)`));
+await linkCheck("Coach Large: today's planned session opens the Coach page", '.wgrid .dcard[data-k="coach"] .lx .lrows li a', () => "#/coach");
+await linkCheck("Coach Large: a tap on the card body (the cover link) opens Coach", '.wgrid .dcard[data-k="coach"] > a.cover', () => "#/coach");
+await ev(`(() => { addEntry("workouts", { id: uid(), date: today(), type: "strength", minutes: 40, cal: 200 }); location.hash = "#/home"; render(); return true; })()`); await sleep(450);
+ok("Coach Large: once today's workout is logged the next action is plain text, not a link", await ev(`(() => { const c = document.querySelector('.wgrid .dcard[data-k="coach"] .lx'); return /Today's workout is logged/.test(c.textContent) && !c.querySelector("li a"); })()`));
+await seed(true);
 
 console.log("--- 2. No Data, never a made-up number");
 await seed(false); await view(1440); await goto("#/home");
@@ -136,8 +168,8 @@ ok("a Large chosen after the upgrade is kept on the next reload", (await sizesOf
 console.log("--- 4. edit mode");
 await seed(); await view(1440); await goto("#/home");
 await ev(`(() => { P().widgets = ["calories", "steps", "sleep", "rhr", "water"].map(k => ({ k, size: "s" })); UI.editPage = null; saveProfile(); render(); return true; })()`);
-const row = await ev(`(() => { const b = document.querySelector('.wsec[data-page="home"] [data-act="wl-edit"]'), h = document.querySelector('.wsec[data-page="home"] .sec-title'), c = getComputedStyle(b); const br = b.getBoundingClientRect(), hr = h.getBoundingClientRect(); return { right: br.left > hr.right, same: Math.abs((br.top + br.height / 2) - (hr.top + hr.height / 2)) < 8, plain: c.backgroundColor === "rgba(0, 0, 0, 0)" && c.borderTopWidth === "0px" && c.boxShadow === "none", accent: c.color === getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || true, text: b.textContent }; })()`);
-ok("'Edit widgets' is plain accent text on the right of the section title", row.right && row.same && row.plain && row.text === "Edit widgets", JSON.stringify(row));
+const row = await ev(`(() => { const b = document.querySelector('.wsec[data-page="home"] [data-act="wl-edit"]'), h = document.querySelector('.wsec[data-page="home"] .sec-title'), c = getComputedStyle(b); const br = b.getBoundingClientRect(), hr = h.getBoundingClientRect(); return { right: br.left > hr.right, same: Math.abs((br.top + br.height / 2) - (hr.top + hr.height / 2)) < 8, plain: c.backgroundColor === "rgba(0, 0, 0, 0)" && c.borderTopWidth === "0px" && c.boxShadow === "none", accent: c.color === (() => { const t = document.createElement("i"); t.style.color = "var(--accent)"; document.body.append(t); const v = getComputedStyle(t).color; t.remove(); return v; })(), text: b.textContent }; })()`);
+ok("'Edit widgets' is plain accent text on the right of the section title", row.right && row.same && row.plain && row.accent && row.text === "Edit widgets", JSON.stringify(row));
 await ev(`${editBtn("home")}.click(); true`); await sleep(300);
 const ctl = await ev(`(() => { const out = { cards: 0, bad: [] }; const vis = e => e && e.getClientRects().length > 0; for (const c of document.querySelectorAll('.wgrid[data-page="home"] .dcard')) { out.cards++; const h = c.querySelector(":scope > .mhead"); const minus = h.querySelector(".wminus"), seg = [...h.querySelectorAll(".wseg button")], drag = h.querySelector(".wdrag"), mv = [...h.querySelectorAll('[data-act="wl-move"]')];
     const big = e => { const r = e.getBoundingClientRect(); return r.width >= 43.9 && r.height >= 43.9; };
