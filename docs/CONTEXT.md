@@ -20,7 +20,7 @@ Version goes up 0.1 per week (8.1, 8.2, ...). Extra builds inside the same week 
 
 ## Design system summary
 
-- Dark default: #000000 canvas, #1C1C1E cards, 16px radius, no shadows, hairline separators only
+- Dark default: #000000 canvas, #1C1C1E cards; light: #F2F2F7 canvas, #FFFFFF cards. Cards are 20px radius, solid, flat: no shadow, border, glow, gradient or glass (see "Dashboard card" below). Hairline separators only
 - One accent per view; category colors (green meals, orange activity, indigo sleep, cyan water, rose heart, gold achievements) only in charts, icons, labels — never large fills
 - Type scale, 8px spacing grid, allowed radii {8, 10, 12, 16, 20, 999}px
 - Fonts: 8-option picker, default system stack (Perplexity-style); metrics use tabular numerals
@@ -38,15 +38,21 @@ Form controls (inputs, selects, textareas, date picker, buttons, button groups, 
 - Primary and destructive buttons use a light top-to-bottom gradient of `--accent` and `--bad`. Colors still come from the tokens, so every scheme, accent and theme follows.
 - Every control is at least 44px tall. The styles live in one block at the end of the stylesheet (`8.1.19 form controls`) and the script before `</body>`.
 
-### Approved exception: liquid glass, caustics and the beam (8.1.20)
+### Dashboard card: one flat pattern (8.2.6), supersedes the 8.1.20 liquid glass on content
 
-Cards are frosted glass again, at the owner's request. This replaces "no shadows" and the "Liquid Glass stays retired" notes for these surfaces only:
+At the owner's request, every dashboard card (the Summary pins, the same card on Nutrition and Health data, the Trends cards and the premium widgets) follows one Apple Health-style pattern in original code, with Lucide and the app's own icons and no Apple assets.
 
-- **Glass:** cards, widgets, health tiles, recipe cards, tab bars and profile strips get `backdrop-filter: blur(14px) saturate(1.4)` (outermost surface only, never blur inside blur), a 1px inset rim (`--glass-line`) and a lit top edge (`--glass-hi`). The Interface opacity slider (`--ui-op`) still sets how much surface colour sits in the glass.
-- **Streak and press:** a light streak crosses a card on hover (mouse only); tappable cards scale to 0.97 when pressed.
-- **Caustics:** widgets and health tiles carry two blurred light pools drifting behind their content.
-- **Beam:** Today at a glance and the coach advice card have a 2px accent light running round the border. It always uses `--accent`, so it follows the theme and accent picker.
-- Reduced motion stops the caustics, beam and springs; Reduce transparency removes the blur. The styles live in one block at the end of the stylesheet (`8.1.20`).
+- **Surface:** solid, opaque, flat. Dark `#1C1C1E` on a `#000` page; light `#FFFFFF` on `#F2F2F7`; OLED a true-black page with `#101012` cards (a hair lighter, so cards show with no border). Radius 20px, padding 16px, 12px between cards. **No border, glow, gradient, glass, shadow or inner cards.** The page and card colours are the same in every theme (Forest, Ocean, Sunset, Midnight); a theme changes only the accent and text tokens.
+- **Layout, the same for every card:** (1) header row: 18px category icon and the category name in the category colour (17px, weight 600) on the left; on the right, "Today" or the last-updated day in gray (15px) and a chevron; the whole card is one link to that metric's detail page. (2) At least 48px of empty space, then at the bottom left the main value: number 34px bold with tabular numerals, the unit 17px gray right after it, and one optional gray line under it (15px). (3) Bottom right, optional: a small chart, at most 120×64px, gray bars with the latest bar in the category colour. (4) Empty state: "No Data" in the value position; no buttons or chips inside a card (edit mode adds the widget tools and nothing else).
+- **Category colours** are used for the icon, the name and the latest chart bar only, and every one must reach 4.5:1 against its card (dark indigo for Sleep is `#7D7AFF` for that reason).
+- **Meals card:** the value is today's total planned calories, the sub-line is "N planned · N logged", the chart is one bar per meal. The Breakfast, Lunch and Dinner list, "Build a plan" and the "No food culture set" prompt live on the Meals detail page (Nutrition, `#meals-today`), never in a card.
+- **Text:** "Edit widgets" and "Done" are plain accent text with no background; section titles ("Pinned", "Trends", "Highlights") are 22px bold; no underlines anywhere except real links in the legal text.
+- **Glass is allowed only** on the floating top bar, the tab bar and menus (sidebar, popovers). Decorative backgrounds (aurora, home scenes, seasonal layers, caustics, sheen, beam) are removed from behind the cards and from the cards; the Scene and Season pickers were taken out of Settings, and the stored choices are kept but not drawn.
+- The styles live in one block at the end of the stylesheet (`8.2.6`); the markup is `dcard()` in `index.html`. `tests/browser/cards.mjs` checks the pattern at 375, 820 and 1440px in light, dark and OLED in every theme.
+
+### Previously approved, now narrowed: liquid glass (8.1.20)
+
+The 8.1.20 glass, caustics and beam on cards were reversed for content cards by the Dashboard card rule above. What remains from 8.1.20: glass on the floating top bar, the tab bar and menus, and the Interface opacity slider (`--ui-op`), which tints that glass.
 
 ## Coach personas
 
