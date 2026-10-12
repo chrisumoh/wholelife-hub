@@ -197,7 +197,10 @@ await waitFor(`!!document.querySelector('[data-act="sb-out"]')`);
 await ev(`document.querySelector('[data-act="sb-out"]').click(); true`);
 ok("dialog shown although nothing is waiting to upload", await waitFor(`!!UI.sbConfirmOut && !!document.querySelector('[data-act="sb-out-force"]')`) && (await ev(`sbPending()`)) === 0);
 const dlg = await ev(`document.getElementById("sb-account").textContent`);
-for (const want of ["1 snack", "1 drink", "1 workout", "1 weigh-in", "1 day of vitals", "plans and coach history for 1 profile"]) ok(`dialog lists "${want}"`, dlg.includes(want), dlg.slice(0, 300));
+for (const want of ["1 snack", "1 drink", "1 day of vitals", "plans and coach history for 1 profile"]) ok(`dialog lists "${want}"`, dlg.includes(want), dlg.slice(0, 300));
+// 8.2.15: workouts and weigh-ins are in the account now, so signing out does not lose them and the dialog must not claim it does.
+const localList = await ev(`UI.sbConfirmOut.local.join(" | ")`);
+for (const not of ["workout", "weigh-in"]) ok(`the list of data that would be lost no longer names "${not}"`, !localList.includes(not), localList);
 ok("dialog has Cancel and Sign out anyway", await ev(`(() => { const b = [...document.querySelectorAll("#sb-account button")].map(x => x.textContent.trim()); return b.includes("Cancel") && b.includes("Sign out anyway"); })()`));
 await ev(`document.querySelector('[data-act="sb-out-no"]').click(); true`);
 await ev(`flush().then(() => true)`);

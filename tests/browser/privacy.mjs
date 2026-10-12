@@ -104,7 +104,7 @@ await ev(`localStorage.setItem(CONSENT_KEY, JSON.stringify({ v: TERMS_VERSION, a
 ok("an accepted terms version is shown", new RegExp("Version " + await ev(`TERMS_VERSION`)).test(await glance()));
 await ev(`SB.user = { id: "u1", email: "ada@example.com" }; render(); true`); await sleep(250);
 t = await glance();
-ok("signed in, it names the account and says meals and names also sync", /ada@example\.com/.test(t) && /Meals and profile names also sync/.test(t), t);
+ok("signed in, it names the account and says what also syncs", /ada@example\.com/.test(t) && /Meals, workouts, weigh-ins and profile basics also sync/.test(t), t);
 await ev(`SB.user = null; true`);
 
 console.log("--- 6. layout");
