@@ -4040,6 +4040,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 .skip-link:focus,.skip-link:focus-visible{top:12px}
 .section:focus{outline:none}
 .chart:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+.choice .ch-t{font-family:var(--display);font-size:calc((var(--t-h3,16px)) * var(--text-scale,1));font-weight:700;letter-spacing:-.012em;line-height:1.15}
 /* No underlines, except real links in the legal pages. */
 .app a:not(.legal a),.app a:not(.legal a):hover,.app a:not(.legal a):focus{text-decoration:none!important}
 </style><div id="app"></div>
@@ -4069,16 +4070,16 @@ const APP_VERSION = { update: "8.2", build: "8.2.10", channel: "Dev Testing", da
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
     { id:"8.2.10", area:"Accessibility", title:"axe-core pass: keyboard-reachable charts, a labelled quick-jump combobox, landmarks, heading order, a skip link, and an automated check",
-      bug:"A launch checklist asked for 'real accessibility: run Lighthouse or axe on every page'. Running axe-core 4.10.2 (WCAG 2.0, 2.1 and 2.2 A and AA, plus its best-practice rules) over 31 screens, the popups, edit mode and the setup screens, at 375 and 1440px in light and dark, found: (1) the metric charts scroll sideways but could not be reached by keyboard; (2) the Ctrl+K quick-jump list was an unnamed listbox with no combobox on the search box, so a screen reader could not hear which option was highlighted, and the highlighted option was not scrolled into view; (3) the new age screen and the setup steps were not inside a landmark; (4) the metric page's 'Add data' heading skipped a level; (5) the Premium page had two h1 headings; (6) there was no way to skip the page header.",
+      bug:"A launch checklist asked for 'real accessibility: run Lighthouse or axe on every page'. Running axe-core 4.10.2 (WCAG 2.0, 2.1 and 2.2 A and AA, plus its best-practice rules) over 31 screens, the popups, edit mode and the setup screens, at 375 and 1440px in light and dark, found: (1) the metric charts scroll sideways but could not be reached by keyboard; (2) the Ctrl+K quick-jump list was an unnamed listbox with no combobox on the search box, so a screen reader could not hear which option was highlighted, and the highlighted option was not scrolled into view; (3) the new age screen and the setup steps were not inside a landmark; (4) the metric page's 'Add data' heading skipped a level; (5) the Premium page had two h1 headings; (6) there was no way to skip the page header. Checking the setup screens properly (an earlier version of the test drew the normal app instead of them) also found (7) the two start choices on the last setup step used h3 headings straight after the h1; they are now plain styled text.",
       fix:"Each metric chart is now a labelled, focusable region (Tab to it, scroll with the arrow keys) with a visible focus ring. The quick-jump box is a combobox (aria-expanded, aria-controls, aria-activedescendant) over a named listbox whose options have ids; ArrowUp and ArrowDown move the named option and scroll it into view; the list can be a little taller so it rarely scrolls. The age screen and every setup step are now a main landmark. 'Add data' is an h2, and the Premium page's second h1 is an h2 with the same look. A 'Skip to page content' button is the first Tab stop on every screen: it appears when focused and moves focus to the page content. After these changes axe reports nothing on any of those screens. Contrast, form labels, button names, ARIA validity, 44px tap targets, the 24px minimum target size and reflow at 320px already passed.",
       where:"index.html: the four metric chart wrappers (.chart), buildPalette(), renderPalette(), highlightPalette(), obStepFrame(), ageGateView(), metricView (Add data), premiumView (heading), render() (skip link, #sec- tabindex), the skip-main action, CSS block 8.2.10 and .prem-store h2. tests/browser/a11y.mjs (new), tests/browser/run-all.mjs. docs/BUILD_PLAN.md, CHANGELOG.md, README.md.",
       test:"AXE_JS=<path to axe.min.js> node tests/browser/a11y.mjs (19 checks; without AXE_JS it fetches axe-core 4.10.2 from jsDelivr). By hand: press Tab once on any screen and see 'Skip to page content', press Enter and Tab on into the page; on a metric page Tab to the chart; press Ctrl+K, type, and use the arrow keys with a screen reader on.",
       limits:"(1) Automated tools find only part of the WCAG problems. This build has no screen-reader run (VoiceOver, TalkBack, NVDA), no check at 200% browser zoom or the largest text sizes, no check that colour is never the only signal, and no review of the animations beyond the reduced-motion setting that already exists. (2) Lighthouse itself was not run; its accessibility score uses axe-core, which was run directly. (3) axe is not bundled with the app; the test reads it from AXE_JS or fetches it, so it needs the network in CI. (4) The hidden owner tap target on the brand line is not keyboard-reachable by design. (5) This is not a legal accessibility audit or a compliance statement." },
     { id:"8.2.9", area:"Legal", title:"Neutral age screen with a 24-hour retry block, and a Terms and Privacy Policy agreement at sign-up",
       bug:"Two gaps from a launch-compliance checklist. (1) The age check was optional and not neutral: setup showed an optional Age box, a 'not for anyone under 13' message that told a child exactly what number to type next, no block on trying again, and an 'I confirm I'm 13 years old or older' tick box on the last step that anyone could tick. Skipping setup avoided it altogether. (2) Create account had no agreement to the Terms and Privacy Policy, and nothing recorded who agreed to which version, or when.",
-      fix:"Age screen: pressing Set up my hub or Skip setup now opens 'When were you born?' first, with a Birth month and a Birth year list that both start blank (the year list starts this year and runs back 110 years), and no age limit named anywhere on the screen. Only the age is kept (a birthday this month counts as not yet reached, because the day is not asked); the month and year are dropped. If the age comes out under 13 the screen says only 'We can't set up a profile on this device', nothing is saved, and the browser refuses another try, including through Skip setup, for 24 hours (a flag in this browser, wlh.ageblock; clearing site data removes it). Adding a profile for another person asks the same question. The old Age box, the 'under 13' message and the 'I confirm I'm 13' box were removed. Sign-up: Create account has an unticked box, 'I agree to the Terms and the Privacy Policy.', with accent-blue underlined links that open the two pages in a new tab; submitting without it shows a message and sends nothing. On a successful sign-up the terms version (TERMS_VERSION, the date the legal pages were last updated) and the time are sent with the account as user metadata (no schema change, nothing under supabase/) and saved on the device (wlh.consent). The Privacy Policy section on children and two privacy lines in Settings were reworded to match what the app now does, and one that said it never asks for an email was corrected.",
+      fix:"Age screen: pressing Set up my hub or Skip setup now opens 'When were you born?' first, with a Birth month and a Birth year list that both start blank (the year list starts this year and runs back 110 years), and no age limit named anywhere on the screen. Only the age is kept (a birthday this month counts as not yet reached, because the day is not asked); the month and year are dropped. If the age comes out under 13 the screen says only 'We can't set up a profile on this device', nothing is saved, and the browser refuses another try, including through Skip setup, for 24 hours (a flag in this browser, wlh.ageblock; clearing site data removes it). Adding a profile for another person asks the same question. The old Age box, the 'under 13' message and the 'I confirm I'm 13' box were removed. Sign-up: Create account has an unticked box, 'I agree to the Terms and the Privacy Policy.', with accent-blue underlined links that open the two pages in a new tab; submitting without it shows a message and sends nothing. On a successful sign-up the terms version (TERMS_VERSION, the date the legal pages were last updated) and the time are sent with the account as user metadata (no schema change, nothing under supabase/) and saved on the device (wlh.consent). The Privacy Policy section on children and two privacy lines in Settings were reworded to match what the app now does, and one that said it never asks for an email was corrected. The block is checked again when an answer is sent and when a profile is about to be created, so an age form left open in a second tab cannot get round it. The agreement box starts unticked every time Create account is opened or switched to, and keeps its tick only for a retry in the same form.",
       where:"index.html: AGE_BLOCK_KEY, CONSENT_KEY, TERMS_VERSION, ageBlocked(), blockAge(), ageFromMonthYear(), ageGateView(), ageGateSubmit(), welcomeView/onboardingView (UI.obGate, UI.obGateOk), the ob-next, ob-skip and ag-back actions, step 3 and step 4 of onboarding, authFormHTML(), sbAuth(), the submit and change handlers, privacyPolicyView() section 8, the Settings privacy lines, CSS block 8.2.9. tests/browser/legal.mjs (new), tests/browser/fake-supabase.js (records sign-up calls), tests/browser/run-all.mjs. docs/BUILD_PLAN.md, CHANGELOG.md, README.md.",
-      test:"node tests/browser/legal.mjs (42 checks). By hand: clear site data, open the app, press Set up my hub, and check that both lists start blank and nothing says an age limit; choose a birth year 12 years ago and see the plain screen, then reload and try Set up my hub and Skip setup again (still blocked); in a private window choose an adult year and finish setup; in Settings, Create account, try without the box (a message, nothing sent), then with it.",
+      test:"node tests/browser/legal.mjs (49 checks). By hand: clear site data, open the app, press Set up my hub, and check that both lists start blank and nothing says an age limit; choose a birth year 12 years ago and see the plain screen, then reload and try Set up my hub and Skip setup again (still blocked); in a private window choose an adult year and finish setup; in Settings, Create account, try without the box (a message, nothing sent), then with it.",
       limits:"(1) The block is a flag in this browser, so clearing site data or using another browser or device removes it; it deters a retry and is not proof of age. (2) Because the birth day is not asked, someone in their 13th-birthday month is treated as under 13 until the next month. (3) Profiles and accounts that existed before this build were not asked again. (4) The agreement is saved with new sign-ups only; nothing asks existing accounts to agree again when TERMS_VERSION changes. (5) The Terms and Privacy Policy text has not been reviewed by a lawyer. (6) The 24 hours is a choice, not a legal requirement." },
     { id:"8.2.8", area:"Food culture", title:"Dish tiles on Food culture, Recipes and Today's menu use the flat card pattern",
       bug:"On the Food culture page (and everywhere a dish tile appears) the tiles still had the old look: a 1px border, a glass rim, a terracotta bar along the top edge, a hover lift, and an uppercase, letter-spaced yellow BREAKFAST / LUNCH / DINNER label. They sat inside cards as a second, differently styled card, which the 8.2.6 card pattern forbids. Found on the build-8.2.7 preview on an iPad.",
@@ -8306,7 +8307,7 @@ function authFormHTML(){
     </form>`;
 }
 function openAuthPopup(mode, triggerEl){
-  UI.acct = mode; UI.sbMsg = null;
+  UI.acct = mode; UI.sbMsg = null; UI.sbAgree = false; // each new form asks again
   openPopover("auth", { labelledby:"auth-title", width:"min(400px, calc(100vw - 32px))", triggerEl, returnSel:`[data-act="sb-open"][data-v="${mode}"]`, focusSel:"#sb-email",
     bodyHTML: `<div class="auth-pop"><div class="pop-head"><h2 id="auth-title">${AUTH_TITLE[mode]}</h2><button type="button" class="pop-x" data-pop="close" aria-label="Close">${icon("x","",24)}</button></div>
       <div class="pop-body" id="auth-pop-body">${authFormHTML()}</div></div>` });
@@ -8361,7 +8362,7 @@ document.addEventListener("click", e => {
   switch (t.dataset.act) {
     case "sb-open": openAuthPopup(t.dataset.v, t); break;
     case "sb-info": openAcctInfo(t); break;
-    case "sb-mode": UI.acct = t.dataset.v; UI.sbMsg = null; UI.sbEmail = val("sb-email") || UI.sbEmail; sbRender(); document.getElementById("sb-email")?.focus(); break;
+    case "sb-mode": UI.acct = t.dataset.v; UI.sbMsg = null; if (t.dataset.v === "up") UI.sbAgree = false; UI.sbEmail = val("sb-email") || UI.sbEmail; sbRender(); document.getElementById("sb-email")?.focus(); break;
     case "sb-out": sbSignOut(false); break;
     case "sb-out-force": sbSignOut(true); break;
     case "sb-out-no": UI.sbConfirmOut = null; render(); break;
@@ -10655,6 +10656,7 @@ function ageGateView(){
   </form></div></main>`;
 }
 function ageGateSubmit(){
+  if (ageBlocked()) { UI.obGateOk = false; return render(); } // another tab may have been turned away since this form opened
   const m = +$("#ag-m")?.value, y = +$("#ag-y")?.value;
   if (!m || !y) { UI.agErr = "Choose a month and a year."; return render(); }
   const age = ageFromMonthYear(m, y);
@@ -10806,8 +10808,8 @@ function onboardingView(){
   return obStepFrame(4, `
     <div><div class="eyebrow">Step 4 of 4 · Your starting point</div><h1 style="margin-top:6px" tabindex="-1" data-st-focus>How do you want to start?</h1></div>
     <div class="choice">
-      <button data-act="ob-choice" data-v="plan" aria-pressed="${UI.obChoice==="plan"}"><h3>Personalized start</h3><span class="small muted">A 7-day meal plan${d.freq ? `, a ${d.freq}-day workout plan` : ""}${canEst ? " and a suggested daily calorie target" : ""} from your answers. You can change all of it later.</span></button>
-      <button data-act="ob-choice" data-v="fresh" aria-pressed="${UI.obChoice==="fresh"}"><h3>Start fresh</h3><span class="small muted">Everything starts at zero. No calorie or workout targets until you set your own in Settings.</span></button>
+      <button data-act="ob-choice" data-v="plan" aria-pressed="${UI.obChoice==="plan"}"><span class="ch-t">Personalized start</span><span class="small muted">A 7-day meal plan${d.freq ? `, a ${d.freq}-day workout plan` : ""}${canEst ? " and a suggested daily calorie target" : ""} from your answers. You can change all of it later.</span></button>
+      <button data-act="ob-choice" data-v="fresh" aria-pressed="${UI.obChoice==="fresh"}"><span class="ch-t">Start fresh</span><span class="small muted">Everything starts at zero. No calorie or workout targets until you set your own in Settings.</span></button>
     </div>
     ${!canEst && UI.obChoice==="plan" ? `<div class="note info">Without age, sex, height and weight there's no calorie target yet. Meals and workouts will still be personalized.</div>` : ""}
     <p class="tiny faint">Estimates are for personal tracking, not medical or nutrition advice.</p>`,
@@ -10827,6 +10829,7 @@ function readOnboardingStep(){
   }
 }
 function finishOnboarding(choice){
+  if (ageBlocked()) { UI.obGateOk = false; UI.obGate = UI.obGate || "next"; UI.obStep = 0; return render(); } // the last stop before a profile exists
   const d = UI.obDraft; d.onboarded = true;
   if (choice === "plan") {
     d.plan = buildPlan(7, d);
@@ -11766,7 +11769,7 @@ document.addEventListener("click", async e => {
     case "skip-main": { const m = document.querySelector(".section.active"); if (m) { m.focus({ preventScroll:true }); m.scrollIntoView({ block:"start" }); } break; }
     // onboarding
     case "ob-next": {
-      if (UI.obStep === 0 && !UI.obGateOk) { UI.obGate = "next"; UI.agErr = null; render(); window.scrollTo(0,0); break; }
+      if (UI.obStep === 0 && (!UI.obGateOk || ageBlocked())) { UI.obGateOk = false; UI.obGate = "next"; UI.agErr = null; render(); window.scrollTo(0,0); break; }
       readOnboardingStep();
       UI.obStep++; render(); window.scrollTo(0,0); break;
     }
@@ -11814,7 +11817,7 @@ document.addEventListener("click", async e => {
     // step's checks -- coach chosen, the under-13 gate -- can be jumped over)
     case "ob-goto": { const to = +t.dataset.v; if (to >= 1 && to < UI.obStep) { readOnboardingStep(); UI.obStep = to; render(); window.scrollTo(0,0); } break; }
     case "ob-cancel": UI.obDraft = null; UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; UI.agErr = null; S.activeId = UI.lastActive && S.profiles.some(x=>x.id===UI.lastActive) ? UI.lastActive : S.profiles[0]?.id; render(); break;
-    case "ob-skip": UI.obDraft = UI.obDraft || newProfile(""); if (!UI.obGateOk) { UI.obGate = "skip"; UI.agErr = null; render(); window.scrollTo(0,0); break; } finishOnboarding("fresh"); break;
+    case "ob-skip": UI.obDraft = UI.obDraft || newProfile(""); if (!UI.obGateOk || ageBlocked()) { UI.obGateOk = false; UI.obGate = "skip"; UI.agErr = null; render(); window.scrollTo(0,0); break; } finishOnboarding("fresh"); break;
     case "ag-back": UI.obGate = null; UI.agErr = null; render(); break;
     case "ob-units": readOnboardingStep(); UI.obDraft.units = t.dataset.v; render(); break;
     case "ob-choice": UI.obChoice = t.dataset.v; render(); break;

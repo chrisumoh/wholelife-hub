@@ -83,6 +83,23 @@ await ev(`localStorage.setItem("wlh.ageblock", String(Date.now() - 1000)); true`
 await click('[data-act="ob-next"]'); await sleep(300);
 ok("once the 24 hours are over the age question comes back", await ev(`!!document.getElementById("ag-y") && !localStorage.getItem("wlh.ageblock") || +localStorage.getItem("wlh.ageblock") < Date.now()`));
 
+console.log("--- 2b. a second open tab cannot get round the block");
+await fresh(); await click('[data-act="ob-next"]'); await sleep(250);
+await pick(6, CY - 30);   // an adult answer is chosen but not sent yet, as in a tab that was left open
+await ev(`localStorage.setItem("wlh.ageblock", String(Date.now() + 3600e3)); true`); // another tab has just turned someone away
+await submitGate();
+ok("sending the adult answer now shows the plain screen and creates no profile", await ev(`document.querySelector(".agate h1")?.textContent === "We can't set up a profile on this device" && S.profiles.length === 0 && UI.obGateOk === false`));
+await ev(`localStorage.removeItem("wlh.ageblock"); true`); await send("Page.reload"); await sleep(500); await waitFor(READY, 15000);
+await click('[data-act="ob-skip"]'); await sleep(250); await pick(6, CY - 30);
+await ev(`localStorage.setItem("wlh.ageblock", String(Date.now() + 3600e3)); true`); await submitGate();
+ok("the same through 'Skip setup': no profile while the block is on", await ev(`S.profiles.length === 0 && !!document.querySelector(".agate") && document.querySelector(".agate h1")?.textContent === "We can't set up a profile on this device"`));
+await ev(`localStorage.removeItem("wlh.ageblock"); true`); await send("Page.reload"); await sleep(500); await waitFor(READY, 15000);
+await click('[data-act="ob-next"]'); await sleep(250); await pick(6, CY - 30); await submitGate(); // reaches step 1 with the gate passed
+await ev(`localStorage.setItem("wlh.ageblock", String(Date.now() + 3600e3)); UI.obStep = 4; UI.obChoice = "fresh"; render(); true`); await sleep(300);
+await click('[data-act="ob-finish"]'); await sleep(500);
+ok("a block that starts after the question was answered still stops the profile being created", await ev(`S.profiles.length === 0 && document.querySelector(".agate h1")?.textContent === "We can't set up a profile on this device"`));
+await ev(`localStorage.removeItem("wlh.ageblock"); true`);
+
 console.log("--- 3. the line itself, and what is kept for an adult");
 const edge = async (m, y) => { await pick(m, y); await submitGate(); return ev(`({ blocked: document.querySelector(".agate h1")?.textContent === "We can't set up a profile on this device", step: UI.obStep, age: UI.obDraft?.age ?? null })`); };
 await fresh(); await click('[data-act="ob-next"]'); await sleep(250);
@@ -110,9 +127,10 @@ await pick(6, CY - 40); await submitGate(); await sleep(1600);
 ok("after a good answer, skipping creates a profile with that age", await ev(`S.profiles.length === 1 && S.profiles[0].age >= 39 && S.profiles[0].age <= 40`), await ev(`JSON.stringify(S.profiles.map(p => p.age))`));
 await ev(`(() => { const p = P(); Object.assign(p, { onboarded: true, coachPrompted: true, tourSeen: "dismissed" }); saveProfile(); return true; })()`);
 await ev(`(() => { const q = P(); S.activeId = q.id; return true; })()`);
-await click('[data-act="new-profile"]').catch(() => {});
-await ev(`(() => { UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; S.activeId = null; render(); return true; })()`); await sleep(300);
-await click('[data-act="ob-next"]'); await sleep(250);
+await ev(`location.hash = "#/settings/household"; true`); await sleep(500);
+await click('[data-act="new-profile"]'); await sleep(400);
+ok("'Add a profile' (Household) opens the welcome screen", await ev(`!!document.querySelector('[data-act="ob-next"]') && !document.querySelector(".agate")`));
+await click('[data-act="ob-next"]'); await sleep(300);
 ok("adding another profile asks the age question again", await ev(`!!document.getElementById("ag-y")`));
 
 console.log("--- 4. agreeing to the Terms and Privacy Policy at sign-up");
@@ -140,6 +158,14 @@ await ev(`(() => { document.querySelector('#pop-auth [data-act="sb-mode"][data-v
 ok("Sign in has no agree box", await ev(`!document.getElementById("sb-agree")`));
 await ev(`document.querySelector('#pop-auth [data-act="sb-mode"][data-v="up"]')?.click(); true`); await sleep(300);
 ok("coming back to Create account starts unticked again", await ev(`document.getElementById("sb-agree")?.checked === false`));
+await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = true; c.dispatchEvent(new Event("change", { bubbles: true })); return true; })()`);
+await ev(`document.querySelector('#pop-auth [data-act="sb-mode"][data-v="in"]')?.click(); true`); await sleep(250);
+await ev(`document.querySelector('#pop-auth [data-act="sb-mode"][data-v="up"]')?.click(); true`); await sleep(250);
+ok("ticking, switching to Sign in and back to Create account asks again (unticked)", await ev(`document.getElementById("sb-agree")?.checked === false`));
+await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = true; c.dispatchEvent(new Event("change", { bubbles: true })); document.querySelector('#pop-auth [data-pop="close"]').click(); return true; })()`); await sleep(400);
+await click('[data-act="sb-open"][data-v="up"]'); await sleep(400);
+ok("ticking, closing the popup and opening Create account again asks again (unticked)", await ev(`document.getElementById("sb-agree")?.checked === false`));
+ok("a failed submit keeps the tick for a retry in the same form", await (async () => { await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = true; c.dispatchEvent(new Event("change", { bubbles: true })); document.getElementById("sb-email").value = "bad"; document.getElementById("sb-pass").value = "x"; document.querySelector('form[data-form="sb-auth"]').requestSubmit(); return true; })()`); await sleep(400); return ev(`document.getElementById("sb-agree")?.checked === true && !!document.querySelector("#pop-auth .note")`); })());
 console.log("--- 5. the policy text matches what the app does");
 await ev(`location.hash = "#/privacy-policy"; true`); await sleep(500);
 const pol = await ev(`document.querySelector("#sec-privacy-policy, .legal")?.textContent || document.body.textContent`);

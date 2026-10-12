@@ -56,15 +56,16 @@ await ev(`(async () => { const p = newProfile("Ada"); Object.assign(p, { onboard
 await ev(AXE + "\n;true");
 const RUN = `(async () => { const x = await axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"] } }); return x.violations.map(v => v.id + " (" + v.impact + "): " + v.nodes.length + " e.g. " + v.nodes[0].target.join(" ") + " " + (v.nodes[0].any[0] || v.nodes[0].all[0] || v.nodes[0].none[0] || {}).message); })()`;
 const ROUTES = ["home", "health", "nutrition", "workouts", "snacks", "alcohol", "awards", "recipes", "recipes/jollof", "culture", "coach", "metric/steps", "metric/weight", "metric/bp", "cat/activity", "settings/profile", "settings/coach", "settings/goals", "settings/household", "settings/appearance", "settings/premium", "settings/privacy", "settings/about", "premium", "premium/pantry", "premium/micros", "privacy-policy", "terms", "refunds", "contact", "credits"];
+// Each state: how to get there, whether it is shown with nobody signed in, and something that must be on screen before axe runs (so axe cannot pass on the wrong page).
 const STATES = {
-  "Summary in edit mode with Large cards": `(() => { const p = P(); p.wv = 2; p.widgets = [{ k: "calories", size: "l" }, { k: "meals", size: "l" }, { k: "coach", size: "l" }, { k: "weight", size: "l" }, { k: "water", size: "l" }]; UI.editPage = "home"; location.hash = "#/home"; render(); return true; })()`,
-  "Create account popup": `(() => { UI.editPage = null; location.hash = "#/settings/profile"; render(); setTimeout(() => document.querySelector('[data-act="sb-open"][data-v="up"]')?.click(), 150); return true; })()`,
-  "quick jump palette": `(() => { location.hash = "#/home"; render(); openPalette(); return true; })()`,
-  "welcome screen": `(() => { UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; S.activeId = null; render(); return true; })()`,
-  "age screen": `(() => { UI.obGate = "next"; render(); return true; })()`,
-  "setup step 1 (coach)": `(() => { UI.obGate = null; UI.obStep = 1; render(); return true; })()`,
-  "setup step 3": `(() => { UI.obStep = 3; render(); return true; })()`,
-  "setup step 4": `(() => { UI.obStep = 4; render(); return true; })()`
+  "Summary in edit mode with Large cards": { js: `(() => { const p = P(); p.wv = 2; p.widgets = [{ k: "calories", size: "l" }, { k: "meals", size: "l" }, { k: "coach", size: "l" }, { k: "weight", size: "l" }, { k: "water", size: "l" }]; UI.editPage = "home"; location.hash = "#/home"; render(); return true; })()`, see: `.wgrid.editing .dcard.editing .wminus` },
+  "Create account popup": { js: `(() => { UI.editPage = null; location.hash = "#/settings/profile"; render(); setTimeout(() => document.querySelector('[data-act="sb-open"][data-v="up"]')?.click(), 150); return true; })()`, see: `#pop-auth #sb-agree` },
+  "quick jump palette": { js: `(() => { location.hash = "#/home"; render(); openPalette(); return true; })()`, see: `#palette:not([hidden]) #palette-input` },
+  "welcome screen": { js: `(() => { UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; render(); return true; })()`, out: true, see: `.wl-cta` },
+  "age screen": { js: `(() => { UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = "next"; UI.obGateOk = false; render(); return true; })()`, out: true, see: `form[data-form="age-gate"] #ag-y` },
+  "setup step 1 (coach)": { js: `(() => { UI.obDraft = newProfile(""); UI.obGate = null; UI.obGateOk = true; UI.obStep = 1; render(); return true; })()`, out: true, see: `.wl-stepper[data-step="1"] [data-act="coach-continue"]` },
+  "setup step 3": { js: `(() => { UI.obDraft = newProfile(""); UI.obGate = null; UI.obGateOk = true; UI.obStep = 3; render(); return true; })()`, out: true, see: `.wl-stepper[data-step="3"] #ob-diet` },
+  "setup step 4": { js: `(() => { UI.obDraft = newProfile(""); UI.obGate = null; UI.obGateOk = true; UI.obStep = 4; render(); return true; })()`, out: true, see: `.wl-stepper[data-step="4"] [data-act="ob-choice"]` }
 };
 console.log("--- 1. axe on every screen, 375 and 1440px, light and dark");
 for (const w of [375, 1440]) for (const mode of ["light", "dark"]) {
@@ -78,7 +79,13 @@ const keep = await ev(`JSON.stringify(S.profiles[0])`);
 for (const w of [375, 1440]) for (const mode of ["light", "dark"]) {
   await view(w); await setMode(mode);
   const bad = [];
-  for (const [name, js] of Object.entries(STATES)) { await ev(`S.profiles = [${keep}]; S.activeId = S.profiles[0].id; true`); await ev(js); await sleep(600); bad.push(...(await ev(RUN)).map(x => name + ": " + x)); }
+  for (const [name, st] of Object.entries(STATES)) {
+    await ev(`S.profiles = [${keep}]; S.activeId = S.profiles[0].id; UI.obStep = 0; UI.obGate = null; UI.editPage = null; true`);
+    if (st.out) await ev(`S.activeId = null; true`);
+    await ev(st.js); await sleep(st.out ? 2200 : 700); // the welcome and setup screens fade in; measuring colours mid-fade gives false contrast failures
+    const here = await ev(`!!document.querySelector(${JSON.stringify(st.see)})`);
+    if (!here) { bad.push(name + ": the screen did not appear, so it was not checked (" + st.see + ")"); continue; }
+    bad.push(...(await ev(RUN)).map(x => name + ": " + x)); }
   await ev(`S.profiles = [${keep}]; S.activeId = S.profiles[0].id; UI.obStep = 0; UI.obDraft = null; UI.obGate = null; UI.editPage = null; location.hash = "#/home"; render(); true`);
   ok(`${w}px ${mode}: ${Object.keys(STATES).length} popups, edit mode and setup screens, no axe violations`, bad.length === 0, bad.slice(0, 3).join(" || "));
 }

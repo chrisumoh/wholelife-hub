@@ -63,12 +63,12 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 ### Checklist run for 8.2.10
 
-- Done: `node tests/browser/a11y.mjs` (19 checks), `node tests/browser/run-all.mjs` and `node tests/check-repo.mjs`.
+- Done: `node tests/browser/a11y.mjs` (19 checks, each popup and setup screen confirmed on screen before axe runs), `node tests/browser/run-all.mjs` and `node tests/check-repo.mjs`.
 - Not run: a screen reader (VoiceOver, TalkBack, NVDA), 200% browser zoom and the largest text sizes, Lighthouse itself, real devices and Safari. No Supabase files were touched.
 
 ### Checklist run for 8.2.9
 
-- Done: `node tests/browser/legal.mjs` (42 checks), `node tests/browser/run-all.mjs` and `node tests/check-repo.mjs`.
+- Done: `node tests/browser/legal.mjs` (49 checks), `node tests/browser/run-all.mjs` and `node tests/check-repo.mjs`.
 - Not run: a real phone and Safari, a real sign-up against the live Supabase project (the tests use a fake client, so the metadata arriving on the real account is unchecked), a lawyer's review of the legal pages. No Supabase files were touched.
 
 ### Checklist run for 8.2.8
