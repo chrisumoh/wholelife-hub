@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.13 | Release gate: size and phone-speed budgets (`measure.mjs --gate`, `budget.json`) checked on every pull request by a new CI job | IN PROGRESS: build-8.2.13, pull request not yet opened |
 | 8.2.12 | Docs only: every build in this table shows its real status (merged, with its pull request number) instead of "in progress, not yet opened" | IN PROGRESS: build-8.2.12, pull request not yet opened |
 | 8.2.11 | New workout icons, 44 activities in seven groups, nine more coach sports | MERGED: PR #21 |
 | 8.2.10 | Accessibility pass with axe-core (charts, quick-jump combobox, landmarks, headings, skip link) and an automated check | MERGED: PR #20 (with 8.2.9) |
@@ -62,6 +63,11 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.2.13
+
+- Done: `node tests/perf/measure.mjs --gate` (27 within budget, 0 over) and a run with a deliberately tight limit to confirm it exits 1, `node tests/check-repo.mjs`. The browser tests were not re-run: the only change to `index.html` is the build number and the change log text.
+- Not run: the new CI job on GitHub itself until this pull request is opened; Safari and a real phone.
 
 ### Checklist run for 8.2.12
 
