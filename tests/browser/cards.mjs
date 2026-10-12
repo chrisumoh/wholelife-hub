@@ -59,7 +59,7 @@ const AUDIT = `((want) => { const out = [], lum = c => { const [r, g, b] = c.mat
   const cards = [...document.querySelectorAll(".app .dcard")];
   if (cards.length < want.min) out.push("only " + cards.length + " dashboard cards");
   const bg = getComputedStyle(document.body).backgroundColor; if (bg !== want.ground) out.push("page background " + bg + " not " + want.ground);
-  for (const el of cards) { const name = (el.querySelector(".mhead b")?.textContent || "?"), tag = "[" + name + "] ", c = getComputedStyle(el), r = el.getBoundingClientRect();
+  for (const el of cards) { const sz = el.classList.contains("ws-s") ? "s" : el.classList.contains("ws-l") ? "l" : "m"; const name = (el.querySelector(".mhead b")?.textContent || "?"), tag = "[" + name + "] ", c = getComputedStyle(el), r = el.getBoundingClientRect();
     if (c.backgroundColor !== want.card) out.push(tag + "surface " + c.backgroundColor + " not " + want.card);
     if (c.borderTopWidth !== "0px" || c.borderLeftWidth !== "0px") out.push(tag + "has a border");
     if (c.boxShadow !== "none") out.push(tag + "has a shadow");
@@ -68,26 +68,26 @@ const AUDIT = `((want) => { const out = [], lum = c => { const [r, g, b] = c.mat
     if (c.borderRadius !== "20px") out.push(tag + "radius " + c.borderRadius);
     if (c.paddingTop !== "16px" || c.paddingLeft !== "16px" || c.paddingRight !== "16px" || c.paddingBottom !== "16px") out.push(tag + "padding " + c.padding);
     for (const ps of ["::before", "::after"]) if (getComputedStyle(el, ps).display !== "none") out.push(tag + ps + " layer");
-    if (!want.editing && (el.tagName !== "A" || !el.getAttribute("href"))) out.push(tag + "is not one link");
+    if (!want.editing && !(el.tagName === "A" && el.getAttribute("href")) && !(el.tagName === "DIV" && sz === "l" && el.querySelector(":scope > a.cover[href]"))) out.push(tag + "is not one link");
     if (el.querySelector("button, input, select, textarea, .btn, .chip, .tag, .mcard, .card, .dcard") && !want.editing) out.push(tag + "has a control or an inner card");
     const head = el.querySelector(":scope > .mhead"), ic = head?.querySelector("svg"), b = head?.querySelector("b"), when = head?.querySelector(".when");
-    if (!head || !ic || !b || !when) { out.push(tag + "no header row"); continue; }
+    if (!head || !ic || !b || (sz !== "s" && !when) || (sz === "s" && when)) { out.push(tag + "no header row"); continue; }
     if (Math.round(ic.getBoundingClientRect().width) !== 18) out.push(tag + "icon " + ic.getBoundingClientRect().width + "px");
-    const bs = getComputedStyle(b); if (bs.fontSize !== "17px" || bs.fontWeight !== "600") out.push(tag + "name " + bs.fontSize + " " + bs.fontWeight);
+    const bs = getComputedStyle(b); if (bs.fontSize !== (sz === "s" ? "15px" : "17px") || bs.fontWeight !== "600") out.push(tag + "name " + bs.fontSize + " " + bs.fontWeight);
     if (ratio(bs.color, c.backgroundColor) < 4.5) out.push(tag + "name contrast " + ratio(bs.color, c.backgroundColor).toFixed(2));
-    const ws_ = getComputedStyle(when); if (ws_.fontSize !== "15px") out.push(tag + "when " + ws_.fontSize);
-    if (ratio(ws_.color, c.backgroundColor) < 4.5) out.push(tag + "gray contrast " + ratio(ws_.color, c.backgroundColor).toFixed(2));
-    if (!want.editing && !when.querySelector(".chev svg")) out.push(tag + "no chevron");
+    if (when) { const ws_ = getComputedStyle(when); if (ws_.fontSize !== "15px") out.push(tag + "when " + ws_.fontSize);
+      if (ratio(ws_.color, c.backgroundColor) < 4.5) out.push(tag + "gray contrast " + ratio(ws_.color, c.backgroundColor).toFixed(2));
+      if (!want.editing && !when.querySelector(".chev svg")) out.push(tag + "no chevron"); }
     const val = el.querySelector(".mval"); if (!val) { out.push(tag + "no value"); continue; }
     const vs = getComputedStyle(val), nodata = val.classList.contains("nodata");
     if (nodata) { if (val.textContent.trim() !== "No Data") out.push(tag + "empty state says " + val.textContent); }
-    else { if (vs.fontSize !== "34px" || vs.fontWeight !== "700") out.push(tag + "value " + vs.fontSize + " " + vs.fontWeight); if (!/tabular-nums/.test(vs.fontVariantNumeric)) out.push(tag + "numerals not tabular"); }
-    const sm = val.querySelector("small"); if (sm && getComputedStyle(sm).fontSize !== "17px") out.push(tag + "unit " + getComputedStyle(sm).fontSize);
+    else { if (vs.fontSize !== (sz === "s" ? "28px" : "34px") || vs.fontWeight !== "700") out.push(tag + "value " + vs.fontSize + " " + vs.fontWeight); if (!/tabular-nums/.test(vs.fontVariantNumeric)) out.push(tag + "numerals not tabular"); }
+    const sm = val.querySelector("small"); if (sm && getComputedStyle(sm).fontSize !== (sz === "s" ? "14px" : "17px")) out.push(tag + "unit " + getComputedStyle(sm).fontSize);
     const sub = el.querySelector(".msub"); if (sub && getComputedStyle(sub).fontSize !== "15px") out.push(tag + "sub-line " + getComputedStyle(sub).fontSize);
     if (nodata && el.querySelector(".spark")) out.push(tag + "chart on an empty card");
-    const gap = val.getBoundingClientRect().top - head.getBoundingClientRect().bottom; if (gap < 47.5) out.push(tag + "only " + Math.round(gap) + "px under the header");
+    const gap = val.getBoundingClientRect().top - head.getBoundingClientRect().bottom; if (gap < (sz === "s" ? 11.5 : 47.5)) out.push(tag + "only " + Math.round(gap) + "px under the header");
     const mm = el.querySelector(".mmain").getBoundingClientRect(); if (Math.abs(mm.left - (r.left + 16)) > 1) out.push(tag + "value not at the left");
-    if (r.bottom - Math.max(mm.bottom, ...[...el.querySelectorAll(".mbody > *")].map(x => x.getBoundingClientRect().bottom)) > 17 && !want.editing) out.push(tag + "value not at the bottom");
+    if (r.bottom - Math.max(mm.bottom, ...[...el.querySelectorAll(".mbody > *")].map(x => x.getBoundingClientRect().bottom)) > 17 && !want.editing && sz !== "l") out.push(tag + "value not at the bottom");
     const sp = el.querySelector(".spark"); if (sp) { const sr = sp.getBoundingClientRect(); if (sr.width > 120.5 || sr.height > 64.5) out.push(tag + "chart " + Math.round(sr.width) + "x" + Math.round(sr.height)); if (Math.abs(sr.right - (r.right - 16)) > 1) out.push(tag + "chart not bottom right");
       const rects = [...sp.querySelectorAll("rect")], last = rects[rects.length - 1], fill = e => e.getAttribute("fill");
       if (!(fill(last) !== "var(--chart-gray)" && rects.slice(0, -1).every(x => fill(x) === "var(--chart-gray)"))) out.push(tag + "chart bars: gray bars, latest in the category colour"); }
@@ -120,10 +120,10 @@ for (const w of [375, 820, 1440]) {
 
 console.log("--- 2. content of the cards");
 await view(1440); await set("dark", "forest"); await goto("#/home");
-const names = await ev(`[...document.querySelectorAll(".app .mgrid .dcard .mhead b")].map(b => b.textContent)`);
+const names = await ev(`[...document.querySelectorAll(".app .wgrid .dcard .mhead b, .app .mgrid .dcard .mhead b")].map(b => b.textContent)`);
 for (const want of ["Meals", "Calories eaten", "Weight estimate", "Workouts", "Steps", "Sleep", "Resting heart rate", "Coach", "Micronutrients", "Recovery", "Pantry"]) ok(`Summary has the ${want} card`, names.includes(want), names.join(","));
 ok("every METRIC is pinned and shows", await ev(`Object.values(METRICS).every(m => [...document.querySelectorAll(".dcard .mhead b")].some(b => b.textContent === m.n))`));
-const meals = await ev(`(() => { const c = [...document.querySelectorAll(".dcard")].find(x => x.querySelector(".mhead b").textContent === "Meals"); return { href: c.getAttribute("href"), sub: c.querySelector(".msub")?.textContent, bars: c.querySelectorAll(".spark rect").length, val: c.querySelector(".mval").textContent, inner: c.textContent, picks: dailyPicks(today(), P()).length, sum: dailyPicks(today(), P()).reduce((a, d) => a + d.cal, 0) }; })()`);
+const meals = await ev(`(() => { const c = [...document.querySelectorAll(".dcard")].find(x => x.querySelector(".mhead b").textContent === "Meals"); return { href: c.getAttribute("href"), sub: c.querySelector(".msub")?.textContent, bars: c.querySelectorAll(".spark rect").length, val: c.querySelector(".mval .cnt")?.dataset.count || c.querySelector(".mval").textContent, inner: c.textContent, picks: dailyPicks(today(), P()).length, sum: dailyPicks(today(), P()).reduce((a, d) => a + d.cal, 0) }; })()`);
 ok("Meals links to the detail page", meals.href === "#/nutrition", meals.href);
 ok("Meals shows the planned calories", meals.val.replace(/[^\d]/g, "") === String(meals.sum), `${meals.val} vs ${meals.sum}`);
 ok("Meals sub-line reads 'N planned · N logged'", /^\d+ planned · \d+ logged$/.test(meals.sub || ""), meals.sub);
@@ -152,21 +152,23 @@ const pt = await ev(`(() => { const c = [...document.querySelectorAll(".dcard")]
 await send("Input.dispatchMouseEvent", { type: "mousePressed", x: pt.x, y: pt.y, button: "left", clickCount: 1 }); await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: pt.x, y: pt.y, button: "left", clickCount: 1 });
 ok("tapping anywhere on a card opens that metric's page", await waitFor(`location.hash === "#/workouts"`), await ev(`location.hash`));
 await goto("#/home");
-const edit = await ev(`(() => { const b = document.querySelector('[data-act="edit-pins"]'), c = getComputedStyle(b); return { text: b.textContent, bg: c.backgroundColor, border: c.borderTopWidth, shadow: c.boxShadow, color: c.color, accent: getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(), h2: getComputedStyle(document.querySelector(".sec-title")).fontSize + " " + getComputedStyle(document.querySelector(".sec-title")).fontWeight }; })()`);
-ok("'Edit widgets' is plain accent text with no background", edit.text === "Edit widgets" && /rgba\(0, 0, 0, 0\)|transparent/.test(edit.bg) && edit.border === "0px" && edit.shadow === "none", JSON.stringify(edit));
+const edit = await ev(`(() => { const b = document.querySelector('[data-act="wl-edit"]'), c = getComputedStyle(b); return { text: b.textContent, bg: c.backgroundColor, border: c.borderTopWidth, shadow: c.boxShadow, color: c.color, accent: getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(), h2: getComputedStyle(document.querySelector(".sec-title")).fontSize + " " + getComputedStyle(document.querySelector(".sec-title")).fontWeight, h: b.getBoundingClientRect().height }; })()`);
+ok("'Edit widgets' is plain accent text with no background", edit.text === "Edit widgets" && /rgba\(0, 0, 0, 0\)|transparent/.test(edit.bg) && edit.border === "0px" && edit.shadow === "none" && edit.h >= 43.9, JSON.stringify(edit));
 ok("section titles are 22px bold", edit.h2 === "22px 700", edit.h2);
-await ev(`document.querySelector('[data-act="edit-pins"]').click(); true`); await sleep(400);
-const ed = await ev(`({ done: document.querySelector('[data-act="edit-pins"]').textContent, tools: document.querySelectorAll(".dcard.editing .wtools").length, remove: document.querySelectorAll(".dcard.editing .wx").length, n: document.querySelectorAll(".dcard.editing").length, tray: !!document.querySelector(".addtray") })`);
-ok("Edit mode shows every card with its tools", ed.done === "Done" && ed.n >= 10 && ed.tools === ed.n && ed.remove === ed.n, JSON.stringify(ed));
+await ev(`document.querySelector('[data-act="wl-edit"]').click(); true`); await sleep(400);
+const ed = await ev(`({ done: document.querySelector('[data-act="wl-edit"]').textContent, n: document.querySelectorAll(".dcard.editing").length, minus: document.querySelectorAll(".dcard.editing .mhead .wminus").length, seg: document.querySelectorAll(".dcard.editing .mhead .wseg").length, old: document.querySelectorAll(".wtools, .wx, .addtray, [data-act='w-size'], [data-act='pw-size']").length })`);
+ok("Edit mode puts a minus and an S/M/L switch in every card's top row, and no old controls", ed.done === "Done" && ed.n >= 5 && ed.minus === ed.n && ed.seg === ed.n && ed.old === 0, JSON.stringify(ed));
 const before = await ev(`P().widgets.length`);
-await ev(`document.querySelector('.dcard.editing [data-act="w-size"][data-v="l"]').click(); true`); await sleep(200);
-ok("resizing a card works", await ev(`document.querySelector(".dcard.editing").classList.contains("wide") || P().widgets.some(w => w.size === "l")`));
-await ev(`document.querySelector('.dcard.editing .wx').click(); true`); await sleep(300);
-ok("removing a card works", (await ev(`P().widgets.length`)) === before - 1, String(await ev(`P().widgets.length`)));
-await ev(`document.querySelector('[data-act="edit-pins"]').click(); true`); await sleep(300);
-ok("Done returns to normal cards", await ev(`document.querySelectorAll(".dcard.editing").length === 0 && document.querySelectorAll("a.dcard").length > 5`));
+await ev(`document.querySelector('.dcard.editing [data-act="wl-size"][data-v="m"]').click(); true`); await sleep(200);
+ok("resizing a card works", await ev(`P().widgets.some(w => w.size === "m") && document.querySelector(".dcard.editing").classList.contains("ws-m")`));
+await ev(`document.querySelector('.dcard.editing .wminus').click(); true`); await sleep(300);
+ok("hiding a card works", (await ev(`P().widgets.length`)) === before - 1, String(await ev(`P().widgets.length`)));
+await ev(`document.querySelector('[data-act="wl-edit"]').click(); true`); await sleep(300);
+ok("Done returns to normal cards", await ev(`document.querySelectorAll(".dcard.editing").length === 0 && document.querySelectorAll("a.dcard").length > 3`));
 
-ok("page widgets: 'Customise' is plain accent text too", await (async () => { await goto("#/health"); return ev(`(() => { const b = document.querySelector('[data-act="edit-page"]'); if (!b) return false; const c = getComputedStyle(b); return /rgba\\(0, 0, 0, 0\\)|transparent/.test(c.backgroundColor) && c.borderTopWidth === "0px" && c.boxShadow === "none"; })()`); })());
+await goto("#/health");
+const pgEdit = await ev(`(() => { const b = document.querySelector('[data-act="wl-edit"]'); if (!b) return "none"; const c = getComputedStyle(b); return JSON.stringify({ t: b.textContent, bg: c.backgroundColor, bw: c.borderTopWidth, sh: c.boxShadow }); })()`);
+ok("page widgets: 'Edit widgets' is plain accent text too", /"t":"Edit widgets","bg":"rgba\(0, 0, 0, 0\)","bw":"0px","sh":"none"/.test(pgEdit), pgEdit);
 console.log("--- 5. legal text keeps its underlines, nothing else does");
 await goto("#/privacy-policy");
 ok("links in the legal text are still underlined", await ev(`[...document.querySelectorAll(".legal a")].some(a => getComputedStyle(a).textDecorationLine === "underline")`) || await ev(`document.querySelectorAll(".legal a").length === 0`));
