@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.8 | Dish tiles (Food culture, Recipes, Today's menu) use the flat card pattern | IN PROGRESS: build-8.2.8, stacked on build-8.2.7, pull request not yet opened |
 | 8.2.7 | Widget sizes work (Small, Medium, Large) on Summary and every page; widget edit mode rebuilt (minus, S/M/L, drag handle or arrows, Hidden widgets, Reset layout with confirm); leftover cards restyled | IN PROGRESS: build-8.2.7, stacked on build-8.2.6, pull request not yet opened |
 | 8.2.6 | One flat Apple Health-style dashboard card everywhere (Summary pins, Nutrition, Health data, Trends, premium widgets); Meals card; glass, caustics, beam and scenes removed from content | IN PROGRESS: build-8.2.6, stacked on build-8.2.5, pull request not yet opened |
 | 8.2.5 | Boot screen on the first bytes; coach portraits and home-screen icon moved to `img/` (first paint 3.7 s to 0.26 s on Fast 4G, download 541 to 450 KB) | IN PROGRESS: build-8.2.5, stacked on build-8.2.4, pull request not yet opened |
@@ -57,6 +58,11 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.2.8
+
+- Done: `node tests/browser/widgets.mjs` (511 checks, including the new dish-tile section in light, dark and OLED at 1180 and 375px), `node tests/browser/run-all.mjs` and `node tests/check-repo.mjs`.
+- Not run: a real iPad and Safari, the deployed-preview check. No Supabase files were touched.
 
 ### Checklist run for 8.2.7
 

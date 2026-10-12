@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.7, 2026-10-12. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.8, 2026-10-12. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.8 · Food culture: Dish tiles on Food culture, Recipes and Today's menu use the flat card pattern
+
+- **Problem:** On the Food culture page (and everywhere a dish tile appears) the tiles still had the old look: a 1px border, a glass rim, a terracotta bar along the top edge, a hover lift, and an uppercase, letter-spaced yellow BREAKFAST / LUNCH / DINNER label. They sat inside cards as a second, differently styled card, which the 8.2.6 card pattern forbids. Found on the build-8.2.7 preview on an iPad.
+- **Change:** One CSS block (8.2.8) restyles .dish: no border, shadow, blur, gradient, top bar or hover lift; 20px radius; 16px padding; the slot label is sentence case, 15px semibold, in the Nutrition colour; the dish name is 17px semibold; calories and protein are 15px gray. A tile on the page is a card colour; a tile inside a card is a second gray (new --tile token: #F2F2F7 light, #2C2C2E dark, #1C1C1E OLED) so it never shares its parent's colour. The plan list on Food culture has 12px gaps and a 17px semibold day label. The sentence-case card labels from 8.2.7 now also cover Food culture, Recipes and Alcohol. Dish tiles stay text only (no icon or image).
+- **Where:** index.html: CSS block 8.2.8 at the end of the stylesheet (.dish, .dish .slot, .dish h3, .planday, --tile), the 8.2.7 sentence-case selector list. tests/browser/widgets.mjs section 8. docs/BUILD_PLAN.md, CHANGELOG.md, README.md.
+- **How to test:** node tests/browser/widgets.mjs (511 checks; section 8 checks every dish tile on Food culture at 1180 and 375px and on Recipes at 1180px, in light, dark and OLED). By hand: open Food culture on a phone and a tablet and look at Today's menu, From other cultures, Today and This week.
+- **Known limits:** (1) The buttons inside the tiles (Swap, Not this, Add to my rotation) keep the earlier button style; only the tiles changed. (2) Other tile-like boxes (.well, coach picker tiles, premium screens) are not restyled in this build. (3) Not tested on a real iPad or in Safari.
 
 ## 8.2.7 · Widgets: Widget sizes work (Small, Medium, Large) on Summary and every page, and widget edit mode rebuilt
 
