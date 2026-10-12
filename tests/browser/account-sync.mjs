@@ -138,8 +138,10 @@ ok("the workout row keeps source and equipment", live("workouts", A)[0].source =
 
 console.log("--- 2. photos: stored under <user>/<person>/<type>/<id>.jpg, shrunk, location stripped");
 const personId = person.id, paths = Object.keys(files());
-const mealPath = live("meal_logs", A)[0].photo_path, wPath = live("workouts", A)[0].photo_path, avatar = person.avatar_url;
+const bare = v => String(v || "").split("#")[0], ver = v => String(v || "").split("#")[1];
+const mealPath = bare(live("meal_logs", A)[0].photo_path), wPath = bare(live("workouts", A)[0].photo_path), avatar = bare(person.avatar_url);
 const shotMeta = person.settings?.prem?.shots?.[0];
+ok("the stored value carries a version after the path, which is how a replaced photo is noticed", !!ver(live("meal_logs", A)[0].photo_path) && !!ver(live("workouts", A)[0].photo_path) && !!ver(person.avatar_url));
 ok("meal path pattern", mealPath === `${A}/${personId}/meals/${ids.meal}.jpg`, mealPath);
 ok("workout path pattern", wPath === `${A}/${personId}/workouts/${ids.workout}.jpg`, wPath);
 ok("avatar path pattern", avatar === `${A}/${personId}/avatar/${pid}.jpg`, avatar);
@@ -317,9 +319,106 @@ ok("nothing is uploaded before the answer", live("snack_logs", C).length === 0 &
 await dC.ev(`document.querySelector('[data-act="sb-guest-import"]').click(); true`);
 ok("import syncs", await dC.synced(25000));
 ok("meal, snack, drink, workout, weigh-in, vitals and the profile are all in C's account", live("meal_logs", C).length === 1 && live("snack_logs", C).length === 1 && live("drink_logs", C).length === 1 && live("workouts", C).length === 1 && live("weight_entries", C).length === 1 && rows("daily_vitals", C).length === 1 && rows("people", C).length === 1 && rows("people", C)[0].display_name === "Guest Gina");
-ok("and the meal's photo", !!live("meal_logs", C)[0].photo_path && !!files()[live("meal_logs", C)[0].photo_path]);
+ok("and the meal's photo", !!live("meal_logs", C)[0].photo_path && !!files()[bare(live("meal_logs", C)[0].photo_path)]);
 
-console.log("--- 12. no script errors");
+console.log("--- 12. review fixes: the later change wins, in every direction");
+await d1.kick(); await d2.kick();
+const nameOf = uid => rows("people", uid).filter(r => !r.deleted_at).map(r => r.display_name);
+// each edit of a waiting profile carries its own time
+await d1.ev(`__fake.offline = true; P().name = "X1"; saveProfile(); true`); await sleep(300);
+await d2.ev(`P().name = "Y"; saveProfile(); true`); await d2.synced(); await sleep(300);
+await d1.ev(`P().name = "X2"; saveProfile(); true`); await sleep(300);
+await d1.ev(`__fake.offline = false; true`);
+ok("a second offline edit, made after another device's change, is not mistaken for an older one", await d1.kick() && nameOf(A).includes("X2") && !nameOf(A).includes("Y"), JSON.stringify(nameOf(A)));
+ok("and the other device follows", await d2.kick() && (await d2.ev(`P().name`)) === "X2");
+// profile deletion against edit, both ways
+const mkTemp = async name => { const id = await d1.ev(`(() => { const p = newProfile(${JSON.stringify(name)}); Object.assign(p, { onboarded: true, coachPrompted: true, tourSeen: "dismissed" }); S.profiles.push(p); saveProfile(); return p.id; })()`); await d1.synced(); await d2.kick(); return id; };
+let tmp = await mkTemp("Temp");
+await d1.ev(`__fake.offline = true; dropProfile(${JSON.stringify(tmp)}); saveProfile(); true`); await sleep(300);
+await d2.ev(`S.profiles.find(p => p.id === ${JSON.stringify(tmp)}).name = "Temp edited"; saveProfile(); true`); await d2.synced(); await sleep(200);
+await d1.ev(`__fake.offline = false; true`);
+ok("an older waiting deletion does not erase a newer edit: the profile comes back", await d1.kick() && await d1.ev(`S.profiles.some(p => p.id === ${JSON.stringify(tmp)} && p.name === "Temp edited")`) && nameOf(A).includes("Temp edited"), JSON.stringify(nameOf(A)));
+await d1.ev(`__fake.offline = true; S.profiles.find(p => p.id === ${JSON.stringify(tmp)}).name = "Edited offline"; saveProfile(); true`); await sleep(300);
+await d2.ev(`dropProfile(${JSON.stringify(tmp)}); saveProfile(); true`); await d2.synced(); await sleep(200);
+await d1.ev(`__fake.offline = false; true`);
+ok("an older waiting edit does not bring back a newer deletion", await d1.kick() && await d1.ev(`!S.profiles.some(p => p.id === ${JSON.stringify(tmp)})`) && !nameOf(A).includes("Edited offline"), JSON.stringify(nameOf(A)));
+tmp = await mkTemp("Temp again");
+await d2.ev(`dropProfile(${JSON.stringify(tmp)}); saveProfile(); true`); await d2.synced(); await sleep(300);
+await d1.ev(`S.profiles.find(p => p.id === ${JSON.stringify(tmp)}).name = "Edited after the delete"; saveProfile(); true`); await d1.synced();
+ok("an edit made after the deletion restores the profile everywhere", nameOf(A).includes("Edited after the delete") && await d2.kick() && await d2.ev(`S.profiles.some(p => p.name === "Edited after the delete")`), JSON.stringify(nameOf(A)));
+// a row written by 8.2.15 is topped up once
+{ const db = DB(); const row = db.people.find(r => r.owner_id === A && r.display_name === "X2"); row.settings = { v: 1, units: row.settings.units, coachName: row.settings.coachName }; row.updated_at = new Date(Date.now() + 50).toISOString(); backend.json = JSON.stringify(db); }
+await d1.ev(`P().workoutPlan = { created: today(), days: [] }; true`);
+ok("an older (version 1) row is sent the newer fields once instead of being treated as current", await d1.kick() && rows("people", A).find(r => r.display_name === "X2")?.settings?.v === 2 && !!rows("people", A).find(r => r.display_name === "X2")?.settings?.workoutPlan);
+// a cleared field is cleared everywhere
+await d1.ev(`P().workoutPlan = null; P().plan = null; saveProfile(); true`); await d1.synced();
+ok("a plan cleared on one device is cleared on the other", await d2.kick() && await d2.ev(`!P().workoutPlan && !P().plan`));
+// meals and sign-out: an older waiting change never overwrites a newer one
+const mid = await d1.ev(`(() => { const id = uid(); addEntry("meals", { id, date: today(), slot: "lunch", name: "Stale test meal", cal: 300, dish: null, extras: [], est: false, photo: null }); return id; })()`);
+await d1.synced(); await d2.kick();
+await d1.ev(`__fake.offline = true; updateEntry("meals", ${JSON.stringify(mid)}, x => { x.name = "D1 older edit"; }); true`); await sleep(300);
+await d2.ev(`updateEntry("meals", ${JSON.stringify(mid)}, x => { x.name = "D2 newer edit"; }); true`); await d2.synced(); await sleep(200);
+await d1.ev(`__fake.offline = false; true`);
+ok("signing out with an older waiting edit does not overwrite the newer one", await d1.reloaded(`sbSignOut(false).then(() => UI.sbConfirmOut ? sbSignOut(true) : 0).then(()=>true)`) && live("meal_logs", A).some(r => r.app_id === mid && r.name === "D2 newer edit"), JSON.stringify(live("meal_logs", A).map(r => r.name)));
+ok("sign in as A again on device 1", await d1.signIn("a@x.com") && await d1.waitFor(`S.profiles.length >= 1 && SB.firstDone && !sbPending()`, 25000));
+
+console.log("--- 13. review fixes: photos");
+const wp = await d1.ev(`(() => { const id = uid(); addEntry("workouts", { id, date: today(), type: "run", minutes: 20, cal: 100, note: "photo workout", src: null, equip: null, photo: __photo(240, 180, true) }); return id; })()`);
+await d1.synced(); await d2.waitFor(`true`);
+await d2.ev(`__fake.failDownload = true; true`);
+await d2.kick();
+const wpath = bare(live("workouts", A).find(r => r.app_id === wp).photo_path);
+ok("a download that fails leaves the workout without its photo (for now)", await d2.ev(`[...sbAllOf("workouts")].some(x => x.e.id === "${wp}" && !x.e.photo)`) && !!files()[wpath]);
+await d2.ev(`updateEntry("workouts", "${wp}", x => { x.note = "text edit only"; }); true`); await d2.synced();
+ok("editing the text before the photo arrives does not delete the account's photo", !!files()[wpath] && bare(live("workouts", A).find(r => r.app_id === wp).photo_path) === wpath && live("workouts", A).find(r => r.app_id === wp).notes === "text edit only", live("workouts", A).find(r => r.app_id === wp).photo_path);
+await d2.ev(`__fake.failDownload = false; true`);
+ok("the photo is still waiting, and arrives on the next sync", await d2.kick() && await d2.waitFor(`[...sbAllOf("workouts")].some(x => x.e.id === "${wp}" && !!x.e.photo)`, 15000));
+// a replaced photo reaches the other device
+const before = await d2.ev(`sbHash([...sbAllOf("workouts")].find(x => x.e.id === "${wp}").e.photo)`);
+await d1.kick();
+await d1.ev(`updateEntry("workouts", "${wp}", x => { x.photo = __photo(200, 200, false); }); true`); await d1.synced();
+ok("a replaced photo (same path, new version) is uploaded", ver(live("workouts", A).find(r => r.app_id === wp).photo_path) !== undefined && files()[wpath] !== undefined);
+ok("the other device shows the new photo, not the old one", await d2.kick() && await d2.waitFor(`sbHash([...sbAllOf("workouts")].find(x => x.e.id === "${wp}").e.photo) !== "${before}"`, 15000));
+// a removed profile picture is removed everywhere, and not sent back
+await d2.ev(`P().photo ? 1 : 0`); 
+await d1.ev(`P().photo = __photo(120, 120, false); saveProfile(); true`); await d1.synced(); await d2.kick();
+ok("the profile picture arrives", await d2.waitFor(`!!P().photo`, 15000));
+await d1.ev(`P().photo = null; saveProfile(); true`); await d1.synced();
+ok("removing it clears the account's picture and file", !live("people", A).length || (rows("people", A).find(r => r.display_name === "X2")?.avatar_url ?? null) === null);
+ok("the other device drops it too", await d2.kick() && await d2.ev(`!P().photo`));
+await d2.ev(`P().name = "X3"; saveProfile(); true`); await d2.synced(); await sleep(300); await d1.kick();
+ok("and does not upload the old picture again", (rows("people", A).find(r => r.display_name === "X3")?.avatar_url ?? null) === null && !Object.keys(files()).some(p => p.includes("/avatar/")));
+// failed deletions are remembered and retried
+await d1.ev(`__fake.failRemove = true; removeEntry("workouts", "${wp}"); true`); await d1.synced();
+ok("a delete that fails keeps the file on a retry list", !!files()[wpath] && (await d1.ev(`SB.rmq.length`)) >= 1);
+await d1.ev(`__fake.failRemove = false; true`);
+ok("the next sync removes it and empties the list", await d1.kick() && !files()[wpath] && (await d1.ev(`SB.rmq.length`)) === 0);
+// a progress photo whose download fails stays on the waiting list and is not lost
+await d1.ev(`P().prem.body.shots.push({ id: "shot0003", at: Date.now(), date: today(), img: __photo(200, 150, false) }); saveProfile(); true`); await d1.synced();
+const shot3 = `${A}/${personId}/progress/shot0003.jpg`;
+await d2.ev(`__fake.failDownload = true; true`); await d2.kick();
+ok("the failed download is kept waiting", (await d2.ev(`SB.sneed.some(n => n.id === "shot0003")`)) && !!files()[shot3]);
+await d2.ev(`P().name = "X4"; saveProfile(); true`); await d2.synced();
+ok("a profile edit meanwhile still lists the photo and keeps its file", !!files()[shot3] && JSON.stringify(rows("people", A).find(r => r.display_name === "X4")?.settings?.prem?.shots || []).includes("shot0003"));
+await d2.ev(`__fake.failDownload = false; true`);
+ok("it arrives once downloads work", await d2.kick() && await d2.waitFor(`P().prem.body.shots.some(s => s.id === "shot0003" && !!s.img)`, 15000));
+// locking stops work that was already under way
+await d2.ev(`setPasscode("longenough1").then(() => true)`);
+await sleep(800);
+ok("a passcode on a profile that holds several photos still saves (the encryption helper used to overflow on large data)", await d2.ev(`(() => { const l = JSON.parse(localStorage.getItem("wlh.v62@u_axcom")); return !!l.root.enc && Object.values(l.logs).every(b => b.enc); })()`));
+backend.delay = 900;
+const upBefore = Object.keys(files()).length;
+await d2.ev(`P().photo = __photo(100, 100, false); P().name = "Lock test"; saveProfile(); true`);
+await sleep(1500);
+await d2.ev(`lockNow(); true`);
+ok("the screen locks", await d2.waitFor(`UI.locked === true`, 8000));
+await sleep(3500); backend.delay = 0;
+ok("a profile write that was in flight does not go on to upload the picture after the lock", Object.keys(files()).length === upBefore && !Object.keys(files()).some(p => p.includes("/avatar/")), Object.keys(files()).join(","));
+await d2.ev(`document.getElementById("unlock-pass").value = "longenough1"; document.querySelector('form[data-form="unlock"]').requestSubmit(); true`);
+ok("after unlocking, the waiting change is sent", await d2.waitFor(`UI.locked === false`, 15000) && await (async () => { for (let i = 0; i < 100; i++) { if (Object.keys(files()).some(p => p.includes("/avatar/"))) return true; await sleep(200); } return false; })() && await d2.synced(25000));
+await d2.ev(`removePasscode().then(() => true)`); await d2.synced();
+
+console.log("--- 14. no script errors");
 ok("no uncaught exceptions on any device", errorsAll.length === 0, errorsAll.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);
 procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(fail ? 1 : 0);

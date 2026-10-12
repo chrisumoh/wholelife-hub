@@ -82,6 +82,7 @@
     },
     async download(path) {
       if (F.offline) throw new TypeError("Failed to fetch");
+      if (F.failDownload) return { data: null, error: { message: "simulated download failure", statusCode: "500" } };
       return exec(DB => {
         const f = (DB.__files ||= {})[path]; if (!session || !path.startsWith(session.user.id + "/") || !f) return { data: null, error: { message: "Object not found", statusCode: "404" } };
         const bin = atob(f.b64), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
@@ -90,6 +91,7 @@
     },
     async remove(paths) {
       if (F.offline) throw new TypeError("Failed to fetch");
+      if (F.failRemove) return { data: null, error: { message: "simulated delete failure", statusCode: "500" } };
       return exec((DB, mark) => { const files = (DB.__files ||= {}); for (const p of paths) if (session && p.startsWith(session.user.id + "/")) delete files[p]; mark(); return { data: [], error: null }; });
     }
   });
