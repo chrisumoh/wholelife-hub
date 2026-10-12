@@ -42,7 +42,7 @@ const SUPA = "https://zemxqbinpehkrkyvzlue.supabase.co";
 // Optional: SUPABASE_JS=<path to supabase.js> serves the pinned library from disk instead of jsDelivr, for runs without internet.
 // It must be the exact file the app pins (npm pack @supabase/supabase-js@<version>, dist/umd/supabase.js), or the integrity check fails.
 const LOCAL_LIB = process.env.SUPABASE_JS ? readFileSync(process.env.SUPABASE_JS) : null;
-const DB = { people: [], meal_logs: [], workouts: [], weight_entries: [] }, reqs = [], sim = { delay: 0 };
+const DB = { people: [], meal_logs: [], workouts: [], weight_entries: [], snack_logs: [], drink_logs: [], daily_vitals: [] }, reqs = [], sim = { delay: 0 };
 const b64u = o => Buffer.from(JSON.stringify(o)).toString("base64url");
 const USER = { id: "11111111-2222-3333-4444-555555555555", aud: "authenticated", role: "authenticated", email: "new@x.com", email_confirmed_at: "2026-10-06T00:00:00Z", app_metadata: {}, user_metadata: {}, created_at: "2026-10-06T00:00:00Z" };
 const session = () => { const exp = Math.floor(Date.now() / 1000) + 3600; return { access_token: `${b64u({ alg: "HS256", typ: "JWT" })}.${b64u({ sub: USER.id, exp, role: "authenticated" })}.sig`, token_type: "bearer", expires_in: 3600, expires_at: exp, refresh_token: "r" + Math.random().toString(36).slice(2), user: USER }; };
@@ -52,20 +52,21 @@ function answer(method, u, body, prefer) {
   if (path.endsWith("/auth/v1/token")) return [200, session()];
   if (path.endsWith("/auth/v1/user")) return [200, USER];
   if (path.endsWith("/auth/v1/logout")) return [204, null];
-  const m = path.match(/\/rest\/v1\/(people|meal_logs|workouts|weight_entries)$/); if (!m) return [404, { message: "unknown" }];
+  const m = path.match(/\/rest\/v1\/(people|meal_logs|workouts|weight_entries|snack_logs|drink_logs|daily_vitals)$/); if (!m) return [404, { message: "unknown" }];
   const t = DB[m[1]];
-  if (method === "GET") return [200, m[1] === "workouts" || m[1] === "weight_entries" ? t : t.filter(r => !r.deleted_at)]; // 8.2.15: these are read with their deleted rows
+  if (method === "GET") return [200, m[1] === "people" || m[1] === "meal_logs" ? t.filter(r => !r.deleted_at) : t]; // 8.2.15: these are read with their deleted rows
   if (method === "POST") {
     const out = [];
     for (const p of JSON.parse(body || "[]")) {
       if (m[1] !== "people" && !DB.people.some(x => x.id === p.person_id)) return [409, { code: "23503", message: "violates foreign key constraint" }];
-      let r = t.find(x => x.owner_id === p.owner_id && x.app_id === p.app_id);
-      if (r) Object.assign(r, p); else { r = { id: crypto.randomUUID(), deleted_at: null, ...p }; t.push(r); }
+      const vit = m[1] === "daily_vitals", stamp = new Date().toISOString();
+      let r = t.find(x => x.owner_id === p.owner_id && (vit ? x.person_id === p.person_id && x.log_date === p.log_date : x.app_id === p.app_id));
+      if (r) Object.assign(r, p, { updated_at: stamp }); else { r = { id: crypto.randomUUID(), deleted_at: null, ...p, updated_at: stamp }; t.push(r); }
       out.push(r);
     }
-    return [201, /return=representation/.test(prefer) ? out.map(r => ({ id: r.id, app_id: r.app_id })) : null];
+    return [201, /return=representation/.test(prefer) ? out.map(r => ({ ...r })) : null];
   }
-  if (method === "PATCH") { const ids = (u.searchParams.get("app_id") || "").replace(/^in\.\(|\)$/g, "").split(","); t.filter(r => ids.includes(r.app_id)).forEach(r => Object.assign(r, JSON.parse(body))); return [204, null]; }
+  if (method === "PATCH") { const ids = (u.searchParams.get("app_id") || "").replace(/^in\.\(|\)$/g, "").split(","); t.filter(r => ids.includes(r.app_id)).forEach(r => Object.assign(r, JSON.parse(body), { updated_at: new Date().toISOString() })); return [204, null]; }
   return [405, {}];
 }
 function onPaused(p) {
@@ -107,7 +108,7 @@ ok("nothing left pending", await waitFor(`sbPending() === 0`, 3000));
 // 8.2.4: how the real client talks to the people table.
 const peoplePosts = reqs.filter(r => r.method === "POST" && r.path === "/rest/v1/people" && r.code < 300);
 ok("the profile is upserted on owner_id,app_id", peoplePosts.length >= 1 && peoplePosts.every(r => /on_conflict=owner_id%2Capp_id|on_conflict=owner_id,app_id/.test(r.q)), JSON.stringify(peoplePosts.map(r => r.q)));
-ok("the profile row carries its basics and a versioned settings object", peoplePosts.some(r => { try { const b = JSON.parse(r.body)[0]; return b.display_name && b.settings?.v === 1 && "age" in b && "height_cm" in b && "weight_kg" in b && b.deleted_at === null; } catch { return false; } }), peoplePosts.map(r => r.body.slice(0, 200)).join(" | "));
+ok("the profile row carries its basics and a versioned settings object", peoplePosts.some(r => { try { const b = JSON.parse(r.body)[0]; return b.display_name && b.settings?.v === 2 && "age" in b && "height_cm" in b && "weight_kg" in b && b.deleted_at === null; } catch { return false; } }), peoplePosts.map(r => r.body.slice(0, 200)).join(" | "));
 ok("the account's people are read once per sync, deleted ones included", reqs.some(r => r.method === "GET" && r.path === "/rest/v1/people" && /deleted_at/.test(r.q) && !/deleted_at=is\.null/.test(r.q)), JSON.stringify(reqs.filter(r => r.path === "/rest/v1/people").map(r => r.method + r.q.slice(0, 160))));
 
 console.log("--- 2. a meal the app never tracked is still found and uploaded");

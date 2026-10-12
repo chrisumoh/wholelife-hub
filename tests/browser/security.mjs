@@ -148,7 +148,7 @@ ok("sign in as A", await signIn("a@x.com"));
 await waitFor(`S.profiles.length === 1`, 8000); await waitFor(`[...sbAllMeals()].length === 1`, 8000);
 ok("A's name is restored from the account", await ev(`P()?.name === "Alice Secret"`));
 ok("A's synced meal is back", await ev(`[...sbAllMeals()].length === 1`));
-ok("A's snack, which was only on the device, is gone", await ev(`Object.values(S.logs).every(m => Object.values(m).every(l => !l.snacks.length))`));
+ok("A's snack comes back too: snacks sync since 8.2.16", await waitFor(`Object.values(S.logs).some(m => Object.values(m).some(l => l.snacks.length))`, 8000));
 
 console.log("--- erase removes notification and reminder keys too");
 await ev(`localStorage.setItem(NOTIF_KEY(P()), "[1]"); localStorage.setItem(remKey(P().id, "r1"), "2026-10-06"); true`);
@@ -183,24 +183,30 @@ ok("Sign out anyway: page reloads signed out", await waitFor(`window.__old === u
 ok("Sign out anyway: device is cleared", (await userKeys()).length === 0 && !(await lsHas("Offline egusi")) && !(await lsHas("Local snack")));
 ok("the meal that never uploaded is not in the account", (await ev(`JSON.stringify(__fake.DB).includes("Offline egusi")`)) === false);
 
-console.log("--- (d) the sign-out dialog lists local-only data");
+console.log("--- (d) sign-out: no warning when everything is saved, a warning for what cannot be");
 ok("sign in as A", await signIn("a@x.com"));
 await waitFor(`S.profiles.length === 1 && SB.started && !sbPending()`, 10000);
-await ev(`(() => { const p = P(); p.coachPrompted = true; p.tourSeen = "dismissed"; p.goal = "lose"; p.age = 30; p.workoutPlan = { weeks: 4 };
+await ev(`(() => { const p = P(); p.coachPrompted = true; p.tourSeen = "dismissed"; p.goal = "lose"; p.age = 30; p.workoutPlan = { created: today(), days: [] };
   addEntry("snacks", { id: uid(), date: today(), name: "Dialog snack", qty: 1, cal: 100 });
   addEntry("drinks", { id: uid(), date: today(), k: "beer", name: "Beer", qty: 1, cal: 150, units: 1 });
   addEntry("workouts", { id: uid(), date: today(), type: "strength", minutes: 30, cal: 100, note: null, src: null, equip: null, photo: null });
   addEntry("weights", { id: uid(), date: today(), kg: 70 });
   const L = logFor(p.id, monthOf(today())); L.vitals[today()] = { steps: 1000 }; markLog(p.id, monthOf(today())); saveProfile();
   location.hash = "#/settings"; render(); return true; })()`);
+await sleep(2500); await waitFor(`SB.state === "idle" && !sbPending()`, 10000);
+await waitFor(`!!document.querySelector('[data-act="sb-out"]')`);
+await ev(`window.__old = 1; document.querySelector('[data-act="sb-out"]').click(); true`);
+ok("everything is saved in the account, so it signs out with no warning", await waitFor(`window.__old === undefined && ${ready} && !SB.user`, 15000));
+ok("sign in as A again", await signIn("a@x.com"));
+ok("snack, drink, workout, weigh-in, vitals and the plan all came back from the account", await waitFor(`S.profiles.length === 1 && [...sbAllOf("snacks")].length >= 1 && [...sbAllOf("drinks")].length === 1 && [...sbAllOf("workouts")].length === 1 && [...sbAllOf("weights")].length === 1 && [...sbAllOf("vitals")].length === 1 && !!P().workoutPlan`, 15000));
+await ev(`(() => { P().prem.clips = [{ id: "clip1abcd", at: Date.now(), date: today(), n: "Squat", v: "data:video/webm;base64,AAAA", secs: 3, ex: null }]; location.hash = "#/settings"; render(); return true; })()`);
 await waitFor(`!!document.querySelector('[data-act="sb-out"]')`);
 await ev(`document.querySelector('[data-act="sb-out"]').click(); true`);
-ok("dialog shown although nothing is waiting to upload", await waitFor(`!!UI.sbConfirmOut && !!document.querySelector('[data-act="sb-out-force"]')`) && (await ev(`sbPending()`)) === 0);
+ok("a form-check video can't be saved to the account, so the warning appears", await waitFor(`!!UI.sbConfirmOut && !!document.querySelector('[data-act="sb-out-force"]')`));
 const dlg = await ev(`document.getElementById("sb-account").textContent`);
-for (const want of ["1 snack", "1 drink", "1 day of vitals", "plans and coach history for 1 profile"]) ok(`dialog lists "${want}"`, dlg.includes(want), dlg.slice(0, 300));
-// 8.2.15: workouts and weigh-ins are in the account now, so signing out does not lose them and the dialog must not claim it does.
+ok(`the warning lists "1 form-check video"`, dlg.includes("1 form-check video"), dlg.slice(0, 300));
 const localList = await ev(`UI.sbConfirmOut.local.join(" | ")`);
-for (const not of ["workout", "weigh-in"]) ok(`the list of data that would be lost no longer names "${not}"`, !localList.includes(not), localList);
+for (const not of ["snack", "drink", "workout", "weigh-in", "vitals", "plans"]) ok(`it no longer lists "${not}", which are saved`, !localList.includes(not), localList);
 ok("dialog has Cancel and Sign out anyway", await ev(`(() => { const b = [...document.querySelectorAll("#sb-account button")].map(x => x.textContent.trim()); return b.includes("Cancel") && b.includes("Sign out anyway"); })()`));
 await ev(`document.querySelector('[data-act="sb-out-no"]').click(); true`);
 await ev(`flush().then(() => true)`);

@@ -68,11 +68,12 @@ ok("the profile is sent", await synced());
 let row = await rowOf(adaId);
 ok("one row in the account", (await rows()).length === 1 && !!row);
 ok("columns hold the basics", row && row.display_name === "Ada" && row.age === 30 && row.height_cm === 170 && row.weight_kg === 65 && row.calorie_target === 1800 && row.workouts_per_week === 4 && row.cultural_background === "Ghana" && row.goal === "lose" && row.onboarding_done === true && row.is_primary === true, JSON.stringify(row));
-ok("settings hold the choices and a version", row?.settings?.v === 1 && row.settings.sex === "female" && row.settings.units === "metric" && row.settings.focus === "africa" && row.settings.allergies === "peanuts" && row.settings.coachName === "Ama" && row.settings.level === "intermediate" && row.settings.targetKg === 60, JSON.stringify(row?.settings));
-const allowed = new Set(["v", "style", "diet", "allergies", "sex", "units", "level", "sport", "targetKg", "workoutGoal", "cultureMode", "focus", "coachPersona", "coachName", "rotation", "menuSkip", "limits", "gear", "coachPrompted", "tourSeen"]);
+ok("settings hold the choices and a version", row?.settings?.v === 2 && row.settings.sex === "female" && row.settings.units === "metric" && row.settings.focus === "africa" && row.settings.allergies === "peanuts" && row.settings.coachName === "Ama" && row.settings.level === "intermediate" && row.settings.targetKg === 60, JSON.stringify(row?.settings));
+const allowed = new Set(["v", "style", "diet", "allergies", "sex", "units", "level", "sport", "targetKg", "workoutGoal", "cultureMode", "focus", "coachPersona", "coachName", "rotation", "menuSkip", "limits", "gear", "coachPrompted", "tourSeen", "created", "look", "widgets", "layouts", "wv", "reminders", "plan", "workoutPlan", "coach", "awards", "celebr", "menuPick", "menuSeed", "prem"]);
 ok("nothing outside the list is uploaded", Object.keys(row?.settings || {}).every(k => allowed.has(k)), Object.keys(row?.settings || {}).join(","));
 const raw = JSON.stringify(await DB());
-ok("plans, coach answers and progress photos never reach the account", !raw.includes("secret") && !raw.includes("private answer") && !raw.includes("data:image"));
+ok("plans and coach answers now travel with the profile (8.2.16), but no photo data is ever stored in a row", raw.includes("secret") && raw.includes("private answer") && !raw.includes("data:image"));
+ok("the allergy text is also written to the allergies column and the choices to nutrition_preferences", JSON.stringify(row?.allergies) === '["peanuts"]' && (row?.nutrition_preferences || []).includes("africa"), JSON.stringify([row?.allergies, row?.nutrition_preferences]));
 await ev(`(() => { addEntry("meals", { id: uid(), date: today(), slot: "lunch", name: "Jollof rice", cal: 500, dish: null, extras: [], est: false }); markLog(P().id, monthOf(today())); return true; })()`);
 ok("a meal follows", await synced() && (await DB()).meal_logs.length === 1);
 const deviceA = await saveDevice();
@@ -135,7 +136,7 @@ await ev(`(() => { const db = JSON.parse(localStorage.getItem("__fakedb")); cons
   const c = JSON.parse(localStorage.getItem("wlh.meals.v1")); delete c.ps; delete c.pp; localStorage.setItem("wlh.meals.v1", JSON.stringify(c)); return true; })()`);
 ok("reloaded", await reload() && await synced());
 ok("this device kept its profile", await ev(`P().age === 31 && P().heightCm === 170 && P().weightKg === 63.5`), await ev(`P().age + " " + P().heightCm + " " + P().weightKg`));
-ok("and sent it up", await waitFor(`true`) && (await rowOf(adaId)).settings?.v === 1 && (await rowOf(adaId)).height_cm === 170, JSON.stringify(await rowOf(adaId)));
+ok("and sent it up", await waitFor(`true`) && (await rowOf(adaId)).settings?.v === 2 && (await rowOf(adaId)).height_cm === 170, JSON.stringify(await rowOf(adaId)));
 
 console.log("--- 7. no console errors");
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 500));
