@@ -118,18 +118,18 @@ const attack2 = await ev(`(async()=>{ const pid=__fake.DB.people.find(p=>p.owner
 ok("B cannot write a meal into A's profile", attack2 === true);
 ok("sign out B", await signOut());
 
-console.log("--- 8. passcode: meals stay local");
+console.log("--- 8. passcode: the device copy is encrypted, sync keeps running (8.2.16)");
 ok("sign in A again (page reloads)", await signIn("a@x.com"));
 ok("A sync finishes (profile restored from the account: meals come back)", await synced());
 ok("A has 3 meals again", await waitFor("[...sbAllMeals()].length === 3", 6000), await memMeals());
 await ev(`setPasscode("passcode-123").then(()=>true)`);
-ok("passcode: sync inactive", await ev(`!sbActive()`));
+ok("passcode: sync still active while unlocked", await ev(`sbActive()`));
 ok("passcode: plain cache removed", (await cacheN()) === -1);
 await addMeal("Kenkey"); await sleep(2500);
-ok("passcode: new meal not uploaded", (await remote("u_axcom")) === 3, await remote("u_axcom"));
+ok("passcode: a new meal is still uploaded", await waitFor(`__fake.DB.meal_logs.filter(r => r.owner_id === "u_axcom" && !r.deleted_at).length === 4`, 8000), await remote("u_axcom"));
 ok("passcode: meals are in the (encrypted) blob, not plain", await ev(`(()=>{ const l=JSON.parse(localStorage.getItem("wlh.v62@u_axcom")).logs; return Object.values(l).every(b=>b.enc && !b.meals); })()`));
 await ev(`removePasscode().then(()=>true)`); await synced();
-ok("passcode removed: sync resumes and uploads the offline-period meal", (await remote("u_axcom")) === 4, await remote("u_axcom"));
+ok("passcode removed: sync carries on, nothing lost or duplicated", (await remote("u_axcom")) === 4 && (await cacheN()) === 4, `${await remote("u_axcom")} / cache ${await cacheN()}`);
 
 console.log("--- 9. expired session, then a different account");
 await ev(`window.__old = 1; __fake.expireNow(); true`); await sleep(1500);

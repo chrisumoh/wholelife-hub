@@ -4,7 +4,7 @@ Project rules for WholeLife Hub. Read this before changing anything.
 
 ## What this repo is
 
-A health and fitness web app that lives in one file, `index.html` (markup, CSS and JS together). It has no build step. `CHANGELOG.md` records every build, and is the only changelog. `docs/VERSIONING.md` and `docs/DATABASE.md` hold the detailed rules. `supabase/migrations/` holds the SQL for the backend. Since build 8.1.11 the app uses Supabase for email sign-in and for syncing meals to your account (the `meal_logs` table); since 8.2.4 it also syncs the basics of each profile (the `people` table). Since 8.2.15 workouts and weigh-ins sync too (the `workouts` and `weight_entries` tables). Everything else (snacks, drinks, vitals, profile plans and coach history, meal and workout photos) still saves in the browser, and with a passcode on, meals, workouts, weigh-ins and profiles stay on the device too.
+A health and fitness web app that lives in one file, `index.html` (markup, CSS and JS together). It has no build step. `CHANGELOG.md` records every build, and is the only changelog. `docs/VERSIONING.md` and `docs/DATABASE.md` hold the detailed rules. `supabase/migrations/` holds the SQL for the backend. Since build 8.1.11 the app uses Supabase for email sign-in and for syncing meals to your account (the `meal_logs` table); since 8.2.4 it also syncs the basics of each profile (the `people` table). Since 8.2.16 everything a person logs syncs (meals, snacks, drinks, workouts, weigh-ins, vitals, every profile field and photos, through the existing tables and the private `photos` bucket), with or without a passcode; only form-check videos, premium status and consent switches stay on the device. The passcode encrypts the device copy only.
 
 ## Read first
 
