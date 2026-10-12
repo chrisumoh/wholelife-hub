@@ -1,6 +1,6 @@
 # Whole Life Hub
 
-A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.2 (Dev Testing), build 8.2.2**.
+A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.2 (Dev Testing), build 8.2.5**.
 
 ## What's in this repository
 
@@ -11,8 +11,9 @@ A health and fitness web app: meal and snack logging, workouts, health metrics, 
 | `docs/VERSIONING.md` | How version numbers work (8.1, 8.1.1 …). |
 | `docs/DATABASE.md` | The Supabase tables, security rules and photo storage. |
 | `supabase/migrations/` | The SQL that built the database, in the order it was applied. |
+| `img/` | Images the app loads on demand: the three coach portraits and the home-screen icon. |
 | `.github/` | Bug-report and pull-request templates for testers, and the `Tests` workflow. |
-| `tests/` | Browser tests (`tests/browser/`, run with `node tests/browser/run-all.mjs`), fast repo checks (`node tests/check-repo.mjs`) and the SQL isolation test. |
+| `tests/` | Browser tests (`tests/browser/`, run with `node tests/browser/run-all.mjs`), fast repo checks (`node tests/check-repo.mjs`) and the SQL isolation test. The phone performance measurement is `node tests/perf/measure.mjs` (see `docs/PERFORMANCE.md`). |
 
 ## Run it locally
 
@@ -36,7 +37,7 @@ Every push to `main` then redeploys automatically, and every pull request gets i
 
 Project **Whole Life Hub** (`https://zemxqbinpehkrkyvzlue.supabase.co`, region us-west-2). Tables, security rules and storage are described in [docs/DATABASE.md](docs/DATABASE.md).
 
-**Status:** the database is ready; the app does not use it yet. It still saves to the browser. The next step is login screens and moving the app's save layer (`schedule()` / `flush()`, `lsGet` / `lsSet` in `index.html`) to Supabase, one data type at a time, starting with meals.
+**Status:** since build 8.1.11 the app signs in with Supabase Auth and saves meals to your account; since 8.2.4 it also saves the basics of each profile, so a second device shows your profiles and meals. Snacks, drinks, workouts, weigh-ins, vitals, plans and photos still save only in the browser. What goes where is in [docs/DATABASE.md](docs/DATABASE.md).
 
 **Keys:** the frontend may only ever use the project URL and the *publishable / anon* key (Supabase dashboard › Project Settings › API). Never commit the *service_role* key or any `.env` file; `.gitignore` already blocks `.env`. Row Level Security is what keeps each account's data private, so every new table needs RLS and a policy before the app uses it.
 

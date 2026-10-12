@@ -74,7 +74,7 @@ function onPaused(p) {
   if (method === "OPTIONS") return void send("Fetch.fulfillRequest", { requestId, responseCode: 204, responseHeaders: CORS });
   const prefer = Object.entries(request.headers).find(([k]) => k.toLowerCase() === "prefer")?.[1] || "";
   const [code, json] = answer(method, u, request.postData, prefer);
-  reqs.push({ method, path: u.pathname, code });
+  reqs.push({ method, path: u.pathname, code, q: u.search, body: request.postData || "" });
   setTimeout(() => send("Fetch.fulfillRequest", { requestId, responseCode: code, responseHeaders: CORS, body: json == null ? "" : Buffer.from(JSON.stringify(json)).toString("base64") }), sim.delay);
 }
 const posts = t => reqs.filter(r => r.method === "POST" && r.path === "/rest/v1/" + t && r.code < 300).length;
@@ -104,6 +104,11 @@ ok("meal is queued", (await ev(`sbPending()`)) === 1, await ev(`JSON.stringify(S
 ok("POST /rest/v1/meal_logs within 5s of logging", await until(() => posts("meal_logs") >= 1, 5000), trail());
 ok("the meal row reached the database, attached to the person", DB.meal_logs.length === 1 && DB.meal_logs[0].name === "Jollof rice" && DB.meal_logs[0].person_id === DB.people[0]?.id);
 ok("nothing left pending", await waitFor(`sbPending() === 0`, 3000));
+// 8.2.4: how the real client talks to the people table.
+const peoplePosts = reqs.filter(r => r.method === "POST" && r.path === "/rest/v1/people" && r.code < 300);
+ok("the profile is upserted on owner_id,app_id", peoplePosts.length >= 1 && peoplePosts.every(r => /on_conflict=owner_id%2Capp_id|on_conflict=owner_id,app_id/.test(r.q)), JSON.stringify(peoplePosts.map(r => r.q)));
+ok("the profile row carries its basics and a versioned settings object", peoplePosts.some(r => { try { const b = JSON.parse(r.body)[0]; return b.display_name && b.settings?.v === 1 && "age" in b && "height_cm" in b && "weight_kg" in b && b.deleted_at === null; } catch { return false; } }), peoplePosts.map(r => r.body.slice(0, 200)).join(" | "));
+ok("the account's people are read once per sync, deleted ones included", reqs.some(r => r.method === "GET" && r.path === "/rest/v1/people" && /deleted_at/.test(r.q) && !/deleted_at=is\.null/.test(r.q)), JSON.stringify(reqs.filter(r => r.path === "/rest/v1/people").map(r => r.method + r.q.slice(0, 160))));
 
 console.log("--- 2. a meal the app never tracked is still found and uploaded");
 // Simulates any path that changes a meal without going through markLog()/sbTrack().

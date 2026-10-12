@@ -21,6 +21,9 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.5 | Boot screen on the first bytes; coach portraits and home-screen icon moved to `img/` (first paint 3.7 s to 0.26 s on Fast 4G, download 541 to 450 KB) | IN PROGRESS: build-8.2.5, stacked on build-8.2.4, pull request not yet opened |
+| 8.2.4 | Profile sync: a new device shows your profiles, their basics and meals; edits and deletes travel between devices (`people` table, no schema change) | IN PROGRESS: build-8.2.4, stacked on build-8.2.3, pull request not yet opened |
+| 8.2.3 | Phone performance measured (`tests/perf/measure.mjs`, `docs/PERFORMANCE.md`); no app change | IN PROGRESS: build-8.2.3, pull request not yet opened |
 | 8.2.2 | Segmented control thumb (units and the other rubber-thumb controls) repaints every frame, so switching slides in about 0.5s instead of freezing stretched across both options | IN PROGRESS: build-8.1.23 (PR #14), main merged in, pull request open, not merged |
 | 8.2.1 | Tests run on every pull request (GitHub Actions); browser tests work on Linux; repo checks for scripts, version agreement, secrets and text-only food data | MERGED: PR #15 (with 8.2) |
 | 8.2 | Security headers: content security policy, no framing, nosniff, referrer and permissions policies in `vercel.json`, with a test that serves the app under them | MERGED: PR #15 (with 8.2.1) |
@@ -52,6 +55,21 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.2.5
+
+- Done: `node tests/check-repo.mjs`, `node tests/browser/run-all.mjs`, `node tests/perf/measure.mjs` (before and after in `docs/PERFORMANCE.md`), and a check on a throttled connection that the boot screen shows from the first bytes, is removed once the app renders, and that the three coach portraits load from `img/`.
+- Not run: real phones and Safari (the boot screen and the home-screen icon on iOS), the 375/820/1440px sweep, theme and font sweep, the deployed-preview checks. No Supabase files were touched.
+
+### Checklist run for 8.2.4
+
+- Done: `node tests/check-repo.mjs` and `node tests/browser/run-all.mjs` (headers 17, security 87, profile-sync 41, meal-sync 55, meal-upload 17, controls 56, glass 36) on Linux in headless Chrome, including the three people-table request checks against the real supabase-js. Live database checked read-only: the six repo migrations are the six applied ones, and `people` has every column used.
+- Not run: sync between two real devices against the real Supabase project (the tests use a fake or a faked network), the 375/820/1440px sweep, theme and font sweep, real phones, the deployed-preview checks (sign up, confirmation link, sign in, refresh stays signed in). No Supabase files were touched.
+
+### Checklist run for 8.2.3
+
+- Done: `node tests/check-repo.mjs`, and `node tests/perf/measure.mjs` (5 cold loads at each of three profiles, plus screen-open times with a year of logs). No app behaviour changed.
+- Not run: the browser tests (the app code did not change), real phones, Safari and Firefox, the deployed-preview checks. No Supabase files were touched.
 
 ### Checklist run for 8.2.2
 
