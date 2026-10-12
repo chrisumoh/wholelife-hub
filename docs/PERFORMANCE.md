@@ -69,3 +69,25 @@ Expected result of 1 and 2: first paint in about half a second on Fast 4G, and t
 - **Repeat visits and caching.** Every run is a cold load with the cache off.
 
 Re-run `node tests/perf/measure.mjs` after any of the changes above and update the table.
+
+## Release gate (8.2.13)
+
+`node tests/perf/measure.mjs --gate` runs in CI as the "Performance gate" job and fails the pull request when the app gets heavier or slower than the limits in `tests/perf/budget.json`. It loads the app three times on the mid-range phone profile (4× CPU, Fast 4G), then opens each screen with a year of logs, and checks:
+
+| What | Measured on 8.2.12 | Limit |
+| --- | --- | --- |
+| `index.html` raw / brotli / gzip | 1,854 / 470 / 555 KB | 2,000 / 510 / 600 KB |
+| First contentful paint (boot screen) | 260 ms | 1,000 ms |
+| App ready | 3,054 ms | 4,600 ms |
+| Largest contentful paint | 3,336 ms | 5,000 ms |
+| Total blocking time | 442 ms | 900 ms |
+| Layout shift | 0.000 | 0.05 |
+| Document transfer | 470 KB | 510 KB |
+| Opening a screen, a year of logs | Home 94, Workouts 454, Nutrition 461, Recipes 290 ms | 800 ms (Workouts and Nutrition 1,000) |
+| DOM nodes on a screen, a year of logs | Workouts 1,795, Recipes 1,768, Nutrition 897 | 1,200 (Workouts 2,000, Recipes 1,950, Nutrition 1,000) |
+
+- **Sizes and node counts** are exact, so their limits sit about 8% above today's numbers. Timings sit about 50% above, because GitHub's machines are slower and noisier than a developer machine; a timing failure that does not repeat on a second run is noise, one that does is real.
+- **Raising a limit** is allowed, in a pull request that says why (a new feature that is worth the weight, for example). Lowering one after a speed-up is encouraged.
+- **Making it required:** a failing check only blocks a merge if "Performance gate" is marked required in the repository's branch protection (Settings, Branches). That setting is yours, not in the code.
+- **Still not covered:** real phones, Safari, GPU cost (blur, animation) and the supabase-js download, as listed above. The gate is a floor against regressions, not a promise of smoothness.
+- **The next thing it will catch:** Workouts and Recipes are at 1,795 and 1,768 nodes with a year of data. Capping long lists (recommendation 3 above) would bring both down, and the limits could then be lowered.

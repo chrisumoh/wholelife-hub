@@ -6,7 +6,9 @@ import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { join, extname } from "node:path";
 
-// Run from the repo root:  node tests/perf/measure.mjs [runs]   (Node 22+ and Chrome; set CHROME to its path, CI=1 as root)
+// Run from the repo root:  node tests/perf/measure.mjs [runs] [--gate]   (Node 22+ and Chrome; set CHROME to its path, CI=1 as root)
+// --gate is the release gate: it measures only the mid-range phone (3 cold loads) and the screen-open times with a year of logs, compares them with
+// tests/perf/budget.json and exits 1 when anything is over. Budgets are raised on purpose, in a pull request that says why (see docs/PERFORMANCE.md).
 // Loads the app the way a phone would: 390x844 at 3x, touch, throttled CPU and network, brotli like Vercel. Prints the
 // median of each metric over [runs] cold loads (default 5), then how long screens take to open once the app holds a year of logs.
 // What it can't see: real GPU cost (backdrop blur, animation), Safari, and a real phone's thermal limits. Check those by hand.
@@ -14,7 +16,11 @@ import { join, extname } from "node:path";
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const NO_SANDBOX = process.env.CI || process.env.NO_SANDBOX ? ["--no-sandbox"] : [];
-const RUNS = Math.max(1, Number(process.argv[2]) || 5);
+const GATE = process.argv.includes("--gate");
+const RUNS = Math.max(1, Number(process.argv.slice(2).find(a => /^\d+$/.test(a))) || (GATE ? 3 : 5));
+const BUDGET = GATE ? JSON.parse(readFileSync(process.env.PERF_BUDGET || new URL("./budget.json", import.meta.url), "utf8")) : null;
+const fails = [], passes = [];
+const check = (what, value, limit, unit = "") => { (value <= limit ? passes : fails).push(`${what}: ${Math.round(value * 1000) / 1000}${unit} (limit ${limit}${unit})`); };
 const FAKE = readFileSync(new URL("../browser/fake-supabase.js", import.meta.url), "utf8");
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".json": "application/json", ".woff2": "font/woff2", ".woff": "font/woff", ".ttf": "font/ttf", ".txt": "text/plain" };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -72,8 +78,9 @@ const seed = `(async () => { const p = newProfile("Ada"); p.onboarded = true; p.
   await flush(); return true; })()`;
 
 console.log(`index.html: ${(html.length / 1024).toFixed(0)} KB raw, ${(BR.length / 1024).toFixed(0)} KB brotli, ${(GZ.length / 1024).toFixed(0)} KB gzip (${RUNS} cold loads per profile, medians)\n`);
+if (GATE) { check("index.html raw", html.length / 1024, BUDGET.sizeKB.raw, " KB"); check("index.html brotli", BR.length / 1024, BUDGET.sizeKB.brotli, " KB"); check("index.html gzip", GZ.length / 1024, BUDGET.sizeKB.gzip, " KB"); }
 const rows = [];
-for (const pr of PROFILES) {
+for (const pr of GATE ? PROFILES.slice(1, 2) : PROFILES) {
   await send("Emulation.setCPUThrottlingRate", { rate: pr.cpu });
   await send("Network.emulateNetworkConditions", pr.net ? { offline: false, ...pr.net } : { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
   const runs = [];
@@ -98,6 +105,7 @@ line("DOMContentLoaded", "dcl", n => f0(n, " ms")); line("Page load event", "loa
 line("Total blocking time", "tbt", n => f0(n, " ms")); line("Long tasks (over 50 ms)", "longTasks", n => f0(n)); line("Script time", "script", n => f0(n, " ms")); line("JS heap at ready", "heap", n => n.toFixed(0) + " MB");
 line("Document transfer", "html", n => f0(n / 1024, " KB")); line("Fonts transferred", "fonts", n => f0(n / 1024, " KB")); line("Requests", "requests", n => f0(n));
 
+if (GATE) { const m = rows[0].r, b = BUDGET.midRange; check("mid-range first contentful paint", m.fcp, b.fcpMs, " ms"); check("mid-range app ready", m.ready, b.readyMs, " ms"); check("mid-range largest contentful paint", m.lcp, b.lcpMs, " ms"); check("mid-range total blocking time", m.tbt, b.tbtMs, " ms"); check("layout shift", m.cls, b.cls); check("document transfer", m.html / 1024, b.transferKB, " KB"); }
 // A year of logs, then how long each screen takes to open (mid-range phone profile).
 await send("Emulation.setCPUThrottlingRate", { rate: 1 }); await send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
 await send("Page.navigate", { url: "http://127.0.0.1:8773/index.html" }); await waitFor(READY); await ev(seed);
@@ -107,6 +115,9 @@ console.log(`\nWith a year of logs (1,095 meals, 365 snacks, 183 workouts), mid-
 for (const r of ["nutrition", "workouts", "snacks", "recipes", "culture", "coach", "premium", "settings", "home"]) {
   const t = [];
   for (let i = 0; i < 3; i++) { await ev(`location.hash = "#/health"; true`); await sleep(500); t.push(await ev(`new Promise(res => { const a = performance.now(); location.hash = "#/${r}"; requestAnimationFrame(() => requestAnimationFrame(() => res(performance.now() - a))); })`)); }
+  const nodes = await ev("document.querySelectorAll('*').length");
   console.log(`| ${r} | ${f0(median(t))} |`);
+  if (GATE) { const lim = BUDGET.screens[r] || BUDGET.screens.default; check(`${r} opens in`, median(t), lim.ms, " ms"); check(`${r} has DOM nodes`, nodes, lim.nodes); }
 }
+if (GATE) { console.log("\n--- release gate ---"); for (const x of passes) console.log("PASS  " + x); for (const x of fails) console.log("FAIL  " + x); console.log(`\n${passes.length} within budget, ${fails.length} over`); stop(); process.exit(fails.length ? 1 : 0); }
 stop(); process.exit(0);

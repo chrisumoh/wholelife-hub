@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.12, 2026-10-12. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.13, 2026-10-12. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.13 · Performance: Release gate: size and phone-speed budgets checked on every pull request
+
+- **Problem:** The phone performance measuring script (8.2.3) only printed numbers. Nothing stopped a build from making the app heavier or slower, and the file had already grown from 450 KB to 470 KB (brotli) since the last measurement without anyone being told.
+- **Change:** measure.mjs has a --gate mode: it loads the app three times on the mid-range phone profile (4x CPU, Fast 4G), then opens each screen with a year of logs, and compares the results with tests/perf/budget.json: the size of index.html (raw, brotli, gzip), first contentful paint, app ready, largest contentful paint, total blocking time, layout shift, document transfer, the time to open each screen and the number of DOM nodes on it. It prints PASS or FAIL for each line and exits 1 if any is over. A new 'Performance gate' job in the GitHub Actions workflow runs it on every pull request. The limits are the build 8.2.12 measurements plus headroom (about 8% on sizes and node counts, about 50% on timings). docs/PERFORMANCE.md has the table and the rules for raising a limit.
+- **Where:** tests/perf/measure.mjs (--gate, check()), tests/perf/budget.json (new), .github/workflows/tests.yml (perf-gate job), docs/PERFORMANCE.md (Release gate), docs/BUILD_PLAN.md, CHANGELOG.md, README.md, and the build number and change log text in index.html.
+- **How to test:** node tests/perf/measure.mjs --gate (about two minutes; CHROME=<path to Chrome>, CI=1 as root). It should end with '27 within budget, 0 over'. To see it fail, lower a limit in tests/perf/budget.json (or point PERF_BUDGET at another file) and run it again; it then prints FAIL lines and exits 1.
+- **Known limits:** (1) A failing check only blocks a merge if 'Performance gate' is set as required in the repository's branch protection; that is a GitHub setting. (2) Timings on GitHub's machines will vary, so a one-off failure may be noise; the limits have 50% headroom for that. (3) It measures headless Chrome only: no Safari, no real phone, no GPU cost. (4) It does not cover the supabase-js download from jsDelivr.
 
 ## 8.2.12 · Docs: Build plan statuses match what is merged
 

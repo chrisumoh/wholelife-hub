@@ -42,3 +42,19 @@ jobs:
       - run: node tests/browser/run-all.mjs
         env:
           CHROME: /usr/bin/google-chrome
+
+  # The release gate: size and phone-speed budgets in tests/perf/budget.json (mid-range phone, a year of logs). About two minutes.
+  # Make this check required in the repository's branch protection to stop a merge that makes the app slower or heavier.
+  perf-gate:
+    name: Performance gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tests/perf/measure.mjs --gate
+        env:
+          CHROME: /usr/bin/google-chrome
+          CI: "1"

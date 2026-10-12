@@ -4059,7 +4059,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.12", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.13", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -4073,6 +4073,12 @@ const APP_VERSION = { update: "8.2", build: "8.2.12", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.13", area:"Performance", title:"Release gate: size and phone-speed budgets checked on every pull request",
+      bug:"The phone performance measuring script (8.2.3) only printed numbers. Nothing stopped a build from making the app heavier or slower, and the file had already grown from 450 KB to 470 KB (brotli) since the last measurement without anyone being told.",
+      fix:"measure.mjs has a --gate mode: it loads the app three times on the mid-range phone profile (4x CPU, Fast 4G), then opens each screen with a year of logs, and compares the results with tests/perf/budget.json: the size of index.html (raw, brotli, gzip), first contentful paint, app ready, largest contentful paint, total blocking time, layout shift, document transfer, the time to open each screen and the number of DOM nodes on it. It prints PASS or FAIL for each line and exits 1 if any is over. A new 'Performance gate' job in the GitHub Actions workflow runs it on every pull request. The limits are the build 8.2.12 measurements plus headroom (about 8% on sizes and node counts, about 50% on timings). docs/PERFORMANCE.md has the table and the rules for raising a limit.",
+      where:"tests/perf/measure.mjs (--gate, check()), tests/perf/budget.json (new), .github/workflows/tests.yml (perf-gate job), docs/PERFORMANCE.md (Release gate), docs/BUILD_PLAN.md, CHANGELOG.md, README.md, and the build number and change log text in index.html.",
+      test:"node tests/perf/measure.mjs --gate (about two minutes; CHROME=<path to Chrome>, CI=1 as root). It should end with '27 within budget, 0 over'. To see it fail, lower a limit in tests/perf/budget.json (or point PERF_BUDGET at another file) and run it again; it then prints FAIL lines and exits 1.",
+      limits:"(1) A failing check only blocks a merge if 'Performance gate' is set as required in the repository's branch protection; that is a GitHub setting. (2) Timings on GitHub's machines will vary, so a one-off failure may be noise; the limits have 50% headroom for that. (3) It measures headless Chrome only: no Safari, no real phone, no GPU cost. (4) It does not cover the supabase-js download from jsDelivr." },
     { id:"8.2.12", area:"Docs", title:"Build plan statuses match what is merged",
       bug:"docs/BUILD_PLAN.md still said builds 8.1.15 to 8.2.11 were 'in progress' with the pull request 'not yet opened', 'stacked on' a branch, or 'open, not merged'. They are all merged, so the table made the release flow look far more tangled than it is, and anyone reading it (or a tool summarising it) would think a dozen builds were waiting.",
       fix:"Every row now shows its real status, taken from the GitHub pull request list: 8.1.15 (PR #6), 8.1.18 (#9), 8.1.19 (#10), 8.1.20 (#11), 8.2.2 (#14), 8.2.3 to 8.2.5 (#16), 8.2.6 (#17), 8.2.7 (#18), 8.2.8 (#19), 8.2.9 and 8.2.10 (#20), 8.2.11 (#21). 8.1.21 stays CLOSED (#12, on purpose). No app behaviour changed.",
