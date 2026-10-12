@@ -50,7 +50,7 @@
         if (password !== "password1") return { data: null, error: { code: "invalid_credentials", message: "bad" } };
         session = { user: mk(email) }; localStorage.setItem(KS, JSON.stringify(session)); fire("SIGNED_IN"); return { data: { session }, error: null };
       },
-      async signUp({ email }) { return { data: { user: mk(email), session: null }, error: null }; },
+      async signUp({ email, options }) { (window.__signUps ||= []).push({ email, options }); return { data: { user: mk(email), session: null }, error: null }; },
       async signOut() { session = null; localStorage.removeItem(KS); fire("SIGNED_OUT"); return { error: null }; },
       async resetPasswordForEmail() { return { data: {}, error: null }; },
       async updateUser() { return { data: {}, error: null }; }
