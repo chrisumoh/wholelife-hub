@@ -42,7 +42,7 @@ const SUPA = "https://zemxqbinpehkrkyvzlue.supabase.co";
 // Optional: SUPABASE_JS=<path to supabase.js> serves the pinned library from disk instead of jsDelivr, for runs without internet.
 // It must be the exact file the app pins (npm pack @supabase/supabase-js@<version>, dist/umd/supabase.js), or the integrity check fails.
 const LOCAL_LIB = process.env.SUPABASE_JS ? readFileSync(process.env.SUPABASE_JS) : null;
-const DB = { people: [], meal_logs: [] }, reqs = [], sim = { delay: 0 };
+const DB = { people: [], meal_logs: [], workouts: [], weight_entries: [] }, reqs = [], sim = { delay: 0 };
 const b64u = o => Buffer.from(JSON.stringify(o)).toString("base64url");
 const USER = { id: "11111111-2222-3333-4444-555555555555", aud: "authenticated", role: "authenticated", email: "new@x.com", email_confirmed_at: "2026-10-06T00:00:00Z", app_metadata: {}, user_metadata: {}, created_at: "2026-10-06T00:00:00Z" };
 const session = () => { const exp = Math.floor(Date.now() / 1000) + 3600; return { access_token: `${b64u({ alg: "HS256", typ: "JWT" })}.${b64u({ sub: USER.id, exp, role: "authenticated" })}.sig`, token_type: "bearer", expires_in: 3600, expires_at: exp, refresh_token: "r" + Math.random().toString(36).slice(2), user: USER }; };
@@ -52,13 +52,13 @@ function answer(method, u, body, prefer) {
   if (path.endsWith("/auth/v1/token")) return [200, session()];
   if (path.endsWith("/auth/v1/user")) return [200, USER];
   if (path.endsWith("/auth/v1/logout")) return [204, null];
-  const m = path.match(/\/rest\/v1\/(people|meal_logs)$/); if (!m) return [404, { message: "unknown" }];
+  const m = path.match(/\/rest\/v1\/(people|meal_logs|workouts|weight_entries)$/); if (!m) return [404, { message: "unknown" }];
   const t = DB[m[1]];
-  if (method === "GET") return [200, t.filter(r => !r.deleted_at)];
+  if (method === "GET") return [200, m[1] === "workouts" || m[1] === "weight_entries" ? t : t.filter(r => !r.deleted_at)]; // 8.2.15: these are read with their deleted rows
   if (method === "POST") {
     const out = [];
     for (const p of JSON.parse(body || "[]")) {
-      if (m[1] === "meal_logs" && !DB.people.some(x => x.id === p.person_id)) return [409, { code: "23503", message: "violates foreign key constraint" }];
+      if (m[1] !== "people" && !DB.people.some(x => x.id === p.person_id)) return [409, { code: "23503", message: "violates foreign key constraint" }];
       let r = t.find(x => x.owner_id === p.owner_id && x.app_id === p.app_id);
       if (r) Object.assign(r, p); else { r = { id: crypto.randomUUID(), deleted_at: null, ...p }; t.push(r); }
       out.push(r);
@@ -114,6 +114,17 @@ console.log("--- 2. a meal the app never tracked is still found and uploaded");
 // Simulates any path that changes a meal without going through markLog()/sbTrack().
 await ev(`(()=>{ const L = logFor(S.activeId, monthOf(today())); L.meals.push({ id: uid(), date: today(), slot: "dinner", name: "Banku", cal: 420, dish: null, extras: [], at: Date.now() }); markRoot(); return true; })()`);
 ok("POST /rest/v1/meal_logs for it within 5s (flush sweeps it up)", await until(() => DB.meal_logs.length === 2, 5000), trail());
+
+console.log("--- 2b. workouts and weigh-ins through the real client (8.2.15)");
+await ev(`(()=>{ addEntry("workouts", { id: uid(), date: today(), type: "strength", minutes: 40, cal: 150, note: "Push day", src: null, equip: null, photo: null }); addEntry("weights", { id: uid(), date: today(), kg: 72.4 }); return true; })()`);
+ok("POST /rest/v1/workouts and /rest/v1/weight_entries within 5s", await until(() => DB.workouts.length === 1 && DB.weight_entries.length === 1, 5000), trail());
+const wPosts = reqs.filter(r => r.method === "POST" && /\/rest\/v1\/(workouts|weight_entries)$/.test(r.path));
+ok("both are upserted on owner_id,app_id", wPosts.length >= 2 && wPosts.every(r => /on_conflict=owner_id%2Capp_id|on_conflict=owner_id,app_id/.test(r.q)), JSON.stringify(wPosts.map(r => r.q)));
+ok("the workout row has the database's column names and the person", DB.workouts[0].duration_min === 40 && DB.workouts[0].calories_burned === 150 && DB.workouts[0].notes === "Push day" && DB.workouts[0].person_id === DB.people[0]?.id && !("minutes" in DB.workouts[0]), JSON.stringify(DB.workouts[0]));
+ok("the weigh-in row has weight_kg", DB.weight_entries[0].weight_kg === 72.4, JSON.stringify(DB.weight_entries[0]));
+ok("both tables are read without a deleted_at filter", reqs.some(r => r.method === "GET" && r.path === "/rest/v1/workouts" && !/deleted_at=is\.null/.test(r.q)) && reqs.some(r => r.method === "GET" && r.path === "/rest/v1/weight_entries"), JSON.stringify(reqs.filter(r => r.method === "GET").map(r => r.path + r.q).slice(-4)));
+await ev(`(()=>{ const e = [...sbAllOf("workouts")][0]; removeEntry("workouts", e.e.id); return true; })()`);
+ok("deleting the workout PATCHes deleted_at", await until(() => !!DB.workouts[0].deleted_at, 5000), trail());
 
 console.log("--- 3. sign out uploads meals that are still pending");
 await clickLogMeal("Waakye", 500); // signing out straight away: the 1.2s upload timer has not fired

@@ -7,7 +7,7 @@
   const subs = []; let n = 0;
   const F = window.__fake = { DB, offline: false, calls: [], expireNow() { session = null; localStorage.removeItem(KS); subs.forEach(cb => cb("SIGNED_OUT", null)); } };
   const fire = (ev) => subs.forEach(cb => cb(ev, session));
-  const table = name => DB[name];
+  const table = name => (DB[name] ||= []);
   const from = name => {
     let op = "select", payload, conflict, filters = [], sel = false;
     const uid = () => session?.user?.id;
@@ -15,13 +15,15 @@
       F.calls.push([name, op]);
       if (F.offline) return Promise.reject(new TypeError("Failed to fetch"));
       if (!uid()) return Promise.resolve({ data: null, error: { message: "no session", code: "401" } });
+      if (F.failWrites && op !== "select") return Promise.resolve({ data: null, error: { message: "simulated write failure", code: "500" } });
+      if (F.failReads && op === "select") return Promise.resolve({ data: null, error: { message: "simulated read failure", code: "500" } });
       const rows = table(name), mine = rows.filter(r => r.owner_id === uid() && filters.every(f => f(r)));
       if (op === "select") return Promise.resolve({ data: JSON.parse(JSON.stringify(mine)), error: null });
       if (op === "update") { mine.forEach(r => Object.assign(r, payload)); save(); return Promise.resolve({ data: null, error: null }); }
       const out = [];
       for (const p of payload) {
         if (p.owner_id !== uid()) return Promise.resolve({ data: null, error: { message: "new row violates row-level security policy", code: "42501" } });
-        if (name === "meal_logs" && !DB.people.some(x => x.id === p.person_id && x.owner_id === uid())) return Promise.resolve({ data: null, error: { message: "rls: person not owned", code: "42501" } });
+        if (name !== "people" && !DB.people.some(x => x.id === p.person_id && x.owner_id === uid())) return Promise.resolve({ data: null, error: { message: "rls: person not owned", code: "42501" } });
         let r = rows.find(x => x.owner_id === p.owner_id && x.app_id === p.app_id);
         if (r) Object.assign(r, p); else { r = { id: "id" + (++n) + "_" + Math.random().toString(36).slice(2, 8), deleted_at: null, ...p }; rows.push(r); }
         out.push(r);
