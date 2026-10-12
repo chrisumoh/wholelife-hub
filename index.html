@@ -4059,7 +4059,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.13", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.14", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -4073,6 +4073,12 @@ const APP_VERSION = { update: "8.2", build: "8.2.13", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.14", area:"Privacy", title:"Privacy summary and a consent and data history in Settings",
+      bug:"There was no one place to see where your data lives or what you had agreed to. The permission switches changed state silently, and nothing recorded that you had downloaded or deleted your data, so after 'Delete everything' there was no trace that it happened.",
+      fix:"Settings > Privacy & security now opens with 'Your privacy at a glance': where your data lives (this device, plus meals and profile names if you are signed in), the signed-in account, whether passcode encryption is on, how many of the three camera and photo-AI permissions are on, and which version of the Terms you accepted. Under it, 'Consent and data history' lists the last ten choices with the date: accepting the Terms at sign-up, turning photo meal logging, the form check camera or the body progress studio on or off, downloading your data, deleting a profile, and deleting everything. The history is kept on this device only (up to 50 entries), holds a kind and a time and nothing else (no names, no health data), is not removed by 'Delete everything' so you can see that it happened, and has a 'Clear history' button. The privacy policy's key table now lists wlh.history, wlh.consent and wlh.ageblock.",
+      where:"index.html: HISTORY_KEY, HISTORY_LABELS, historyGet(), historyAdd(), historyClear(), privacyGlance() (next to consentCenter()), the privacy tab in settingsView(), the consent-photoai/clips/body toggles, photoai-optin, fc-optin, bd-optin, export, erase-all-yes, del-profile-yes and history-clear actions, the sbAuth sign-up success block, the privacy policy storage table (section 5). tests/browser/privacy.mjs (new, 26 checks), tests/browser/legal.mjs (one check), tests/browser/run-all.mjs. docs/SECURITY.md, docs/BUILD_PLAN.md, CHANGELOG.md, README.md.",
+      test:"node tests/browser/privacy.mjs (26 checks). By hand: open Settings > Privacy & security, switch a permission on and off, press Download (JSON), then look at the history list. Delete everything and open the same tab again: the list is still there with 'Deleted all data on this device' on top. Press Clear history: it empties.",
+      limits:"(1) The history is per browser, not per account, and is not synced: another device shows its own. (2) It does not say which profile a change was made under, on purpose, so it holds no names. (3) Permission switches used before this build are not in the list. (4) Clearing the browser's site data removes it, like everything else stored here. (5) It records choices made on this device only; it is not a legal record of consent. The Terms version and time are also saved with the account at sign-up (8.2.9). (6) Not yet: cross-device sync of workouts and weigh-ins, which needs a Supabase change and your approval first." },
     { id:"8.2.13", area:"Performance", title:"Release gate: size and phone-speed budgets checked on every pull request",
       bug:"The phone performance measuring script (8.2.3) only printed numbers. Nothing stopped a build from making the app heavier or slower, and the file had already grown from 450 KB to 470 KB (brotli) since the last measurement without anyone being told.",
       fix:"measure.mjs has a --gate mode: it loads the app three times on the mid-range phone profile (4x CPU, Fast 4G), then opens each screen with a year of logs, and compares the results with tests/perf/budget.json: the size of index.html (raw, brotli, gzip), first contentful paint, app ready, largest contentful paint, total blocking time, layout shift, document transfer, the time to open each screen and the number of DOM nodes on it. It prints PASS or FAIL for each line and exits 1 if any is over. A new 'Performance gate' job in the GitHub Actions workflow runs it on every pull request. The limits are the build 8.2.12 measurements plus headroom (about 8% on sizes and node counts, about 50% on timings). docs/PERFORMANCE.md has the table and the rules for raising a limit.",
@@ -8304,6 +8310,7 @@ async function sbAuth(kind){
       const consent = { terms_version: TERMS_VERSION, terms_accepted_at: new Date().toISOString() };
       const r = await c.auth.signUp({ email, password: pass, options: { emailRedirectTo: sbRedirect(), data: consent } }); if (r.error) throw r.error;
       try { localStorage.setItem(CONSENT_KEY, JSON.stringify({ v: consent.terms_version, at: consent.terms_accepted_at })); } catch {}
+      historyAdd("terms");
       UI.sbAgree = false;
       UI.sbMsg = r.data.session ? null : { t:"Check your email. Open the link we sent to confirm your account, then sign in here.", ok:true }; UI.acct = "in";
     } else {
@@ -11768,7 +11775,7 @@ function settingsView(p){
       <div class="row" style="gap:6px">${x.id !== p.id ? `<button class="btn sm" data-act="switch" data-id="${x.id}">Switch</button>` : ""}
       ${UI.confirmDel === x.id ? `<span class="small">Delete ${esc(x.name || "this profile")} and all its logs?</span><button class="btn sm danger" data-act="del-profile-yes" data-id="${x.id}">Delete</button><button class="btn sm" data-act="del-profile-no">Keep</button>` : S.profiles.length > 1 ? `<button class="btn sm ghost" data-act="del-profile" data-id="${x.id}">Delete</button>` : ""}</div></div>`).join("")}</div>
   </section>`,
-    privacy: `${mediaCard()}<section class="card" id="security">
+    privacy: `${privacyGlance(p)}${mediaCard()}<section class="card" id="security">
     <div class="row" style="gap:12px"><div class="shield">${icon("lock")}</div><h2>Privacy and security</h2></div>
     <ul class="checklist">
       ${[
@@ -11973,6 +11980,7 @@ document.addEventListener("click", async e => {
       try {
         if (a === "rem-ics") saveTextFile("wholelife-reminders.ics", buildICS(p), "text/calendar");
         else saveTextFile(`wholelife-${(p.name||"profile").toLowerCase().replace(/[^a-z0-9]+/g,"-")}-${today()}.json`, JSON.stringify({ exported: today(), profile: p, logs: S.logs[p.id] || {} }, null, 2), "application/json");
+        if (a === "export") historyAdd("export");
         toast(a === "rem-ics" ? "Calendar file downloaded. Open it to add the reminders." : "Data downloaded");
       } catch { toast("This browser wouldn't save the file."); }
       break; }
@@ -12012,14 +12020,15 @@ document.addEventListener("click", async e => {
     // from the locked-out "forgot passcode" screen, with a confirmation that lists what's deleted.
     case "erase-all-ask": UI.confirmEraseAll = true; render(); break;
     case "erase-all-no": UI.confirmEraseAll = false; render(); break;
-    case "erase-all-yes": await eraseEverything(); UI.locked = false; UI.confirmEraseAll = false; resetUI(); render(); toast("Deleted. Starting fresh."); break;
+    case "erase-all-yes": historyAdd("erase"); await eraseEverything(); UI.locked = false; UI.confirmEraseAll = false; resetUI(); render(); toast("Deleted. Starting fresh."); break;
     // Task 7.4/7.10: each permission screen sets its own flag; this is where turning one back off
     // lives, and it takes effect immediately because the views that gate on these flags re-check
     // them on every render.
-    case "consent-photoai-toggle": p.photoAiConsent = !p.photoAiConsent; saveProfile(); render(); break;
-    case "consent-clips-toggle": p.prem = p.prem || {}; p.prem.clipsConsent = !p.prem.clipsConsent; saveProfile(); render(); break;
-    case "consent-body-toggle": { const st = bodyState(p); st.on = !st.on; saveProfile(); render(); if (st.on) bodyPhotoLockNudge(); break; }
-    case "photoai-optin": p.photoAiConsent = true; saveProfile(); render(); break;
+    case "consent-photoai-toggle": p.photoAiConsent = !p.photoAiConsent; historyAdd(p.photoAiConsent ? "photo-on" : "photo-off"); saveProfile(); render(); break;
+    case "consent-clips-toggle": p.prem = p.prem || {}; p.prem.clipsConsent = !p.prem.clipsConsent; historyAdd(p.prem.clipsConsent ? "clips-on" : "clips-off"); saveProfile(); render(); break;
+    case "consent-body-toggle": { const st = bodyState(p); st.on = !st.on; historyAdd(st.on ? "body-on" : "body-off"); saveProfile(); render(); if (st.on) bodyPhotoLockNudge(); break; }
+    case "photoai-optin": p.photoAiConsent = true; historyAdd("photo-on"); saveProfile(); render(); break;
+    case "history-clear": historyClear(); render(); toast("History cleared"); break;
     // settings
     case "units": p.units = t.dataset.v; saveProfile(); render(); break;
     case "use-sg": document.getElementById("st-cg").value = t.dataset.v; break;
@@ -12035,7 +12044,7 @@ document.addEventListener("click", async e => {
     case "switch": S.activeId = t.dataset.id; saveProfile(); resetUI(); render(); toast(`Switched to ${P().name || "profile"}`); break;
     case "del-profile": UI.confirmDel = t.dataset.id; render(); break;
     case "del-profile-no": UI.confirmDel = null; render(); break;
-    case "del-profile-yes": { const id = t.dataset.id; dropProfile(id); UI.confirmDel = null; saveProfile(); render(); toast("Profile deleted"); break; }
+    case "del-profile-yes": { const id = t.dataset.id; historyAdd("profile-del"); dropProfile(id); UI.confirmDel = null; saveProfile(); render(); toast("Profile deleted"); break; }
   }
 });
 function resetUI(){
@@ -15424,6 +15433,9 @@ function privacyPolicyView(){
         <tr><td><code>wlh.notif.&lt;profile&gt;</code></td><td>Your in-app notification list (badges, reminders), per profile. Signed in, the key ends in <code>@</code> and your account id.</td></tr>
         <tr><td><code>wlh.rem.&lt;profile&gt;.&lt;reminder&gt;</code></td><td>The date a reminder last fired, so it fires once a day. Signed in, the key ends in <code>@</code> and your account id.</td></tr>
         <tr><td><code>wlh.signedout</code></td><td>Your account id and a time, written when you sign out, so other open tabs of this app know to drop their copy of your data instead of saving it again.</td></tr>
+        <tr><td><code>wlh.history</code></td><td>A short list (up to 50) of your consent and data choices with the date: for example that you turned a camera permission on, downloaded your data or deleted it. No health data and no names. It stays when you delete your data, so you can see that you did; Settings › Privacy &amp; security › Clear history removes it.</td></tr>
+        <tr><td><code>wlh.consent</code></td><td>The version of the Terms you agreed to at sign-up and when, so the app can tell if they have changed. Removed only by clearing this site's data in your browser.</td></tr>
+        <tr><td><code>wlh.ageblock</code></td><td>Only if the age screen turned you away: the time until you can try again (24 hours). It holds no birth date.</td></tr>
         <tr><td><code>wlh.flash</code>, <code>wlh.reloadAt</code>, <code>wlh.recovery</code></td><td>Short-lived, this tab only (session storage): a one-line message to show after signing in or out, and a guard against reloading in a loop.</td></tr>
       </tbody>
     </table>
@@ -15584,6 +15596,51 @@ function consentCenter(p){
     ${row(!!p.prem?.clipsConsent, "Form check camera", "Records on this device only; nothing is uploaded.", "consent-clips-toggle")}
     ${row(!!p.prem?.body?.on, "Body progress studio", "Stores photos on this device only; nothing is uploaded.", "consent-body-toggle")}
     <span class="tiny muted">Turning one off here stops that feature immediately and shows its explainer again next time you open it.</span></div>`;
+}
+// ---- consent and data history (8.2.14) ----
+// A short on-device log of consent and data choices: what happened and when, never the health
+// data itself or a name. It sits outside LS_USER_BASES on purpose, so "Delete everything" leaves
+// the line saying it happened; "Clear history" is how a person removes it.
+const HISTORY_KEY = "wlh.history", HISTORY_MAX = 50;
+const HISTORY_LABELS = {
+  terms: "Accepted the Terms and Privacy Policy at sign-up",
+  "photo-on": "Turned on photo meal logging and equipment photos",
+  "photo-off": "Turned off photo meal logging and equipment photos",
+  "clips-on": "Turned on the form check camera",
+  "clips-off": "Turned off the form check camera",
+  "body-on": "Turned on the body progress studio",
+  "body-off": "Turned off the body progress studio",
+  export: "Downloaded a copy of your data",
+  "profile-del": "Deleted a profile and its logs from this device",
+  erase: "Deleted all data on this device"
+};
+function historyGet(){
+  try { const v = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); return Array.isArray(v) ? v.filter(x => x && HISTORY_LABELS[x.k] && x.at) : []; } catch { return []; }
+}
+function historyAdd(k){
+  if (!HISTORY_LABELS[k]) return;
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify([...historyGet(), { k, at: new Date().toISOString() }].slice(-HISTORY_MAX))); } catch {}
+}
+function historyClear(){ try { localStorage.removeItem(HISTORY_KEY); } catch {} }
+function privacyGlance(p){
+  const row = (label, val) => `<div class="setrow"><div class="setlabel"><b>${esc(label)}</b></div><span class="small">${val}</span></div>`;
+  let terms = null;
+  try { terms = JSON.parse(localStorage.getItem(CONSENT_KEY) || "null"); } catch {}
+  const perms = [!!p.photoAiConsent, !!p.prem?.clipsConsent, !!p.prem?.body?.on].filter(Boolean).length;
+  const hist = historyGet().slice(-10).reverse();
+  const when = at => new Date(at).toLocaleString([], { day:"numeric", month:"short", year:"numeric", hour:"numeric", minute:"2-digit" });
+  return `<section class="card" id="privacy-glance">
+    <h2>Your privacy at a glance</h2>
+    ${row("Where your data lives", SB.user ? "On this device. Meals and profile names also sync to your account." : "On this device only.")}
+    ${row("Account", SB.user ? esc(SB.user.email || "Signed in") : "Not signed in")}
+    ${row("Passcode encryption", CRY.lock ? "On" : "Off")}
+    ${row("Camera and photo-AI permissions", `${perms} of 3 on`)}
+    ${row("Terms accepted", terms?.v ? `Version ${esc(terms.v)}` : "Not recorded on this device")}
+    <h3 style="margin:14px 0 6px">Consent and data history</h3>
+    ${hist.length ? `<ul class="small" style="margin:0;padding-left:18px">${hist.map(x => `<li>${esc(HISTORY_LABELS[x.k])} <span class="muted">· ${esc(when(x.at))}</span></li>`).join("")}</ul>
+      <div class="row" style="margin-top:8px"><button class="btn sm ghost" data-act="history-clear">Clear history</button></div>`
+      : `<p class="small muted">Nothing yet. Your consent and data choices will be listed here, with the date, on this device only.</p>`}
+  </section>`;
 }
 // =================== COACH PERSONAS ===================
 // Three coaches, each with its own artwork and its own voice. The persona is chosen before
@@ -18832,7 +18889,7 @@ document.addEventListener("click", e => {
   const a = t.dataset.act, p = P(); if (!p) return;
   switch (a) {
     // form check
-    case "fc-optin": p.prem = p.prem || {}; p.prem.clipsConsent = true; saveProfile(); render(); break;
+    case "fc-optin": p.prem = p.prem || {}; p.prem.clipsConsent = true; historyAdd("clips-on"); saveProfile(); render(); break;
     case "fc-open": clipRecordStart(); break;
     case "fc-go": clipRecordGo(); break;
     case "fc-stop": clipRecordStop(); break;
@@ -18857,7 +18914,7 @@ document.addEventListener("click", e => {
       if (!drop.length) return; saveProfile(); render();
       toast(`${drop.length} clip${drop.length === 1 ? "" : "s"} deleted.`, "success"); break; }
     // body studio
-    case "bd-optin": { bodyState(p).on = true; saveProfile(); render(); toast("On. Nothing was stored before now."); bodyPhotoLockNudge(); break; }
+    case "bd-optin": { bodyState(p).on = true; historyAdd("body-on"); saveProfile(); render(); toast("On. Nothing was stored before now."); bodyPhotoLockNudge(); break; }
     case "bd-open": bodyOpen(p); break;
     case "bd-cancel": camStop(); UI.bdState = null; render(); break;
     case "bd-shoot": bodyShoot(p); break;

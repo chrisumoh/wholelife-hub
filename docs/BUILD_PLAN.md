@@ -21,7 +21,8 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
-| 8.2.13 | Release gate: size and phone-speed budgets (`measure.mjs --gate`, `budget.json`) checked on every pull request by a new CI job | IN PROGRESS: build-8.2.13, pull request not yet opened |
+| 8.2.14 | Privacy summary and a consent and data history in Settings > Privacy & security (`privacyGlance()`, `wlh.history`) | IN PROGRESS: build-8.2.14, pull request not yet opened (stacked on 8.2.13) |
+| 8.2.13 | Release gate: size and phone-speed budgets (`measure.mjs --gate`, `budget.json`) checked on every pull request by a new CI job | OPEN: PR #23, awaiting merge |
 | 8.2.12 | Docs only: every build in this table shows its real status (merged, with its pull request number) instead of "in progress, not yet opened" | IN PROGRESS: build-8.2.12, pull request not yet opened |
 | 8.2.11 | New workout icons, 44 activities in seven groups, nine more coach sports | MERGED: PR #21 |
 | 8.2.10 | Accessibility pass with axe-core (charts, quick-jump combobox, landmarks, headings, skip link) and an automated check | MERGED: PR #20 (with 8.2.9) |
@@ -63,6 +64,11 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.2.14
+
+- Done: `node tests/browser/privacy.mjs` (26 checks), `node tests/browser/run-all.mjs`, `node tests/check-repo.mjs`.
+- Not run: Safari and a real phone, a lawyer's review of the new wording. No Supabase files were touched.
 
 ### Checklist run for 8.2.13
 

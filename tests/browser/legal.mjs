@@ -153,6 +153,7 @@ const d0 = su.calls[0]?.options?.data;
 ok("sign-up is sent once with the terms version and the time of agreement", su.calls.length === 1 && d0?.terms_version === su.tv && /^\d{4}-\d\d-\d\dT[\d:.]+Z$/.test(d0?.terms_accepted_at || "") && Math.abs(Date.parse(d0.terms_accepted_at) - su.now) < 60000, JSON.stringify(su.calls));
 ok("the version is the date the legal pages were last updated", await ev(`TERMS_VERSION === "2026-10-12" && LEGAL_UPDATED === "12 October 2026"`));
 ok("the same version and time are saved on this device", (() => { try { const c = JSON.parse(su.saved); return c.v === su.tv && c.at === d0.terms_accepted_at; } catch { return false; } })(), su.saved);
+ok("sign-up adds a 'terms' entry to the on-device history", await ev(`historyGet().some(x => x.k === "terms")`));
 ok("the confirmation message about the email link still shows", await ev(`/Check your email/.test(document.getElementById("pop-auth")?.textContent || "")`));
 await ev(`(() => { document.querySelector('#pop-auth [data-act="sb-mode"][data-v="in"]')?.click(); return true; })()`); await sleep(300);
 ok("Sign in has no agree box", await ev(`!document.getElementById("sb-agree")`));
