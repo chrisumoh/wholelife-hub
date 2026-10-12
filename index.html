@@ -4007,9 +4007,28 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 .app .wreset button{min-height:44px;padding:0 8px;border:0;background:none;cursor:pointer;font-size:calc((13px) * var(--text-scale,1));font-weight:600;color:var(--bad)}
 .app .wreset .wreset-no{color:var(--muted)}
 /* Cards on the widget pages that are not widgets use the same header look: sentence case, 15px semibold, no tracking. */
-.app :is(#sec-nutrition,#sec-workouts,#sec-coach,#sec-health,#sec-awards,#sec-snacks) .card .eyebrow{text-transform:none;letter-spacing:0;font-size:calc((15px) * var(--text-scale,1));font-weight:600}
+.app :is(#sec-nutrition,#sec-workouts,#sec-coach,#sec-health,#sec-awards,#sec-snacks,#sec-culture,#sec-recipes,#sec-alcohol) .card .eyebrow{text-transform:none;letter-spacing:0;font-size:calc((15px) * var(--text-scale,1));font-weight:600}
 .app .li .eyebrow{display:block}
 .app .card .mhead{margin-bottom:4px}
+/* =================== 8.2.8: DISH TILES AND FOOD CULTURE PAGE ===================
+   Dish tiles (Food culture, Recipes, Today's menu) follow the flat card pattern: no border, glow, top bar or hover lift, 20px radius,
+   16px padding, the slot as a sentence-case label in the Nutrition colour, the dish name 17px semibold, calories in gray. Text only.
+   On the page a tile is a card; inside a card it is a slightly different gray tile (an inner card cannot share its parent's colour). */
+:root{--tile:#F2F2F7}
+:root:is([data-scheme="dark"],[data-scheme="oled"]){--tile:#2C2C2E}
+:root[data-scheme="oled"]:not(.x1):not(.x2){--tile:#1C1C1E}
+.app .dish{background:var(--surface)!important;background-image:none!important;border:0!important;box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;border-radius:20px;padding:16px;gap:4px;color:var(--text)}
+.app .card .dish{background:var(--tile)!important}
+.app .dish::before,.app .dish::after{display:none!important}
+.app a.dish:hover,.app .dish:hover{transform:none!important;box-shadow:none!important;border-color:transparent!important}
+.app a.dish:active{opacity:.85;transform:none!important}
+.app .dish .slot{font-size:calc((15px) * var(--text-scale,1));font-weight:600;letter-spacing:0;text-transform:none;color:var(--c-nutrition)}
+.app .dish h3{font-size:calc((17px) * var(--text-scale,1));font-weight:600;line-height:1.3;margin:0}
+.app .dish .small,.app .dish .muted{font-size:calc((15px) * var(--text-scale,1))}
+.app .planday .d{font-size:calc((17px) * var(--text-scale,1));font-weight:600}
+.app .plan{display:flex;flex-direction:column;gap:12px}
+.app .planday{gap:12px}
 /* No underlines, except real links in the legal pages. */
 .app a:not(.legal a),.app a:not(.legal a):hover,.app a:not(.legal a):focus{text-decoration:none!important}
 </style><div id="app"></div>
@@ -4024,7 +4043,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.7", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.8", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -4038,6 +4057,12 @@ const APP_VERSION = { update: "8.2", build: "8.2.7", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.8", area:"Food culture", title:"Dish tiles on Food culture, Recipes and Today's menu use the flat card pattern",
+      bug:"On the Food culture page (and everywhere a dish tile appears) the tiles still had the old look: a 1px border, a glass rim, a terracotta bar along the top edge, a hover lift, and an uppercase, letter-spaced yellow BREAKFAST / LUNCH / DINNER label. They sat inside cards as a second, differently styled card, which the 8.2.6 card pattern forbids. Found on the build-8.2.7 preview on an iPad.",
+      fix:"One CSS block (8.2.8) restyles .dish: no border, shadow, blur, gradient, top bar or hover lift; 20px radius; 16px padding; the slot label is sentence case, 15px semibold, in the Nutrition colour; the dish name is 17px semibold; calories and protein are 15px gray. A tile on the page is a card colour; a tile inside a card is a second gray (new --tile token: #F2F2F7 light, #2C2C2E dark, #1C1C1E OLED) so it never shares its parent's colour. The plan list on Food culture has 12px gaps and a 17px semibold day label. The sentence-case card labels from 8.2.7 now also cover Food culture, Recipes and Alcohol. Dish tiles stay text only (no icon or image).",
+      where:"index.html: CSS block 8.2.8 at the end of the stylesheet (.dish, .dish .slot, .dish h3, .planday, --tile), the 8.2.7 sentence-case selector list. tests/browser/widgets.mjs section 8. docs/BUILD_PLAN.md, CHANGELOG.md, README.md.",
+      test:"node tests/browser/widgets.mjs (511 checks; section 8 checks every dish tile on Food culture at 1180 and 375px and on Recipes at 1180px, in light, dark and OLED). By hand: open Food culture on a phone and a tablet and look at Today's menu, From other cultures, Today and This week.",
+      limits:"(1) The buttons inside the tiles (Swap, Not this, Add to my rotation) keep the earlier button style; only the tiles changed. (2) Other tile-like boxes (.well, coach picker tiles, premium screens) are not restyled in this build. (3) Not tested on a real iPad or in Safari." },
     { id:"8.2.7", area:"Widgets", title:"Widget sizes work (Small, Medium, Large) on Summary and every page, and widget edit mode rebuilt",
       bug:"Choosing Small, Medium or Large saved a setting but the card looked the same at every size. On Summary the sizes only chose a grid-column class inside an auto-fill 300px grid, which is identical at phone widths, and nothing inside the card depended on size. Every other page ran a second, separate widget system with its own size bars. Edit mode put loose arrows, a full-width Small/Medium/Wide bar and a Hide button under each card, and a dark-blue Reset bar above them. A hidden widget could not be found again on a page where everything was hidden, and the page controls used list positions, so a hidden widget in the saved list moved the wrong card. Some cards on the widget pages still used the old look (the Photo estimate card with its uppercase green label), and Nutrition showed Water and Weight estimate twice.",
       fix:"One engine now serves Summary and every page. wlGet and wlSet read and write the list (p.widgets on Summary, p.layouts[page] elsewhere); actions find a widget by its key, never by position. wdef(p, k, size) builds each widget for its size and dcard() renders it. Small: half width (2 per row on phones, 4 per row from 700px), square-ish, icon, name and the one value. Medium: full width, value and unit, one gray context line, a 7-day chart (gray bars, latest in the category colour). Large: Medium plus a block of detail: a labelled 7-day chart, today against the 7-day average, goal progress where a goal exists, and the widget's own detail (the table is in docs/CONTEXT.md). Only real data is used; an empty source says No Data. Meals and Coach Large have links inside, so those cards are a div with one stretched link under the inner ones. Edit mode: each card's top row holds a red minus circle (hide), a compact S/M/L switch and a drag handle (mouse) or up and down buttons (touch), all 44px; the arrow keys move a card when its handle has focus. Edit widgets and Done are plain accent text on the right of the section title, Hidden widgets is a list at the bottom with a + for each, and Reset layout is small red text that asks to confirm. The dark-blue Reset bar, loose arrows, size bars and Hide buttons are gone. Layouts saved before this build keep their full width: old Large and Wide read as Medium once (p.wv marks migrated profiles). New default sizes: Meals and Coach Medium. The Photo estimate card has the card header (icon and 17px name) and the other card labels on the widget pages are sentence case. The duplicate Water and Weight estimate cards under the Nutrition widgets were removed.",

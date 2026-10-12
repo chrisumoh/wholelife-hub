@@ -256,6 +256,27 @@ ok("'Photo estimate' card: icon and 17px name header, no uppercase green label",
 await view(1440); await goto("#/nutrition");
 ok("Nutrition has no second copy of the Water and Weight estimate cards under the widgets", await ev(`(() => { const names = [...document.querySelectorAll("#sec-nutrition .dcard .mhead b")].map(b => b.textContent); return names.length === new Set(names).size; })()`));
 
+console.log("--- 8. dish tiles (Food culture, Recipes) follow the flat card pattern");
+for (const [mode, ground, card, tile] of [["light", "rgb(242, 242, 247)", "rgb(255, 255, 255)", "rgb(242, 242, 247)"], ["dark", "rgb(0, 0, 0)", "rgb(28, 28, 30)", "rgb(44, 44, 46)"], ["oled", "rgb(0, 0, 0)", "rgb(16, 16, 18)", "rgb(28, 28, 30)"]]) {
+  await ev(`(() => { const p = P(); p.look = { ...(p.look || {}), mode: ${JSON.stringify(mode)}, theme: "forest" }; saveProfile(); applyLook(p); render(); return true; })()`);
+  for (const [w, page] of [[1180, "culture"], [375, "culture"], [1180, "recipes"]]) {
+    await view(w); await goto("#/" + page);
+    const r = await ev(`(() => { const out = [], tiles = [...document.querySelectorAll(".app .dish")]; if (tiles.length < 3) out.push("only " + tiles.length + " tiles");
+      for (const t of tiles) { const c = getComputedStyle(t), n = (t.querySelector("h3")?.textContent || "?").slice(0, 24), inCard = !!t.closest(".card"), want = ${JSON.stringify(tile)}, wantOn = ${JSON.stringify(card)}, wantPage = ${JSON.stringify(card)};
+        if (c.borderTopWidth !== "0px" || c.borderLeftWidth !== "0px") out.push(n + ": border"); if (c.boxShadow !== "none") out.push(n + ": shadow"); if (c.backdropFilter !== "none") out.push(n + ": blur"); if (c.backgroundImage !== "none") out.push(n + ": gradient");
+        if (c.borderRadius !== "20px") out.push(n + ": radius " + c.borderRadius); if (c.paddingTop !== "16px" || c.paddingLeft !== "16px") out.push(n + ": padding " + c.padding);
+        if (getComputedStyle(t, "::before").display !== "none") out.push(n + ": top bar");
+        if (inCard ? c.backgroundColor !== want : c.backgroundColor !== wantPage) out.push(n + ": surface " + c.backgroundColor);
+        if (inCard && c.backgroundColor === getComputedStyle(t.closest(".card")).backgroundColor) out.push(n + ": same colour as its card");
+        const sl = t.querySelector(".slot"); if (sl) { const q = getComputedStyle(sl); if (q.textTransform !== "none" || q.fontSize !== "15px" || q.fontWeight !== "600") out.push(n + ": label " + q.textTransform + " " + q.fontSize + " " + q.fontWeight); }
+        const h = t.querySelector("h3"); if (h) { const q = getComputedStyle(h); if (q.fontSize !== "17px" || q.fontWeight !== "600") out.push(n + ": name " + q.fontSize + " " + q.fontWeight); }
+        if (t.querySelector(":scope > svg, :scope > img, :scope > picture")) out.push(n + ": icon or image on a food option"); }
+      const up = [...document.querySelectorAll("#sec-${page} .card .eyebrow")].filter(e => getComputedStyle(e).textTransform === "uppercase").length; if (up) out.push(up + " uppercase card labels");
+      if (document.documentElement.scrollWidth > innerWidth) out.push("horizontal scroll"); return out; })()`);
+    ok(`${page} at ${w}px ${mode}: dish tiles are flat, 20px, 16px padding, sentence-case label, text only`, r.length === 0, r.slice(0, 4).join(" | "));
+  }
+}
+
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 400));
 console.log(`\n${pass} passed, ${fail} failed`);
 ws.close(); procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(fail ? 1 : 0);
