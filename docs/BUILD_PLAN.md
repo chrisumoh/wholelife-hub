@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.16 | Full account sync: every log type, all profile fields and photos; later change wins; offline queue; passcode keeps syncing (no database change) | IN PROGRESS: build-8.2.16, pull request not yet opened (stacked on 8.2.15) |
 | 8.2.15 | Workouts and weigh-ins sync to the account (`workouts` and `weight_entries`, no database change) | IN PROGRESS: build-8.2.15, pull request not yet opened (stacked on 8.2.14) |
 | 8.2.14 | Privacy summary and a consent and data history in Settings > Privacy & security (`privacyGlance()`, `wlh.history`) | IN PROGRESS: build-8.2.14, pull request not yet opened (stacked on 8.2.13) |
 | 8.2.13 | Release gate: size and phone-speed budgets (`measure.mjs --gate`, `budget.json`) checked on every pull request by a new CI job | OPEN: PR #23, awaiting merge |
@@ -65,6 +66,11 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.2.16
+
+- Done: `node tests/browser/account-sync.mjs` (92 checks, two devices for one account and a third for another), `node tests/browser/run-all.mjs`, `node tests/check-repo.mjs`, and mutation checks (later-update rule, photo re-encoding, passcode gate, update cursor and the sign-out rule each make the new test fail when broken). The live schema was read (read-only) earlier to confirm every column used; no `supabase/` file was touched and nothing was applied.
+- Not run: a real account on the preview with two real devices (the tests use a fake Supabase), the size and speed gate on GitHub, Safari and a real phone, a lawyer's review of the rewritten privacy policy.
 
 ### Checklist run for 8.2.15
 
