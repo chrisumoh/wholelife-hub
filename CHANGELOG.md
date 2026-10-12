@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.4, 2026-10-12. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.5, 2026-10-12. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.5 · Performance: A boot screen on the first bytes, and the four embedded images moved out of index.html
+
+- **Problem:** docs/PERFORMANCE.md (8.2.3) found that nothing painted until all 541 KB of index.html had arrived: 3.7 s to first paint on Fast 4G and 12.3 s on Slow 4G. The file also carried 125 KB of base64 images (three coach photos and the home-screen icon) that a first visit rarely needs, which brotli cannot shrink.
+- **Change:** A small boot screen (the app's name and a thin progress bar) sits at the top of <body> with its CSS in the tiny <style> in <head>, so it paints as soon as the first bytes arrive. render() removes it the first time it runs. It follows the system light or dark setting, respects reduced motion, and after 15 seconds shows 'Still loading. Check your connection, then reload the page.' with no script needed. The apple-touch-icon and the three coach portraits are now files: img/apple-touch-icon.png, img/coach-motivator.webp, img/coach-enforcer.webp, img/coach-strategist.webp (byte for byte what was embedded). index.html drops 127 KB raw and 91 KB with brotli (541 to 450 KB). Measured on a mid-range phone profile (4x CPU, Fast 4G): first paint 3,708 ms to 264 ms, app usable 3,698 ms to 2,920 ms; Slow 4G: first paint 12,304 ms to 636 ms, usable 12,300 ms to 10,088 ms.
+- **Where:** index.html: the boot-screen CSS at the end of the first <style> and the #boot element right after <body>; render() (removes #boot); the apple-touch-icon <link>; COACH_PHOTO. img/ (new, four files). docs/PERFORMANCE.md (results after this build); docs/BUILD_PLAN.md
+- **How to test:** Throttle the network in the browser's dev tools (Slow 4G) and reload: the name and a moving bar appear straight away, then the app. Open the coach picker (Personal coach) and check the three portraits show. On an iPhone, Share > Add to Home Screen still offers the app's icon. `node tests/perf/measure.mjs` should show first contentful paint well under a second on the phone profiles. Automated: the full browser suite and check-repo pass.
+- **Known limits:** (1) The boot screen's colours are fixed (light #faf9f5 or dark #111113 by system setting, accent green) because the app's own CSS tokens have not loaded yet; if someone's saved theme differs from their system setting they see the system colour for a moment. (2) The app is still not usable until the whole file has arrived: this makes the wait visible, and the 17% smaller file shortens it, but a weak signal still takes about 10 s. (3) The coach portraits and home-screen icon now need a second request, so they appear a moment after the screen that uses them on a slow connection (the portraits are lazy-loaded). (4) The page no longer works as one single self-contained file: the fonts were already files, and img/ must be deployed with it. (5) Real phones, Safari and the effect of the blur and glass effects are still not measured.
 
 ## 8.2.4 · Profile sync: Profiles saved to your account: a new device shows your profiles, their basics and their meals; edits and deletes travel between devices
 
