@@ -4029,6 +4029,12 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 .app .planday .d{font-size:calc((17px) * var(--text-scale,1));font-weight:600}
 .app .plan{display:flex;flex-direction:column;gap:12px}
 .app .planday{gap:12px}
+/* =================== 8.2.9: AGE SCREEN AND TERMS CONSENT =================== */
+.agree{display:flex;gap:10px;align-items:flex-start;font-size:calc((15px) * var(--text-scale,1));line-height:1.4;min-height:44px}
+.agree input{flex:none;width:22px;height:22px;margin:1px 0 0}
+.agree a,.app .agree a{color:var(--accent);text-decoration:underline!important}
+.agate{max-width:420px;margin-inline:auto}
+.agate .row{gap:12px}
 /* No underlines, except real links in the legal pages. */
 .app a:not(.legal a),.app a:not(.legal a):hover,.app a:not(.legal a):focus{text-decoration:none!important}
 </style><div id="app"></div>
@@ -4043,7 +4049,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.8", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.9", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -4057,6 +4063,12 @@ const APP_VERSION = { update: "8.2", build: "8.2.8", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.9", area:"Legal", title:"Neutral age screen with a 24-hour retry block, and a Terms and Privacy Policy agreement at sign-up",
+      bug:"Two gaps from a launch-compliance checklist. (1) The age check was optional and not neutral: setup showed an optional Age box, a 'not for anyone under 13' message that told a child exactly what number to type next, no block on trying again, and an 'I confirm I'm 13 years old or older' tick box on the last step that anyone could tick. Skipping setup avoided it altogether. (2) Create account had no agreement to the Terms and Privacy Policy, and nothing recorded who agreed to which version, or when.",
+      fix:"Age screen: pressing Set up my hub or Skip setup now opens 'When were you born?' first, with a Birth month and a Birth year list that both start blank (the year list starts this year and runs back 110 years), and no age limit named anywhere on the screen. Only the age is kept (a birthday this month counts as not yet reached, because the day is not asked); the month and year are dropped. If the age comes out under 13 the screen says only 'We can't set up a profile on this device', nothing is saved, and the browser refuses another try, including through Skip setup, for 24 hours (a flag in this browser, wlh.ageblock; clearing site data removes it). Adding a profile for another person asks the same question. The old Age box, the 'under 13' message and the 'I confirm I'm 13' box were removed. Sign-up: Create account has an unticked box, 'I agree to the Terms and the Privacy Policy.', with accent-blue underlined links that open the two pages in a new tab; submitting without it shows a message and sends nothing. On a successful sign-up the terms version (TERMS_VERSION, the date the legal pages were last updated) and the time are sent with the account as user metadata (no schema change, nothing under supabase/) and saved on the device (wlh.consent). The Privacy Policy section on children and two privacy lines in Settings were reworded to match what the app now does, and one that said it never asks for an email was corrected.",
+      where:"index.html: AGE_BLOCK_KEY, CONSENT_KEY, TERMS_VERSION, ageBlocked(), blockAge(), ageFromMonthYear(), ageGateView(), ageGateSubmit(), welcomeView/onboardingView (UI.obGate, UI.obGateOk), the ob-next, ob-skip and ag-back actions, step 3 and step 4 of onboarding, authFormHTML(), sbAuth(), the submit and change handlers, privacyPolicyView() section 8, the Settings privacy lines, CSS block 8.2.9. tests/browser/legal.mjs (new), tests/browser/fake-supabase.js (records sign-up calls), tests/browser/run-all.mjs. docs/BUILD_PLAN.md, CHANGELOG.md, README.md.",
+      test:"node tests/browser/legal.mjs (42 checks). By hand: clear site data, open the app, press Set up my hub, and check that both lists start blank and nothing says an age limit; choose a birth year 12 years ago and see the plain screen, then reload and try Set up my hub and Skip setup again (still blocked); in a private window choose an adult year and finish setup; in Settings, Create account, try without the box (a message, nothing sent), then with it.",
+      limits:"(1) The block is a flag in this browser, so clearing site data or using another browser or device removes it; it deters a retry and is not proof of age. (2) Because the birth day is not asked, someone in their 13th-birthday month is treated as under 13 until the next month. (3) Profiles and accounts that existed before this build were not asked again. (4) The agreement is saved with new sign-ups only; nothing asks existing accounts to agree again when TERMS_VERSION changes. (5) The Terms and Privacy Policy text has not been reviewed by a lawyer. (6) The 24 hours is a choice, not a legal requirement." },
     { id:"8.2.8", area:"Food culture", title:"Dish tiles on Food culture, Recipes and Today's menu use the flat card pattern",
       bug:"On the Food culture page (and everywhere a dish tile appears) the tiles still had the old look: a 1px border, a glass rim, a terracotta bar along the top edge, a hover lift, and an uppercase, letter-spaced yellow BREAKFAST / LUNCH / DINNER label. They sat inside cards as a second, differently styled card, which the 8.2.6 card pattern forbids. Found on the build-8.2.7 preview on an iPad.",
       fix:"One CSS block (8.2.8) restyles .dish: no border, shadow, blur, gradient, top bar or hover lift; 20px radius; 16px padding; the slot label is sentence case, 15px semibold, in the Nutrition colour; the dish name is 17px semibold; calories and protein are 15px gray. A tile on the page is a card colour; a tile inside a card is a second gray (new --tile token: #F2F2F7 light, #2C2C2E dark, #1C1C1E OLED) so it never shares its parent's colour. The plan list on Food culture has 12px gaps and a 17px semibold day label. The sentence-case card labels from 8.2.7 now also cover Food culture, Recipes and Alcohol. Dish tiles stay text only (no icon or image).",
@@ -8199,11 +8211,16 @@ async function sbAuth(kind){
   UI.sbEmail = email; UI.sbMsg = null;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { UI.sbMsg = { t:"Enter a valid email address." }; return sbRender(); }
   if (kind !== "reset" && (kind === "up" ? pass.length < 8 : !pass)) { UI.sbMsg = { t: kind === "up" ? "Use at least 8 characters for the password." : "Enter your password." }; return sbRender(); }
+  if (kind === "up" && !document.getElementById("sb-agree")?.checked) { UI.sbMsg = { t:"Tick the box to agree to the Terms and the Privacy Policy." }; return sbRender(); }
   SB.busy = true; sbRender();
   try {
     if (kind === "in") { const r = await c.auth.signInWithPassword({ email, password: pass }); if (r.error) throw r.error; UI.sbMsg = null; closePopover("auth"); toast("Signed in", "success"); }
     else if (kind === "up") {
-      const r = await c.auth.signUp({ email, password: pass, options: { emailRedirectTo: sbRedirect() } }); if (r.error) throw r.error;
+      // The agreement is recorded with the account (user metadata, no schema change) and on this device: which version, and when.
+      const consent = { terms_version: TERMS_VERSION, terms_accepted_at: new Date().toISOString() };
+      const r = await c.auth.signUp({ email, password: pass, options: { emailRedirectTo: sbRedirect(), data: consent } }); if (r.error) throw r.error;
+      try { localStorage.setItem(CONSENT_KEY, JSON.stringify({ v: consent.terms_version, at: consent.terms_accepted_at })); } catch {}
+      UI.sbAgree = false;
       UI.sbMsg = r.data.session ? null : { t:"Check your email. Open the link we sent to confirm your account, then sign in here.", ok:true }; UI.acct = "in";
     } else {
       const r = await c.auth.resetPasswordForEmail(email, { redirectTo: sbRedirect() }); if (r.error) throw r.error;
@@ -8270,7 +8287,8 @@ function authFormHTML(){
   return `<form class="stack" data-form="sb-auth" data-kind="${mode}" novalidate>
       <label class="f">Email<input type="email" id="sb-email" autocomplete="email" inputmode="email" value="${em}" required></label>
       ${mode === "reset" ? "" : `<label class="f">Password<input type="password" id="sb-pass" autocomplete="${mode === "up" ? "new-password" : "current-password"}" ${mode === "up" ? 'minlength="8" ' : ""}required></label>`}
-      ${mode === "up" ? `<p class="tiny muted">At least 8 characters. We'll email you a link to confirm your address.</p>` : ""}
+      ${mode === "up" ? `<p class="tiny muted">At least 8 characters. We'll email you a link to confirm your address.</p>
+      <label class="agree"><input type="checkbox" id="sb-agree"${UI.sbAgree ? " checked" : ""}><span>I agree to the <a href="#/terms" target="_blank" rel="noopener">Terms</a> and the <a href="#/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>` : ""}
       ${UI.sbMsg ? `<div class="note ${UI.sbMsg.ok ? "info" : ""}" role="${UI.sbMsg.ok ? "status" : "alert"}">${esc(UI.sbMsg.t)}</div>` : ""}
       <button class="btn primary" type="submit"${SB.busy ? " disabled" : ""}>${SB.busy ? "Working…" : mode === "in" ? "Sign in" : mode === "up" ? "Create account" : "Email me a reset link"}</button>
       <div class="auth-links">${mode === "in" ? link("reset", "Forgot password?") + link("up", "Create an account") : mode === "up" ? link("in", "I already have an account") : link("in", "Back to sign in")}</div>
@@ -9126,7 +9144,7 @@ function profileTab(p){
     <label class="f full">Active profile<select id="switchProfile" aria-label="Switch profile">${S.profiles.map(x => `<option value="${x.id}"${x.id===p.id?" selected":""}>${esc(x.name || "Unnamed")}</option>`).join("")}<option value="__new">+ Add a profile</option></select></label>
     <p class="tiny muted">${S.profiles.length === 1 ? "You're the only profile here so far." : `${S.profiles.length} profiles on this hub.`} Manage them on <a href="#/settings/household">Household</a>.</p>
   </section>
-  <p class="small muted">WholeLife doesn't ask for your email, phone number or date of birth. Profile photos are resized to 320 × 320 in your browser, which also strips hidden location data, and are encrypted along with everything else when a passcode is on.</p>`;
+  <p class="small muted">WholeLife doesn't ask for your phone number or date of birth. Setting up a profile asks for your birth month and year once, to check your age, and keeps only your age. An account is optional and needs an email address. Profile photos are resized to 320 × 320 in your browser, which also strips hidden location data, and are encrypted along with everything else when a passcode is on.</p>`;
 }
 function saveGroup(p, key){
   const v = id => document.getElementById(id)?.value?.trim() ?? "";
@@ -10594,6 +10612,47 @@ function wlRing(labels){
 }
 function loaderView(msg){ return `<div class="wl wl-load" role="status"><div class="wl-art">${wlRing(false)}<div class="wl-mark">${logoSVG(96, false)}</div></div><div><h2>Whole Life Hub</h2><p>${esc(typeof msg === "string" ? msg : "Loading your hub…")}</p></div></div>`; }
 function obGround(){ return `<div class="obg-bg" aria-hidden="true"><i></i><i></i></div>`; }
+// ---- age gate and terms consent (8.2.9) ----
+// A neutral age screen: it asks for birth month and year with nothing pre-selected and never says what age is allowed. Only the age
+// is kept, never the birth date. Someone under 13 gets a plain "can't set up" screen, and the device refuses another try for 24 hours
+// (a flag in this browser; clearing site data removes it, so it deters a retry rather than guaranteeing one).
+const AGE_BLOCK_KEY = "wlh.ageblock", AGE_BLOCK_MS = 24 * 3600 * 1000, CONSENT_KEY = "wlh.consent";
+const TERMS_VERSION = "2026-10-12"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
+const ageBlocked = () => { try { return +localStorage.getItem(AGE_BLOCK_KEY) > Date.now(); } catch { return false; } };
+const blockAge = () => { try { localStorage.setItem(AGE_BLOCK_KEY, String(Date.now() + AGE_BLOCK_MS)); } catch {} };
+// Whole years old. The birth day is not asked, so a birthday this month counts as not reached yet.
+const ageFromMonthYear = (m, y) => { const n = new Date(); return n.getFullYear() - y - (n.getMonth() + 1 <= m ? 1 : 0); };
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+function ageGateView(){
+  if (ageBlocked()) return `<div class="ob obg">${obGround()}<div class="panel st-panel"><div class="stack agate">
+    <div class="row">${logoSVG(46)}</div>
+    <h1 class="ob-h1" tabindex="-1" data-st-focus>We can't set up a profile on this device</h1>
+    <p class="muted">Please try again later.</p>
+    <div class="row">${S.profiles.length ? `<button class="btn primary" data-act="ob-cancel">Back</button>` : ""}</div></div></div></div>`;
+  const y0 = new Date().getFullYear();
+  return `<div class="ob obg">${obGround()}<div class="panel st-panel"><form class="stack agate" data-form="age-gate" novalidate>
+    <div class="row">${logoSVG(46)}</div>
+    <h1 class="ob-h1" tabindex="-1" data-st-focus>When were you born?</h1>
+    <p class="muted">We use your birth month and year once, to set up your hub. We keep your age, not your birth date.</p>
+    <div class="form">
+      <label class="f">Birth month<select id="ag-m" required><option value="">Month</option>${MONTHS.map((m, i) => `<option value="${i + 1}">${m}</option>`).join("")}</select></label>
+      <label class="f">Birth year<select id="ag-y" required><option value="">Year</option>${Array.from({ length: 111 }, (_, i) => `<option value="${y0 - i}">${y0 - i}</option>`).join("")}</select></label>
+    </div>
+    ${UI.agErr ? `<div class="note" role="alert">${esc(UI.agErr)}</div>` : ""}
+    <div class="row"><button type="button" class="btn ghost" data-act="ag-back">Back</button><button type="submit" class="btn primary">Continue</button></div>
+  </form></div></div>`;
+}
+function ageGateSubmit(){
+  const m = +$("#ag-m")?.value, y = +$("#ag-y")?.value;
+  if (!m || !y) { UI.agErr = "Choose a month and a year."; return render(); }
+  const age = ageFromMonthYear(m, y);
+  if (age < 0) { UI.agErr = "Check the year you chose."; return render(); }
+  if (age < 13) { blockAge(); UI.agErr = null; return render(); } // nothing is kept: no age, no birth date
+  UI.obDraft = UI.obDraft || newProfile(""); UI.obDraft.age = Math.min(110, age); UI.obGateOk = true; UI.agErr = null;
+  const then = UI.obGate; UI.obGate = null;
+  if (then === "skip") return finishOnboarding("fresh");
+  UI.obStep = 1; render(); window.scrollTo(0, 0);
+}
 function welcomeView(){
   const adding = S.profiles.length > 0;
   return `<main class="wl" aria-labelledby="wl-h">
@@ -10687,7 +10746,7 @@ function obStepFrame(step, content, foot){
 function onboardingView(){
   const d = UI.obDraft || (UI.obDraft = newProfile(""));
   const step = UI.obStep;
-  if (step === 0) return welcomeView();
+  if (step === 0) return UI.obGate ? ageGateView() : welcomeView();
   const units = d.units;
   // Step zero: pick a coach. Nothing is personalised and no coaching text is generated
   // until this is answered, so the voice is set before there is anything to say.
@@ -10717,14 +10776,12 @@ function onboardingView(){
     return obStepFrame(3, `
     <div class="setrow"><div class="setlabel"><div class="eyebrow">Step 3 of 4 · Food and body</div><h1 style="margin-top:6px" tabindex="-1" data-st-focus>Add only what helps</h1></div>
       <div class="seg setctl" role="group" aria-label="Units"><button data-act="ob-units" data-v="us" aria-pressed="${units==="us"}">lb / ft</button><button data-act="ob-units" data-v="metric" aria-pressed="${units==="metric"}">kg / cm</button></div></div>
-    <p class="small muted">Age, sex, height and weight power the weight gain/loss estimate. Leave them blank and the estimate stays off.</p>
+    <p class="small muted">Sex, height and weight power the weight gain/loss estimate, with the age you gave. Leave them blank and the estimate stays off.</p>
     <div class="form">
       <label class="f">Food preference<select id="ob-diet">${opt(DIETS, d.diet)}</select></label>
       <label class="f">Food culture<select id="ob-culture">${coverageOptions(d.culture)}</select></label>
       <label class="f full">Allergies or foods to avoid<input type="text" id="ob-allergies" value="${esc(d.allergies)}" placeholder="e.g. peanuts, shellfish"></label>
-      <label class="f">Age<input type="number" id="ob-age" min="13" max="110" value="${d.age ?? ""}" placeholder="Optional"></label>
       <label class="f">Sex (for calorie estimates)<select id="ob-sex">${opt([["","Prefer not to say"],["female","Female"],["male","Male"]], d.sex)}</select></label>
-      ${UI.obAgeErr ? `<div class="note full">${esc(UI.obAgeErr)}</div>` : ""}
       ${units === "us"
         ? `<label class="f">Height (ft)<input type="number" id="ob-ft" min="3" max="8" value="${hIn ? Math.floor(hIn/12) : ""}" placeholder="ft"></label>
            <label class="f">Height (in)<input type="number" id="ob-in" min="0" max="11" value="${hIn ? round(hIn%12) : ""}" placeholder="in"></label>
@@ -10741,16 +10798,15 @@ function onboardingView(){
       <button data-act="ob-choice" data-v="fresh" aria-pressed="${UI.obChoice==="fresh"}"><h3>Start fresh</h3><span class="small muted">Everything starts at zero. No calorie or workout targets until you set your own in Settings.</span></button>
     </div>
     ${!canEst && UI.obChoice==="plan" ? `<div class="note info">Without age, sex, height and weight there's no calorie target yet. Meals and workouts will still be personalized.</div>` : ""}
-    ${d.age == null ? `<label class="f full" style="display:flex;gap:8px;align-items:flex-start;margin-top:4px"><input type="checkbox" id="ob-age-confirm" ${UI.obAgeConfirm ? "checked" : ""} style="margin-top:3px"> I confirm I'm 13 years old or older.</label>` : ""}
     <p class="tiny faint">Estimates are for personal tracking, not medical or nutrition advice.</p>`,
-    `<div class="foot-left"><button class="btn ghost" data-act="ob-back">Back</button></div><div class="foot-right"><button class="btn primary" data-act="ob-finish"${UI.obChoice && (d.age != null || UI.obAgeConfirm) ? "" : " disabled"}>Enter Whole Life Hub</button></div>`);
+    `<div class="foot-left"><button class="btn ghost" data-act="ob-back">Back</button></div><div class="foot-right"><button class="btn primary" data-act="ob-finish"${UI.obChoice ? "" : " disabled"}>Enter Whole Life Hub</button></div>`);
 }
 function readOnboardingStep(){
   const d = UI.obDraft; const v = id => $("#"+id)?.value?.trim();
   const num = id => { const x = parseFloat(v(id)); return isFinite(x) ? x : null; };
   if (UI.obStep === 2) { d.name = v("ob-name") || ""; d.goal = v("ob-goal"); d.style = v("ob-style"); d.freq = num("ob-freq"); d.level = v("ob-level"); }
   if (UI.obStep === 3) {
-    d.diet = v("ob-diet"); d.culture = v("ob-culture"); d.allergies = v("ob-allergies") || ""; d.age = num("ob-age"); d.sex = v("ob-sex");
+    d.diet = v("ob-diet"); d.culture = v("ob-culture"); d.allergies = v("ob-allergies") || ""; d.sex = v("ob-sex");
     const wr = parseWeight($("#ob-wt")?.value, d);
     UI.obWeightErr = wr.error || null;
     d.weightKg = wr.kg ?? null;
@@ -10768,7 +10824,7 @@ function finishOnboarding(choice){
   S.profiles.push(d); S.activeId = d.id;
   if (d.weightKg) { S.activeId = d.id; addEntry("weights", { id: uid(), date: today(), kg: d.weightKg }); }
   saveProfile();
-  UI.obDraft = null; UI.obStep = 0; UI.obChoice = null;
+  UI.obDraft = null; UI.obStep = 0; UI.obChoice = null; UI.obGate = null; UI.obGateOk = false;
   UI.loading = choice === "plan" ? "Building your plan…" : "Setting up your hub…";
   render();
   setTimeout(() => { UI.loading = false; location.hash = "#/home"; readRoute(); render(); }, 1100);
@@ -11629,7 +11685,7 @@ function settingsView(p){
         [true, "Checked on load", "Every saved record is validated before it's shown: unknown fields are dropped, numbers are range-checked and text is escaped, so damaged or tampered data can't run code in the page."],
         [!!CRY.lock, "Passcode encryption", CRY.lock ? "On: AES-256-GCM in your browser, key from your passcode with PBKDF2-SHA-256 (600,000 rounds). The passcode never leaves this device." : "Off. Turn it on below to encrypt everything before it's saved."],
         [!!CRY.lock && (CRY.lock.auto ?? 15) > 0, "Auto-lock", CRY.lock ? ((CRY.lock.auto ?? 15) > 0 ? `Locks after ${CRY.lock.auto ?? 15} minutes without activity or away from the page.` : "Off. Pick a time below.") : "Available once encryption is on."],
-        [true, "Collects less", "No email, phone number or date of birth. No analytics, ads or tracking scripts. Photos are shrunk in your browser and stripped of location data."],
+        [true, "Collects less", "No phone number or date of birth is kept (your birth month and year are used once to work out your age, then dropped). An email address is needed only if you create an account. No analytics, ads or tracking scripts. Photos are shrunk in your browser and stripped of location data."],
         [true, "Encrypted in transit", "Everything travels over HTTPS."]
       ].map(([ok, t, d]) => `<li><span class="${ok ? "ok" : "no"}" aria-hidden="true">${ok ? icon("check","",14) : icon("alert","",14)}</span><span><b>${t}.</b> ${d}</span></li>`).join("")}
     </ul>
@@ -11697,15 +11753,9 @@ document.addEventListener("click", async e => {
     case "menu": setMenu(!UI.menu); break;
     // onboarding
     case "ob-next": {
-      const wasStep = UI.obStep; readOnboardingStep();
-      // Task 7.9 age gate: an age typed here that's under 13 blocks the flow before a profile is
-      // ever created, with a neutral message, and the value is dropped rather than carried on to
-      // the next step or ever saved.
-      if (wasStep === 3 && UI.obDraft && UI.obDraft.age != null && UI.obDraft.age < 13) {
-        UI.obDraft.age = null; UI.obAgeErr = "Whole Life Hub is not for anyone under 13. Nothing has been saved.";
-        render(); return;
-      }
-      UI.obAgeErr = null; UI.obStep++; render(); window.scrollTo(0,0); break;
+      if (UI.obStep === 0 && !UI.obGateOk) { UI.obGate = "next"; UI.agErr = null; render(); window.scrollTo(0,0); break; }
+      readOnboardingStep();
+      UI.obStep++; render(); window.scrollTo(0,0); break;
     }
     case "set-theme": { const p2 = P(); p2.look = p2.look || {}; p2.look.theme = t.dataset.v;
       if (t.dataset.v === "midnight" && p2.look.mode === "light") p2.look.mode = "dark";
@@ -11749,9 +11799,10 @@ document.addEventListener("click", async e => {
     case "ob-back": readOnboardingStep(); UI.obStep = Math.max(0, UI.obStep-1); render(); break;
     // 8.1.9 stepper: tapping a finished step's circle goes back to it (never forward, so no
     // step's checks -- coach chosen, the under-13 gate -- can be jumped over)
-    case "ob-goto": { const to = +t.dataset.v; if (to >= 1 && to < UI.obStep) { readOnboardingStep(); UI.obAgeErr = null; UI.obStep = to; render(); window.scrollTo(0,0); } break; }
-    case "ob-cancel": UI.obDraft = null; UI.obStep = 0; UI.obAgeErr = null; UI.obAgeConfirm = false; S.activeId = UI.lastActive && S.profiles.some(x=>x.id===UI.lastActive) ? UI.lastActive : S.profiles[0]?.id; render(); break;
-    case "ob-skip": UI.obDraft = UI.obDraft || newProfile(""); finishOnboarding("fresh"); break;
+    case "ob-goto": { const to = +t.dataset.v; if (to >= 1 && to < UI.obStep) { readOnboardingStep(); UI.obStep = to; render(); window.scrollTo(0,0); } break; }
+    case "ob-cancel": UI.obDraft = null; UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; UI.agErr = null; S.activeId = UI.lastActive && S.profiles.some(x=>x.id===UI.lastActive) ? UI.lastActive : S.profiles[0]?.id; render(); break;
+    case "ob-skip": UI.obDraft = UI.obDraft || newProfile(""); if (!UI.obGateOk) { UI.obGate = "skip"; UI.agErr = null; render(); window.scrollTo(0,0); break; } finishOnboarding("fresh"); break;
+    case "ag-back": UI.obGate = null; UI.agErr = null; render(); break;
     case "ob-units": readOnboardingStep(); UI.obDraft.units = t.dataset.v; render(); break;
     case "ob-choice": UI.obChoice = t.dataset.v; render(); break;
     case "ob-finish": finishOnboarding(UI.obChoice); break;
@@ -11887,7 +11938,7 @@ document.addEventListener("click", async e => {
       p.targetKg = tw.kg ?? null;
       saveProfile(); render();
       toast(p.targetKg ? `Targets saved. Goal weight ${fmtWeight(p.targetKg, p)}.` : "Targets saved", "success"); break; }
-    case "new-profile": UI.lastActive = p?.id; UI.obDraft = newProfile(""); UI.obStep = 0; S.activeId = null; render(); break;
+    case "new-profile": UI.lastActive = p?.id; UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; S.activeId = null; render(); break;
     case "switch": S.activeId = t.dataset.id; saveProfile(); resetUI(); render(); toast(`Switched to ${P().name || "profile"}`); break;
     case "del-profile": UI.confirmDel = t.dataset.id; render(); break;
     case "del-profile-no": UI.confirmDel = null; render(); break;
@@ -11902,7 +11953,7 @@ function resetUI(){
   if (typeof camStop === "function" && typeof CAM !== "undefined" && CAM.stream) camStop();
   if (typeof restStop === "function") restStop();
   Object.assign(UI, { metricErr:null, editPage:null, resetAsk:null, secMsg:null, editGroup:null, groupErr:null, pendingExtras:null, navDate:null, prefill:null, prefillW:null, askCoach:null, askMeal:null, import:null, weightErr:null, mealBuild:null, coachAns:null, drinkPick:null, drinkQty:null, confirmDel:null, confirmDelMeal:null, confirmErase:false, cw:null, foodShot:null, gymShot:null, planUI:null, editBaseline:false, baselineDraft:null,
-    fcState:null, fcPending:null, fcSecs:0, fcEx:null, fcErr:null, bdState:null, bdErr:null, obAgeErr:null, obAgeConfirm:false, confirmEraseAll:false });
+    fcState:null, fcPending:null, fcSecs:0, fcEx:null, fcErr:null, bdState:null, bdErr:null, confirmEraseAll:false });
 }
 // BUG-117/118/119 fix: these three two-tap confirms (erase everything, delete a profile, delete
 // a photo'd meal) used to arm on the first tap and then stay armed forever if the user navigated
@@ -11929,12 +11980,13 @@ document.addEventListener("change", e => {
   if (t.id === "f-apple" && t.files[0]) importApple(t.files[0]);
   if (t.id === "photo-in" && t.files[0]) { processPhoto(t.files[0]).then(d => { P().photo = d; saveProfile(); render(); toast("Photo updated"); }).catch(() => toast("That file couldn't be used. Try a JPEG or PNG photo.")); }
   if (t.id === "f-google" && t.files.length) importFiles([...t.files]);
-  if (t.id === "ob-age-confirm") { UI.obAgeConfirm = t.checked; render(); }
+  if (t.id === "sb-agree") UI.sbAgree = t.checked;
 });
 
 document.addEventListener("submit", async e => {
   const f = e.target.closest("form[data-form]"); if (!f) return; e.preventDefault();
   const kind = f.dataset.form;
+  if (kind === "age-gate") { ageGateSubmit(); return; }
   if (kind === "ci-mo") {
     setDaily(P(), { win: val("mo-win").slice(0,90), next: val("mo-next").slice(0,90), done: true, skipped: false });
     render(); toast("Saved. That's the habit forming."); return;
@@ -15260,7 +15312,7 @@ function privacyPolicyView(){
     <p>You can export everything you have stored as a file from <a href="#/settings/about">Data &amp; about</a>, and you can delete the data this browser holds, or export it, from <a href="#/settings/privacy">Privacy &amp; security</a>. Deleting is immediate and cannot be undone. It does not delete the meals and profile names stored in your account (section 4). To delete your account and all the data synced to it, email the address in section 9; that deletes the account and all synced data. You can also delete any single meal, workout, drink or weigh-in from the page it lives on, remove a profile photo, and turn any of the section 3 permissions back off — each stops that feature immediately.</p>
 
     <h3>8. Children</h3>
-    <p>This app is not intended for anyone under 13, and it is not designed to be used by children. Setting up a profile asks for an age or a 13-and-over confirmation before it finishes, and a profile is not created for anyone who says they are under 13.</p>
+    <p>This app is not intended for anyone under 13, and it is not designed to be used by children. Setting up a profile starts by asking for your birth month and year. Only your age is kept, never your birth date. If the answer shows someone is under 13, no profile is created, nothing is kept, and this browser declines another attempt for 24 hours.</p>
 
     <h3>9. Contact</h3>
     <p>Questions about this policy: <b>${esc(CONTACT_EMAIL)}</b>, or see the <a href="#/contact">Contact page</a>.</p>
