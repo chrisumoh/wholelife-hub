@@ -64,7 +64,7 @@ function answer(method, u, body, prefer) {
       if (r) Object.assign(r, p, { updated_at: stamp }); else { r = { id: crypto.randomUUID(), deleted_at: null, ...p, updated_at: stamp }; t.push(r); }
       out.push(r);
     }
-    return [201, /return=representation/.test(prefer) ? out.map(r => ({ id: r.id, app_id: r.app_id })) : null];
+    return [201, /return=representation/.test(prefer) ? out.map(r => ({ ...r })) : null];
   }
   if (method === "PATCH") { const ids = (u.searchParams.get("app_id") || "").replace(/^in\.\(|\)$/g, "").split(","); t.filter(r => ids.includes(r.app_id)).forEach(r => Object.assign(r, JSON.parse(body), { updated_at: new Date().toISOString() })); return [204, null]; }
   return [405, {}];

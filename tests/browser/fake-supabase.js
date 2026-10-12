@@ -29,6 +29,7 @@
       if (!uid()) return { data: null, error: { message: "no session", code: "401" } };
       if (F.failWrites && op !== "select") return { data: null, error: { message: "simulated write failure", code: "500" } };
       if (F.failReads && op === "select") return { data: null, error: { message: "simulated read failure", code: "500" } };
+      if (op !== "select") { F.beforeWrite?.(name, op); F.inflight = (F.inflight || 0) + 1; F.maxInflight = Math.max(F.maxInflight || 0, F.inflight); }
       return exec((DB, mark) => {
         const rows = table(DB, name), mine = rows.filter(r => r.owner_id === uid() && filters.every(f => f(r)));
         if (op === "select") {
@@ -37,7 +38,7 @@
           if (rng) out = out.slice(rng[0], rng[1] + 1); else if (lim != null) out = out.slice(0, lim);
           return { data: JSON.parse(JSON.stringify(out)), error: null };
         }
-        if (op === "update") { const t = stamp(); mine.forEach(r => Object.assign(r, payload, { updated_at: t })); mark(); return { data: null, error: null }; }
+        if (op === "update") { const t = stamp(); mine.forEach(r => Object.assign(r, payload, { updated_at: t })); mark(); return { data: sel ? JSON.parse(JSON.stringify(mine)) : null, error: null }; }
         if (op === "delete") { DB[name] = rows.filter(r => !mine.includes(r)); mark(); return { data: null, error: null }; }
         const out = [], keys = (conflict || "owner_id,app_id").split(",");
         for (const p of payload) {
@@ -49,13 +50,13 @@
           out.push(r);
         }
         mark(); return { data: sel ? JSON.parse(JSON.stringify(out)) : null, error: null };
-      });
+      }).finally(() => { if (op !== "select") F.inflight--; });
     };
     const b = {
       upsert(r, o) { op = "upsert"; payload = Array.isArray(r) ? r : [r]; conflict = o?.onConflict; return b; },
       update(p) { op = "update"; payload = p; return b; },
       delete() { op = "delete"; return b; },
-      select() { if (op === "upsert") sel = true; else op = "select"; return b; },
+      select() { if (op === "upsert" || op === "update") sel = true; else op = "select"; return b; },
       in(c, v) { filters.push(r => v.includes(r[c])); return b; },
       is(c, v) { filters.push(r => (r[c] ?? null) === v); return b; },
       eq(c, v) { filters.push(r => r[c] === v); return b; },

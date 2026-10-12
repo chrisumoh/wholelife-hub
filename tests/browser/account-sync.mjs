@@ -439,7 +439,37 @@ await d2.ev(`document.getElementById("unlock-pass").value = "longenough1"; docum
 ok("after unlocking, the waiting change is sent", await d2.waitFor(`UI.locked === false`, 15000) && await (async () => { for (let i = 0; i < 100; i++) { if (Object.keys(files()).some(p => p.includes("/avatar/"))) return true; await sleep(200); } return false; })() && await d2.synced(25000));
 await d2.ev(`removePasscode().then(() => true)`); await d2.synced();
 
-console.log("--- 14. no script errors");
+console.log("--- 14. the queue: on disk before it is sent, removed only after the server confirms, one worker");
+await d1.kick();
+// 1. persisted first
+await d1.ev(`window.__snap = {}; __fake.beforeWrite = name => { if (name === "meal_logs") window.__snap.cache = localStorage.getItem(SB_CACHE); if (name === "snack_logs") window.__snap.root = localStorage.getItem("wlh.v62@u_axcom"); }; true`);
+const q1 = await d1.ev(`(() => { const m = uid(), s = uid(); addEntry("meals", { id: m, date: today(), slot: "lunch", name: "Queue meal", cal: 200, dish: null, extras: [], est: false, photo: null }); addEntry("snacks", { id: s, date: today(), name: "Queue snack", qty: 1, cal: 50 }); sbKick(); return { m, s }; })()`); // an immediate sync, not the 1.2 s timer: the queue must still be on disk first
+await d1.synced();
+const snap = await d1.ev(`JSON.stringify({ cacheHas: (() => { try { return JSON.parse(window.__snap.cache).pend["${q1.m}"]; } catch { return null; } })(), rootHas: (() => { try { return JSON.parse(window.__snap.root).root.kp.k.snacks.pend["${q1.s}"]; } catch { return null; } })() })`);
+ok("the meal and the snack were already in the saved queue when the upload began", snap === JSON.stringify({ cacheHas: "up", rootHas: "up" }), snap);
+await d1.ev(`__fake.beforeWrite = null; true`);
+// 2. removed only after success
+await d1.ev(`__fake.failWrites = true; true`);
+const q2 = await d1.ev(`(() => { const m = uid(); addEntry("meals", { id: m, date: today(), slot: "dinner", name: "Retry meal", cal: 300, dish: null, extras: [], est: false, photo: null }); return m; })()`);
+await sleep(2600);
+const stillQueued = await d1.ev(`JSON.stringify({ mem: SB.pend["${q2}"], disk: JSON.parse(localStorage.getItem(SB_CACHE)).pend["${q2}"] })`);
+ok("while uploads fail, the meal stays queued in memory and on disk", stillQueued === JSON.stringify({ mem: "up", disk: "up" }), stillQueued);
+await d1.ev(`__fake.failWrites = false; true`); await d1.kick();
+ok("once the server confirms, it leaves the queue, in memory and on disk", live("meal_logs", A).some(r => r.app_id === q2) && await d1.ev(`!SB.pend["${q2}"] && !JSON.parse(localStorage.getItem(SB_CACHE)).pend["${q2}"]`));
+// 3. one worker
+await d1.ev(`__fake.maxInflight = 0; window.__peopleReads = __fake.calls.filter(c => c[0] === "people" && c[1] === "select").length; for (let i = 0; i < 6; i++) { sbKick(); addEntry("snacks", { id: uid(), date: today(), name: "Burst " + i, qty: 1, cal: 10 }); } true`);
+await d1.synced(25000); await sleep(800);
+const reads = await d1.ev(`__fake.calls.filter(c => c[0] === "people" && c[1] === "select").length - window.__peopleReads`);
+ok("six sync requests and six edits at once never run two uploads at the same time", (await d1.ev(`__fake.maxInflight`)) === 1, await d1.ev(`__fake.maxInflight`));
+ok("and six sync requests were folded into a few runs, not six", reads <= 3, reads);
+ok("all six snacks arrived", live("snack_logs", A).filter(r => /^Burst /.test(r.name)).length === 6);
+// 4. an edit made while the upload is in flight is not lost by the upload finishing
+const q4 = await d1.ev(`(() => { const id = uid(); window.__edited = false; __fake.beforeWrite = name => { if (name === "workouts" && !window.__edited) { window.__edited = true; updateEntry("workouts", id, x => { x.minutes = 99; }); } }; addEntry("workouts", { id, date: today(), type: "run", minutes: 10, cal: 50, note: "mid-flight", src: null, equip: null, photo: null }); return id; })()`);
+await d1.synced(25000); await sleep(1500); await d1.synced(25000);
+await d1.ev(`__fake.beforeWrite = null; true`);
+ok("the edit made during the upload is uploaded next and is not removed from the queue by the first upload finishing", live("workouts", A).find(r => r.app_id === q4)?.duration_min === 99 && (await d1.ev(`!SB.kp.workouts.pend["${q4}"]`)), JSON.stringify(live("workouts", A).find(r => r.app_id === q4)));
+
+console.log("--- 15. no script errors");
 ok("no uncaught exceptions on any device", errorsAll.length === 0, errorsAll.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);
 procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(fail ? 1 : 0);
