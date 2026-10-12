@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.17 | Ten workout types (soccer, basketball, American football, volleyball, cricket, baseball, tennis, badminton, strength, bodyweight) use Boxicons glyphs on the app's disc; Boxicons credited (CC BY 4.0) on the Credits page | IN PROGRESS: build-8.2.17, pull request open, not merged |
 | 8.2.15 | Workouts and weigh-ins sync to the account (`workouts` and `weight_entries`, no database change) | IN PROGRESS: build-8.2.15, pull request not yet opened (stacked on 8.2.14) |
 | 8.2.14 | Privacy summary and a consent and data history in Settings > Privacy & security (`privacyGlance()`, `wlh.history`) | IN PROGRESS: build-8.2.14, pull request not yet opened (stacked on 8.2.13) |
 | 8.2.13 | Release gate: size and phone-speed budgets (`measure.mjs --gate`, `budget.json`) checked on every pull request by a new CI job | OPEN: PR #23, awaiting merge |

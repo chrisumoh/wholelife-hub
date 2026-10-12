@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.15, 2026-10-12. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.17, 2026-10-12. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.17 · Workouts: Ten workout types use Boxicons icons, credited on the Credits page
+
+- **Problem:** The owner chose the Boxicons free pack for the workout icons. Ten workout types have a matching Boxicons icon; the other 34 have no match in the pack.
+- **Change:** Soccer, basketball, American football, volleyball, cricket, baseball, tennis, badminton, strength training and bodyweight now draw a Boxicons glyph (football, basketball, rugby-ball, volleyball, cricket-ball, baseball, tennis, shuttlecock, dumbbell and biceps from Boxicons v3.0.8). Each glyph is scaled from the 24px grid to 36px inside the 48px tile, filled with that activity's existing colour gradient, and set on the same frosted disc as every other workout icon, so the picker, the workout list and the coach sports keep one frame. Soccer and basketball keep their bounce on hover, tennis its swing and strength its pump. The other 34 workout types keep their original artwork. The Credits page lists Boxicons with a link to boxicons.com and to the CC BY 4.0 license, the ten workouts it covers, the changes made, and that Boxicons does not endorse the app (the license requires the credit, the link and a note of the changes). Its opening line now reads that nothing is taken from another icon set without its license.
+- **Where:** index.html: BX_ART and wBx() (new, just above WI_ART); WI_ART entries soccer, basketball, football, volleyball, cricket, baseball, tennis, badminton, strength, calisthenics; creditsView() (Icons section and opening line); APP_VERSION. tests/browser/workouts.mjs (one-path Boxicons glyphs need one shape, not two). CHANGELOG.md, README.md, docs/BUILD_PLAN.md, docs/CONTEXT.md.
+- **How to test:** node tests/browser/workouts.mjs: all 44 icons drawn, at least 14px, inside the tile, not copies of each other, gradient safe; the picker shows every activity with its icon. node tests/browser/legal.mjs for the legal pages. By hand: Workouts, open the activity picker and look at Team sports, Racket sports and Strength; open Credits from the footer and check the Boxicons entry and both links.
+- **Known limits:** Only ten of the 44 workout types have a Boxicons match, so the picker mixes Boxicons glyphs with the app's own figure artwork on the same disc. Boxicons are filled line icons, a little heavier than the original art at small sizes. Checked in headless Chrome only. No Supabase files touched.
 
 ## 8.2.15 · Sync: Workouts and weigh-ins sync to your account
 
