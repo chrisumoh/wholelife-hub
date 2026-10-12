@@ -917,7 +917,7 @@ img.avatar{background:var(--raise)}
   width:min(560px,calc(100vw - 32px));z-index:91;padding:8px;border-radius:var(--r)}
 #palette.in{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
 #palette-input{width:100%;border:0;background:transparent;font-size:calc((17px) * var(--text-scale,1));padding:12px 14px;outline:none;color:var(--text)}
-#palette-list{max-height:min(50vh,360px);overflow:auto;display:flex;flex-direction:column;gap:2px;padding:4px}
+#palette-list{max-height:min(50vh,400px);overflow:auto;display:flex;flex-direction:column;gap:2px;padding:4px}
 #palette-list [role="option"]{padding:10px 14px;border-radius:var(--r-xs);cursor:pointer;font-size:calc((15px) * var(--text-scale,1))}
 #palette-list [role="option"].on,#palette-list [role="option"][aria-selected="true"]{background:color-mix(in srgb,var(--accent) 18%,transparent)}
 .pal-empty{padding:12px 14px;color:var(--muted);font-size:calc((14px) * var(--text-scale,1))}
@@ -2370,7 +2370,7 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
 @keyframes premSpk{0%,100%{opacity:0;transform:scale(.4) rotate(0deg)}50%{opacity:1;transform:scale(1) rotate(25deg)}}
 :root[data-motion="reduced"] .prem-spk{animation:none;opacity:.85;transform:none}
 @media (prefers-reduced-motion:reduce){.prem-spk{animation:none;opacity:.85;transform:none}}
-.prem-store h1{font-size:calc((26px) * var(--text-scale,1));font-weight:800;letter-spacing:-.02em;margin:0}
+.prem-store h2{font-size:calc((26px) * var(--text-scale,1));font-weight:800;letter-spacing:-.02em;margin:0}
 .prem-store .prem-sub{color:var(--muted);font-size:calc((14.5px) * var(--text-scale,1));margin:0;max-width:38ch}
 
 .plansel{width:100%;display:flex;flex-direction:column;gap:8px;padding:6px;border-radius:var(--r-sm);
@@ -4035,6 +4035,11 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 .agree a,.app .agree a{color:var(--accent);text-decoration:underline!important}
 .agate{max-width:420px;margin-inline:auto}
 .agate .row{gap:12px}
+/* =================== 8.2.10: ACCESSIBILITY PASS =================== */
+.skip-link{position:fixed;left:12px;top:-80px;z-index:var(--z-popup,200);min-height:44px;padding:0 16px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:calc((17px) * var(--text-scale,1));cursor:pointer}
+.skip-link:focus,.skip-link:focus-visible{top:12px}
+.section:focus{outline:none}
+.chart:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
 /* No underlines, except real links in the legal pages. */
 .app a:not(.legal a),.app a:not(.legal a):hover,.app a:not(.legal a):focus{text-decoration:none!important}
 </style><div id="app"></div>
@@ -4049,7 +4054,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.9", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.10", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -4063,6 +4068,12 @@ const APP_VERSION = { update: "8.2", build: "8.2.9", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.10", area:"Accessibility", title:"axe-core pass: keyboard-reachable charts, a labelled quick-jump combobox, landmarks, heading order, a skip link, and an automated check",
+      bug:"A launch checklist asked for 'real accessibility: run Lighthouse or axe on every page'. Running axe-core 4.10.2 (WCAG 2.0, 2.1 and 2.2 A and AA, plus its best-practice rules) over 31 screens, the popups, edit mode and the setup screens, at 375 and 1440px in light and dark, found: (1) the metric charts scroll sideways but could not be reached by keyboard; (2) the Ctrl+K quick-jump list was an unnamed listbox with no combobox on the search box, so a screen reader could not hear which option was highlighted, and the highlighted option was not scrolled into view; (3) the new age screen and the setup steps were not inside a landmark; (4) the metric page's 'Add data' heading skipped a level; (5) the Premium page had two h1 headings; (6) there was no way to skip the page header.",
+      fix:"Each metric chart is now a labelled, focusable region (Tab to it, scroll with the arrow keys) with a visible focus ring. The quick-jump box is a combobox (aria-expanded, aria-controls, aria-activedescendant) over a named listbox whose options have ids; ArrowUp and ArrowDown move the named option and scroll it into view; the list can be a little taller so it rarely scrolls. The age screen and every setup step are now a main landmark. 'Add data' is an h2, and the Premium page's second h1 is an h2 with the same look. A 'Skip to page content' button is the first Tab stop on every screen: it appears when focused and moves focus to the page content. After these changes axe reports nothing on any of those screens. Contrast, form labels, button names, ARIA validity, 44px tap targets, the 24px minimum target size and reflow at 320px already passed.",
+      where:"index.html: the four metric chart wrappers (.chart), buildPalette(), renderPalette(), highlightPalette(), obStepFrame(), ageGateView(), metricView (Add data), premiumView (heading), render() (skip link, #sec- tabindex), the skip-main action, CSS block 8.2.10 and .prem-store h2. tests/browser/a11y.mjs (new), tests/browser/run-all.mjs. docs/BUILD_PLAN.md, CHANGELOG.md, README.md.",
+      test:"AXE_JS=<path to axe.min.js> node tests/browser/a11y.mjs (19 checks; without AXE_JS it fetches axe-core 4.10.2 from jsDelivr). By hand: press Tab once on any screen and see 'Skip to page content', press Enter and Tab on into the page; on a metric page Tab to the chart; press Ctrl+K, type, and use the arrow keys with a screen reader on.",
+      limits:"(1) Automated tools find only part of the WCAG problems. This build has no screen-reader run (VoiceOver, TalkBack, NVDA), no check at 200% browser zoom or the largest text sizes, no check that colour is never the only signal, and no review of the animations beyond the reduced-motion setting that already exists. (2) Lighthouse itself was not run; its accessibility score uses axe-core, which was run directly. (3) axe is not bundled with the app; the test reads it from AXE_JS or fetches it, so it needs the network in CI. (4) The hidden owner tap target on the brand line is not keyboard-reachable by design. (5) This is not a legal accessibility audit or a compliance statement." },
     { id:"8.2.9", area:"Legal", title:"Neutral age screen with a 24-hour retry block, and a Terms and Privacy Policy agreement at sign-up",
       bug:"Two gaps from a launch-compliance checklist. (1) The age check was optional and not neutral: setup showed an optional Age box, a 'not for anyone under 13' message that told a child exactly what number to type next, no block on trying again, and an 'I confirm I'm 13 years old or older' tick box on the last step that anyone could tick. Skipping setup avoided it altogether. (2) Create account had no agreement to the Terms and Privacy Policy, and nothing recorded who agreed to which version, or when.",
       fix:"Age screen: pressing Set up my hub or Skip setup now opens 'When were you born?' first, with a Birth month and a Birth year list that both start blank (the year list starts this year and runs back 110 years), and no age limit named anywhere on the screen. Only the age is kept (a birthday this month counts as not yet reached, because the day is not asked); the month and year are dropped. If the age comes out under 13 the screen says only 'We can't set up a profile on this device', nothing is saved, and the browser refuses another try, including through Skip setup, for 24 hours (a flag in this browser, wlh.ageblock; clearing site data removes it). Adding a profile for another person asks the same question. The old Age box, the 'under 13' message and the 'I confirm I'm 13' box were removed. Sign-up: Create account has an unticked box, 'I agree to the Terms and the Privacy Policy.', with accent-blue underlined links that open the two pages in a new tab; submitting without it shows a message and sends nothing. On a successful sign-up the terms version (TERMS_VERSION, the date the legal pages were last updated) and the time are sent with the account as user metadata (no schema change, nothing under supabase/) and saved on the device (wlh.consent). The Privacy Policy section on children and two privacy lines in Settings were reworded to match what the app now does, and one that said it never asks for an email was corrected.",
@@ -9626,7 +9637,7 @@ function metricChart(p, k, days, avg){
   const y = v => T + (Hc - T - B) * (1 - (v - lo) / (hi - lo));
   const ticks = [lo, (lo + hi) / 2, hi];
   const labelEvery = days <= 7 ? 1 : days <= 31 ? 5 : 15;
-  return `<div class="chart"><svg class="chart-svg" viewBox="0 0 ${Wc} ${Hc}" role="img" aria-label="${esc(m.n)} for the last ${days} days">
+  return `<div class="chart" tabindex="0" role="region" aria-label="Chart, scrolls sideways"><svg class="chart-svg" viewBox="0 0 ${Wc} ${Hc}" role="img" aria-label="${esc(m.n)} for the last ${days} days">
     ${ticks.map(t => `<line x1="${L}" x2="${Wc-4}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L-8}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="var(--faint)">${t.toLocaleString()}</text>`).join("")}
     ${dv.map((v,i) => { const x = L + i*bw + bw*0.18, w = Math.max(2, bw*0.64);
       const bar = v == null ? "" : k === "bp" ? (() => { const raw = m.get(ds[i]); return `<rect x="${x}" y="${y(raw.sys)}" width="${w}" height="${Math.max(2, y(raw.dia) - y(raw.sys))}" rx="${Math.min(4,w/2)}" fill="${color}"/>`; })()
@@ -9679,7 +9690,7 @@ function lineChart(p, k, days, avg){
     ? `<circle class="line-dot" cx="${px(firstIdx)}" cy="${py(dv[firstIdx])}" r="4" fill="var(--surface)" stroke="${color}" stroke-width="2"/>` : "";
   const endDot = lastIdx >= 0 ? `<circle class="line-dot line-today" cx="${px(lastIdx)}" cy="${py(dv[lastIdx])}" r="5" fill="${color}"/>
     <text x="${px(lastIdx)}" y="${py(dv[lastIdx]) - 12}" text-anchor="${lastIdx > days*0.75 ? "end" : "middle"}" font-size="11" font-weight="700" fill="${color}">${ds[lastIdx] === today() ? "Today" : whenLabel(ds[lastIdx])}</text>` : "";
-  return `<div class="chart"><svg class="chart-svg" viewBox="0 0 ${Wc} ${Hc}" role="img" aria-label="${esc(m.n)} for the last ${days} days">
+  return `<div class="chart" tabindex="0" role="region" aria-label="Chart, scrolls sideways"><svg class="chart-svg" viewBox="0 0 ${Wc} ${Hc}" role="img" aria-label="${esc(m.n)} for the last ${days} days">
     ${ticks.map(t => `<line x1="${L}" x2="${Wc-4}" y1="${py(t)}" y2="${py(t)}" stroke="var(--line)"/><text x="${L-8}" y="${py(t)+4}" text-anchor="end" font-size="11" fill="var(--faint)">${Math.round(t).toLocaleString()}</text>`).join("")}
     ${dispAvg != null ? `<line x1="${L}" x2="${Wc-4}" y1="${py(dispAvg)}" y2="${py(dispAvg)}" stroke="var(--chevron)" stroke-dasharray="4 4" stroke-width="1.25"/><text x="${L+6}" y="${py(dispAvg)-5}" text-anchor="start" font-size="11" fill="var(--muted)">${avgName(days)} avg</text>` : ""}
     <path class="line-path" d="${pathD}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/>
@@ -9738,7 +9749,7 @@ function yearChart(p, k, avg){
       ? `<rect x="${cx(i) - w/2}" y="${y(b.sys)}" width="${w}" height="${Math.max(2, y(b.dia) - y(b.sys))}" rx="4" fill="${color}"><title>${tip(i, b)}</title></rect>`
       : `<rect x="${cx(i) - w/2}" y="${y(b.v)}" width="${w}" height="${Math.max(2, y(lo) - y(b.v))}" rx="4" fill="${color}" opacity="${i === 11 ? 1 : .75}"><title>${tip(i, b)}</title></rect>`).join("");
   }
-  return `<div class="chart"><svg class="chart-svg" viewBox="0 0 ${Wc} ${Hc}" role="img" aria-label="${esc(m.n)}, monthly averages for the last 12 months">
+  return `<div class="chart" tabindex="0" role="region" aria-label="Chart, scrolls sideways"><svg class="chart-svg" viewBox="0 0 ${Wc} ${Hc}" role="img" aria-label="${esc(m.n)}, monthly averages for the last 12 months">
     ${ticks.map(t => `<line x1="${L}" x2="${Wc-4}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L-8}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="var(--faint)">${Math.round(t).toLocaleString()}</text>`).join("")}
     ${dispAvg != null ? `<line x1="${L}" x2="${Wc-4}" y1="${y(dispAvg)}" y2="${y(dispAvg)}" stroke="var(--chevron)" stroke-dasharray="4 4" stroke-width="1.25"/><text x="${L+6}" y="${y(dispAvg)-5}" text-anchor="start" font-size="11" fill="var(--muted)">1-year avg</text>` : ""}
     ${marks}
@@ -9767,7 +9778,7 @@ function metricView(p){
   </section>
   ${warn ? `<div class="note">${esc(warn)}</div>` : ""}
   <div class="grid g2">
-    <section class="card"><h3>Add data</h3>
+    <section class="card"><h2>Add data</h2>
       <form class="form" data-form="metric-${k}">
         <label class="f">Date<input type="date" id="md-date" value="${today()}" max="${today()}" required></label>
         ${m.fields(p).map(([id, label, lo, hi]) => (m.text || []).includes(id)
@@ -10253,6 +10264,7 @@ function render(){
   const routeKey = location.hash; const animate = UI.lastKey !== routeKey; UI.lastKey = routeKey;
   morphInto(root, `
   <div class="app${UI.rail ? " rail" : ""}${UI.menu ? " menu-on" : ""}">
+    <button type="button" class="skip-link" data-act="skip-main">Skip to page content</button>
     <div class="scrim${UI.menu ? " on" : ""}" data-act="menu" aria-hidden="${!UI.menu}"></div>
     <main class="main">
       <div class="wrap">
@@ -10280,7 +10292,7 @@ function render(){
           <div class="head-sentinel" aria-hidden="true"></div>
         </header>
         ${notifPanel(p)}
-        <div class="section active ${animate ? "enter " : ""}stack lg" id="sec-${UI.route}">${PAGE_WIDGETS[UI.route] ? widgetSection(p, UI.route) : ""}${view(p)}</div>
+        <div class="section active ${animate ? "enter " : ""}stack lg" id="sec-${UI.route}" tabindex="-1">${PAGE_WIDGETS[UI.route] ? widgetSection(p, UI.route) : ""}${view(p)}</div>
         ${typeof siteFooter === "function" ? siteFooter() : ""}
       </div>
     </main>
@@ -10624,13 +10636,13 @@ const blockAge = () => { try { localStorage.setItem(AGE_BLOCK_KEY, String(Date.n
 const ageFromMonthYear = (m, y) => { const n = new Date(); return n.getFullYear() - y - (n.getMonth() + 1 <= m ? 1 : 0); };
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 function ageGateView(){
-  if (ageBlocked()) return `<div class="ob obg">${obGround()}<div class="panel st-panel"><div class="stack agate">
+  if (ageBlocked()) return `<main class="ob obg">${obGround()}<div class="panel st-panel"><div class="stack agate">
     <div class="row">${logoSVG(46)}</div>
     <h1 class="ob-h1" tabindex="-1" data-st-focus>We can't set up a profile on this device</h1>
     <p class="muted">Please try again later.</p>
-    <div class="row">${S.profiles.length ? `<button class="btn primary" data-act="ob-cancel">Back</button>` : ""}</div></div></div></div>`;
+    <div class="row">${S.profiles.length ? `<button class="btn primary" data-act="ob-cancel">Back</button>` : ""}</div></div></div></main>`;
   const y0 = new Date().getFullYear();
-  return `<div class="ob obg">${obGround()}<div class="panel st-panel"><form class="stack agate" data-form="age-gate" novalidate>
+  return `<main class="ob obg">${obGround()}<div class="panel st-panel"><form class="stack agate" data-form="age-gate" novalidate>
     <div class="row">${logoSVG(46)}</div>
     <h1 class="ob-h1" tabindex="-1" data-st-focus>When were you born?</h1>
     <p class="muted">We use your birth month and year once, to set up your hub. We keep your age, not your birth date.</p>
@@ -10640,7 +10652,7 @@ function ageGateView(){
     </div>
     ${UI.agErr ? `<div class="note" role="alert">${esc(UI.agErr)}</div>` : ""}
     <div class="row"><button type="button" class="btn ghost" data-act="ag-back">Back</button><button type="submit" class="btn primary">Continue</button></div>
-  </form></div></div>`;
+  </form></div></main>`;
 }
 function ageGateSubmit(){
   const m = +$("#ag-m")?.value, y = +$("#ag-y")?.value;
@@ -10735,13 +10747,13 @@ const OB_STEPS = ["Your coach", "You and your goals", "Food and body", "Your sta
 // Every onboarding step after "Set up my hub" shares one stepper frame; only the slide's content
 // and the footer change. The fields, actions and checks inside each step are unchanged.
 function obStepFrame(step, content, foot){
-  return `<div class="ob obg">${obGround()}<div class="panel st-panel${step === 1 ? " coachpanel" : ""}">
+  return `<main class="ob obg">${obGround()}<div class="panel st-panel${step === 1 ? " coachpanel" : ""}">
     <div class="wl-stepper" data-sid="ob" data-step="${step}">
       ${stepperRowHTML({ sid:"ob", labels:OB_STEPS, current:step, goto:"ob-goto", clickable:"back", label:"Setup progress" })}
       <div class="st-body"><div class="st-slide">${content}</div></div>
       <div class="st-foot modal-foot">${foot}</div>
     </div>
-  </div></div>`;
+  </div></main>`;
 }
 function onboardingView(){
   const d = UI.obDraft || (UI.obDraft = newProfile(""));
@@ -10894,7 +10906,7 @@ function weekChart(p){
   const W = 640, H = 220, L = 44, B = 36, T = 14, bw = (W-L-10)/7;
   const y = v => T + (H-T-B) * (1 - v/top);
   const ticks = [0, top/2, top];
-  return `<div class="chart"><svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Calories per day for the last 7 days">
+  return `<div class="chart" tabindex="0" role="region" aria-label="Chart, scrolls sideways"><svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Calories per day for the last 7 days">
     ${ticks.map(t => `<line x1="${L}" x2="${W-6}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" /><text x="${L-8}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="var(--faint)">${t.toLocaleString()}</text>`).join("")}
     ${vals.map((v,i) => { const x = L + i*bw + bw*0.2, w = bw*0.6; const h = y(0) - y(v); const over = goal && v > goal;
       return `<rect x="${x}" y="${y(v)}" width="${w}" height="${Math.max(0,h)}" rx="5" fill="${v ? (over ? "var(--warn)" : "var(--accent)") : "none"}"/>
@@ -11751,6 +11763,7 @@ document.addEventListener("click", async e => {
   const a = t.dataset.act, p = P();
   switch (a) {
     case "menu": setMenu(!UI.menu); break;
+    case "skip-main": { const m = document.querySelector(".section.active"); if (m) { m.focus({ preventScroll:true }); m.scrollIntoView({ block:"start" }); } break; }
     // onboarding
     case "ob-next": {
       if (UI.obStep === 0 && !UI.obGateOk) { UI.obGate = "next"; UI.agErr = null; render(); window.scrollTo(0,0); break; }
@@ -12368,7 +12381,7 @@ function buildPalette(){
   ];
   const seen = new Set();
   PAL.items = [...links, ...actions].filter(i => i.label && !seen.has(i.label) && seen.add(i.label));
-  pal.innerHTML = `<input id="palette-input" placeholder="Jump to…" autocomplete="off" aria-label="Search sections"><div id="palette-list" role="listbox"></div>`;
+  pal.innerHTML = `<input id="palette-input" placeholder="Jump to…" autocomplete="off" aria-label="Search sections" role="combobox" aria-expanded="true" aria-controls="palette-list" aria-autocomplete="list" aria-activedescendant="pal-opt-0"><div id="palette-list" role="listbox" aria-label="Quick jump results"></div>`;
   pal.querySelector("#palette-input").addEventListener("input", e => renderPalette(e.target.value));
   renderPalette("");
 }
@@ -12377,14 +12390,16 @@ function renderPalette(query = ""){
   const q = query.toLowerCase();
   PAL.matches = PAL.items.filter(i => i.label.toLowerCase().includes(q)).slice(0, 8);
   PAL.index = 0;
-  list.innerHTML = PAL.matches.map((m, i) => `<div role="option" aria-selected="${i === 0}" data-i="${i}">${esc(m.label)}</div>`).join("") || `<div class="pal-empty">No match</div>`;
+  list.innerHTML = PAL.matches.map((m, i) => `<div role="option" id="pal-opt-${i}" aria-selected="${i === 0}" data-i="${i}">${esc(m.label)}</div>`).join("") || `<div class="pal-empty">No match</div>`;
+  const inp = document.getElementById("palette-input"); if (inp) { if (PAL.matches.length) inp.setAttribute("aria-activedescendant", "pal-opt-0"); else inp.removeAttribute("aria-activedescendant"); }
   list.querySelectorAll("[data-i]").forEach(el => {
     el.addEventListener("click", () => { const i = +el.dataset.i; closePalette(); PAL.matches[i]?.go(); });
     el.addEventListener("mouseenter", () => { PAL.index = +el.dataset.i; highlightPalette(); });
   });
 }
 function highlightPalette(){
-  document.querySelectorAll("#palette-list [data-i]").forEach((el, i) => { const on = i === PAL.index; el.setAttribute("aria-selected", on); el.classList.toggle("on", on); });
+  document.querySelectorAll("#palette-list [data-i]").forEach((el, i) => { const on = i === PAL.index; el.setAttribute("aria-selected", on); el.classList.toggle("on", on); if (on) el.scrollIntoView({ block:"nearest" }); });
+  const inp = document.getElementById("palette-input"); if (inp) { if (PAL.matches?.length) inp.setAttribute("aria-activedescendant", "pal-opt-" + PAL.index); else inp.removeAttribute("aria-activedescendant"); }
 }
 function openPalette(){
   const [back, pal] = paletteEls(); buildPalette();
@@ -16382,7 +16397,7 @@ function premiumHub(p){
   <div class="prem-store-page">
   <section class="card prem-store">
     ${premiumEmblemSVG()}
-    <h1>WholeLife Premium</h1>
+    <h2>WholeLife Premium</h2>
     <p class="prem-sub">Every extra feature, unlocked across food, training, coaching and health.</p>
 
     ${on ? `<span class="prem-active-pill">${icon("check","",15)} Premium active</span>

@@ -14,13 +14,14 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 | 4 | Font system: 8 options, Perplexity-style default | PROMPTED |
 | 5 | UI cleanup: blue outlines, compact appearance controls, clean layout, gradient sidebar icons | PROMPTED |
 | 6 | Space + arrow: centered arrow morph (tested code in prompt), 12-col grid, one-row headers, two-pane Settings, sidebar grouping | PROMPTED |
-| 7 | Legal/compliance: privacy+terms updates, refunds/contact/credits, consent flows, age gate, delete/export, accessibility pass, dark-pattern sweep | PARTLY DONE: neutral age screen and sign-up agreement in 8.2.9; accessibility pass and a lawyer's review still to do |
+| 7 | Legal/compliance: privacy+terms updates, refunds/contact/credits, consent flows, age gate, delete/export, accessibility pass, dark-pattern sweep | PARTLY DONE: neutral age screen and sign-up agreement in 8.2.9; axe-core accessibility pass in 8.2.10 (screen-reader and zoom checks and a lawyer's review still to do) |
 | 8 | App Store readiness — RUN ONLY IF submitting to iOS App Store (Apple IAP, reviewer account, iPad, UGC safety) | IDEA (skip while web-only) |
 
 ## Builds outside the phases
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.10 | Accessibility pass with axe-core (charts, quick-jump combobox, landmarks, headings, skip link) and an automated check | IN PROGRESS: build-8.2.10, stacked on build-8.2.9, pull request not yet opened |
 | 8.2.9 | Neutral age screen with a 24-hour retry block; Terms and Privacy Policy agreement at sign-up (version and time saved) | IN PROGRESS: build-8.2.9, stacked on build-8.2.8, pull request not yet opened |
 | 8.2.8 | Dish tiles (Food culture, Recipes, Today's menu) use the flat card pattern | IN PROGRESS: build-8.2.8, stacked on build-8.2.7, pull request not yet opened |
 | 8.2.7 | Widget sizes work (Small, Medium, Large) on Summary and every page; widget edit mode rebuilt (minus, S/M/L, drag handle or arrows, Hidden widgets, Reset layout with confirm); leftover cards restyled | IN PROGRESS: build-8.2.7, stacked on build-8.2.6, pull request not yet opened |
@@ -59,6 +60,11 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.2.10
+
+- Done: `node tests/browser/a11y.mjs` (19 checks), `node tests/browser/run-all.mjs` and `node tests/check-repo.mjs`.
+- Not run: a screen reader (VoiceOver, TalkBack, NVDA), 200% browser zoom and the largest text sizes, Lighthouse itself, real devices and Safari. No Supabase files were touched.
 
 ### Checklist run for 8.2.9
 
