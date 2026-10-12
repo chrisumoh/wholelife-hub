@@ -105,7 +105,7 @@ await ev(`(() => { const e = [...sbAllOf("workouts")].find(x => x.e.note === "Mo
 await sleep(1800);
 ok("both changes are waiting", (await ev(`Object.keys(SB.kp.workouts.pend).length`)) === 2);
 await ev(`flush()`); await sleep(400);
-ok("the waiting list is saved in the local cache", (await ev(`Object.keys(JSON.parse(localStorage.getItem(SB_CACHE)).kp.workouts).length`)) === 2);
+ok("the waiting list is saved with the account's store on this device", (await ev(`(() => { const r = JSON.parse(localStorage.getItem("wlh.v62@u_axcom")).root; return r.kp && r.kp.ready === true && Object.keys(r.kp.workouts).length; })()`)) === 2);
 await ev(`window.__old = 1; location.reload(); true`);
 ok("reload (online again)", await waitFor(`window.__old === undefined && ${READY}`, 15000));
 ok("the waiting changes come back from the cache", (await ev(`Object.keys(SB.kp.workouts.pend).length`)) === 2 || (await synced()));
@@ -127,6 +127,48 @@ ok("sign in as B", await signIn("b@x.com"));
 await ev(`(async () => { if (!S.profiles.length) { const p = newProfile("Bo"); Object.assign(p, { onboarded: true, coachPrompted: true, tourSeen: "dismissed" }); S.profiles = [p]; S.activeId = p.id; saveProfile(); await flush(); } return true; })()`);
 await sleep(1500);
 ok("B has no workouts or weigh-ins", (await ev(`[...sbAllOf("workouts")].length`)) === 0 && (await ev(`[...sbAllOf("weights")].length`)) === 0);
+
+console.log("--- 7. review fixes");
+await ev(`window.__old = 1; sbSignOut(true).then(() => true)`); await waitFor(`window.__old === undefined && ${READY}`, 15000);
+ok("sign in as A again", await signIn("a@x.com"));
+ok("synced", await waitFor(`S.profiles.length === 1 && [...sbAllOf("workouts")].length > 0 && SB.kstarted && !sbPending()`, 15000));
+// passcode: edits and deletes made while it is on are kept and sent after it is removed
+await ev(`(async () => { await setPasscode("longenough1"); return true; })()`);
+ok("a passcode is on and nothing syncs", await ev(`!!CRY.lock && !sbActive()`));
+const target = await ev(`(() => { const e = [...sbAllOf("workouts")][0].e; return { id: e.id, note: e.note }; })()`);
+const victim = await ev(`(() => { const e = [...sbAllOf("workouts")][1].e; return { id: e.id, note: e.note }; })()`);
+await ev(`(() => { updateEntry("workouts", ${JSON.stringify(target.id)}, x => { x.minutes = 77; }); removeEntry("workouts", ${JSON.stringify(victim.id)}); return true; })()`);
+await sleep(1800);
+const beforeRemove = await ev(`__fake.DB.workouts.find(r => r.app_id === ${JSON.stringify(target.id)}).duration_min`);
+ok("with the passcode on, nothing was uploaded", beforeRemove !== 77);
+ok("both changes are being noted", (await ev(`JSON.stringify(SB.kp.workouts.pend)`)).includes('"del"') && (await ev(`JSON.stringify(SB.kp.workouts.pend)`)).includes('"up"'));
+await ev(`removePasscode().then(() => true)`);
+ok("after removing it the edit reaches the account", await waitFor(`__fake.DB.workouts.find(r => r.app_id === ${JSON.stringify(target.id)})?.duration_min === 77`, 12000));
+ok("and so does the delete", await waitFor(`!!__fake.DB.workouts.find(r => r.app_id === ${JSON.stringify(victim.id)})?.deleted_at`, 12000));
+ok("neither was reverted here", await waitFor(`SB.state === 'idle'`, 8000) && (await local("workouts")).find(e => e.id === target.id)?.minutes === 77 && !(await local("workouts")).some(e => e.id === victim.id));
+
+// downloaded changes are saved before any upload can fail
+await ev(`(() => { const D = __fake.DB, r = D.workouts.find(x => x.app_id === ${JSON.stringify(target.id)}); r.duration_min = 61; localStorage.setItem("__fakedb", JSON.stringify(D)); __fake.failWrites = true; return true; })()`);
+await ev(`(() => { addEntry("workouts", { id: uid(), date: addDays(today(), -45), type: "strength", minutes: 10, cal: 50, note: "will fail to upload", src: null, equip: null, photo: null }); return true; })()`);
+await ev(`sbKick(); true`);
+ok("the pulled edit is applied even though the upload fails", await waitFor(`[...sbAllOf("workouts")].find(x => x.e.id === ${JSON.stringify(target.id)})?.e.minutes === 61`, 10000));
+await ev(`flush().then(() => true)`); await sleep(500);
+ok("and it is already saved on this device (not only in memory)", await ev(`(() => { const raw = localStorage.getItem("wlh.v62@u_axcom") || ""; return new RegExp('"id":"${target.id}"[^}]*"minutes":61').test(raw); })()`));
+await ev(`__fake.failWrites = false; true`);
+
+// sign-out never deletes workouts it could not confirm
+await ev(`(() => { SB.kstarted = false; return true; })()`);
+await ev(`__fake.failReads = true; true`);
+await ev(`sbSignOut(false).then(() => true)`);
+const lst = await ev(`(UI.sbConfirmOut?.local || []).join(" | ")`);
+ok("sign-out with a failed first sync warns instead of deleting silently", await ev(`!!UI.sbConfirmOut && UI.sbConfirmOut.failed === true`), lst);
+await ev(`UI.sbConfirmOut = null; __fake.failReads = false; render(); true`);
+// ... and when the first sync can finish, sign-out finishes it first and uploads what was never confirmed
+await addW("never confirmed", 12);
+await ev(`(() => { SB.kstarted = false; SB.kp.workouts.pend = {}; return true; })()`);
+await ev(`window.__old = 1; sbSignOut(false).then(() => true)`);
+ok("sign-out completes after syncing", await waitFor(`window.__old === undefined && ${READY}`, 20000));
+ok("the unconfirmed workout reached the account before the device was cleared", (await DBQ("workouts")).some(r => r.notes === "never confirmed"));
 
 ok("no script errors", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);

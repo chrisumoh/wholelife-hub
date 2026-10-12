@@ -15,6 +15,8 @@
       F.calls.push([name, op]);
       if (F.offline) return Promise.reject(new TypeError("Failed to fetch"));
       if (!uid()) return Promise.resolve({ data: null, error: { message: "no session", code: "401" } });
+      if (F.failWrites && op !== "select") return Promise.resolve({ data: null, error: { message: "simulated write failure", code: "500" } });
+      if (F.failReads && op === "select") return Promise.resolve({ data: null, error: { message: "simulated read failure", code: "500" } });
       const rows = table(name), mine = rows.filter(r => r.owner_id === uid() && filters.every(f => f(r)));
       if (op === "select") return Promise.resolve({ data: JSON.parse(JSON.stringify(mine)), error: null });
       if (op === "update") { mine.forEach(r => Object.assign(r, payload)); save(); return Promise.resolve({ data: null, error: null }); }
