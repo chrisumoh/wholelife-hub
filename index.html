@@ -1271,6 +1271,8 @@ svg:not(.logo-svg):not(.scene-svg):not(.chart){max-width:100%}
 @media (hover:hover) and (pointer:fine){.wi:hover .wi-disc{transform:scale(1.04)}}
 .wi-art *{transform-box:fill-box;transform-origin:center}
 .wi-svg .w-wheel,.wi-svg .w-wheel2{transform-origin:center}
+.wi-art .b{stroke-width:4.4}
+.wi-art [transform]{transform-box:view-box;transform-origin:0 0} /* a rotate(a x y) attribute then turns about x y, not about the middle of the icon */
 .wi-svg.go .w-leg{animation:wiStride var(--dur-page) var(--ease) 2}@media (hover:hover) and (pointer:fine){.wi:hover .wi-run .w-leg{animation:wiStride var(--dur-page) var(--ease) 2}}
 .wi-svg.go .w-leg{animation:wiStride var(--dur-page) var(--ease) 2}@media (hover:hover) and (pointer:fine){.wi:hover .wi-walk .w-leg{animation:wiStride var(--dur-page) var(--ease) 2}}
 .wi-svg.go .w-wheel{animation:wiSpin var(--dur-page) var(--ease-smooth) 2}@media (hover:hover) and (pointer:fine){.wi:hover .wi-cycle .w-wheel{animation:wiSpin var(--dur-page) var(--ease-smooth) 2}}
@@ -1369,10 +1371,12 @@ svg:not(.logo-svg):not(.scene-svg):not(.chart){max-width:100%}
 .wrow{align-items:center;gap:12px}
 .prow{display:flex;align-items:center;gap:8px;min-width:0}
 .prow h3,.prow b{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.actpick{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(min(100%,74px),1fr));margin-bottom:8px}
+.actpick{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(min(100%,80px),1fr));margin-bottom:8px}
+.actgroup{margin-top:6px}
+.actgh{font-size:calc((13px) * var(--text-scale,1));font-weight:600;color:var(--muted);margin:6px 0 2px}
 .actbtn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:var(--r-xs);border:1px solid transparent;
   background:transparent;cursor:pointer;transition:transform var(--dur-menu) var(--ease-spring),border-color var(--dur-tap),background-color var(--dur-tap);min-width:0}
-.actbtn .tiny{color:var(--muted);text-align:center;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.actbtn .tiny{color:var(--muted);text-align:center;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;max-width:100%;min-height:2.4em}
 .actbtn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .actbtn[aria-pressed="true"] .tiny{color:var(--text);font-weight:700}
 @media (hover:hover) and (pointer:fine){.actbtn:hover{transform:translateY(-2px)}}
@@ -4055,7 +4059,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.10", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.11", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -4069,6 +4073,12 @@ const APP_VERSION = { update: "8.2", build: "8.2.10", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.11", area:"Workouts", title:"New workout icons, 44 activities in seven groups, and nine more coach sports",
+      bug:"The Log a workout picker had 16 activities drawn as thin stick figures. The icons were hard to tell apart at small size (the barbell bar did not draw at all, because a straight line with a gradient fill vanishes), two of the ball icons were clipped, long names were cut off ('Strength ...', 'HIIT / cir...'), and common activities were missing: Pilates, stretching, boxing, jump rope, climbing, cricket, volleyball, rugby, badminton, golf and more. The Coach page offered only six sports.",
+      fix:"Every icon was redrawn as an original pictogram in the app's own glass-tile style: a filled head, round limbs, thicker torsos and solid equipment, one colour pair per activity. The gradient now works in tile space, so straight lines draw. The activity list grew from 16 to 44 and is shown in seven groups (Cardio, Strength and studio, Team sports, Racket and club sports, Combat, Water and outdoors, Other) with headings; names wrap onto two lines instead of being cut; each tile is at least 60px wide and 44px tall. New activities: Spin class, Stair climbing, Jump rope, Track and sprints, Bodyweight, Pilates, Stretching, Aerobics / Zumba, Gymnastics, Rugby, Volleyball, Cricket, Baseball / softball, Handball, Hockey, Badminton, Table tennis, Squash, Golf, Boxing, Martial arts, Wrestling, Kayaking, Climbing, Skiing, Ice skating, Skateboarding and Horse riding. Each has a MET value (the general-effort figure from the Compendium of Physical Activities) so a workout logged without calories gets an estimate. The Coach sport list went from 6 to 15 with Volleyball, Cricket, Rugby, Badminton, Table tennis, Boxing, Martial arts, Track and field and Cycling, each with three sessions of drills; a sport's sessions use that sport's icon. Importing from Apple Health or a workout file now lands on the right activity for all of the new ones (Hiking, Pilates, Rowing, Stairs, Boxing and others used to fall into Walking, Yoga or HIIT). Saved workouts keep their old activity keys, so history still shows.",
+      where:"index.html: WI_COLOR, wH(), wF(), WI_ART, wicon() (user-space gradient, paint token), ACT_GROUPS, ACTIVITIES, SPORTS, buildWorkoutPlan() (sport type map), HK, guessType(), the Log a workout picker (workoutsView), CSS .actgroup, .actgh, .actbtn .tiny, .wi-art .b and .wi-art [transform]. tests/browser/workouts.mjs (new), tests/browser/run-all.mjs. docs/BUILD_PLAN.md, CHANGELOG.md, README.md.",
+      test:"node tests/browser/workouts.mjs (27 checks: every icon is drawn, 14px or more, inside the tile and not a copy; the picker's groups and tile sizes at 375, 820 and 1440px; logging Pilates and Jump rope gives the right calories; every sport has three sessions and an icon; 25 import names land on the right activity). By hand: Workouts, Log a workout, look through the seven groups; Coach, choose Cricket or Volleyball and open the weekly plan.",
+      limits:"(1) The icons are drawn in code from simple shapes. They are clear at tile size but they are not illustrator-grade artwork; the Figma connection can read and write files but cannot search Figma Community for icon packs, and an outside pack would need its licence checked before use. The set is also in a Figma file as 44 components (https://www.figma.com/design/TFSqp54EUz923EeZbu90WV) so it can be refined there; changes made there are not synced back to the code automatically. (2) MET values are general-effort figures from memory of the Compendium and should be checked against it; the app already labels every calorie figure an estimate, and a calories box in the form overrides the estimate. (3) The sport sessions are general training drills, not a coach's programme, and have not been reviewed by a trainer. (4) Not every Apple Health workout name is mapped, only the common ones; anything else becomes Other. (5) Existing coach plans built for the old six sports are unchanged. (6) Not tested on a real phone or in Safari." },
     { id:"8.2.10", area:"Accessibility", title:"axe-core pass: keyboard-reachable charts, a labelled quick-jump combobox, landmarks, heading order, a skip link, and an automated check",
       bug:"A launch checklist asked for 'real accessibility: run Lighthouse or axe on every page'. Running axe-core 4.10.2 (WCAG 2.0, 2.1 and 2.2 A and AA, plus its best-practice rules) over 31 screens, the popups, edit mode and the setup screens, at 375 and 1440px in light and dark, found: (1) the metric charts scroll sideways but could not be reached by keyboard; (2) the Ctrl+K quick-jump list was an unnamed listbox with no combobox on the search box, so a screen reader could not hear which option was highlighted, and the highlighted option was not scrolled into view; (3) the new age screen and the setup steps were not inside a landmark; (4) the metric page's 'Add data' heading skipped a level; (5) the Premium page had two h1 headings; (6) there was no way to skip the page header. Checking the setup screens properly (an earlier version of the test drew the normal app instead of them) also found (7) the two start choices on the last setup step used h3 headings straight after the h1; they are now plain styled text.",
       fix:"Each metric chart is now a labelled, focusable region (Tab to it, scroll with the arrow keys) with a visible focus ring. The quick-jump box is a combobox (aria-expanded, aria-controls, aria-activedescendant) over a named listbox whose options have ids; ArrowUp and ArrowDown move the named option and scroll it into view; the list can be a little taller so it rarely scrolls. The age screen and every setup step are now a main landmark. 'Add data' is an h2, and the Premium page's second h1 is an h2 with the same look. A 'Skip to page content' button is the first Tab stop on every screen: it appears when focused and moves focus to the page content. After these changes axe reports nothing on any of those screens. Contrast, form labels, button names, ARIA validity, 44px tap targets, the 24px minimum target size and reflow at 320px already passed.",
@@ -5466,13 +5476,23 @@ const EXTRAS = [
 
 // ---------- WORKOUTS ----------
 // MET values for calorie estimates (kcal = MET × kg × hours)
+// MET values (kcal = MET x kg x hours) are the general-effort values from the Compendium of Physical Activities; they are rough, which is why every estimate says so.
+// g is the group the picker shows it under.
+const ACT_GROUPS = [["cardio","Cardio"],["strength","Strength and studio"],["team","Team sports"],["racket","Racket and club sports"],["combat","Combat"],["outdoor","Water and outdoors"],["other","Other"]];
 const ACTIVITIES = [
-{k:"walk",n:"Walking",met:3.5},{k:"run",n:"Running",met:9.8},{k:"cycle",n:"Cycling",met:7.5},
-{k:"strength",n:"Strength training",met:5},{k:"hiit",n:"HIIT / circuits",met:8},{k:"yoga",n:"Yoga / mobility",met:2.5},
-{k:"swim",n:"Swimming",met:7},{k:"soccer",n:"Soccer",met:7},{k:"basketball",n:"Basketball",met:6.5},
-{k:"football",n:"American football",met:8},{k:"tennis",n:"Tennis",met:7.3},{k:"dance",n:"Dance",met:5},
-{k:"row",n:"Rowing",met:7},{k:"hike",n:"Hiking",met:6},{k:"elliptical",n:"Elliptical",met:5.5},
-{k:"other",n:"Other",met:5}
+{k:"walk",n:"Walking",met:3.5,g:"cardio"},{k:"run",n:"Running",met:9.8,g:"cardio"},{k:"cycle",n:"Cycling",met:7.5,g:"cardio"},{k:"spin",n:"Spin class",met:8.5,g:"cardio"},
+{k:"hike",n:"Hiking",met:6,g:"cardio"},{k:"elliptical",n:"Elliptical",met:5.5,g:"cardio"},{k:"stairs",n:"Stair climbing",met:8.8,g:"cardio"},{k:"jumprope",n:"Jump rope",met:11.8,g:"cardio"},
+{k:"row",n:"Rowing",met:7,g:"cardio"},{k:"athletics",n:"Track and sprints",met:12.3,g:"cardio"},
+{k:"strength",n:"Strength training",met:5,g:"strength"},{k:"calisthenics",n:"Bodyweight",met:3.8,g:"strength"},{k:"hiit",n:"HIIT / circuits",met:8,g:"strength"},
+{k:"yoga",n:"Yoga / mobility",met:2.5,g:"strength"},{k:"pilates",n:"Pilates",met:3,g:"strength"},{k:"stretch",n:"Stretching",met:2.3,g:"strength"},
+{k:"aerobics",n:"Aerobics / Zumba",met:7.3,g:"strength"},{k:"dance",n:"Dance",met:5,g:"strength"},{k:"gymnastics",n:"Gymnastics",met:3.8,g:"strength"},
+{k:"soccer",n:"Soccer",met:7,g:"team"},{k:"basketball",n:"Basketball",met:6.5,g:"team"},{k:"football",n:"American football",met:8,g:"team"},{k:"rugby",n:"Rugby",met:8.3,g:"team"},
+{k:"volleyball",n:"Volleyball",met:4,g:"team"},{k:"cricket",n:"Cricket",met:4.8,g:"team"},{k:"baseball",n:"Baseball / softball",met:5,g:"team"},{k:"handball",n:"Handball",met:12,g:"team"},{k:"hockey",n:"Hockey",met:7.8,g:"team"},
+{k:"tennis",n:"Tennis",met:7.3,g:"racket"},{k:"badminton",n:"Badminton",met:5.5,g:"racket"},{k:"tabletennis",n:"Table tennis",met:4,g:"racket"},{k:"squash",n:"Squash",met:7.3,g:"racket"},{k:"golf",n:"Golf",met:4.8,g:"racket"},
+{k:"boxing",n:"Boxing",met:5.5,g:"combat"},{k:"martial",n:"Martial arts",met:10.3,g:"combat"},{k:"wrestling",n:"Wrestling",met:6,g:"combat"},
+{k:"swim",n:"Swimming",met:7,g:"outdoor"},{k:"kayak",n:"Kayaking",met:5,g:"outdoor"},{k:"climb",n:"Climbing",met:8,g:"outdoor"},{k:"ski",n:"Skiing",met:7,g:"outdoor"},
+{k:"iceskate",n:"Ice skating",met:7,g:"outdoor"},{k:"skate",n:"Skateboarding",met:5,g:"outdoor"},{k:"horse",n:"Horse riding",met:5.5,g:"outdoor"},
+{k:"other",n:"Other",met:5,g:"other"}
 ];
 const ACT = Object.fromEntries(ACTIVITIES.map(a=>[a.k,a]));
 
@@ -5520,7 +5540,47 @@ const SPORTS = {
  tennis:{n:"Tennis",days:[
   ["Footwork",[["Split-step and lateral shuffle drills","10 × 20 s"],["Spider drill","6 reps"]]],
   ["Strength and rotation",[["Medicine-ball rotational throws","4 × 8 each"],["Lunges","3 × 10 each"],["Band rows","3 × 12"]]],
-  ["Hitting and conditioning",[["Rally with a partner or wall","30 min"],["On-court intervals","10 × 30 s hard"]]]]}
+  ["Hitting and conditioning",[["Rally with a partner or wall","30 min"],["On-court intervals","10 × 30 s hard"]]]]},
+ volleyball:{n:"Volleyball",days:[
+  ["Jump and landing",[["Box jumps","4 × 5"],["Approach jumps (spike footwork)","6 × 4"],["Single-leg landing holds","3 × 6 each"],["Calf raise","3 × 15"]]],
+  ["Skills and movement",[["Passing against a wall","10 min"],["Serving practice","40 serves"],["Blocking footwork shuffles","6 × 20 s"],["Dig and recover drills","6 × 30 s"]]],
+  ["Shoulders and core",[["Band external rotations","3 × 15"],["Scapular push-ups","3 × 12"],["Overhead medicine-ball throws","4 × 8"],["Side plank","3 × 30 s each"]]]]},
+ cricket:{n:"Cricket",days:[
+  ["Batting and technique",[["Throwdowns or a net session","30 min"],["Shadow batting drills","10 min"],["Wrist and forearm work","3 × 12"]]],
+  ["Fielding and speed",[["Dynamic warm-up","10 min"],["Short sprints, 10–20 m","8 reps"],["Catching and ground fielding","20 min"],["Throws from the boundary","3 × 6"]]],
+  ["Strength and shoulder care",[["Split squats","3 × 8 each"],["Rotational medicine-ball throws","3 × 8 each"],["Band rows","3 × 12"],["Plank","3 × 40 s"]]]]},
+ rugby:{n:"Rugby",days:[
+  ["Power and contact strength",[["Back squat","5 × 5"],["Bench press","5 × 5"],["Power clean","4 × 3"],["Neck and shoulder prehab","3 × 12"]]],
+  ["Speed and agility",[["Sprints, 20–40 m","8 reps"],["Pro-agility shuttle","6 reps"],["Sled pushes","6 × 15 m"]]],
+  ["Conditioning and skills",[["20 s hard / 40 s easy","10 rounds"],["Passing and catching drills","20 min"],["Tackle technique on pads or bags","15 min"]]]]},
+ badminton:{n:"Badminton",days:[
+  ["Footwork",[["Shadow footwork to the four corners","8 × 30 s"],["Split-step and lunge drills","3 × 10"],["Skipping","3 × 2 min"]]],
+  ["Racket skills",[["Smash and clear practice","30 shuttles"],["Drop shots and net play","15 min"],["Serve practice","20 of each serve"]]],
+  ["Legs and shoulder care",[["Lunges","3 × 10 each"],["Calf raise","3 × 15"],["Band external rotations","3 × 15"],["Core rotation holds","3 × 30 s"]]]]},
+ tabletennis:{n:"Table tennis",days:[
+  ["Footwork and reflexes",[["Side-to-side shuffle drills","6 × 30 s"],["Reaction-ball catches","3 × 20"],["Skipping","3 × 2 min"]]],
+  ["Strokes",[["Forehand and backhand drives","15 min"],["Serve and receive","20 min"],["Multi-ball drills","3 × 5 min"]]],
+  ["Core and wrist",[["Plank","3 × 40 s"],["Wrist curls","3 × 15"],["Lunges","3 × 10 each"]]]]},
+ boxing:{n:"Boxing",days:[
+  ["Bag rounds",[["Jab-cross combinations","6 × 3 min, 1 min rest"],["Hooks and body shots","4 × 3 min"]]],
+  ["Footwork and conditioning",[["Shadow boxing","4 × 3 min"],["Skipping","5 × 3 min"],["Slips and rolls","4 × 2 min"]]],
+  ["Strength",[["Push-ups","4 × 12"],["Medicine-ball slams","4 × 10"],["Pull-ups or rows","4 × 8"],["Hanging knee raise","3 × 12"]]]]},
+ martial:{n:"Martial arts",days:[
+  ["Technique",[["Kicks and strikes on pads","6 × 3 min"],["Forms or drills","20 min"],["Partner drills","15 min"]]],
+  ["Flexibility and mobility",[["Hip openers","10 min"],["Hamstring and groin stretches","10 min"],["Spinal mobility flow","10 min"]]],
+  ["Conditioning",[["3 min work / 1 min rest","5 rounds"],["Bodyweight squats and burpees","3 × 12"],["Core circuit","3 rounds"]]]]},
+ athletics:{n:"Track and field",days:[
+  ["Speed",[["Warm-up and drills (A-skips, B-skips)","15 min"],["Accelerations, 30–60 m","6 reps, full rest"]]],
+  ["Strength and power",[["Back squat","4 × 5"],["Hip thrust","4 × 8"],["Box jumps","4 × 5"],["Hamstring curls","3 × 10"]]],
+  ["Speed endurance",[["150 m repeats at 90%","4 reps, 4 min rest"],["Easy jog cool-down","10 min"]]]]},
+ cycling:{n:"Cycling",days:[
+  ["Endurance ride",[["Steady ride at a conversational effort","60–90 min"]]],
+  ["Intervals",[["Warm-up","15 min"],["4 min hard / 4 min easy","5 rounds"],["Cool-down","10 min"]]],
+  ["Legs and core",[["Goblet squat","3 × 10"],["Single-leg RDL","3 × 8 each"],["Plank series","3 × 45 s"]]]]},
+ golf:{n:"Golf",days:[
+  ["Mobility and rotation",[["Thoracic rotation drills","10 min"],["Hip hinge and glute bridge","3 × 12"],["Band pull-aparts","3 × 15"]]],
+  ["Strength and balance",[["Split squat","3 × 8 each"],["Cable or band woodchop","3 × 10 each"],["Single-leg balance holds","3 × 30 s each"]]],
+  ["Range practice",[["Short game: chipping and putting","30 min"],["Full-swing practice","40 balls"],["Walking round","9 holes"]]]]}
 };
 
 const MOTIVATION = [
@@ -8945,7 +9005,7 @@ function buildWorkoutPlan(p = P()){
   const typeOf = { fullbody:"strength", upper:"strength", lower:"strength", cardio: p.style === "cardio" && lvl === "beginner" ? "walk" : "run", hiit:"hiit", mobility:"yoga" };
   const mins = { fullbody:45, upper:45, lower:45, cardio:35, hiit:25, mobility:25 };
   return pattern.map((k, i) => {
-    if (k.startsWith("sport:")) { const s = SPORTS[p.sport]; const d = s.days[+k.split(":")[1]]; return { dow: dayMap[i], title: `${s.n}: ${d[0]}`, items: d[1], type: p.sport === "running" ? "run" : p.sport === "swimming" ? "swim" : p.sport, minutes: 50 }; }
+    if (k.startsWith("sport:")) { const s = SPORTS[p.sport]; const d = s.days[+k.split(":")[1]]; return { dow: dayMap[i], title: `${s.n}: ${d[0]}`, items: d[1], type: ({ running:"run", swimming:"swim", cycling:"cycle" })[p.sport] || p.sport, minutes: 50 }; }
     return { dow: dayMap[i], title: names[k], items: EX[k][lvl], type: typeOf[k], minutes: mins[k] };
   });
 }
@@ -11084,8 +11144,9 @@ function workoutsView(p){
     </section>
     <section class="card"><div class="eyebrow">Manual entry</div><h3>Log a workout</h3>
       <div class="form">
-        <label class="f full">Activity<span class="actpick">${ACTIVITIES.map(a => `<button type="button" class="actbtn" data-act="pick-act" data-v="${a.k}" aria-pressed="${(UI.prefillW?.type || UI.pickAct || "strength") === a.k}" title="${esc(a.n)}">${wicon(a.k, 34)}<span class="tiny">${esc(a.n)}</span></button>`).join("")}</span>
-          <select id="w-type" class="visually-tight">${opt(ACTIVITIES.map(a=>[a.k,a.n]), UI.prefillW?.type || UI.pickAct || "strength")}</select></label>
+        <div class="f full" role="group" aria-label="Activity"><span>Activity</span>
+          ${ACT_GROUPS.map(([g, gn]) => `<div class="actgroup" role="group" aria-label="${esc(gn)}"><div class="actgh">${esc(gn)}</div><span class="actpick">${ACTIVITIES.filter(a => a.g === g).map(a => `<button type="button" class="actbtn" data-act="pick-act" data-v="${a.k}" aria-pressed="${(UI.prefillW?.type || UI.pickAct || "strength") === a.k}" title="${esc(a.n)}">${wicon(a.k, 40)}<span class="tiny">${esc(a.n)}</span></button>`).join("")}</span></div>`).join("")}
+          <select id="w-type" class="visually-tight" aria-label="Activity">${opt(ACTIVITIES.map(a=>[a.k,a.n]), UI.prefillW?.type || UI.pickAct || "strength")}</select></div>
         <label class="f">Minutes<input type="number" id="w-min" min="1" max="600" value="${UI.prefillW?.minutes ?? ""}" placeholder="45"></label>
         <label class="f">Date<input type="date" id="w-d" value="${today()}" max="${today()}"></label>
         <label class="f">Calories (optional)<input type="number" id="w-cal" min="0" max="5000" placeholder="Estimated if blank"></label>
@@ -11108,12 +11169,16 @@ function workoutsView(p){
   </section>
   ${typeof medicalNote === "function" ? medicalNote() : ""}`;
 }
-const HK = {Running:"run",Walking:"walk",Hiking:"walk",Cycling:"cycle",TraditionalStrengthTraining:"strength",FunctionalStrengthTraining:"strength",CoreTraining:"strength",HighIntensityIntervalTraining:"hiit",CrossTraining:"hiit",MixedCardio:"hiit",Yoga:"yoga",Pilates:"yoga",Flexibility:"yoga",Swimming:"swim",Soccer:"soccer",Basketball:"basketball",AmericanFootball:"football",Tennis:"tennis",Dance:"dance",SocialDance:"dance",CardioDance:"dance",Elliptical:"cycle",Rowing:"hiit",StairClimbing:"hiit"};
+const HK = {Running:"run",Walking:"walk",Hiking:"hike",Cycling:"cycle",TraditionalStrengthTraining:"strength",FunctionalStrengthTraining:"strength",CoreTraining:"strength",HighIntensityIntervalTraining:"hiit",CrossTraining:"hiit",MixedCardio:"hiit",Yoga:"yoga",Pilates:"pilates",Flexibility:"stretch",Swimming:"swim",Soccer:"soccer",Basketball:"basketball",AmericanFootball:"football",Tennis:"tennis",Dance:"dance",SocialDance:"dance",CardioDance:"aerobics",Elliptical:"elliptical",Rowing:"row",StairClimbing:"stairs",Stairs:"stairs",StepTraining:"aerobics",JumpRope:"jumprope",Boxing:"boxing",Kickboxing:"boxing",MartialArts:"martial",Wrestling:"wrestling",Cricket:"cricket",Volleyball:"volleyball",Badminton:"badminton",TableTennis:"tabletennis",Squash:"squash",Rugby:"rugby",Baseball:"baseball",Softball:"baseball",Handball:"handball",Hockey:"hockey",Golf:"golf",Climbing:"climb",Gymnastics:"gymnastics",Skating:"iceskate",SkatingSports:"iceskate",DownhillSkiing:"ski",CrossCountrySkiing:"ski",SnowSports:"ski",Equestrian:"horse",PaddleSports:"kayak",TrackAndField:"athletics",Kayaking:"kayak"};
 function guessType(s){ s = String(s||"").toLowerCase();
-  if (/run|jog/.test(s)) return "run"; if (/walk|hik/.test(s)) return "walk"; if (/bik|cycl|spin/.test(s)) return "cycle";
-  if (/strength|weight|lift|gym/.test(s)) return "strength"; if (/hiit|interval|circuit|crossfit|row/.test(s)) return "hiit";
-  if (/yoga|pilates|stretch|mobil/.test(s)) return "yoga"; if (/swim/.test(s)) return "swim"; if (/soccer|football_soccer/.test(s)) return "soccer";
-  if (/american|football/.test(s)) return "football"; if (/basket/.test(s)) return "basketball"; if (/tennis/.test(s)) return "tennis"; if (/danc/.test(s)) return "dance"; return "other"; }
+  const rules = [[/jump ?rope|skipping/,"jumprope"],[/pilates/,"pilates"],[/stretch|flexib/,"stretch"],[/yoga|mobil/,"yoga"],[/spin|indoor cycl/,"spin"],[/hik/,"hike"],
+    [/stair|step ?mill/,"stairs"],[/ellip/,"elliptical"],[/row/,"row"],[/run|jog/,"run"],[/walk/,"walk"],[/bik|cycl/,"cycle"],[/calisthen|bodyweight/,"calisthenics"],
+    [/strength|weight|lift|gym/,"strength"],[/hiit|interval|circuit|crossfit/,"hiit"],[/zumba|aerobic/,"aerobics"],[/danc/,"dance"],[/gymnast/,"gymnastics"],[/swim/,"swim"],
+    [/kayak|canoe|paddle/,"kayak"],[/climb|boulder/,"climb"],[/ski|snowboard/,"ski"],[/ice.?skat|skating/,"iceskate"],[/skateboard/,"skate"],[/horse|equestrian|riding/,"horse"],
+    [/box|kickbox/,"boxing"],[/martial|karate|judo|taekwondo|jiu/,"martial"],[/wrestl/,"wrestling"],[/soccer|football_soccer/,"soccer"],[/rugby/,"rugby"],
+    [/american|football/,"football"],[/basket/,"basketball"],[/volley/,"volleyball"],[/cricket/,"cricket"],[/baseball|softball/,"baseball"],[/handball/,"handball"],[/hockey/,"hockey"],
+    [/table.?tennis|ping/,"tabletennis"],[/badminton/,"badminton"],[/squash/,"squash"],[/tennis/,"tennis"],[/golf/,"golf"],[/track|sprint|athletic/,"athletics"]];
+  for (const [re, k] of rules) if (re.test(s)) return k; return "other"; }
 function toDate(v){ if (v == null || v === "") return null; if (/^\d{10,13}$/.test(String(v))) { const n = +v; return ymd(new Date(n < 1e12 ? n*1000 : n)); } const m = String(v).match(/(\d{4})-(\d{2})-(\d{2})/); if (m) return `${m[1]}-${m[2]}-${m[3]}`; const d = new Date(v); return isNaN(d) ? null : ymd(d); }
 function toMinutes(v, header=""){ if (v == null || v === "") return null; const s = String(v).trim(); header = header.toLowerCase();
   if (/^\d+:\d{2}(:\d{2})?$/.test(s)) { const p = s.split(":").map(Number); return p.length === 3 ? p[0]*60 + p[1] + p[2]/60 : p[0] + p[1]/60; }
@@ -13996,29 +14061,65 @@ function initRings(){
 // One visual system for every activity: a frosted glass disc, a soft top highlight, a single
 // gradient figure at a consistent weight, and one micro-animation per type. Inline SVG so they
 // scale and animate. Original artwork, not traced from anything.
-const WI_COLOR = { walk:["#0E9DB3","#3FD0E0"], run:["#B03A00","#FF9A4D"], cycle:["#0B6FBF","#4FC3F7"],
-  strength:["#7A2FD0","#C77DFF"], hiit:["#C21E45","#FF4D6D"], yoga:["#0E7A6E","#2ED3BF"],
-  swim:["#0A5FA8","#49B6FF"], row:["#1A6E3A","#4CD964"], hike:["#7A5A18","#E0B44A"],
-  elliptical:["#5A4ACF","#8E8CFF"], soccer:["#0E7A3C","#4CD964"], basketball:["#B34700","#FF8A3D"],
-  football:["#6B3A16","#C98B4B"], tennis:["#7A8F00","#C6E14A"], dance:["#A01C84","#FF6FD8"], other:["#4A5568","#A0AEC0"] };
-// Each entry draws inside a 48x48 box on top of the shared disc.
+// Colours: [deep, light] per type, grouped by family (cardio orange/teal, strength purple, studio teal, ball sports green and orange, racket lime, combat red, water blue, outdoors gold).
+const WI_COLOR = { walk:["#0E9DB3","#3FD0E0"], run:["#B03A00","#FF9A4D"], cycle:["#0B6FBF","#4FC3F7"], spin:["#1B5FC4","#6FA8FF"],
+  strength:["#7A2FD0","#C77DFF"], calisthenics:["#6A3FC9","#B79BFF"], hiit:["#C21E45","#FF4D6D"], yoga:["#0E7A6E","#2ED3BF"], pilates:["#0F8A8A","#5BE0D4"], stretch:["#2A7F62","#6FE0A8"],
+  aerobics:["#B8227A","#FF7AC6"], dance:["#A01C84","#FF6FD8"], jumprope:["#B3420A","#FFA24D"], stairs:["#7A4F00","#F2B33D"], row:["#1A6E3A","#4CD964"], hike:["#7A5A18","#E0B44A"],
+  elliptical:["#5A4ACF","#8E8CFF"], athletics:["#B3261E","#FF7B5C"], swim:["#0A5FA8","#49B6FF"], kayak:["#0A7A9A","#4FD2E8"], climb:["#7A4A2A","#D9A066"], ski:["#2F6FA8","#9CCBF2"],
+  iceskate:["#3B6FB0","#A9D4FF"], skate:["#5B4FB0","#A99BFF"], horse:["#7A4B1E","#D9954A"], gymnastics:["#A03A9A","#F08AE6"],
+  soccer:["#0E7A3C","#4CD964"], basketball:["#B34700","#FF8A3D"], football:["#6B3A16","#C98B4B"], rugby:["#7A3A12","#E0974F"], volleyball:["#B08A00","#FFD84D"],
+  cricket:["#9A3A12","#F08A5A"], baseball:["#B0302C","#FF8A7A"], handball:["#1F7A5A","#5DE0B0"], hockey:["#1A5FA8","#5AA9F2"],
+  tennis:["#7A8F00","#C6E14A"], badminton:["#4F8F10","#A9E65A"], tabletennis:["#B02A2A","#FF8080"], squash:["#6A7A10","#BFD84A"], golf:["#1A7A3A","#7BE08A"],
+  boxing:["#B01E2E","#FF5A6E"], martial:["#8A1F3A","#F0607F"], wrestling:["#9A2A1A","#F07A5A"], other:["#4A5568","#A0AEC0"] };
+// Every icon is drawn in a 48x48 box on the shared disc: a filled head, limbs as round strokes, thicker (.b) torsos and filled equipment.
+// "§" stands for the instance's gradient paint, put in by wicon(). Original artwork, not traced from anything.
+const wH = (x, y, r = 3.6) => `<circle class="w-head" cx="${x}" cy="${y}" r="${r}" fill="§" stroke="none"/>`;
+const wF = d => `<path d="${d}" fill="§" stroke="none"/>`;
 const WI_ART = {
-  walk:`<circle class="w-head" cx="24" cy="12" r="4"/><path class="w-body" d="M24 17l-3 7 4 4 1 8"/><path class="w-leg" d="M25 28l-5 9"/><path class="w-arm" d="M24 19l6 3M24 20l-5 3"/>`,
-  run:`<circle class="w-head" cx="28" cy="11" r="4"/><path class="w-body" d="M27 16l-4 7 5 4 1 9"/><path class="w-leg" d="M28 27l-8 8"/><path class="w-arm" d="M26 19l7 1M25 21l-7 2"/>`,
-  cycle:`<circle class="w-wheel" cx="13" cy="32" r="8"/><circle class="w-wheel w-wheel2" cx="35" cy="32" r="8"/><path class="w-body" d="M13 32l8-12h8l6 12M21 20h9"/><circle class="w-head" cx="27" cy="12" r="3.4"/>`,
-  strength:`<path class="w-bar" d="M8 24h32"/><rect class="w-plate" x="5" y="17" width="6" height="14" rx="2"/><rect class="w-plate w-plate2" x="37" y="17" width="6" height="14" rx="2"/><rect class="w-plate" x="12" y="20" width="4" height="8" rx="1.5"/><rect class="w-plate w-plate2" x="32" y="20" width="4" height="8" rx="1.5"/>`,
-  hiit:`<path class="w-bolt" d="M27 6L14 26h8l-3 16 15-22h-9z"/>`,
-  yoga:`<circle class="w-head" cx="24" cy="11" r="4"/><path class="w-body" d="M24 16v10"/><path class="w-leg" d="M24 26l-10 10h20z"/><path class="w-arm" d="M24 20l-9 1M24 20l9 1"/>`,
-  swim:`<circle class="w-head" cx="15" cy="16" r="4"/><path class="w-body" d="M19 20l10-4 8 6"/><path class="w-wave" d="M6 32c4-3 7 3 11 0s7 3 11 0 7 3 11 0"/><path class="w-wave w-wave2" d="M6 39c4-3 7 3 11 0s7 3 11 0 7 3 11 0"/>`,
-  row:`<circle class="w-head" cx="18" cy="12" r="4"/><path class="w-body" d="M18 17l3 8-6 7"/><path class="w-oar" d="M8 28h32"/><path class="w-arm" d="M21 22l12 5"/>`,
-  hike:`<circle class="w-head" cx="22" cy="11" r="4"/><path class="w-body" d="M22 16l-3 8 5 4 2 9"/><path class="w-leg" d="M24 28l-6 8"/><path class="w-pole" d="M33 13v26"/><path class="w-arm" d="M22 19l10-4"/>`,
-  elliptical:`<ellipse class="w-wheel" cx="24" cy="33" rx="14" ry="6"/><circle class="w-head" cx="24" cy="11" r="4"/><path class="w-body" d="M24 16v10"/><path class="w-leg" d="M24 26l-8 6M24 26l8 6"/>`,
-  soccer:`<circle class="w-ball" cx="24" cy="24" r="13"/><path class="w-pent" d="M24 17l5 3.6-2 6h-6l-2-6z"/><path class="w-seam" d="M24 11v6M11.5 21l7.5 5.5M36.5 21L29 26.5M17 36l4-9M31 36l-4-9"/>`,
-  basketball:`<circle class="w-ball" cx="24" cy="24" r="13"/><path class="w-seam" d="M11 24h26M24 11v26M15 14c5 6 5 14 0 20M33 14c-5 6-5 14 0 20"/>`,
-  football:`<ellipse class="w-ball" cx="24" cy="24" rx="14" ry="9" transform="rotate(-25 24 24)"/><path class="w-seam" d="M18 29l12-10M20 27l2 2M23 24l2 2M26 21l2 2"/>`,
-  tennis:`<ellipse class="w-racket" cx="19" cy="18" rx="9" ry="11" transform="rotate(-30 19 18)"/><path class="w-seam" d="M13 12l11 9M12 19l9 7M17 9l8 12"/><path class="w-handle" d="M25 27l9 11"/><circle class="w-ball2" cx="36" cy="16" r="4"/>`,
-  dance:`<circle class="w-head" cx="27" cy="10" r="4"/><path class="w-body" d="M27 15l-4 8 5 5"/><path class="w-leg" d="M28 28l-9 9M28 28l7 9"/><path class="w-arm" d="M26 18l-9-5M26 19l10-3"/>`,
-  other:`<circle class="w-ball" cx="24" cy="24" r="12"/><path class="w-seam" d="M24 16v8l6 4"/>`
+  walk: wH(26, 9) + `<path class="w-body b" d="M25 15l-1.5 11"/><path class="w-leg" d="M23.5 26l4.5 9-1 7M23.5 26l-4.5 8-4 4"/><path class="w-arm" d="M25 17l5 6 3 3M25 17l-5 5-2 5"/>`,
+  run: wH(31, 9) + `<path class="w-body b" d="M29 15l-5 10"/><path class="w-leg" d="M24 25l7 5-1 8M24 25l-7 6-7-2"/><path class="w-arm" d="M28 17l6 4 3-4M27 18l-7 2-2 6"/>`,
+  cycle: `<circle class="w-wheel" cx="11" cy="33" r="7.5"/><circle class="w-wheel w-wheel2" cx="37" cy="33" r="7.5"/><path class="w-body" d="M11 33l9-12h11l6 12M20 21l5 12 6-12"/>` + wH(27, 9, 3.4) + `<path class="w-arm" d="M26 14l-5 7M27 14l6 7"/><path d="M31 21l3-2"/>`,
+  spin: `<circle class="w-wheel" cx="32" cy="31" r="8"/><path class="w-body" d="M32 31l-9-15M32 31l5-17"/><path d="M19 15h9M34 14h8M10 41h30M24 41v-8"/><path class="w-leg" d="M32 31l-8 10"/>`,
+  strength: `<path class="w-bar" d="M7 24h34"/>` + `<rect class="w-plate" x="8" y="16" width="5" height="16" rx="2" fill="§" stroke="none"/><rect class="w-plate" x="14" y="19" width="4" height="10" rx="1.6" fill="§" stroke="none"/><rect class="w-plate w-plate2" x="35" y="16" width="5" height="16" rx="2" fill="§" stroke="none"/><rect class="w-plate w-plate2" x="30" y="19" width="4" height="10" rx="1.6" fill="§" stroke="none"/>`,
+  calisthenics: wH(35, 17) + `<path class="w-body b" d="M31 22l-20 9"/><path class="w-arm" d="M29 23v11"/><path class="w-leg" d="M11 31v4"/><path d="M5 38h38"/>`,
+  hiit: wF("M27.5 4L13 26.5h9L19 44l16-24h-10.500z") + `<path d="M36 9l3-3M39 14h4M9 14H5" opacity=".7"/>`,
+  yoga: wH(24, 9) + `<path class="w-body b" d="M24 15v13"/><path class="w-arm" d="M24 17l-8-9M24 17l8-9"/><path class="w-leg" d="M24 28v13M24 29l7 4-7 4"/><path d="M11 43h26"/>`,
+  pilates: wH(10, 27) + `<path class="w-body b" d="M15 29h13"/><path class="w-leg" d="M28 29l11-14M28 29l5 6"/><path class="w-arm" d="M16 30l7 5"/><path d="M5 40h38"/>`,
+  stretch: wH(21, 10) + `<path class="w-body b" d="M23 16q5 8 1 15"/><path class="w-arm" d="M23 18q11-9 15-1M22 18l-6 6"/><path class="w-leg" d="M24 31l-5 11M24 31l6 11"/>`,
+  aerobics: wH(24, 9) + `<path class="w-body b" d="M24 15v11"/><path class="w-arm" d="M24 17L12 9M24 17l12-8"/><path class="w-leg" d="M24 26L14 40M24 26l10 14"/><path d="M8 20l2 2M40 20l-2 2M24 3v-2" opacity=".7"/>`,
+  dance: wH(28, 8) + `<path class="w-body b" d="M27 14l-3 11"/><path class="w-arm" d="M26 16l-9-6M26 17l9-3 3 4"/><path class="w-leg" d="M24 25l6 9 6-3M24 25l-5 10v7"/>`,
+  jumprope: wH(24, 8) + `<path class="w-body b" d="M24 14v12"/><path class="w-arm" d="M24 16l-9 8M24 16l9 8"/><path class="w-leg" d="M24 26l-3 11M24 26l3 11"/><path class="w-rope" d="M15 24C4 48 44 48 33 24"/>`,
+  stairs: `<path class="w-body" d="M6 41h9v-9h9v-9h9v-9h9"/>` + wH(34, 6, 3.2) + `<path d="M34 11v4" />`,
+  row: wF("M5 33h38l-5 7H10z") + wH(19, 12) + `<path class="w-body b" d="M20 18l4 12"/><path class="w-leg" d="M24 30h8l-1 3"/><path class="w-arm" d="M21 21l11 4"/><path class="w-pole" d="M10 19l30 14"/>`,
+  hike: wH(22, 9) + `<path class="w-body b" d="M22 15l-2 11"/>` + `<rect x="25.500" y="16" width="5" height="9" rx="2" fill="§" stroke="none" transform="rotate(8 28 20)"/><path class="w-leg" d="M20 26l5 8-1 8M20 26l-5 8-3 4"/><path class="w-arm" d="M22 17l9 4"/><path class="w-pole" d="M33 12l-3 30"/>`,
+  elliptical: wH(22, 8) + `<path class="w-body b" d="M22 14v11"/><path class="w-arm" d="M22 17l-8 5v12M22 17l8-1"/><path class="w-leg" d="M22 25l-6 8 1 7M22 25l8 6v8"/><ellipse class="w-wheel" cx="24" cy="41" rx="15" ry="3.500"/><path d="M36 14v26"/>`,
+  athletics: wH(17, 12) + `<path class="w-body b" d="M18 17l6 8"/><path class="w-arm" d="M19 19l9-4M19 19l-6 4"/><path class="w-leg" d="M24 25l14-2M24 25l-9 6-3 7"/><path d="M29 30v11M41 30v11M27 30h16"/>`,
+  swim: wH(15, 16) + `<path class="w-arm" d="M19 19l7-6 8 4"/><path class="w-body b" d="M18 21l19 4"/><path class="w-wave" d="M5 32q4-3 8 0t8 0 8 0 8 0 8 0"/><path class="w-wave w-wave2" d="M5 39q4-3 8 0t8 0 8 0 8 0 8 0"/>`,
+  kayak: wF("M5 31q19-9 38 0q-19 8-38 0z") + `<path class="w-pole" d="M12 12l24 22"/><path d="M9 9l6 5M33 31l6 5" stroke-width="5"/><path class="w-wave" d="M6 39q4-3 8 0t8 0 8 0 8 0 6 0"/>`,
+  climb: `<circle cx="11" cy="13" r="2.600" fill="§" stroke="none"/><circle cx="37" cy="21" r="2.600" fill="§" stroke="none"/><circle cx="12" cy="33" r="2.600" fill="§" stroke="none"/><circle cx="36" cy="38" r="2.600" fill="§" stroke="none"/>` + wH(24, 10) + `<path class="w-body b" d="M24 16v10"/><path class="w-arm" d="M24 17l-8-6M24 17l9 3"/><path class="w-leg" d="M24 26l-8 6 1 7M24 26l7 6 4 5"/>`,
+  ski: `<path d="M5 33l38 8"/>` + wH(26, 9) + `<path class="w-body b" d="M25 15l-4 10"/><path class="w-leg" d="M21 25l9 5-3 7M21 25l-4 6"/><path class="w-arm" d="M25 17l9 4M24 17l-9 5"/><path class="w-pole" d="M34 21l5 17M15 22l-5 14"/>`,
+  iceskate: wF("M15 8h10v15l11 5v6H15z") + `<path class="w-body" d="M11 40h30"/><path d="M18 34v6M33 34v6"/><path d="M19 14h4M19 18h4" stroke="#fff" opacity=".6"/>`,
+  skate: `<path class="w-body" d="M6 30q2 3 6 3h24q4 0 6-3"/><circle cx="14" cy="38" r="3"/><circle cx="34" cy="38" r="3"/>` + wH(22, 7) + `<path class="w-body b" d="M22 13l1 10"/><path class="w-leg" d="M23 23l-5 9M23 23l7 9"/><path class="w-arm" d="M22 16l-8 3M22 16l9 1"/>`,
+  horse: `<path class="w-body" d="M12 40V25C12 14 17 8 24 8s12 6 12 17v15"/>` + `<circle cx="12" cy="30" r="2" fill="§" stroke="none"/><circle cx="12" cy="22" r="2" fill="§" stroke="none"/><circle cx="36" cy="30" r="2" fill="§" stroke="none"/><circle cx="36" cy="22" r="2" fill="§" stroke="none"/>`,
+  gymnastics: wH(24, 34) + `<path class="w-arm" d="M18 42l5-7M30 42l-5-7"/><path class="w-body b" d="M24 30V15"/><path class="w-leg" d="M24 15l-8-10M24 15l8-10"/>`,
+  soccer: `<circle class="w-ball" cx="24" cy="24" r="14"/>` + wF("M24 17l5.500 4-2 6.500h-7l-2-6.500z") + `<path class="w-seam" d="M24 10v7M10.500 20.500L18.500 24M37.500 20.500L29.500 24M17 37l3.500-9.500M31 37l-3.500-9.500"/>`,
+  basketball: `<circle class="w-ball" cx="24" cy="24" r="14"/><path class="w-seam" d="M10 24h28M24 10v28M14 13c6 7 6 15 0 22M34 13c-6 7-6 15 0 22"/>`,
+  football: `<ellipse cx="24" cy="24" rx="16" ry="9.500" transform="rotate(-30 24 24)"/><path class="w-seam" d="M17 30l14-12M20.500 27l2.500 2.500M24 24l2.500 2.500M27.500 21l2.500 2.500M13 20l3 3M32 29l3 3" />`,
+  rugby: `<ellipse cx="24" cy="24" rx="16" ry="10" transform="rotate(-40 24 24)"/><path class="w-seam" d="M13 35l22-22M18 24q6-2 6-8M30 24q-6 2-6 8"/>`,
+  volleyball: `<circle class="w-ball" cx="24" cy="24" r="14"/><path class="w-seam" d="M24 10c-5 7-4 13 0 14s9-1 14 3M10.500 28c6 1 10-1 13.500-4M30 11c-3 6-1 11 2 14"/>`,
+  cricket: `<path class="w-body" d="M12 38l16-22" stroke-width="8"/><path d="M29 14l5-7" stroke-width="3"/>` + `<circle cx="35" cy="34" r="4.500" fill="§" stroke="none"/><path d="M32 32q3 2 6 0" stroke="#fff" opacity=".7"/>`,
+  baseball: `<path class="w-body" d="M8 8l17 17" stroke-width="5"/><circle class="w-ball" cx="32" cy="32" r="10"/><path class="w-seam" d="M26 25q4 7-1 14M38 25q-4 7 1 14"/>`,
+  handball: wH(21, 9) + `<path class="w-body b" d="M21 15l-1 11"/><path class="w-arm" d="M21 17l9-5 6-4M21 17l-7 6"/><path class="w-leg" d="M20 26l7 7-1 8M20 26l-6 8-4 6"/><circle cx="40" cy="8" r="4" fill="§" stroke="none"/>`,
+  hockey: `<path class="w-body" d="M31 7L22 32q-2 7-10 7" stroke-width="4.400"/><ellipse cx="33" cy="38" rx="5" ry="3" fill="§" stroke="none"/>`,
+  tennis: `<g transform="rotate(-35 19 18)"><ellipse class="w-racket" cx="19" cy="18" rx="9" ry="11.500"/><path class="w-seam" d="M19 7v22M12 13h14M11 18h16M12 23h14"/></g><path class="w-handle b" d="M25.500 27.500l8.500 10"/><circle cx="37" cy="13" r="4.500" fill="§" stroke="none"/>`,
+  badminton: `<circle cx="24" cy="38" r="4" fill="§" stroke="none"/><path class="w-seam" d="M21 34L14 12M27 34l7-22M24 33V10"/><path d="M13 12q11-5 22 0"/>`,
+  tabletennis: `<circle class="w-racket" cx="20" cy="20" r="11"/><path class="w-handle b" d="M28 28l9 10"/><circle cx="37" cy="12" r="3.500" fill="§" stroke="none"/>`,
+  squash: `<ellipse class="w-racket" cx="19" cy="19" rx="7.500" ry="10.500" transform="rotate(-30 19 19)"/><path class="w-handle b" d="M25 28l7 9"/><circle cx="36" cy="14" r="3" fill="§" stroke="none"/><path d="M42 6v34"/>`,
+  golf: `<path class="w-pole" d="M29 7v31"/>` + wF("M29 7l11 5-11 5z") + `<circle cx="16" cy="35" r="3.500" fill="§" stroke="none"/><path d="M6 41q18-5 36 0"/>`,
+  boxing: wF("M11 21c0-8 5-12 13-12h3c8 0 12 4 12 12v8c0 3-2 5-5 5H16c-3 0-5-2-5-5z") + `<rect x="15" y="36" width="22" height="6.500" rx="2.500" fill="§" stroke="none"/><path d="M17 27h14q4 0 4-4" stroke="#fff" opacity=".55"/>`,
+  martial: wH(18, 9) + `<path class="w-body b" d="M19 15l2 12"/><path class="w-arm" d="M19 17l-7 4M19 17l7-3"/><path class="w-leg" d="M21 27l-1 14M21 27l12-5 9-5"/><path d="M17 23h6" opacity=".7"/>`,
+  wrestling: wH(14, 12) + wH(34, 12) + `<path class="w-body b" d="M15 18l8 10M33 18l-8 10"/><path class="w-arm" d="M17 20l12 3M31 20l-12 4"/><path class="w-leg" d="M23 28l-8 13M23 28l2 13M25 28l8 13"/>`,
+  other: `<circle class="w-ball" cx="24" cy="26" r="13"/><path d="M24 13v-4M20 9h8M24 26v-7M24 26l5 3"/>`
 };
 // The shared frame: frosted disc, rim light, highlight — identical for every type.
 let WI_SEQ = 0;
@@ -14031,13 +14132,13 @@ function wicon(type, size = 40, cls = ""){
   return `<span class="wi ${cls}" style="--wi1:${c1};--wi2:${c2};width:${size}px;height:${size}px">
     <svg class="wi-svg wi-${k}" viewBox="0 0 48 48" width="${size}" height="${size}" aria-hidden="true" focusable="false">
       <defs>
-        <linearGradient id="${id}-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2}"/></linearGradient>
+        <linearGradient id="${id}-g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="48" y2="48"><stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2}"/></linearGradient>
         <linearGradient id="${id}-d" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="${c2}" stop-opacity=".30"/><stop offset="100%" stop-color="${c1}" stop-opacity=".16"/></linearGradient>
       </defs>
       <rect class="wi-disc" x="1.5" y="1.5" width="45" height="45" rx="14" fill="url(#${id}-d)" stroke="${c2}" stroke-opacity=".34" stroke-width="1"/>
       <path class="wi-shine" d="M6 16c4-9 14-12 22-10 5 1 9 4 11 8-6-6-16-8-24-5-4 1.5-7 4-9 7z" fill="#fff" opacity=".22"/>
-      <g class="wi-art" fill="none" stroke="url(#${id}-g)" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round">${WI_ART[k]}</g>
+      <g class="wi-art" fill="none" stroke="url(#${id}-g)" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round">${WI_ART[k].replaceAll("§", `url(#${id}-g)`)}</g>
     </svg></span>`;
 }
 const ACT_ICON = t => wicon(t, 36);
