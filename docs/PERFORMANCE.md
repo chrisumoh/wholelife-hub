@@ -69,3 +69,12 @@ Expected result of 1 and 2: first paint in about half a second on Fast 4G, and t
 - **Repeat visits and caching.** Every run is a cold load with the cache off.
 
 Re-run `node tests/perf/measure.mjs` after any of the changes above and update the table.
+
+## Release gate (8.2.11 onward)
+
+For release-candidate builds, run `node tests/perf/measure.mjs` and record the medians in `docs/BUILD_PLAN.md`.
+
+- Low-end phone (6× CPU, Slow 4G): **App ready must stay <= 11,000 ms**
+- Low-end phone (6× CPU, Slow 4G): **First contentful paint must stay <= 1,000 ms** (boot-screen paint remains expected well before app-ready)
+
+If either threshold is missed, treat it as a release blocker until fixed or explicitly waived by the owner in the build checklist.

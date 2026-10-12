@@ -4055,7 +4055,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.10", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.11", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -4069,6 +4069,12 @@ const APP_VERSION = { update: "8.2", build: "8.2.10", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.11", area:"Privacy & release quality", title:"Settings now shows consent history and privacy status, exports show a clear last-export outcome, and release gates are tightened for legal/accessibility and real-device checks",
+      bug:"The launch plan still had open trust/compliance and release-process gaps: no clear in-app surface for the current consent record, no one-place privacy-state summary, and no visible export outcome in Settings after downloading data. Build docs still listed real-device, screen-reader, zoom and lawyer checks as optional omissions rather than explicit release gates.",
+      fix:"Settings › Privacy & security now has a Privacy status card (account sync state, passcode encryption state, age-gate block state, and where data stays), a Terms and Privacy agreement history card (latest record from this device and from account metadata), and Your data now shows the latest local export outcome (time and file size) after each JSON export. Build docs now scope 8.2.11 to close legal/accessibility and real-device quality gaps in one focused build, add explicit release gates for screen-reader/zoom/Safari/real-phone checks, add a low-end performance gate, and set a one-active-build release-flow rule to reduce stacked PR risk.",
+      where:"index.html: APP_VERSION, in-app WLH changelog, EXPORT_META_KEY/exportMetaRead/exportMetaWrite, consentHistoryRows(), settingsView() privacy cards and export status line, export click action. tests/browser/legal.mjs (consent history and export outcome checks). docs/BUILD_PLAN.md, docs/PERFORMANCE.md, CHANGELOG.md, README.md.",
+      test:"node tests/browser/legal.mjs, node tests/check-repo.mjs, node tests/browser/run-all.mjs. By hand: Settings › Privacy & security shows Privacy status and Terms and Privacy agreement history; export data once and confirm the new 'Latest export on this device' line updates.",
+      limits:"Consent history depends on what this browser and account metadata currently hold; legacy accounts created before the terms metadata shipped may show no account-side row. Real-device and lawyer review gates are process checks and still require human execution." },
     { id:"8.2.10", area:"Accessibility", title:"axe-core pass: keyboard-reachable charts, a labelled quick-jump combobox, landmarks, heading order, a skip link, and an automated check",
       bug:"A launch checklist asked for 'real accessibility: run Lighthouse or axe on every page'. Running axe-core 4.10.2 (WCAG 2.0, 2.1 and 2.2 A and AA, plus its best-practice rules) over 31 screens, the popups, edit mode and the setup screens, at 375 and 1440px in light and dark, found: (1) the metric charts scroll sideways but could not be reached by keyboard; (2) the Ctrl+K quick-jump list was an unnamed listbox with no combobox on the search box, so a screen reader could not hear which option was highlighted, and the highlighted option was not scrolled into view; (3) the new age screen and the setup steps were not inside a landmark; (4) the metric page's 'Add data' heading skipped a level; (5) the Premium page had two h1 headings; (6) there was no way to skip the page header. Checking the setup screens properly (an earlier version of the test drew the normal app instead of them) also found (7) the two start choices on the last setup step used h3 headings straight after the h1; they are now plain styled text.",
       fix:"Each metric chart is now a labelled, focusable region (Tab to it, scroll with the arrow keys) with a visible focus ring. The quick-jump box is a combobox (aria-expanded, aria-controls, aria-activedescendant) over a named listbox whose options have ids; ArrowUp and ArrowDown move the named option and scroll it into view; the list can be a little taller so it rarely scrolls. The age screen and every setup step are now a main landmark. 'Add data' is an h2, and the Premium page's second h1 is an h2 with the same look. A 'Skip to page content' button is the first Tab stop on every screen: it appears when focused and moves focus to the page content. After these changes axe reports nothing on any of those screens. Contrast, form labels, button names, ARIA validity, 44px tap targets, the 24px minimum target size and reflow at 320px already passed.",
@@ -10629,10 +10635,38 @@ function obGround(){ return `<div class="obg-bg" aria-hidden="true"><i></i><i></
 // A neutral age screen: it asks for birth month and year with nothing pre-selected and never says what age is allowed. Only the age
 // is kept, never the birth date. Someone under 13 gets a plain "can't set up" screen, and the device refuses another try for 24 hours
 // (a flag in this browser; clearing site data removes it, so it deters a retry rather than guaranteeing one).
-const AGE_BLOCK_KEY = "wlh.ageblock", AGE_BLOCK_MS = 24 * 3600 * 1000, CONSENT_KEY = "wlh.consent";
+const AGE_BLOCK_KEY = "wlh.ageblock", AGE_BLOCK_MS = 24 * 3600 * 1000, CONSENT_KEY = "wlh.consent", EXPORT_META_KEY = "wlh.exportmeta";
 const TERMS_VERSION = "2026-10-12"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
 const ageBlocked = () => { try { return +localStorage.getItem(AGE_BLOCK_KEY) > Date.now(); } catch { return false; } };
 const blockAge = () => { try { localStorage.setItem(AGE_BLOCK_KEY, String(Date.now() + AGE_BLOCK_MS)); } catch {} };
+const exportMetaRead = () => {
+  try {
+    const m = JSON.parse(localStorage.getItem(EXPORT_META_KEY) || "null");
+    if (!m || typeof m !== "object") return null;
+    if (typeof m.at !== "string" || !isFinite(Date.parse(m.at))) return null;
+    if (typeof m.bytes !== "number" || !isFinite(m.bytes) || m.bytes < 0) return null;
+    return { at: m.at, bytes: m.bytes };
+  } catch { return null; }
+};
+const exportMetaWrite = m => { try { localStorage.setItem(EXPORT_META_KEY, JSON.stringify(m)); } catch {} };
+const fmtDateTime = iso => { try { return new Date(iso).toLocaleString([], { dateStyle:"medium", timeStyle:"short" }); } catch { return iso; } };
+function consentHistoryRows(){
+  const out = [], seen = new Set();
+  const add = (source, v, at) => {
+    if (!v || !at) return;
+    const ms = Date.parse(at); if (!isFinite(ms)) return;
+    const key = `${v}|${at}|${source}`; if (seen.has(key)) return; seen.add(key);
+    out.push({ source, v, at, ms });
+  };
+  try {
+    const c = JSON.parse(localStorage.getItem(CONSENT_KEY) || "null");
+    if (c && typeof c === "object") add("This device", c.v, c.at);
+  } catch {}
+  const md = SB.user?.user_metadata || {};
+  add("Your account", String(md.terms_version || ""), String(md.terms_accepted_at || ""));
+  out.sort((a, b) => b.ms - a.ms);
+  return out;
+}
 // Whole years old. The birth day is not asked, so a birthday this month counts as not reached yet.
 const ageFromMonthYear = (m, y) => { const n = new Date(); return n.getFullYear() - y - (n.getMonth() + 1 <= m ? 1 : 0); };
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -11619,6 +11653,8 @@ function settingsView(p){
   const us = p.units === "us"; const hIn = p.heightCm ? p.heightCm/2.54 : null;
   const sg = suggestedGoal(p);
   const tab = SET_TABS.some(t => t[0] === UI.param) ? UI.param : "profile";
+  const exportMeta = exportMetaRead();
+  const consentRows = consentHistoryRows();
   // One row, always. The active tab is bold and a shade larger with no pill behind it, and a
   // hidden bold copy of the label (::after, from data-label) holds the width so nothing shifts.
   const tabs = `<div class="tabwrap"><nav class="tabs" role="tablist" aria-label="Settings sections">${SET_TABS.map(([k,l]) =>
@@ -11717,8 +11753,24 @@ function settingsView(p){
       </form>`}
     ${UI.secMsg ? `<div class="note ${UI.secMsg.ok ? "info" : ""}">${esc(UI.secMsg.t)}</div>` : ""}
   </section>
+  <section class="card" id="privacy-state">
+    <h2>Privacy status</h2>
+    <ul class="checklist">
+      ${[
+        [true, "Account sync", sbActive() ? (CRY.lock ? "Signed in, with passcode on: meals stay encrypted on this device and are not uploaded." : "Signed in: meals and profile basics are saved to your account and this device.") : "Signed out: your data stays on this device only."],
+        [true, "Passcode encryption", CRY.lock ? "On for this device." : "Off. Turn it on above to encrypt data at rest."],
+        [true, "Age-gate retry block", ageBlocked() ? "Active on this browser right now." : "No active retry block on this browser."]
+      ].map(([ok, t, d]) => `<li><span class="${ok ? "ok" : "no"}" aria-hidden="true">${ok ? icon("check","",14) : icon("alert","",14)}</span><span><b>${esc(t)}.</b> ${esc(d)}</span></li>`).join("")}
+    </ul>
+  </section>
+  <section class="card" id="consent-history">
+    <h2>Terms and Privacy agreement</h2>
+    <p class="small muted">Recorded agreement to the current legal pages (version ${esc(TERMS_VERSION)}).</p>
+    ${consentRows.length ? `<div class="list">${consentRows.map(r => `<div class="li"><div class="grow"><b>${esc(r.source)}</b><div class="small muted">Version ${esc(r.v)} · ${esc(fmtDateTime(r.at))}</div></div></div>`).join("")}</div>` : `<div class="note">No agreement record is saved on this device yet.</div>`}
+  </section>
   <section class="card" id="data-rights">
     <h2>Your data</h2>
+    <p class="small muted" id="export-status">${exportMeta ? `Latest export on this device: ${esc(fmtDateTime(exportMeta.at))} (${Math.max(1, Math.round(exportMeta.bytes / 1024))} KB).` : "No export has been downloaded from this device yet."}</p>
     <div class="setrow"><div class="setlabel"><b>Export my data</b><span class="small muted">A JSON file with your logs, plans and settings.</span></div>
       <button class="btn" data-act="export">Download (JSON)</button></div>
     <div class="setrow"><div class="setlabel"><b>Delete my account and data</b><span class="small muted">Every profile and everything logged under it, on this device. Meals and profile names saved to your account are not deleted by this: to delete the account and all synced data, email the contact address in the Privacy Policy. Immediate, and cannot be undone.</span></div>
@@ -11895,7 +11947,13 @@ document.addEventListener("click", async e => {
       if (a === "rem-ics") { p.reminders.time = val("rem-time") || p.reminders.time; p.reminders.mealTime = val("rem-meal") || p.reminders.mealTime; saveProfile(); }
       try {
         if (a === "rem-ics") saveTextFile("wholelife-reminders.ics", buildICS(p), "text/calendar");
-        else saveTextFile(`wholelife-${(p.name||"profile").toLowerCase().replace(/[^a-z0-9]+/g,"-")}-${today()}.json`, JSON.stringify({ exported: today(), profile: p, logs: S.logs[p.id] || {} }, null, 2), "application/json");
+        else {
+          const filename = `wholelife-${(p.name||"profile").toLowerCase().replace(/[^a-z0-9]+/g,"-")}-${today()}.json`;
+          const data = JSON.stringify({ exported: today(), profile: p, logs: S.logs[p.id] || {} }, null, 2);
+          saveTextFile(filename, data, "application/json");
+          exportMetaWrite({ at: new Date().toISOString(), bytes: new Blob([data]).size });
+          render();
+        }
         toast(a === "rem-ics" ? "Calendar file downloaded. Open it to add the reminders." : "Data downloaded");
       } catch { toast("This browser wouldn't save the file."); }
       break; }
@@ -15308,6 +15366,7 @@ function privacyPolicyView(){
         <tr><td><code>wlh.navgrp</code></td><td>Which sidebar groups you left expanded or collapsed (older builds; no longer written since the sidebar stopped collapsing).</td></tr>
         <tr><td><code>wlh.showtesting</code></td><td>Whether this device shows Premium features that are still being built (Settings › Data &amp; about › Diagnostics).</td></tr>
         <tr><td><code>wlh.rail</code></td><td>Whether you collapsed the sidebar to icons on a wide screen.</td></tr>
+        <tr><td><code>wlh.exportmeta</code></td><td>The timestamp and file size of the latest JSON export from this browser, so Settings can show a clear export outcome.</td></tr>
         <tr><td><code>wlh.notif.&lt;profile&gt;</code></td><td>Your in-app notification list (badges, reminders), per profile. Signed in, the key ends in <code>@</code> and your account id.</td></tr>
         <tr><td><code>wlh.rem.&lt;profile&gt;.&lt;reminder&gt;</code></td><td>The date a reminder last fired, so it fires once a day. Signed in, the key ends in <code>@</code> and your account id.</td></tr>
         <tr><td><code>wlh.signedout</code></td><td>Your account id and a time, written when you sign out, so other open tabs of this app know to drop their copy of your data instead of saving it again.</td></tr>

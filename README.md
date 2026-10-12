@@ -1,6 +1,6 @@
 # Whole Life Hub
 
-A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.2 (Dev Testing), build 8.2.10**.
+A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.2 (Dev Testing), build 8.2.11**.
 
 ## What's in this repository
 
@@ -43,7 +43,7 @@ Project **Whole Life Hub** (`https://zemxqbinpehkrkyvzlue.supabase.co`, region u
 
 ## Working on it
 
-1. Branch from `main` (`feature/meals-sync`, `fix/header-overlap`).
+1. Branch from `main` (`feature/meals-sync`, `fix/header-overlap`) and keep one release build active at a time (finish, review and merge before starting the next release build).
 2. Make the change in `index.html`; add an entry to the in-app change log (`CHANGELOG` array near the top of the developer-log script) with the next version number, then regenerate or edit `CHANGELOG.md`.
 3. Open a pull request using the template. The `Tests` workflow runs on it; a tester checks the preview link.
 4. Merge to `main`, then tag the release: `git tag v8.1.9 && git push --tags`.

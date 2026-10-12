@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.11 | Focused legal/compliance closeout: in-app consent history + privacy-state visibility + export outcome visibility; release gates tightened (screen reader, zoom/text-size, Safari and real phone checks, low-end perf gate) | IN PROGRESS: build-8.2.11, stacked on build-8.2.10, pull request not yet opened |
 | 8.2.10 | Accessibility pass with axe-core (charts, quick-jump combobox, landmarks, headings, skip link) and an automated check | IN PROGRESS: build-8.2.10, stacked on build-8.2.9, pull request not yet opened |
 | 8.2.9 | Neutral age screen with a 24-hour retry block; Terms and Privacy Policy agreement at sign-up (version and time saved) | IN PROGRESS: build-8.2.9, stacked on build-8.2.8, pull request not yet opened |
 | 8.2.8 | Dish tiles (Food culture, Recipes, Today's menu) use the flat card pattern | IN PROGRESS: build-8.2.8, stacked on build-8.2.7, pull request not yet opened |
@@ -60,6 +61,24 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+## Release-flow guardrails (from 8.2.11 onward)
+
+- Keep one active build branch at a time for release builds (finish, PR, review, then start the next build) to avoid long stacked chains.
+- Every release build must include a scoped acceptance list in this file before coding starts.
+- Manual verification results must be written in this file in the same PR, not deferred.
+
+## Additional mandatory gates for legal/accessibility/performance
+
+- Accessibility manual gate: screen-reader sweep (VoiceOver/TalkBack/NVDA), 200% zoom, and largest text-size sweep on key routes.
+- Real-device gate: Safari + at least one real phone run for the release candidate.
+- Low-end performance gate: run `node tests/perf/measure.mjs`; fail the release candidate if low-end phone median app-ready time is above 11s or low-end first contentful paint is above 1s after boot-screen paint.
+- Legal copy gate: Terms/Privacy/Refund/Contact text reviewed by owner before charging money.
+
+### Checklist run for 8.2.11
+
+- Done: `node tests/browser/legal.mjs`, `node tests/check-repo.mjs`, and the rest of `node tests/browser/run-all.mjs`.
+- Not run: screen-reader sweep (VoiceOver/TalkBack/NVDA), 200% zoom and largest-text sweep, Safari and a real phone, lawyer review. No Supabase files were touched.
 
 ### Checklist run for 8.2.10
 
@@ -140,4 +159,3 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Done: `node tests/browser/security.mjs` (87 checks) and `node tests/browser/meal-sync.mjs` (52 checks), both against a fake Supabase in headless Chrome; no uncaught exceptions. Supabase files were not touched, so the migrations and the security advisor are unchanged.
 - Not run: the 375/820/1440px layout sweep, theme and font sweep, premium flag, coach voices, and the feature regression sweep (the build changes storage, sign-in and text, not layout). The new Import / Discard screen has not been checked at 375px.
 - Not run (needs the deployed preview and a real account): sign up with the confirmation link, log in, refresh stays logged in, and the Supabase read-only checks.
-

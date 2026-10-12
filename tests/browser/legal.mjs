@@ -6,8 +6,9 @@ import { tmpdir } from "node:os";
 import { join, extname } from "node:path";
 
 // Run from the repo root:  node tests/browser/legal.mjs   (needs Node 22+ and Chrome; set CHROME to its path, CI=1 as root)
-// Build 8.2.9: the neutral age screen (birth month and year, nothing pre-selected, no age limit named, a 24-hour retry block, only the age kept)
-// and the Terms and Privacy Policy agreement at sign-up (unticked box, underlined accent links, the version and time saved with the account and on the device).
+// Build 8.2.9 and 8.2.11: the neutral age screen (birth month and year, nothing pre-selected, no age limit named, a 24-hour retry block, only the age kept)
+// and the Terms and Privacy Policy agreement at sign-up (unticked box, underlined accent links, the version and time saved with the account and on the device),
+// plus the in-app consent history and export outcome surfaces in Settings > Privacy and security.
 // The app is served with a faked Supabase, so no real account is touched.
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
@@ -166,6 +167,26 @@ await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = tr
 await click('[data-act="sb-open"][data-v="up"]'); await sleep(400);
 ok("ticking, closing the popup and opening Create account again asks again (unticked)", await ev(`document.getElementById("sb-agree")?.checked === false`));
 ok("a failed submit keeps the tick for a retry in the same form", await (async () => { await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = true; c.dispatchEvent(new Event("change", { bubbles: true })); document.getElementById("sb-email").value = "bad"; document.getElementById("sb-pass").value = "x"; document.querySelector('form[data-form="sb-auth"]').requestSubmit(); return true; })()`); await sleep(400); return ev(`document.getElementById("sb-agree")?.checked === true && !!document.querySelector("#pop-auth .note")`); })());
+console.log("--- 4b. consent history and export status are visible in Settings");
+await ev(`document.querySelector('#pop-auth [data-pop="close"]')?.click(); true`); await sleep(250);
+await ev(`location.hash = "#/settings/privacy"; true`); await sleep(500);
+const hist = await ev(`(() => {
+  const card = document.getElementById("consent-history");
+  const txt = card?.textContent || "";
+  const rows = [...(card?.querySelectorAll(".li") || [])].map(x => x.textContent.trim());
+  return { hasCard: !!card, txt, rows };
+})()`);
+ok("Settings > Privacy and security shows a consent-history card", hist.hasCard && /Terms and Privacy agreement/.test(hist.txt), JSON.stringify(hist));
+ok("consent history lists at least this device's saved record", hist.rows.some(t => /This device/.test(t) && /Version 2026-10-12/.test(t)), JSON.stringify(hist.rows));
+await click('#data-rights [data-act="export"]'); await sleep(450);
+const xmeta = await ev(`(() => {
+  const raw = localStorage.getItem("wlh.exportmeta");
+  const txt = document.getElementById("export-status")?.textContent || "";
+  let meta = null; try { meta = JSON.parse(raw); } catch {}
+  return { raw, txt, meta };
+})()`);
+ok("export writes wlh.exportmeta with time and size", !!xmeta.meta?.at && typeof xmeta.meta?.bytes === "number" && xmeta.meta.bytes > 100, JSON.stringify(xmeta.meta));
+ok("Your data card shows the latest export outcome", /Latest export on this device/.test(xmeta.txt), xmeta.txt);
 console.log("--- 5. the policy text matches what the app does");
 await ev(`location.hash = "#/privacy-policy"; true`); await sleep(500);
 const pol = await ev(`document.querySelector("#sec-privacy-policy, .legal")?.textContent || document.body.textContent`);

@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.10, 2026-10-12. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.11, 2026-10-12. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.11 · Privacy & release quality: Consent history and privacy-state surfaces in Settings, export outcome visibility, and stricter legal/accessibility release gates
+
+- **Problem:** The launch checklist still had unresolved trust and release-process gaps: Settings had no clear in-app surface for the current Terms/Privacy consent record, no concise privacy-state summary, and no visible export outcome after downloading data. Release docs still recorded manual checks (screen reader, zoom, Safari/real phone, legal review) mainly as omissions instead of explicit gates.
+- **Change:** Settings › Privacy & security now includes (1) **Privacy status** (account sync mode, passcode encryption state, and age-gate retry-block state), (2) **Terms and Privacy agreement** history (latest record saved on this device and account metadata when present), and (3) **Your data** now shows the latest local export outcome (time and size) after each JSON export. Build docs now scope 8.2.11 as the legal/compliance closeout build and add explicit release gates for screen-reader and zoom/text-size checks, Safari and real-phone checks, a low-end performance threshold, and one-active-build release-flow guardrails.
+- **Where:** `index.html` (`APP_VERSION`; in-app `CHANGELOG`; `EXPORT_META_KEY`; `exportMetaRead()`, `exportMetaWrite()`, `consentHistoryRows()`; `settingsView()` privacy cards and export status line; export action). `tests/browser/legal.mjs` (new consent-history and export-status checks). `docs/BUILD_PLAN.md`, `docs/PERFORMANCE.md`, `README.md`, `CHANGELOG.md`.
+- **How to test:** `node tests/browser/legal.mjs`, `node tests/check-repo.mjs`, `node tests/browser/run-all.mjs`. By hand: open Settings › Privacy & security and confirm Privacy status + Terms and Privacy agreement cards; tap Download (JSON) and confirm the latest-export line updates.
+- **Known limits:** Legacy accounts that predate consent metadata may not show an account-side consent row. Screen-reader, zoom/text-size, Safari/real-phone, and legal review gates still require manual execution; this build documents and enforces them in process but does not automate them.
 
 ## 8.2.10 · Accessibility: axe-core pass: keyboard-reachable charts, a labelled quick-jump combobox, landmarks, heading order, a skip link, and an automated check
 
