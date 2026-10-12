@@ -1,6 +1,6 @@
 # Whole Life Hub
 
-A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.2 (Dev Testing), build 8.2.3**.
+A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.2 (Dev Testing), build 8.2.4**.
 
 ## What's in this repository
 
@@ -36,7 +36,7 @@ Every push to `main` then redeploys automatically, and every pull request gets i
 
 Project **Whole Life Hub** (`https://zemxqbinpehkrkyvzlue.supabase.co`, region us-west-2). Tables, security rules and storage are described in [docs/DATABASE.md](docs/DATABASE.md).
 
-**Status:** the database is ready; the app does not use it yet. It still saves to the browser. The next step is login screens and moving the app's save layer (`schedule()` / `flush()`, `lsGet` / `lsSet` in `index.html`) to Supabase, one data type at a time, starting with meals.
+**Status:** since build 8.1.11 the app signs in with Supabase Auth and saves meals to your account; since 8.2.4 it also saves the basics of each profile, so a second device shows your profiles and meals. Snacks, drinks, workouts, weigh-ins, vitals, plans and photos still save only in the browser. What goes where is in [docs/DATABASE.md](docs/DATABASE.md).
 
 **Keys:** the frontend may only ever use the project URL and the *publishable / anon* key (Supabase dashboard › Project Settings › API). Never commit the *service_role* key or any `.env` file; `.gitignore` already blocks `.env`. Row Level Security is what keeps each account's data private, so every new table needs RLS and a policy before the app uses it.
 

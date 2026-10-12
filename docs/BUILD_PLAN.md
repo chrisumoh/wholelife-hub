@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.4 | Profile sync: a new device shows your profiles, their basics and meals; edits and deletes travel between devices (`people` table, no schema change) | IN PROGRESS: build-8.2.4, stacked on build-8.2.3, pull request not yet opened |
 | 8.2.3 | Phone performance measured (`tests/perf/measure.mjs`, `docs/PERFORMANCE.md`); no app change | IN PROGRESS: build-8.2.3, pull request not yet opened |
 | 8.2.2 | Segmented control thumb (units and the other rubber-thumb controls) repaints every frame, so switching slides in about 0.5s instead of freezing stretched across both options | IN PROGRESS: build-8.1.23 (PR #14), main merged in, pull request open, not merged |
 | 8.2.1 | Tests run on every pull request (GitHub Actions); browser tests work on Linux; repo checks for scripts, version agreement, secrets and text-only food data | MERGED: PR #15 (with 8.2) |
@@ -53,6 +54,11 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.2.4
+
+- Done: `node tests/check-repo.mjs` and `node tests/browser/run-all.mjs` (headers 17, security 87, profile-sync 41, meal-sync 55, meal-upload 17, controls 56, glass 36) on Linux in headless Chrome, including the three people-table request checks against the real supabase-js. Live database checked read-only: the six repo migrations are the six applied ones, and `people` has every column used.
+- Not run: sync between two real devices against the real Supabase project (the tests use a fake or a faked network), the 375/820/1440px sweep, theme and font sweep, real phones, the deployed-preview checks (sign up, confirmation link, sign in, refresh stays signed in). No Supabase files were touched.
 
 ### Checklist run for 8.2.3
 

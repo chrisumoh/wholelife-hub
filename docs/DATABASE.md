@@ -50,15 +50,15 @@ The app itself only soft-deletes (`deleted_at`). A hard delete happens only when
 - `tests/meal_rls_isolation.sql` re-checks this on the real database (account B can't read, change or write into account A's meals; it rolls back). Written in 8.1.11, not yet run.
 - The app uses only the project URL and the publishable (anon) key. The `service_role` key never goes in the repo or the frontend.
 
-## How the app uses it (8.1.11)
+## How the app uses it (8.2.4)
 
 - **Email sign-in** (Supabase Auth, password, email confirmation on). The provider, the site URL and the redirect URLs are dashboard settings, not migrations; the redirect rules are in [SECURITY.md](SECURITY.md).
-- **Only meals are saved here.** While signed in with no passcode, `meal_logs` is the store for meals, with a local copy in the browser (`wlh.meals.v1`) so the app works offline and queues changes. Snacks, drinks, workouts, weigh-ins, vitals and profiles still save in the browser; their tables are not used yet.
-- Each household profile is upserted into `people` (matched on `app_id` = the profile's id) before its meals are written.
+- **Meals and the basics of each profile are saved here.** While signed in with no passcode, `meal_logs` is the store for meals and `people` for profiles, with a local copy in the browser (`wlh.meals.v1`, which also holds the waiting changes) so the app works offline and queues changes. Snacks, drinks, workouts, weigh-ins and vitals still save in the browser; their tables are not used yet.
+- **Profiles (8.2.4).** Each household profile is a `people` row matched on `app_id` = the profile's id. Columns: `display_name`, `is_primary`, `onboarding_done`, `goal`, `age`, `height_cm`, `weight_kg`, `calorie_target`, `workouts_per_week`, `cultural_background`. `settings` (jsonb, `v: 1`) holds `style`, `diet`, `allergies`, `sex`, `units`, `level`, `sport`, `targetKg`, `workoutGoal`, `cultureMode`, `focus`, `coachPersona`, `coachName`, `rotation`, `menuSkip`, `limits`, `gear`, and the first-run flags `coachPrompted` and `tourSeen`. Never uploaded: plans, coach history, reminders, appearance, awards, `prem` (progress photos, clips). The list is `SB_PROF_COLS` and `SB_PROF_SET` in `index.html`; adding a field there is a privacy change (update the privacy text, [SECURITY.md](SECURITY.md) and this table in the same build).
+- **Which copy wins** (`sbApplyPeople()`): a change waiting on this device always wins; a profile only the account has is created on the device; a profile deleted in the account (`deleted_at`, from another device) is removed here unless an edit is waiting; a profile this browser has never synced takes the account's copy if another device stored a full one (`settings.v`), otherwise this device's copy is sent; otherwise the account's copy replaces the device's when it differs. A delete here soft-deletes the row. Edits are sent about a second after they are made, and waiting edits survive a reload.
 - Deleting a meal sets `deleted_at`; the app never hard-deletes rows.
-- **With a passcode on, meals are not synced.** The passcode encrypts data in the browser, which the database can't read.
-- Meals are plain rows protected by RLS, not end-to-end encrypted. Meal photos are not uploaded yet.
-- Profiles are not synced, so another device shows an account's meals only if it has the same profile ids.
+- **With a passcode on, meals and profiles are not synced.** The passcode encrypts data in the browser, which the database can't read.
+- Meals and profiles are plain rows protected by RLS, not end-to-end encrypted. Meal photos are not uploaded yet.
 
 ## Migrations
 
@@ -88,9 +88,9 @@ Path pattern: `{account id}/{person id}/{kind}/{file}`, for example `…/meals/2
 
 ## Next steps
 
-Done in 8.1.11: login screens and `meal_logs` (including the first-sign-in upload of a device's existing meals).
+Done in 8.1.11: login screens and `meal_logs` (including the first-sign-in upload of a device's existing meals). Done in 8.2.4: profile basics through `people`, so a second device shows its profiles and meals.
 
-1. Sync profiles through `people`, so a second device shows its meals.
+1. Profile plans and coach history (today they stay on the device).
 2. Meal photos to the `photos` bucket (`photo_path`).
 3. Move the other data types over one at a time (snacks, drinks, workouts, weigh-ins, vitals), each with the same first-sign-in upload.
 4. Decide how a passcode and cloud sync should work together (today a passcode keeps meals on the device).

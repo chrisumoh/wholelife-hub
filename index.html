@@ -3885,7 +3885,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.3", channel: "Dev Testing", date: "2026-10-11", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.4", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3899,6 +3899,12 @@ const APP_VERSION = { update: "8.2", build: "8.2.3", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.4", area:"Profile sync", title:"Profiles saved to your account: a new device shows your profiles, their basics and their meals; edits and deletes travel between devices",
+      bug:"Only meals were saved to the account, with each profile's name. A second device, or the same device after signing out, showed meals only if it had the same profiles, and rebuilt every profile from a name alone: age, height, weight, goals, food choices and the coach choice all had to be entered again. Deleting a profile on one device was not passed on, and the next sync could bring it back.",
+      fix:"Each profile is now a full row in the account's people table. Columns: name, first-profile flag, setup finished, goal, age, height, weight, calorie target, workouts per week and food culture. A settings object (version 1) holds diet, allergies text, sex, units, activity level, sport, target weight, workout goal, menu mode, food focus, coach style and name, dishes added to or skipped from the menu, limits, gear and the first-run flags (coach asked, tour shown), so a new device doesn't ask again. Not uploaded: weight and workout plans, coach history and answers, reminders, appearance, awards, progress photos and clips. The first sync after sign-in now reads the account's people first (including deleted ones) and decides per profile: a change waiting on this device wins; a profile only the account has is created here; one deleted from another device is removed here unless an edit is waiting; a profile this browser never synced takes the account's copy if another device stored a full one, otherwise this device's copy is sent; otherwise the account's copy replaces the device's when it differs. After that, an edit is sent about a second later, a delete soft-deletes the row, and waiting edits are kept in the local cache so an offline edit survives a reload and still wins. The sign-out summary now lists what the account does not hold (plans and coach history, snacks, drinks, workouts, weigh-ins, vitals, photos, clips). Privacy policy, in-app storage text, status line and the guest-import screen were rewritten to match, and the policy date is 12 October 2026.",
+      where:"index.html: the 'profiles in the account' block after sbRedirect() (SB_PROF_COLS, SB_PROF_SET, sbCanon(), sbProfSig(), sbProfRow(), sbProfFromRow(), dropProfile(), sbTrackProfiles()); sbPushProfiles(), sbPullPeople() and sbApplyPeople() (replacing sbEnsurePeople() and sbRestoreProfiles()); sbPull() (meals only); sbSyncBody(); sbCacheSave()/sbLoadCache() (pp and ps); markRoot(); the reset sites (sbProfReset()); the delete-profile click case; sbLocalOnly(); sbStatusText(); the privacy policy, storage and sign-out texts; LEGAL_UPDATED. tests/browser/profile-sync.mjs (new, 41 checks), meal-upload.mjs (3 request-shape checks with the real supabase-js), security.mjs (sign-out dialog wording). docs/DATABASE.md, docs/SECURITY.md, CLAUDE.md and README.md describe what syncs. No Supabase files changed: the live people table already had every column used (checked read-only against the six migrations).",
+      test:"Two devices (or two browsers) with the same account: on the first, sign in, set up a profile with age, height, weight, goals and food choices, log a meal; on the second, sign in: the profile, its basics, its coach choice and the meal are there, and no setup or coach screen appears. Change the weight on one, wait a few seconds, reload the other: it shows the new weight. Delete a profile on one: it disappears from the other after its next sync. Go offline, change the age, reload, go online: the account gets the new age. Automated: `node tests/browser/profile-sync.mjs` (41), and the three people-table checks in `meal-upload.mjs` against the real client. After deploying, check Supabase › Table Editor › people: your profile row has the columns filled and a settings object.",
+      limits:"(1) Only the listed fields sync. Plans, coach history, reminders, appearance and awards are still per device, so a new device starts those empty; they are the next step. (2) When two devices edit the same profile before either syncs, the one that syncs last wins for the whole profile (no per-field merge). (3) A profile deleted on another device is removed here at the next sync, together with its logs on this device; an edit waiting here keeps it alive instead. (4) Anyone already signed in starts uploading their profile basics when they get this build; the privacy policy says so, and there is no per-field switch. With a passcode on, nothing syncs, as with meals. (5) The sign-out dialog counts plans and coach history, not every unsynced field, so it can understate what stays on the device. (6) Meal photos are still not uploaded; that is a separate build." },
     { id:"8.2.3", area:"Performance", title:"Phone performance measured: a repeatable test and a report on what to do before considering a split of index.html",
       bug:"There was no measurement of how fast the app loads or opens screens on a phone, so the question of splitting the 1.9 MB single file had no data behind it.",
       fix:"New tests/perf/measure.mjs loads the app the way a phone would (390×844 at 3×, touch, 4× or 6× CPU, Fast or Slow 4G, brotli like Vercel) and prints first and largest contentful paint, layout shift, blocking time, script time, transfer, and how long each screen takes to open with a year of logs. New docs/PERFORMANCE.md records the results for build 8.2.2, what the file is made of, and a recommendation. Findings: first paint is 3.7 s on Fast 4G and 12.3 s on Slow 4G, and almost all of it is download time for the 541 KB (brotli) document, not script time (0.3 s); layout is stable; Workouts takes 776 ms to open with a year of data. Recommendation: do not split into modules or add a build step; instead show an inline loading screen on the first bytes, move the four embedded base64 images (125 KB) to files, cap long lists, and cache fonts and later the food catalog. No app behaviour changed in this build.",
@@ -7565,7 +7571,7 @@ async function eraseEverything(){
 }
 
 const dirty = new Set(); let flushTimer = null, flushing = null;
-function markRoot(){ dirty.add("root"); schedule(); }
+function markRoot(){ dirty.add("root"); sbTrackProfiles(); schedule(); }
 function markLog(pid, mon){ if (typeof logIdxDrop === "function") logIdxDrop(); sbTrack(pid, mon); dirty.add(`log:${pid}:${mon}`); schedule(); }
 function markAll(){ if (typeof logIdxDrop === "function") logIdxDrop(); dirty.add("root"); for (const pid in S.logs) for (const m in S.logs[pid]) { sbTrack(pid, m); dirty.add(`log:${pid}:${m}`); } schedule(); }
 function schedule(){ clearTimeout(flushTimer); flushTimer = setTimeout(flush, 600); }
@@ -7611,14 +7617,54 @@ function flush(){
 // passcode is on, meals stay on this device only and nothing is uploaded or downloaded.
 // Only the project URL and the publishable (anon) key belong in this file.
 const SB_URL = "https://zemxqbinpehkrkyvzlue.supabase.co", SB_KEY = "sb_publishable_sWli_uOByy_C9rg8CE_8vQ_VNglQf0l", SB_CACHE = "wlh.meals.v1";
-const SB = { client:null, user:null, started:false, cacheDirty:false, pend:{}, shadow:new Map(), people:new Map(), state:"idle", err:"", recovery:false, busy:false, lastOk:0, lastPull:0, timers:{}, q:null };
+const SB = { client:null, user:null, started:false, cacheDirty:false, pend:{}, shadow:new Map(), ppend:{}, psig:new Map(), people:new Map(), state:"idle", err:"", recovery:false, busy:false, lastOk:0, lastPull:0, timers:{}, q:null };
 // STORE_UID must match: until the account's own store is loaded (see sbUserChanged), nothing on screen is tracked or uploaded.
 const sbActive = () => !!(SB.user && !CRY.lock && STORE_UID === SB.user.id);
 const sbSig = m => JSON.stringify([m.date, m.at || 0, m.slot, m.name, Math.round(m.cal || 0), m.dish || null, m.extras || [], !!m.est]);
 function* sbAllMeals(){ for (const pid in S.logs) for (const mon in S.logs[pid]) for (const m of S.logs[pid][mon].meals || []) yield { pid, mon, m }; }
 const sbDigest = () => [...sbAllMeals()].map(x => x.m.id + sbSig(x.m)).sort().join("|");
-const sbPending = () => Object.keys(SB.pend).length;
+const sbPending = () => Object.keys(SB.pend).length + Object.keys(SB.ppend).length;
+const sbProfReset = () => { SB.ppend = {}; SB.psig = new Map(); clearTimeout(SB.timers.pp); };
 const sbRedirect = () => location.origin + location.pathname;
+
+// ---- profiles in the account (8.2.4) ----
+// Stored: the basics and the food and training choices. Not stored: plans, coach history, reminders, appearance,
+// awards and everything under prem (progress photos, clips); those stay on the device.
+const SB_PROF_COLS = ["name","goal","age","heightCm","weightKg","calorieGoal","freq","culture","onboarded"];
+const SB_PROF_SET = ["style","diet","allergies","sex","units","level","sport","targetKg","workoutGoal","cultureMode","focus","coachPersona","coachName","rotation","menuSkip","limits","gear","coachPrompted","tourSeen"];
+const sbCanon = v => Array.isArray(v) ? v.map(sbCanon) : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().map(k => [k, sbCanon(v[k])])) : v;
+// jsonb reorders object keys, so the signature sorts them: a round trip through the database must not look like a change.
+const sbProfSig = p => { const o = {}; for (const k of [...SB_PROF_COLS, ...SB_PROF_SET]) o[k] = p[k] ?? null; return JSON.stringify(sbCanon(o)); };
+function sbProfRow(p, i){
+  const set = { v: 1 }; for (const k of SB_PROF_SET) set[k] = p[k] ?? null;
+  return { owner_id: SB.user.id, app_id: p.id, display_name: (p.name || "Me").slice(0, 60), is_primary: i === 0, onboarding_done: !!p.onboarded,
+    goal: p.goal || null, age: p.age ?? null, height_cm: p.heightCm ?? null, weight_kg: p.weightKg ?? null, calorie_target: p.calorieGoal ?? null,
+    workouts_per_week: p.freq ?? null, cultural_background: p.culture || null, settings: set, deleted_at: null };
+}
+// The fields a database row carries, ready for cleanProfile(). A row from before 8.2.4 has no settings.v, so only its basics count.
+function sbProfFromRow(r){
+  const s = r.settings && typeof r.settings === "object" && !Array.isArray(r.settings) ? r.settings : {}, n = v => v == null ? null : Number(v);
+  const x = { name: r.display_name === "Me" ? "" : str(r.display_name, 40), onboarded: r.onboarding_done === true, goal: r.goal || "", age: n(r.age), heightCm: n(r.height_cm),
+    weightKg: n(r.weight_kg), calorieGoal: n(r.calorie_target), freq: n(r.workouts_per_week), culture: r.cultural_background || "" };
+  if (s.v === 1) for (const k of SB_PROF_SET) if (s[k] != null) x[k] = s[k];
+  return x;
+}
+// Deleting a profile removes it and its logs from this device (the delete button and a delete from another device share this).
+function dropProfile(id){
+  S.profiles = S.profiles.filter(x => x.id !== id);
+  for (const m in (S.logs[id] || {})) { delete S.logs[id][m]; markLog(id, m); }
+  delete S.logs[id]; if (S.activeId === id) S.activeId = S.profiles[0]?.id || null;
+}
+// Change tracking for profiles: markRoot() calls this, like markLog() calls sbTrack() for meals. Waits for the first sync
+// (SB.started): that one decides, per profile, whether this device or the account has the newer copy.
+function sbTrackProfiles(){
+  if (!sbActive() || !SB.started) return;
+  const now = new Set(S.profiles.map(p => p.id));
+  for (const p of S.profiles) if (SB.ppend[p.id] !== "up" && SB.psig.get(p.id) !== sbProfSig(p)) SB.ppend[p.id] = "up";
+  for (const id of [...SB.psig.keys()]) if (!now.has(id)) SB.ppend[id] = "del";
+  for (const id of Object.keys(SB.ppend)) if (SB.ppend[id] === "up" && !now.has(id)) delete SB.ppend[id];
+  if (Object.keys(SB.ppend).length) { SB.cacheDirty = true; clearTimeout(SB.timers.pp); SB.timers.pp = setTimeout(() => sbRun(sbPushProfiles), 1200); }
+}
 
 function sbClient(){
   if (SB.client) return SB.client;
@@ -7644,7 +7690,7 @@ function sbCacheSave(){
   if (!SB.user || LEAVING) return false;
   if (!SB.cacheDirty) return true;
   const meals = {}; for (const { pid, m } of sbAllMeals()) meals[m.id] = { pid, m };
-  try { localStorage.setItem(SB_CACHE, JSON.stringify({ v:1, uid:SB.user.id, pend:SB.pend, meals })); SB.cacheDirty = false; return true; }
+  try { localStorage.setItem(SB_CACHE, JSON.stringify({ v:1, uid:SB.user.id, pend:SB.pend, meals, pp:SB.ppend, ps:Object.fromEntries(SB.psig) })); SB.cacheDirty = false; return true; }
   catch { if (!SB.cacheWarned) { SB.cacheWarned = true; toast("This browser's storage is full, so meals can't be kept offline until you free some space.", "warn"); } return false; }
 }
 function sbCacheDrop(){ try { localStorage.removeItem(SB_CACHE); } catch {} SB.cacheDirty = false; }
@@ -7660,6 +7706,10 @@ function sbLoadCache(c){
     SB.shadow.set(m.id, { pid, mon: monthOf(m.date), sig: sbSig(m) });
   }
   SB.pend = { ...(c.pend || {}) }; SB.started = true; logIdxDrop();
+  // Profiles: what was last in the account and what was still waiting, so an edit made offline survives a reload.
+  sbProfReset();
+  for (const [id, v] of Object.entries(c.pp || {})) if (ID_RE.test(id) && (v === "up" || v === "del")) SB.ppend[id] = v;
+  for (const [id, v] of Object.entries(c.ps || {})) if (ID_RE.test(id) && typeof v === "string") SB.psig.set(id, v);
 }
 // A different account used this browser before: its meals must not be uploaded into this one.
 function sbDropForeign(c){
@@ -7703,12 +7753,31 @@ function sbRow(m, personId){
   return { owner_id: SB.user.id, person_id: personId, app_id: m.id, log_date: m.date, logged_at: new Date(m.at || Date.parse(m.date + "T12:00:00")).toISOString(),
     slot: m.slot, name: m.name, dish_id: m.dish || null, calories: Math.round(m.cal || 0), extras: m.extras || [], est: !!m.est, deleted_at: null };
 }
-async function sbEnsurePeople(){
-  if (!S.profiles.length) return;
-  const rows = S.profiles.map((p, i) => ({ owner_id: SB.user.id, app_id: p.id, display_name: (p.name || "Me").slice(0, 60), is_primary: i === 0, onboarding_done: !!p.onboarded }));
-  const r = await SB.client.from("people").upsert(rows, { onConflict: "owner_id,app_id" }).select("id,app_id");
+// Send profile changes: new and edited profiles are upserted (every one carries the full row), deleted ones are soft-deleted.
+// Fills SB.people (profile id -> the account's row id), which meal rows need as person_id.
+async function sbPushProfiles(){
+  if (!sbActive() || !SB.started) return;
+  const ups = S.profiles.filter(p => SB.ppend[p.id] === "up"), dels = Object.keys(SB.ppend).filter(id => SB.ppend[id] === "del");
+  if (!ups.length && !dels.length) return;
+  if (ups.length) {
+    const sent = ups.map(p => [p.id, sbProfSig(p)]);
+    const r = await SB.client.from("people").upsert(ups.map(p => sbProfRow(p, S.profiles.indexOf(p))), { onConflict: "owner_id,app_id" }).select("id,app_id");
+    if (r.error) throw r.error;
+    for (const x of r.data) SB.people.set(x.app_id, x.id);
+    // An edit made while this was in flight keeps its pending mark and goes in the next round.
+    for (const [id, sig] of sent) { SB.psig.set(id, sig); const cur = S.profiles.find(p => p.id === id); if (SB.ppend[id] === "up" && cur && sbProfSig(cur) === sig) delete SB.ppend[id]; }
+  }
+  if (dels.length) {
+    const r = await SB.client.from("people").update({ deleted_at: new Date().toISOString() }).in("app_id", dels).is("deleted_at", null);
+    if (r.error) throw r.error;
+    for (const id of dels) { if (SB.ppend[id] === "del") delete SB.ppend[id]; SB.psig.delete(id); SB.people.delete(id); }
+  }
+  SB.cacheDirty = true; sbCacheSave(); SB.lastOk = Date.now(); if (!sbPending()) { SB.state = "idle"; SB.err = ""; } sbPaint();
+}
+async function sbPullPeople(){
+  const r = await SB.client.from("people").select("id,app_id,display_name,is_primary,onboarding_done,goal,age,height_cm,weight_kg,calorie_target,workouts_per_week,cultural_background,settings,deleted_at");
   if (r.error) throw r.error;
-  SB.people = new Map(r.data.map(x => [x.app_id, x.id]));
+  return r.data;
 }
 async function sbPush(){
   sbSweep();
@@ -7716,7 +7785,7 @@ async function sbPush(){
   const where = new Map(); for (const x of sbAllMeals()) where.set(x.m.id, x);
   const ups = [], dels = [];
   for (const id of Object.keys(SB.pend)) { if (SB.pend[id] === "del") dels.push(id); else if (where.has(id)) ups.push(where.get(id)); else delete SB.pend[id]; }
-  if (ups.some(x => !SB.people.has(x.pid))) await sbEnsurePeople();
+  if (ups.some(x => !SB.people.has(x.pid))) await sbPushProfiles();
   // A meal whose person didn't come back used to be skipped without a word and stayed pending. Meals
   // of a profile that no longer exists are dropped; any other miss is an error, so it shows and retries.
   for (const x of ups) if (!SB.people.has(x.pid)) { if (S.profiles.some(p => p.id === x.pid)) throw Object.assign(new Error("person_missing"), { code: "person_missing" }); delete SB.pend[x.m.id]; }
@@ -7736,26 +7805,47 @@ async function sbPush(){
   SB.cacheDirty = true; sbCacheSave(); SB.lastOk = Date.now(); if (!sbPending()) { SB.state = "idle"; SB.err = ""; } sbPaint();
 }
 async function sbPull(){
-  const c = SB.client, ppl = await c.from("people").select("id,app_id,display_name,is_primary,onboarding_done").is("deleted_at", null);
-  if (ppl.error) throw ppl.error;
-  const byUuid = new Map(ppl.data.map(r => [r.id, r.app_id])), rows = [];
+  const c = SB.client, byUuid = new Map([...SB.people].map(([appId, uuid]) => [uuid, appId])), rows = [];
   for (let from = 0; ; from += 1000) {
     const r = await c.from("meal_logs").select("app_id,person_id,log_date,logged_at,slot,name,dish_id,calories,extras,est").is("deleted_at", null).order("logged_at").order("app_id").range(from, from + 999);
     if (r.error) throw r.error; rows.push(...r.data); if (r.data.length < 1000) break;
   }
-  return { people: ppl.data, list: rows.map(row => ({ pid: byUuid.get(row.person_id), row })).filter(x => x.pid) };
+  return rows.map(row => ({ pid: byUuid.get(row.person_id), row })).filter(x => x.pid);
 }
-// Only a name and a first-run flag per person are stored in the account so far, so a browser that
-// has no profile for someone (after sign-out, or on a new device) gets a basic one, and their meals attach to it.
-function sbRestoreProfiles(people){
-  const have = new Set(S.profiles.map(p => p.id)), add = [...people].sort((a, b) => (b.is_primary === true) - (a.is_primary === true));
-  let n = 0;
-  for (const r of add) {
-    if (S.profiles.length >= 12 || !ID_RE.test(r.app_id || "") || have.has(r.app_id)) continue;
-    const p = cleanProfile({ ...newProfile(r.display_name === "Me" ? "" : str(r.display_name, 40)), id: r.app_id, onboarded: r.onboarding_done === true });
-    if (p) { S.profiles.push(p); n++; }
+// Decide, per profile, which copy wins, then fill SB.people. Rules:
+//  - a change waiting to be sent from this device always wins;
+//  - a profile only the account has is created here (unless it was deleted here and the delete hasn't been sent yet);
+//  - a profile deleted in the account (from another device) is removed here, unless it has an edit waiting;
+//  - a profile this browser has never synced: the account's copy wins if another device already stored a full one (settings.v),
+//    otherwise this device's copy is the fuller one and is sent;
+//  - otherwise the account's copy replaces this one when it differs.
+function sbApplyPeople(rows){
+  SB.people = new Map(); let changed = false;
+  const known = new Set(), live = rows.filter(r => !r.deleted_at).sort((a, b) => (b.is_primary === true) - (a.is_primary === true));
+  for (const r of rows) {
+    const id = r.app_id; if (!ID_RE.test(id || "")) continue;
+    known.add(id);
+    if (r.deleted_at && S.profiles.some(p => p.id === id) && SB.ppend[id] !== "up") { dropProfile(id); SB.psig.delete(id); changed = true; }
   }
-  if (n) { if (!P()) S.activeId = S.profiles[0].id; markRoot(); }
+  for (const r of live) {
+    const id = r.app_id; if (!ID_RE.test(id || "")) continue;
+    SB.people.set(id, r.id);
+    const p = S.profiles.find(x => x.id === id), pend = SB.ppend[id];
+    if (!p) {
+      if (pend === "del" || S.profiles.length >= 12) continue;
+      const made = cleanProfile({ ...newProfile(""), id, ...sbProfFromRow(r) });
+      if (made) { S.profiles.push(made); SB.psig.set(id, sbProfSig(made)); changed = true; }
+      continue;
+    }
+    if (pend) continue;
+    if (!SB.psig.has(id) && r.settings?.v !== 1) { SB.ppend[id] = "up"; continue; }
+    const merged = cleanProfile({ ...p, ...sbProfFromRow(r) }); if (!merged) continue;
+    SB.psig.set(id, sbProfSig(merged));
+    if (sbProfSig(merged) !== sbProfSig(p)) { S.profiles[S.profiles.indexOf(p)] = merged; changed = true; }
+  }
+  for (const p of S.profiles) if (!known.has(p.id) && SB.ppend[p.id] !== "up") SB.ppend[p.id] = "up"; // new here: the account doesn't have it yet
+  if (!P() && S.profiles.length) { S.activeId = S.profiles[0].id; changed = true; }
+  if (changed) markRoot();
 }
 // Database rows are checked like anything else loaded from storage (cleanLog), then replace the
 // synced meals in memory. Meals with a change still waiting to be sent are left alone.
@@ -7775,17 +7865,20 @@ function sbApplyRemote(list){
 async function sbSyncBody(){
   if (!sbActive()) return;
   SB.state = "syncing"; sbPaint();
-  const first = !SB.started, before = sbDigest();
+  const digest = () => sbDigest() + "#" + S.profiles.map(sbProfSig).join("|"), first = !SB.started, before = digest();
   for (const { pid, mon, m } of sbAllMeals()) if (!SB.shadow.has(m.id) && !SB.pend[m.id]) { SB.shadow.set(m.id, { pid, mon, sig: sbSig(m) }); SB.pend[m.id] = "up"; }
   SB.cacheDirty = true; sbCacheSave();
-  await sbEnsurePeople(); await sbPush();
-  const { people, list } = await sbPull();
+  const people = await sbPullPeople();
   if (!sbActive()) return;
-  sbRestoreProfiles(people);
+  sbApplyPeople(people);
+  SB.started = true; // from here edits are tracked; the profiles marked above go out now
+  await sbPushProfiles(); await sbPush();
+  const list = await sbPull();
+  if (!sbActive()) return;
   sbApplyRemote(list);
-  SB.started = true; SB.cacheDirty = true; sbCacheSave();
+  SB.cacheDirty = true; sbCacheSave();
   SB.state = "idle"; SB.err = ""; SB.lastOk = SB.lastPull = Date.now();
-  if (first || sbDigest() !== before) { markAll(); render(); } else sbPaint();
+  if (first || digest() !== before) { markAll(); render(); } else sbPaint();
 }
 const sbKick = () => { if (sbActive()) sbRun(sbSyncBody); };
 // The account changed (sign-in, sign-out, an expired session, or another tab). Local data is kept per
@@ -7800,7 +7893,7 @@ function sbDiscardAndReload(){
   LEAVING = true; STORE_UID = null; // from here lsSet(), flush() and the meal cache write nothing
   clearTimeout(flushTimer); clearTimeout(SB.timers.push); clearTimeout(SB.timers.retry); dirty.clear();
   Object.assign(S, { profiles:[], activeId:null, logs:{} }); CRY.key = null; CRY.lock = null; CRY.raw = null;
-  SB.user = null; SB.started = false; SB.pend = {}; SB.shadow.clear(); SB.people = new Map(); SB.cacheDirty = false;
+  SB.user = null; SB.started = false; SB.pend = {}; SB.shadow.clear(); sbProfReset(); SB.people = new Map(); SB.cacheDirty = false;
   location.reload();
 }
 window.addEventListener("storage", e => { if (e.key === SIGNOUT_KEY && signedOutElsewhere(e.newValue)) sbDiscardAndReload(); });
@@ -7816,13 +7909,13 @@ async function sbUserChanged(now){
 // Only an explicit sign-out (sbSignOut) clears the device.
 function sbSessionLost(){
   clearTimeout(SB.timers.push); clearTimeout(SB.timers.retry);
-  SB.started = false; SB.pend = {}; SB.shadow.clear(); SB.people = new Map(); SB.state = "idle"; SB.err = "";
+  SB.started = false; SB.pend = {}; SB.shadow.clear(); sbProfReset(); SB.people = new Map(); SB.state = "idle"; SB.err = "";
   UI.sessionExpired = true;
   markAll(); render(); // sync is off now, so meals go back into the saved months on this device
 }
 function expiredView(){
   return `<div class="ob pastel">${pastelScene()}<div class="panel lockcard"><div><h1>Sign in again</h1>
-    <p class="muted" style="margin-top:6px">Your session ended. Nothing has been deleted: your data is still on this device. Sign in with the same account to carry on, and meals sync again. Reloading the page opens the app as a guest and leaves your data here until you sign in.</p></div>
+    <p class="muted" style="margin-top:6px">Your session ended. Nothing has been deleted: your data is still on this device. Sign in with the same account to carry on, and your meals and profile choices sync again. Reloading the page opens the app as a guest and leaves your data here until you sign in.</p></div>
     ${accountCard()}</div></div>`;
 }
 // Remove one account's data from this browser and from memory. Nothing may be written back after this.
@@ -7831,7 +7924,7 @@ function sbLeaveStore(){
   if (uid) try { localStorage.setItem(SIGNOUT_KEY, JSON.stringify({ uid, at: Date.now() })); } catch {}
   clearTimeout(flushTimer); clearTimeout(SB.timers.push); clearTimeout(SB.timers.retry); dirty.clear();
   Object.assign(S, { profiles:[], activeId:null, logs:{} }); CRY.key = null; CRY.lock = null; CRY.raw = null;
-  SB.started = false; SB.pend = {}; SB.shadow.clear(); SB.people = new Map(); SB.state = "idle"; logIdxDrop();
+  SB.started = false; SB.pend = {}; SB.shadow.clear(); sbProfReset(); SB.people = new Map(); SB.state = "idle"; logIdxDrop();
   if (uid) lsRemoveUserData(uid);
   sbCacheDrop();
 }
@@ -7904,16 +7997,16 @@ function guestView(){
   return `<div class="ob pastel">${pastelScene()}<div class="panel lockcard"><div><h1>Data from before you signed in</h1>
     <p class="muted" style="margin-top:6px">${g.locked ? "This device holds guest data protected by a passcode. It can't be imported while you're signed in." : `This device holds ${g.n} guest profile${g.n === 1 ? "" : "s"} you made without an account.`} Nothing has been added to your account.</p></div>
     ${g.locked ? `<p class="small">Discard it, or keep it on this device and sign out later to open it with its passcode.</p>`
-      : `<p class="small">Import adds it to your account on this device. Meals then sync to your account; everything else stays on this device. Discard deletes it.</p>`}
+      : `<p class="small">Import adds it to your account on this device. Meals and the basics of each profile then sync to your account; everything else stays on this device. Discard deletes it.</p>`}
     <div class="row">${g.locked ? `<button class="btn" data-act="sb-guest-keep">Keep for later</button>` : `<button class="btn primary" data-act="sb-guest-import">Import it</button>`}<button class="btn danger" data-act="sb-guest-discard">Discard it</button></div></div></div>`;
 }
 
 window.addEventListener("online", () => sbKick());
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && sbActive() && SB.started && Date.now() - SB.lastPull > 30000) sbKick(); });
 // Passcode on: meals are encrypted with the rest and stay here. Passcode off: sync starts again.
-function sbOnLock(){ SB.started = false; SB.pend = {}; SB.shadow.clear(); sbCacheDrop(); SB.state = "idle"; }
+function sbOnLock(){ SB.started = false; SB.pend = {}; SB.shadow.clear(); sbProfReset(); sbCacheDrop(); SB.state = "idle"; }
 function sbResume(){ if (sbActive()) sbKick(); }
-function sbOnErase(){ SB.started = false; SB.pend = {}; SB.shadow.clear(); sbCacheDrop(); try { SB.client?.auth.signOut({ scope:"local" }); } catch {} }
+function sbOnErase(){ SB.started = false; SB.pend = {}; SB.shadow.clear(); sbProfReset(); sbCacheDrop(); try { SB.client?.auth.signOut({ scope:"local" }); } catch {} }
 
 // ---- sign in / out ----
 const SB_ERR = { invalid_credentials:"That email and password don't match.", email_not_confirmed:"Confirm your email first: open the link we sent you, then sign in.", over_request_rate_limit:"Too many tries. Wait a minute and try again.", over_email_send_rate_limit:"Too many emails sent. Wait a few minutes and try again.", weak_password:"Choose a longer, harder-to-guess password.", user_already_exists:"There's already an account for that email. Try signing in." };
@@ -7946,7 +8039,7 @@ async function sbNewPassword(){
   catch (e) { UI.sbMsg = { t: sbErrText(e) }; }
   SB.busy = false; render();
 }
-// What signing out would delete that the account does not hold (only meals and profile names sync).
+// What signing out would delete that the account does not hold (meals and the profile basics sync; plans and the rest stay here).
 function sbLocalOnly(){
   const n = { snacks:0, drinks:0, workouts:0, weights:0, vitals:0, photos:0 }, out = [], pl = (k, one, many = one + "s") => `${k} ${k === 1 ? one : many}`;
   for (const pid in S.logs) for (const mon in S.logs[pid]) {
@@ -7954,20 +8047,20 @@ function sbLocalOnly(){
     n.snacks += L.snacks?.length || 0; n.drinks += L.drinks?.length || 0; n.workouts += L.workouts?.length || 0; n.weights += L.weights?.length || 0;
     n.vitals += Object.keys(L.vitals || {}).length; n.photos += (L.meals || []).filter(m => m.photo).length;
   }
-  const set = S.profiles.filter(p => ["goal","style","diet","culture","allergies","sex","sport","coachPersona"].some(k => p[k]) || ["age","heightCm","weightKg","targetKg","calorieGoal","workoutGoal","freq"].some(k => p[k] != null) || p.plan || p.workoutPlan).length;
+  const set = S.profiles.filter(p => p.plan || p.workoutPlan || p.coach?.baseline || p.coach?.plan).length;
   const media = S.profiles.reduce((t, p) => t + (p.prem?.clips?.length || 0) + (p.prem?.body?.shots?.length || 0), 0);
   if (n.snacks) out.push(pl(n.snacks, "snack")); if (n.drinks) out.push(pl(n.drinks, "drink")); if (n.workouts) out.push(pl(n.workouts, "workout"));
   if (n.weights) out.push(pl(n.weights, "weigh-in")); if (n.vitals) out.push(`${pl(n.vitals, "day")} of vitals`);
-  if (set) out.push(`settings for ${pl(set, "profile")}`); if (n.photos) out.push(pl(n.photos, "meal photo")); if (media) out.push(pl(media, "form-check clip or progress photo", "form-check clips or progress photos"));
+  if (set) out.push(`plans and coach history for ${pl(set, "profile")}`); if (n.photos) out.push(pl(n.photos, "meal photo")); if (media) out.push(pl(media, "form-check clip or progress photo", "form-check clips or progress photos"));
   return out;
 }
 async function sbSignOut(force){
   const c = sbClient(); if (!c) return;
   SB.busy = true; render();
   if (!force) {
-    // Upload what is waiting (meals, and each profile's name) before anything is deleted.
+    // Upload what is waiting (meals and profile changes) before anything is deleted.
     let failed = navigator.onLine === false;
-    if (sbActive() && !failed) await sbRun(async () => { try { await sbPush(); await sbEnsurePeople(); } catch (e) { failed = true; throw e; } });
+    if (sbActive() && !failed) await sbRun(async () => { try { await sbPushProfiles(); await sbPush(); } catch (e) { failed = true; throw e; } });
     const heldBack = !!CRY.lock && [...sbAllMeals()].length > 0; // with a passcode on, meals never upload
     const local = sbLocalOnly();
     if (failed || sbPending() || heldBack || local.length) { SB.busy = false; UI.sbConfirmOut = { n: sbPending(), failed, heldBack, local }; render(); return; }
@@ -7979,13 +8072,13 @@ async function sbSignOut(force){
   SB.user = null; sbReload("Signed out. Your meals stay in your account, not on this device.");
 }
 function sbStatusText(){
-  if (!sbActive()) return CRY.lock ? "Passcode on: meals stay on this device." : "";
+  if (!sbActive()) return CRY.lock ? "Passcode on: meals and profiles stay on this device." : "";
   const n = sbPending();
-  if (SB.state === "syncing") return "Saving meals…";
-  if (SB.state === "offline") return `Offline. ${n} meal change${n === 1 ? "" : "s"} will upload when you're back online.`;
+  if (SB.state === "syncing") return "Saving…";
+  if (SB.state === "offline") return `Offline. ${n} change${n === 1 ? "" : "s"} will upload when you're back online.`;
   if (SB.state === "error" && SB.err === "23503") return "Your account session is no longer valid. Sign out, then sign in again.";
   if (SB.state === "error") return `Couldn't reach your account${n ? `, ${n} change${n === 1 ? "" : "s"} waiting` : ""}. Retrying.`;
-  return n ? `${n} meal change${n === 1 ? "" : "s"} waiting to upload.` : SB.started ? "Meals saved to your account." : "Getting your meals…";
+  return n ? `${n} change${n === 1 ? "" : "s"} waiting to upload.` : SB.started ? "Meals and profiles saved to your account." : "Getting your account data…";
 }
 function sbPaint(){ const el = document.getElementById("sb-status"); if (el) el.textContent = sbStatusText(); }
 const AUTH_TITLE = { in:"Sign in", up:"Create account", reset:"Reset your password" };
@@ -8017,7 +8110,7 @@ function sbRender(){
 function openAcctInfo(triggerEl){
   openPopover("acct-info", { label:"What is saved to my account", width:"min(400px, calc(100vw - 32px))", triggerEl,
     bodyHTML: `<div class="auth-pop"><div class="pop-head"><h2>What is saved to my account</h2><button type="button" class="pop-x" data-pop="close" aria-label="Close">${icon("x","",24)}</button></div>
-      <div class="pop-body"><p class="small">Only meals (and each profile's name) are saved to your account for now. Snacks, workouts and everything else stay on this device, and signing out removes them from it.</p>
+      <div class="pop-body"><p class="small">Meals, and each profile's basics (name, age, height, weight, goals and food choices), are saved to your account. Plans, coach history, reminders, snacks, workouts and everything else stay on this device, and signing out removes them from it.</p>
       ${CRY.lock ? `<div class="note info">A passcode is on, so meals are encrypted on this device and not uploaded. Meals already in your account stay there.</div>` : ""}</div></div>` });
 }
 function accountCard(){
@@ -8030,7 +8123,7 @@ function accountCard(){
     ${UI.sbMsg ? `<div class="note ${UI.sbMsg.ok ? "info" : ""}" role="status">${esc(UI.sbMsg.t)}</div>` : ""}
     ${UI.sbConfirmOut ? `<div class="note" role="alert"><b>Signing out will delete data from this device.</b>
       ${UI.sbConfirmOut.local?.length ? `<p class="small" style="margin:6px 0 2px">Saved only on this device, not in your account, so it will be deleted:</p><ul class="clean small">${UI.sbConfirmOut.local.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
-      ${[UI.sbConfirmOut.failed ? "You're offline or the upload failed." : "", UI.sbConfirmOut.n ? `${UI.sbConfirmOut.n} meal change${UI.sbConfirmOut.n === 1 ? " is" : "s are"} waiting to upload and will be deleted too.` : "", UI.sbConfirmOut.heldBack ? "A passcode is on, so your meals are only on this device and will be deleted too." : ""].filter(Boolean).map(x => `<p class="small" style="margin:2px 0">${esc(x)}</p>`).join("")}
+      ${[UI.sbConfirmOut.failed ? "You're offline or the upload failed." : "", UI.sbConfirmOut.n ? `${UI.sbConfirmOut.n} change${UI.sbConfirmOut.n === 1 ? " is" : "s are"} (meals or profile) waiting to upload and will be deleted too.` : "", UI.sbConfirmOut.heldBack ? "A passcode is on, so your meals are only on this device and will be deleted too." : ""].filter(Boolean).map(x => `<p class="small" style="margin:2px 0">${esc(x)}</p>`).join("")}
       <p class="small" style="margin:2px 0">This can't be undone.</p></div>
       <div class="row"><button class="btn sm" data-act="sb-out-no">Cancel</button><button class="btn sm danger" data-act="sb-out-force">Sign out anyway</button></div>` : ""}
   </section>`;
@@ -11236,7 +11329,7 @@ function settingsView(p){
     <div class="row" style="gap:12px"><div class="shield">${icon("lock")}</div><h2>Privacy and security</h2></div>
     <ul class="checklist">
       ${[
-        [!!STORE_UID, "Private storage", STORE_UID ? "Your profiles and logs are saved in this browser under your account, and removed from it when you sign out. Meals are also saved to your account." : "Saved in this browser only."],
+        [!!STORE_UID, "Private storage", STORE_UID ? "Your profiles and logs are saved in this browser under your account, and removed from it when you sign out. Meals and the basics of each profile are also saved to your account." : "Saved in this browser only."],
         [true, "No IDs in links", "The address bar only ever holds a page or a public recipe name. Records are never looked up from the link, and every read and write is checked against who's signed in, so editing a link can't reveal anyone's data (no IDOR)."],
         [true, "Checked on load", "Every saved record is validated before it's shown: unknown fields are dropped, numbers are range-checked and text is escaped, so damaged or tampered data can't run code in the page."],
         [!!CRY.lock, "Passcode encryption", CRY.lock ? "On: AES-256-GCM in your browser, key from your passcode with PBKDF2-SHA-256 (600,000 rounds). The passcode never leaves this device." : "Off. Turn it on below to encrypt everything before it's saved."],
@@ -11281,7 +11374,7 @@ function settingsView(p){
     <p class="small muted">${S.lastSaved ? `Last saved ${new Date(S.lastSaved).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})}.` : ""} ${CRY.lock ? "Stored encrypted." : ""}</p>
     ${typeof photoMeter === "function" && typeof isPremium === "function" && isPremium() ? photoMeter(p) : ""}
     ${typeof clipMeter === "function" && typeof isPremium === "function" && isPremium() ? clipMeter(p) : ""}
-    <p class="small">${S.mode === "browser" ? "Profiles and logs are saved in this browser. Signed in, meals are also saved to your account; everything else stays here, and signing out removes it from this device. Clearing site data removes it too." : "Storage is blocked here, so nothing will be kept after you close the page."}</p>
+    <p class="small">${S.mode === "browser" ? "Profiles and logs are saved in this browser. Signed in, meals and the basics of each profile are also saved to your account; everything else stays here, and signing out removes it from this device. Clearing site data removes it too." : "Storage is blocked here, so nothing will be kept after you close the page."}</p>
     <div class="row"><button class="btn" data-act="export">Download my data (JSON)</button></div>
   </section>
 <section class="card" id="sources">
@@ -11509,7 +11602,7 @@ document.addEventListener("click", async e => {
     case "switch": S.activeId = t.dataset.id; saveProfile(); resetUI(); render(); toast(`Switched to ${P().name || "profile"}`); break;
     case "del-profile": UI.confirmDel = t.dataset.id; render(); break;
     case "del-profile-no": UI.confirmDel = null; render(); break;
-    case "del-profile-yes": { const id = t.dataset.id; S.profiles = S.profiles.filter(x => x.id !== id); for (const m in (S.logs[id]||{})) { delete S.logs[id][m]; markLog(id, m); } delete S.logs[id]; if (S.activeId === id) S.activeId = S.profiles[0]?.id || null; UI.confirmDel = null; saveProfile(); render(); toast("Profile deleted"); break; }
+    case "del-profile-yes": { const id = t.dataset.id; dropProfile(id); UI.confirmDel = null; saveProfile(); render(); toast("Profile deleted"); break; }
   }
 });
 function resetUI(){
@@ -14744,7 +14837,7 @@ const CONTACT_EMAIL = "[YOUR CONTACT EMAIL]";                // TODO: set your c
 const LEGAL_BUSINESS_NAME = "[YOUR LEGAL BUSINESS NAME]";    // TODO: fill in before publishing
 const MAILING_ADDRESS = "[YOUR MAILING ADDRESS]";            // TODO: fill in before publishing
 const REFUND_POLICY_TEXT = "[REFUND POLICY: fill in — how many days, which plans, and whether a partial period is refunded]"; // TODO
-const LEGAL_UPDATED = "6 October 2026";
+const LEGAL_UPDATED = "12 October 2026";
 
 function applyCanonical(){
   if (/\[YOUR-DOMAIN\]/.test(SITE_URL)) return;              // nothing to point at yet
@@ -14811,9 +14904,9 @@ function privacyPolicyView(){
     <p><b>In our database (only if you sign in).</b> An account is an email address and password handled by Supabase Auth, and your sign-in session is kept in this browser. Signed in, these are saved in our Supabase database, where each account can read only its own rows:</p>
     <ul class="clean small">
       <li><b>Meals:</b> the date and time, meal slot (breakfast, lunch and so on), the name you gave it, the catalog dish if you picked one, calories, any extras (name and calories), and whether the calories were an estimate. Deleted meals are marked deleted rather than removed.</li>
-      <li><b>Each profile:</b> its name, whether it is the first profile, and whether setup was finished.</li>
+      <li><b>Each profile:</b> its name, whether it is the first profile, whether setup was finished, and its basics and choices: goal, age, sex, height, weight, target weight, calorie and workout goals, workouts per week, activity level, sport, units, diet, the allergies text you typed, food culture and food focus, your coach style and coach name, dishes you added to or skipped from your menu, limits, and gear.</li>
     </ul>
-    <p><b>Not uploaded, even when signed in:</b> meal photos, snacks, drinks, workouts, weigh-ins, vitals, goals, age, sex, height, weight, allergies, the rest of your profile settings, clips and progress photos. These stay in this browser and are removed from it when you sign out. While a passcode is on, meals are not uploaded either; meals already in your account stay there.</p>
+    <p><b>Not uploaded, even when signed in:</b> meal photos, snacks, drinks, workouts, weigh-ins, vitals, weight and workout plans, coach history and answers, reminders, appearance settings, awards, clips and progress photos. These stay in this browser and are removed from it when you sign out. While a passcode is on, meals are not uploaded either; meals already in your account stay there.</p>
     <p>If you set a passcode, what this browser stores is encrypted in your browser before it is saved, using AES-256-GCM with a key derived from your passcode by PBKDF2-SHA-256 at 600,000 iterations. The passcode itself is never stored or transmitted, which also means it cannot be recovered if you forget it. The copy of your meals in our database is not encrypted this way.</p>
     <p>Everything you store stays until you delete it. There is no automatic expiry and no schedule that clears old logs; deleting a single entry, a whole profile, or everything on this device (section 7) takes effect immediately.</p>
 

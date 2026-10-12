@@ -36,7 +36,8 @@ A browser can be shared. What one account leaves behind must not show up for the
 - New code that stores health data in `localStorage`, `sessionStorage` or IndexedDB must either key it by user id or be listed in the sign-out and erase paths. Add the key to the same function that clears the others.
 - Non-health preferences (theme, rail state, tour progress) may stay.
 - The Supabase session lives in `localStorage` (`wlh.sb.auth`) with `persistSession` on. That means any script running on the page can read the token, which is the reason for the script and XSS rules below.
-- With a passcode on, meals are not synced and stay encrypted on the device. Don't weaken that to make sync work.
+- With a passcode on, meals and profiles are not synced and stay encrypted on the device. Don't weaken that to make sync work.
+- Profile fields that go to the account are the whitelist `SB_PROF_COLS` / `SB_PROF_SET` in `index.html` (basics and food and training choices). Plans, coach history, reminders, awards and everything under `prem` (progress photos, clips) never go. Adding a field to the list is a privacy change: update the privacy policy text, `docs/DATABASE.md` and the change log in the same build, and `tests/browser/profile-sync.mjs`, which fails if a field outside the list reaches the account.
 
 ## 4. User text is rendered as text
 

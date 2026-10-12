@@ -186,7 +186,7 @@ ok("the meal that never uploaded is not in the account", (await ev(`JSON.stringi
 console.log("--- (d) the sign-out dialog lists local-only data");
 ok("sign in as A", await signIn("a@x.com"));
 await waitFor(`S.profiles.length === 1 && SB.started && !sbPending()`, 10000);
-await ev(`(() => { const p = P(); p.coachPrompted = true; p.tourSeen = "dismissed"; p.goal = "lose"; p.age = 30;
+await ev(`(() => { const p = P(); p.coachPrompted = true; p.tourSeen = "dismissed"; p.goal = "lose"; p.age = 30; p.workoutPlan = { weeks: 4 };
   addEntry("snacks", { id: uid(), date: today(), name: "Dialog snack", qty: 1, cal: 100 });
   addEntry("drinks", { id: uid(), date: today(), k: "beer", name: "Beer", qty: 1, cal: 150, units: 1 });
   addEntry("workouts", { id: uid(), date: today(), type: "strength", minutes: 30, cal: 100, note: null, src: null, equip: null, photo: null });
@@ -197,7 +197,7 @@ await waitFor(`!!document.querySelector('[data-act="sb-out"]')`);
 await ev(`document.querySelector('[data-act="sb-out"]').click(); true`);
 ok("dialog shown although nothing is waiting to upload", await waitFor(`!!UI.sbConfirmOut && !!document.querySelector('[data-act="sb-out-force"]')`) && (await ev(`sbPending()`)) === 0);
 const dlg = await ev(`document.getElementById("sb-account").textContent`);
-for (const want of ["1 snack", "1 drink", "1 workout", "1 weigh-in", "1 day of vitals", "settings for 1 profile"]) ok(`dialog lists "${want}"`, dlg.includes(want), dlg.slice(0, 300));
+for (const want of ["1 snack", "1 drink", "1 workout", "1 weigh-in", "1 day of vitals", "plans and coach history for 1 profile"]) ok(`dialog lists "${want}"`, dlg.includes(want), dlg.slice(0, 300));
 ok("dialog has Cancel and Sign out anyway", await ev(`(() => { const b = [...document.querySelectorAll("#sb-account button")].map(x => x.textContent.trim()); return b.includes("Cancel") && b.includes("Sign out anyway"); })()`));
 await ev(`document.querySelector('[data-act="sb-out-no"]').click(); true`);
 await ev(`flush().then(() => true)`);
