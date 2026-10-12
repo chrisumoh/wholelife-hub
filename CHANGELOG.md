@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.11, 2026-10-12. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.12, 2026-10-12. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.12 · Docs: Build plan statuses match what is merged
+
+- **Problem:** docs/BUILD_PLAN.md still said builds 8.1.15 to 8.2.11 were 'in progress' with the pull request 'not yet opened', 'stacked on' a branch, or 'open, not merged'. They are all merged, so the table made the release flow look far more tangled than it is, and anyone reading it (or a tool summarising it) would think a dozen builds were waiting.
+- **Change:** Every row now shows its real status, taken from the GitHub pull request list: 8.1.15 (PR #6), 8.1.18 (#9), 8.1.19 (#10), 8.1.20 (#11), 8.2.2 (#14), 8.2.3 to 8.2.5 (#16), 8.2.6 (#17), 8.2.7 (#18), 8.2.8 (#19), 8.2.9 and 8.2.10 (#20), 8.2.11 (#21). 8.1.21 stays CLOSED (#12, on purpose). No app behaviour changed.
+- **Where:** docs/BUILD_PLAN.md (the builds table and a checklist section), CHANGELOG.md, README.md, and the build number and change log text in index.html.
+- **How to test:** node tests/check-repo.mjs. Open docs/BUILD_PLAN.md and look down the Status column.
+- **Known limits:** (1) The phases 1 to 7 table above it was not touched; several of those phases shipped piece by piece as numbered builds, and their status text needs a separate pass. (2) Statuses will go stale again unless each build's status is updated in the pull request that merges it, as the file's own header asks.
 
 ## 8.2.11 · Workouts: New workout icons, 44 activities in seven groups, and nine more coach sports
 

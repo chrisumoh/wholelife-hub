@@ -21,24 +21,25 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
-| 8.2.11 | New workout icons, 44 activities in seven groups, nine more coach sports | IN PROGRESS: build-8.2.11, stacked on build-8.2.10, pull request not yet opened |
-| 8.2.10 | Accessibility pass with axe-core (charts, quick-jump combobox, landmarks, headings, skip link) and an automated check | IN PROGRESS: build-8.2.10, stacked on build-8.2.9, pull request not yet opened |
-| 8.2.9 | Neutral age screen with a 24-hour retry block; Terms and Privacy Policy agreement at sign-up (version and time saved) | IN PROGRESS: build-8.2.9, stacked on build-8.2.8, pull request not yet opened |
-| 8.2.8 | Dish tiles (Food culture, Recipes, Today's menu) use the flat card pattern | IN PROGRESS: build-8.2.8, stacked on build-8.2.7, pull request not yet opened |
-| 8.2.7 | Widget sizes work (Small, Medium, Large) on Summary and every page; widget edit mode rebuilt (minus, S/M/L, drag handle or arrows, Hidden widgets, Reset layout with confirm); leftover cards restyled | IN PROGRESS: build-8.2.7, stacked on build-8.2.6, pull request not yet opened |
-| 8.2.6 | One flat Apple Health-style dashboard card everywhere (Summary pins, Nutrition, Health data, Trends, premium widgets); Meals card; glass, caustics, beam and scenes removed from content | IN PROGRESS: build-8.2.6, stacked on build-8.2.5, pull request not yet opened |
-| 8.2.5 | Boot screen on the first bytes; coach portraits and home-screen icon moved to `img/` (first paint 3.7 s to 0.26 s on Fast 4G, download 541 to 450 KB) | IN PROGRESS: build-8.2.5, stacked on build-8.2.4, pull request not yet opened |
-| 8.2.4 | Profile sync: a new device shows your profiles, their basics and meals; edits and deletes travel between devices (`people` table, no schema change) | IN PROGRESS: build-8.2.4, stacked on build-8.2.3, pull request not yet opened |
-| 8.2.3 | Phone performance measured (`tests/perf/measure.mjs`, `docs/PERFORMANCE.md`); no app change | IN PROGRESS: build-8.2.3, pull request not yet opened |
-| 8.2.2 | Segmented control thumb (units and the other rubber-thumb controls) repaints every frame, so switching slides in about 0.5s instead of freezing stretched across both options | IN PROGRESS: build-8.1.23 (PR #14), main merged in, pull request open, not merged |
+| 8.2.12 | Docs only: every build in this table shows its real status (merged, with its pull request number) instead of "in progress, not yet opened" | IN PROGRESS: build-8.2.12, pull request not yet opened |
+| 8.2.11 | New workout icons, 44 activities in seven groups, nine more coach sports | MERGED: PR #21 |
+| 8.2.10 | Accessibility pass with axe-core (charts, quick-jump combobox, landmarks, headings, skip link) and an automated check | MERGED: PR #20 (with 8.2.9) |
+| 8.2.9 | Neutral age screen with a 24-hour retry block; Terms and Privacy Policy agreement at sign-up (version and time saved) | MERGED: PR #20 (with 8.2.10) |
+| 8.2.8 | Dish tiles (Food culture, Recipes, Today's menu) use the flat card pattern | MERGED: PR #19 |
+| 8.2.7 | Widget sizes work (Small, Medium, Large) on Summary and every page; widget edit mode rebuilt (minus, S/M/L, drag handle or arrows, Hidden widgets, Reset layout with confirm); leftover cards restyled | MERGED: PR #18 |
+| 8.2.6 | One flat Apple Health-style dashboard card everywhere (Summary pins, Nutrition, Health data, Trends, premium widgets); Meals card; glass, caustics, beam and scenes removed from content | MERGED: PR #17 |
+| 8.2.5 | Boot screen on the first bytes; coach portraits and home-screen icon moved to `img/` (first paint 3.7 s to 0.26 s on Fast 4G, download 541 to 450 KB) | MERGED: PR #16 (with 8.2.3 and 8.2.4) |
+| 8.2.4 | Profile sync: a new device shows your profiles, their basics and meals; edits and deletes travel between devices (`people` table, no schema change) | MERGED: PR #16 (with 8.2.3 and 8.2.5) |
+| 8.2.3 | Phone performance measured (`tests/perf/measure.mjs`, `docs/PERFORMANCE.md`); no app change | MERGED: PR #16 (with 8.2.4 and 8.2.5) |
+| 8.2.2 | Segmented control thumb (units and the other rubber-thumb controls) repaints every frame, so switching slides in about 0.5s instead of freezing stretched across both options | MERGED: PR #14 (as build-8.1.23) |
 | 8.2.1 | Tests run on every pull request (GitHub Actions); browser tests work on Linux; repo checks for scripts, version agreement, secrets and text-only food data | MERGED: PR #15 (with 8.2) |
 | 8.2 | Security headers: content security policy, no framing, nosniff, referrer and permissions policies in `vercel.json`, with a test that serves the app under them | MERGED: PR #15 (with 8.2.1) |
 | 8.1.22 | Dropdown list no longer closes itself right after opening (scrolls only the list) | MERGED: PR #13 |
 | 8.1.21 | Polish pass from make-interfaces-feel-better | CLOSED: not shipped at the owner's request (PR #12); only its dropdown fix went on as 8.1.22 |
-| 8.1.20 | Liquid glass cards with a hover streak and press, caustics on widgets, an accent beam on Today at a glance and the coach card (replacing the green glow), and a rubber-band Interface opacity slider | IN PROGRESS: build-8.1.20 (branched from build-8.1.19), pull request open, not merged |
-| 8.1.19 | Form controls restyled to BoardUI's look (input, textarea auto-resize, select listbox, date picker, segmented control, button and button group, sign-in card), 44px touch targets. Date range picker not found, skipped | IN PROGRESS: build-8.1.19, pushed, not merged |
-| 8.1.18 | Compact account row with sign-in popup, tighter spacing, Premium in Ctrl+K, Snap your plate copy. 8.1.16 and 8.1.17 were closed and never released; sidebar rework and legal pages are not in this build | IN PROGRESS: build-8.1.18 from main, not merged |
-| 8.1.15 | Audit fixes from PR #5: coach text escaped, per-account local storage with sign-out clearing, guest import/discard, Erase removes notif/rem keys, short error logs, db account path removed, privacy text matches the code, "Whole Life Hub" name, browser tests | IN PROGRESS: build-8.1.15, pull request open, not merged |
+| 8.1.20 | Liquid glass cards with a hover streak and press, caustics on widgets, an accent beam on Today at a glance and the coach card (replacing the green glow), and a rubber-band Interface opacity slider | MERGED: PR #11 |
+| 8.1.19 | Form controls restyled to BoardUI's look (input, textarea auto-resize, select listbox, date picker, segmented control, button and button group, sign-in card), 44px touch targets. Date range picker not found, skipped | MERGED: PR #10 |
+| 8.1.18 | Compact account row with sign-in popup, tighter spacing, Premium in Ctrl+K, Snap your plate copy. 8.1.16 and 8.1.17 were closed and never released; sidebar rework and legal pages are not in this build | MERGED: PR #9 |
+| 8.1.15 | Audit fixes from PR #5: coach text escaped, per-account local storage with sign-out clearing, guest import/discard, Erase removes notif/rem keys, short error logs, db account path removed, privacy text matches the code, "Whole Life Hub" name, browser tests | MERGED: PR #6 |
 
 ## Standing backlog
 
@@ -61,6 +62,11 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.2.12
+
+- Done: `node tests/check-repo.mjs`. Docs only, no app behaviour changed; every status was checked against the pull request list on GitHub (all of #1 to #21 are merged except #12, which was closed on purpose).
+- Not run: the browser tests (the only change to `index.html` is the build number and the change log text).
 
 ### Checklist run for 8.2.11
 
