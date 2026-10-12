@@ -68,7 +68,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 ### Checklist run for 8.2.15
 
-- Done: `node tests/browser/workout-sync.mjs` (45 checks), `node tests/browser/security.mjs` (87), `node tests/browser/run-all.mjs`, `node tests/check-repo.mjs`. The live schema of `workouts` and `weight_entries` was read (read-only) to confirm every column the app sends exists; no `supabase/` file was touched and nothing was applied.
+- Done: `node tests/browser/workout-sync.mjs` (52 checks), `node tests/browser/security.mjs` (87), `node tests/browser/run-all.mjs`, `node tests/check-repo.mjs`. The live schema of `workouts` and `weight_entries` was read (read-only) to confirm every column the app sends exists; no `supabase/` file was touched and nothing was applied.
 - Not run: a real account on the preview with two devices (the tests use a fake Supabase), Safari and a real phone, a lawyer's review of the changed privacy policy wording.
 
 ### Checklist run for 8.2.14

@@ -170,6 +170,22 @@ await ev(`window.__old = 1; sbSignOut(false).then(() => true)`);
 ok("sign-out completes after syncing", await waitFor(`window.__old === undefined && ${READY}`, 20000));
 ok("the unconfirmed workout reached the account before the device was cleared", (await DBQ("workouts")).some(r => r.notes === "never confirmed"));
 
+console.log("--- 8. an expired session keeps the waiting changes");
+ok("sign in as A", await signIn("a@x.com"));
+ok("synced", await waitFor(`S.profiles.length === 1 && SB.kstarted && !sbPending()`, 15000));
+const ex = await ev(`(() => { const e = [...sbAllOf("workouts")][0].e; return { id: e.id }; })()`);
+await ev(`__fake.offline = true; true`);
+await ev(`(() => { updateEntry("workouts", ${JSON.stringify(ex.id)}, x => { x.minutes = 88; }); return true; })()`);
+await sleep(300);
+await ev(`__fake.expireNow(); true`);
+ok("the sign-in screen shows (session expired)", await waitFor(`UI.sessionExpired === true`, 8000));
+await ev(`flush().then(() => true)`); await sleep(500);
+ok("the waiting edit is still on the list and saved", (await ev(`SB.kp.workouts.pend["${ex.id}"]`)) === "up" && (await ev(`(() => { const r = JSON.parse(localStorage.getItem("wlh.v62@u_axcom")).root; return r.kp && r.kp.workouts["${ex.id}"]; })()`)) === "up");
+await ev(`window.__old = 1; location.reload(); true`);
+ok("reload", await waitFor(`window.__old === undefined && ${READY}`, 15000));
+ok("sign in again", await signIn("a@x.com"));
+ok("the edit is sent, not overwritten by the account's older copy", await waitFor(`__fake.DB.workouts.find(r => r.app_id === "${ex.id}")?.duration_min === 88`, 15000) && (await local("workouts")).find(e => e.id === ex.id)?.minutes === 88);
+
 ok("no script errors", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);
 ws.close(); procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(fail ? 1 : 0);
