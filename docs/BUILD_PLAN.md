@@ -67,7 +67,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 ### Checklist run for 8.2.14
 
-- Done: `node tests/browser/privacy.mjs` (26 checks), `node tests/browser/run-all.mjs`, `node tests/check-repo.mjs`.
+- Done: `node tests/browser/privacy.mjs` (28 checks), `node tests/browser/run-all.mjs`, `node tests/check-repo.mjs`.
 - Not run: Safari and a real phone, a lawyer's review of the new wording. No Supabase files were touched.
 
 ### Checklist run for 8.2.13

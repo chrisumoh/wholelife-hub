@@ -74,6 +74,7 @@ ok("the body studio toggle is logged too", (await stored()).at(-1).k === "body-o
 console.log("--- 3. export, profile delete and erase are logged");
 await ev(`document.querySelector('[data-act="export"]').click(); true`); await sleep(300);
 ok("downloading the data adds an entry", (await stored()).at(-1).k === "export");
+ok("and the card shows it straight away, without another action", /Downloaded a copy of your data/.test(await glance()) && await ev(`!!document.querySelector('[data-act="history-clear"]')`));
 await ev(`(() => { const q = newProfile("Kofi"); Object.assign(q, { onboarded: true, coachPrompted: true, tourSeen: "dismissed" }); S.profiles.push(q); saveProfile(); UI.confirmDel = q.id; location.hash = "#/settings/household"; render(); return true; })()`); await sleep(350);
 await ev(`document.querySelector('[data-act="del-profile-yes"]').click(); true`); await sleep(300);
 ok("deleting a profile adds an entry", (await stored()).at(-1).k === "profile-del");
@@ -105,7 +106,10 @@ ok("an accepted terms version is shown", new RegExp("Version " + await ev(`TERMS
 await ev(`SB.user = { id: "u1", email: "ada@example.com" }; render(); true`); await sleep(250);
 t = await glance();
 ok("signed in, it names the account and says meals and names also sync", /ada@example\.com/.test(t) && /Meals and profile names also sync/.test(t), t);
-await ev(`SB.user = null; true`);
+await ev(`CRY.lock = { salt: "x", iter: 1, check: null }; render(); true`); await sleep(250);
+t = await glance();
+ok("signed in with a passcode on, it says new data is not uploaded", /passcode is on/.test(t) && /not uploaded/.test(t) && !/also sync to your account/.test(t), t);
+await ev(`CRY.lock = null; SB.user = null; true`);
 
 console.log("--- 6. layout");
 for (const w of [390, 768, 1440]) { await view(w); await goPrivacy(); ok(`no sideways scroll at ${w}px`, await ev(`document.documentElement.scrollWidth <= innerWidth + 1`)); }
