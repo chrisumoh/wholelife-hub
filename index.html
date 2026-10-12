@@ -3919,6 +3919,97 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 .app .sec-title{font-size:calc((22px) * var(--text-scale,1));font-weight:700}
 /* "Edit widgets" / "Done": plain accent text, no background. */
 .link-btn{background:none;border:0;padding:0 2px;min-height:44px;color:var(--accent);font-size:calc((17px) * var(--text-scale,1));font-weight:500;cursor:pointer;box-shadow:none}
+/* =================== 8.2.7: WIDGET SIZES AND EDIT MODE ===================
+   Small is half width (2 per row on phones, 4 from 700px up) and roughly square: icon, name, one value. Medium and Large are full width.
+   Edit controls sit in the card's top row. The red minus, the S/M/L switch and the drag handle or arrows are all 44px targets. */
+.app .wgrid{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:700px){.app .wgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.app .wgrid>.ws-m,.app .wgrid>.ws-l,.app .wgrid>.empty{grid-column:1/-1}
+.app .wgrid>.ws-s{aspect-ratio:1/1;min-width:0}
+.app .ws-s .mhead{align-items:flex-start}
+.app .ws-s .mhead b{min-width:0;font-size:calc((15px) * var(--text-scale,1));line-height:1.25;overflow-wrap:anywhere}
+.app .ws-s .mhead svg.ci{margin-top:1px}
+.app .ws-s .mbody{padding-top:12px}
+.app .ws-s .mval{font-size:calc((28px) * var(--text-scale,1))}
+.app .ws-s .mval small{font-size:calc((14px) * var(--text-scale,1))}
+.app .ws-s .mval.nodata{font-size:calc((20px) * var(--text-scale,1))}
+.app .ws-m .msub{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.app .ws-l{min-height:0}
+.app .cover{position:absolute;inset:0;z-index:1;border-radius:inherit}
+.app .ws-l .lx a:not(.cover){position:relative;z-index:2;color:var(--text)}
+.app .ws-l .lx a.lbtn{color:var(--accent)}
+.app .lx{display:grid;grid-template-columns:minmax(0,1fr);gap:14px 28px;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+@media (min-width:700px){.app .lx{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:1100px){.app .lx{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.app .lsec{min-width:0;display:flex;flex-direction:column;gap:8px}
+.app .lh{font-size:calc((13px) * var(--text-scale,1));font-weight:600;color:var(--muted)}
+.app .lrows{list-style:none;margin:0;padding:0}
+.app .lrows li{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px;border-top:1px solid var(--line);font-size:calc((15px) * var(--text-scale,1))}
+.app .lrows li:first-child{border-top:0}
+.app .lrows li>span,.app .lrows li>a{min-width:0;overflow-wrap:anywhere}
+.app .lrows li>a{display:flex;align-items:center;flex:1;min-height:44px}
+.app .lrows b{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.app .lrows b small{font-size:calc((13px) * var(--text-scale,1));font-weight:400;color:var(--muted)}
+.app .lnone{font-size:calc((15px) * var(--text-scale,1));color:var(--muted)}
+.app .lnone span{display:block;font-size:calc((13px) * var(--text-scale,1));margin-top:2px}
+.app .ladvice{margin:0;font-size:calc((15px) * var(--text-scale,1));line-height:1.4}
+.app .lstats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-content:start}
+.app .lstat{display:flex;flex-direction:column;gap:2px;min-width:0}
+.app .lstat span{font-size:calc((13px) * var(--text-scale,1));color:var(--muted)}
+.app .lstat b{font-family:var(--display);font-size:calc((20px) * var(--text-scale,1));font-weight:700;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.app .lstat b small{font-size:calc((13px) * var(--text-scale,1));font-weight:600;color:var(--muted)}
+.app .lgoal{display:flex;flex-direction:column;gap:8px;align-content:start}
+.app .lg-top{display:flex;justify-content:space-between;gap:12px;font-size:calc((15px) * var(--text-scale,1))}
+.app .lg-top span{color:var(--muted)}.app .lg-top b{font-weight:600;text-align:right}
+.app .lg-track{height:8px;border-radius:999px;background:var(--chart-gray);overflow:hidden}
+.app .lg-track i{display:block;height:100%;border-radius:999px}
+.app .lchart{display:flex;gap:6px;height:96px}
+.app .lchart.dense{gap:2px}
+.app .lc-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+.app .lc-bar{flex:1;width:100%;min-height:0;display:flex;align-items:flex-end;justify-content:center}
+.app .lc-bar i{display:block;width:min(100%,24px);border-radius:4px;background:var(--chart-gray)}
+.app .lc-v,.app .lc-l{font-style:normal;height:14px;line-height:14px;font-size:calc((11px) * var(--text-scale,1));color:var(--muted);white-space:nowrap}
+.app .lc-l{font-size:calc((12px) * var(--text-scale,1))}
+.app .lchart.dense .lc-l{overflow:visible;width:0}
+.app .lcta{justify-content:flex-end}
+.app .lbtn{display:inline-flex;align-items:center;min-height:44px;font-size:calc((17px) * var(--text-scale,1));font-weight:500}
+/* edit mode: no wiggle, the controls live in the header row */
+.app .mcard.editing{animation:none;cursor:default}
+.app .mhead.editing{flex-wrap:wrap;row-gap:0;column-gap:8px}
+.app .mhead.editing b{flex:1 1 auto;min-width:0}
+.app .wminus{flex:none;width:44px;height:44px;margin:0 -2px 0 -10px;padding:0;border:0;background:none;display:grid;place-items:center;cursor:pointer}
+.app .wminus span{width:24px;height:24px;border-radius:50%;background:var(--bad);color:#fff;display:grid;place-items:center;font-size:calc((20px) * var(--text-scale,1));font-weight:700;line-height:1;padding-bottom:2px}
+.app .wctl{flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-left:auto;color:var(--text)}
+.app .ws-s .wctl{flex:1 0 100%;margin-left:0}
+.app .wseg{display:inline-flex;flex-wrap:nowrap;height:44px;padding:0;gap:0;border-radius:12px;border:0;background:var(--ground);overflow:hidden;width:auto}
+.app .wseg button{flex:none;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border-radius:12px;font-size:calc((15px) * var(--text-scale,1))}
+.app .wseg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:none;animation:none}
+.app .wmove{display:none;gap:0}
+.app .wdrag{display:inline-grid}
+.app .wmove button,.app .wdrag{width:44px;height:44px;padding:0;border:0;background:none;color:var(--muted);place-items:center;cursor:pointer;border-radius:12px}
+.app .wmove button{display:inline-grid}
+.app .wmove button:disabled{opacity:.3;cursor:default}
+.app .wdrag{touch-action:none;cursor:grab}
+@media (pointer:coarse){.app .wmove{display:inline-flex}.app .wdrag{display:none}}
+.app .dcard.dragging{opacity:.55}
+.app .dcard.drop-before{box-shadow:0 -3px 0 0 var(--accent)!important}
+.app .dcard.drop-after{box-shadow:0 3px 0 0 var(--accent)!important}
+@media (max-width:359px){.app .wgrid.editing>.ws-s{grid-column:1/-1}}
+.app .wlist{margin-top:12px;gap:4px}
+.app .wlist-h{font-size:calc((17px) * var(--text-scale,1));font-weight:600}
+.app .wlist-rows{list-style:none;margin:0;padding:0}
+.app .wlist-rows li{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;border-top:1px solid var(--line)}
+.app .wlist-rows li:first-child{border-top:0}
+.app .wlist-n{display:flex;align-items:center;gap:8px;font-size:calc((17px) * var(--text-scale,1))}
+.app .wadd{flex:none;width:44px;height:44px;border:0;background:none;padding:0;display:grid;place-items:center;cursor:pointer}
+.app .wadd span{width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:calc((22px) * var(--text-scale,1));font-weight:600;line-height:1;padding-bottom:2px}
+.app .wreset{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 12px;margin-top:4px}
+.app .wreset button{min-height:44px;padding:0 8px;border:0;background:none;cursor:pointer;font-size:calc((13px) * var(--text-scale,1));font-weight:600;color:var(--bad)}
+.app .wreset .wreset-no{color:var(--muted)}
+/* Cards on the widget pages that are not widgets use the same header look: sentence case, 15px semibold, no tracking. */
+.app :is(#sec-nutrition,#sec-workouts,#sec-coach,#sec-health,#sec-awards,#sec-snacks) .card .eyebrow{text-transform:none;letter-spacing:0;font-size:calc((15px) * var(--text-scale,1));font-weight:600}
+.app .li .eyebrow{display:block}
+.app .card .mhead{margin-bottom:4px}
 /* No underlines, except real links in the legal pages. */
 .app a:not(.legal a),.app a:not(.legal a):hover,.app a:not(.legal a):focus{text-decoration:none!important}
 </style><div id="app"></div>
@@ -3933,7 +4024,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.6", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.7", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3947,6 +4038,12 @@ const APP_VERSION = { update: "8.2", build: "8.2.6", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.7", area:"Widgets", title:"Widget sizes work (Small, Medium, Large) on Summary and every page, and widget edit mode rebuilt",
+      bug:"Choosing Small, Medium or Large saved a setting but the card looked the same at every size. On Summary the sizes only chose a grid-column class inside an auto-fill 300px grid, which is identical at phone widths, and nothing inside the card depended on size. Every other page ran a second, separate widget system with its own size bars. Edit mode put loose arrows, a full-width Small/Medium/Wide bar and a Hide button under each card, and a dark-blue Reset bar above them. A hidden widget could not be found again on a page where everything was hidden, and the page controls used list positions, so a hidden widget in the saved list moved the wrong card. Some cards on the widget pages still used the old look (the Photo estimate card with its uppercase green label), and Nutrition showed Water and Weight estimate twice.",
+      fix:"One engine now serves Summary and every page. wlGet and wlSet read and write the list (p.widgets on Summary, p.layouts[page] elsewhere); actions find a widget by its key, never by position. wdef(p, k, size) builds each widget for its size and dcard() renders it. Small: half width (2 per row on phones, 4 per row from 700px), square-ish, icon, name and the one value. Medium: full width, value and unit, one gray context line, a 7-day chart (gray bars, latest in the category colour). Large: Medium plus a block of detail: a labelled 7-day chart, today against the 7-day average, goal progress where a goal exists, and the widget's own detail (the table is in docs/CONTEXT.md). Only real data is used; an empty source says No Data. Meals and Coach Large have links inside, so those cards are a div with one stretched link under the inner ones. Edit mode: each card's top row holds a red minus circle (hide), a compact S/M/L switch and a drag handle (mouse) or up and down buttons (touch), all 44px; the arrow keys move a card when its handle has focus. Edit widgets and Done are plain accent text on the right of the section title, Hidden widgets is a list at the bottom with a + for each, and Reset layout is small red text that asks to confirm. The dark-blue Reset bar, loose arrows, size bars and Hide buttons are gone. Layouts saved before this build keep their full width: old Large and Wide read as Medium once (p.wv marks migrated profiles). New default sizes: Meals and Coach Medium. The Photo estimate card has the card header (icon and 17px name) and the other card labels on the widget pages are sentence case. The duplicate Water and Weight estimate cards under the Nutrition widgets were removed.",
+      where:"index.html: dcard(), wdef(), largeOf(), mealsDef(), coachWDef(), metricCard(), lchart(), seriesOf(), todayVsAvg(), recentOf(), wlGet(), wlSet(), wlMigrate(), wlEdit(), wcard(), widgetSection(), the wl- click actions, the drag handlers (WDRAG), PAGE_WIDGETS, DEFAULT_WIDGETS, homeView(), render(), the profile sanitizer (wv), icons chevU, chevD and grip, the CSS block 8.2.7 at the end of the stylesheet, photoAiOptIn() and foodPhotoCard() headers, nutritionView(). Removed: widgetsOf, widgetTools, mealsWidget, coachWidget, renderWidget, pageLayout, pageWidgetHTML, renderPageWidget, pageWidgetTray, widgetBody, ringsMini, ringsMid and the w- and pw- actions. tests/browser/widgets.mjs (new), tests/browser/cards.mjs, tests/browser/run-all.mjs. docs/CONTEXT.md (size and content table), docs/BUILD_PLAN.md, CHANGELOG.md, README.md.",
+      test:"node tests/browser/widgets.mjs (502 checks) and node tests/browser/cards.mjs (143). By hand: open Summary, tap Edit widgets, tap S, M and L on any card and watch the card change at once with no reload; tap Done, reload, and the sizes are still there; repeat on Workouts and Nutrition (sizes are per page and per profile). Drag a card by its handle on a desktop, or use the arrows on a phone. Tap the red minus, find the widget under Hidden widgets and tap + to add it back. Tap Reset layout and confirm.",
+      limits:"(1) Large is about 2 times Medium on a desktop (1.9 to 2.7 times measured) but 2.4 to 3.9 times on a 375px phone, because the detail stacks in one column. (2) Steps are saved per day, so Steps Large says No Data for the hourly bars; water is saved per day, so Water Large says No Data for the last drink time. (3) There is no Drinks widget; Snacks Large lists the day's top 3 snacks only. (4) The app has a weekly workout count goal, not a minutes goal, so Workouts Large shows the week's minutes and the count against the goal. (5) Estimate, Active energy, Resting heart rate, Blood pressure, Blood oxygen and Sleep have no specified Large content; they show the generic detail (labelled 7-day chart, today against average, last 3 readings), and Estimate shows the projected weights and what they are based on. (6) A hidden widget comes back Small; its old size is not remembered. (7) Dragging does not scroll the page near the edge; touch devices use the arrows (chosen by the pointer type, so a touch laptop with a mouse gets the handle). (8) Health data, category pages, Trends and the premium cards stay Medium and have no size switch. (9) Layouts are saved on this device only, as before. (10) Only the header and label style of the other cards on these pages was changed; their layouts were not rebuilt. (11) Not tested on a real phone or in Safari." },
     { id:"8.2.6", area:"Dashboard cards", title:"One flat Apple Health-style card for every dashboard card; Meals card; glass, caustics, beam and scene backgrounds removed from content",
       bug:"Dashboard cards were frosted glass with caustics, a sheen, a hover lift, a border and a rim light, on top of an animated aurora or scene, and each kind of card laid itself out differently: the Today's meals card held a list of dishes and a Build a plan button, the Coach card a paragraph, the premium cards their own layout. 'Edit widgets' was a filled button, and links were underlined in places.",
       fix:"Every dashboard card (the Summary pins, the same card on Nutrition and Health data, the per-page widgets, Trends, and the three premium cards) is built by one function, dcard(), and follows one pattern in original code with Lucide and the app's own icons. Surface: solid, opaque, flat, 20px radius, 16px padding, 12px between cards, no border, glow, gradient, glass, shadow or inner cards; dark #1C1C1E on a #000 page, light #FFFFFF on #F2F2F7, and OLED a black page with #101012 cards. The page and card colours are now the same in every theme (a theme changes only accent and text). Layout: header row with an 18px category icon and the name in the category colour (17px, 600) and, on the right, Today or the last-updated day in gray (15px) and a chevron, the whole card being one link to the metric's page; at least 48px of space; the value bottom left (34px bold tabular numerals, 17px gray unit, one optional 15px gray line); an optional chart at most 120×64px bottom right with gray bars and the latest bar in the category colour; 'No Data' in the value position when empty, with no buttons or chips. Today's meals is now Meals: the value is today's planned calories, the sub-line 'N planned · N logged', the chart one bar per meal; the Breakfast, Lunch and Dinner list, Build a plan and the 'No food culture set' prompt moved to a Today's meals section on the Meals detail page (Nutrition). The Coach card shows the workout streak with the coaching line under it; Micronutrients, Recovery and Pantry use the same card. 'Edit widgets', 'Done' and 'Customise' are plain accent text; section titles are 22px bold; no link is underlined except in the legal text. The aurora, home scenes, seasonal layers, caustics, sheen and beam are gone from behind and on the cards, and the Scene and Season pickers were removed from Settings (the stored choices are kept, not drawn). Glass stays only on the floating top bar, the tab bar and menus. Dark Sleep indigo moved from #5E5CE6 to #7D7AFF so the Sleep name reaches 4.5:1 on its card. The rule is recorded in docs/CONTEXT.md.",
@@ -8267,6 +8364,7 @@ function cleanProfile(x){
   d.gear = {};
   if (x.gear && typeof x.gear === "object") for (const [k, v] of Object.entries(x.gear).slice(0, 40))
     if (SUBS[k] && (v === "yes" || v === "no")) d.gear[k] = v;
+  if (x.wv === 2) d.wv = 2; // widget sizes saved under the 8.2.7 meaning of S, M and L
   d.layouts = {};
   if (x.layouts && typeof x.layouts === "object") for (const [pg, list] of Object.entries(x.layouts).slice(0, 12)) {
     if (!PAGE_WIDGETS[pg] || !Array.isArray(list)) continue;
@@ -9160,31 +9258,166 @@ function initSparks(){
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("drawn"); io.unobserve(e.target); } }), { threshold: 0.4 });
   els.forEach(el => io.observe(el));
 }
-// ---- dashboard card (8.2.6): the one flat card every Summary pin, Nutrition and Health data card uses ----
-// Header (category icon and name in the category colour, "Today" and a chevron in gray), then at the bottom the main value,
-// one optional gray line, and an optional small chart. The whole card is one link to that metric's detail page.
-// Edit mode renders a div instead of a link and appends the widget tools.
+// ---- dashboard card (8.2.7): one flat card in three sizes, used by every Summary and page widget ----
+// Small: icon, name and the one main value. Medium: header ("Today", chevron), value, one gray line and a 7-day chart.
+// Large: Medium plus a block of extra detail (o.extra). The whole card is one link to the detail page. A Large card whose extra
+// block holds its own links is a div with a stretched link under them (links cannot nest). Edit mode renders a div and puts
+// the controls (o.edit) in the top row.
 function dcard(o){
-  const Tag = o.tools ? "div" : "a", href = o.tools ? "" : ` href="${o.href}"`;
-  return `<${Tag} class="mcard dcard${o.cls ? " " + o.cls : ""}${o.tools ? " editing" : ""}"${href}><div class="mhead" style="color:${o.color}">${o.iconHTML || cicon(o.icon, o.color, 18)}<b>${esc(o.name)}</b><span class="when">${esc(o.when || "")}${o.tools ? "" : `<span class="chev">${icon("chevR","go",16)}</span>`}</span></div>
-    <div class="mbody"><div class="mmain">${o.val}${o.sub ? `<div class="msub">${esc(o.sub)}</div>` : ""}</div>${o.chart || ""}</div>${o.tools || ""}</${Tag}>`;
+  const size = o.size || "m", small = size === "s", edit = o.edit, cover = !edit && o.cover;
+  const Tag = edit || cover ? "div" : "a", href = Tag === "a" ? ` href="${o.href}"` : "";
+  const sub = size === "l" && o.subL != null ? o.subL : o.sub;
+  return `<${Tag} class="mcard dcard ws-${size}${edit ? " editing" : ""}${o.cls ? " " + o.cls : ""}"${href}${o.key ? ` data-k="${esc(o.key)}"` : ""}><div class="mhead${edit ? " editing" : ""}" style="color:${o.color}">${edit ? edit.minus : ""}${o.iconHTML || cicon(o.icon, o.color, 18)}<b>${esc(o.name)}</b>${small || edit ? "" : `<span class="when">${esc(o.when || "")}<span class="chev">${icon("chevR","go",16)}</span></span>`}${edit ? edit.controls : ""}</div>
+    <div class="mbody"><div class="mmain">${o.val}${!small && sub ? `<div class="msub">${esc(sub)}</div>` : ""}</div>${small ? "" : o.chart || ""}</div>${size === "l" ? o.extra || "" : ""}${cover ? `<a class="cover" href="${o.href}" aria-label="Open ${esc(o.name)}"></a>` : ""}</${Tag}>`;
 }
 const NODATA = `<div class="mval nodata">No Data</div>`;
-const sizeCls = o => o.wide ? "wide" : o.med ? "med" : "";
-function metricCard(p, k, o = {}){
-  const tools = o.tools || "", m = METRICS[k], color = mColor(k), href = m.link || `#/metric/${k}`, base = { cls: sizeCls(o), tools, href, color, icon: m.icon, name: m.n };
+// ---- Large card pieces (8.2.7) ----
+const plain = s => String(s).replace(/<[^>]+>/g, "");
+const dayLetter = d => "SMTWTFS"[parseYmd(d).getDay()];
+const shortDate = d => parseYmd(d).toLocaleDateString(undefined, { month:"short", day:"numeric" });
+const valText = (k, p, v) => { const m = METRICS[k], f = plain(m.fmt(v, p)); return m.html ? f : `${f} ${m.unit(p)}`; };
+const valHTML = (k, p, v) => { const m = METRICS[k]; return m.html ? m.fmt(v, p) : `${m.fmt(v, p)}<small> ${esc(m.unit(p))}</small>`; };
+const lnone = (note = "") => `<div class="lnone">No Data${note ? `<span>${esc(note)}</span>` : ""}</div>`;
+const lsec = (h, body) => `<div class="lsec"><div class="lh">${esc(h)}</div>${body}</div>`;
+const lrows = rows => rows.length ? `<ul class="lrows">${rows.map(r => `<li><span>${r[0]}</span><b>${r[1]}</b></li>`).join("")}</ul>` : lnone();
+const lstats = (a, b) => `<div class="lstats"><div class="lstat"><span>${esc(a[0])}</span><b>${a[1]}</b></div><div class="lstat"><span>${esc(b[0])}</span><b>${b[1]}</b></div></div>`;
+const lgoal = (label, frac, text, color) => `<div class="lgoal"><div class="lg-top"><span>${esc(label)}</span><b>${text}</b></div><div class="lg-track" role="progressbar" aria-label="${esc(label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(Math.min(1, frac) * 100)}"><i style="width:${Math.round(Math.min(1, frac) * 100)}%;background:${color}"></i></div></div>`;
+// A bar chart with a label under every bar and (unless dense) the value over it. Gray bars, the latest in the card colour.
+function lchart(pts, color, label, o = {}){
+  const nums = pts.map(x => x.n).filter(x => x != null);
+  if (!nums.length) return lnone();
+  const max = Math.max(...nums), min = o.min ? Math.min(...nums) * 0.9 : 0, span = Math.max(1e-6, max - min);
+  return `<div class="lchart${o.dense ? " dense" : ""}" role="img" aria-label="${esc(label)}">${pts.map((x, i) => `<span class="lc-col"><em class="lc-v">${x.n == null || o.dense ? "" : esc(x.txt)}</em><span class="lc-bar"><i style="height:${x.n == null ? 2 : Math.max(4, Math.round((x.n - min) / span * 100))}%${x.n != null && i === pts.length - 1 ? `;background:${color}` : ""}"></i></span><em class="lc-l">${esc(x.lab || "")}</em></span>`).join("")}</div>`;
+}
+const lx = parts => `<div class="lx">${parts.filter(Boolean).join("")}</div>`;
+// The last n days of a metric: raw value (v), chart number (n) and date (d), oldest first.
+function seriesOf(k, n){
+  const m = METRICS[k];
+  return Array.from({ length:n }, (_, i) => { const d = addDays(today(), i - n + 1), v = m.get(d); return { d, v, n: v == null ? null : (m.num ? m.num(v) : v) }; });
+}
+const meanOf = a => a.reduce((x, y) => x + y, 0) / a.length;
+function avgRaw(k, vs){ if (!vs.length) return null; return k === "bp" ? { sys: meanOf(vs.map(v => v.sys)), dia: meanOf(vs.map(v => v.dia)) } : meanOf(vs); }
+// Today against the mean of the days with data in the series.
+function todayVsAvg(k, p, pts){
+  const t = pts[pts.length - 1].v, a = avgRaw(k, pts.filter(x => x.v != null).map(x => x.v));
+  return lstats(["Today", t == null ? "No Data" : valHTML(k, p, t)], ["7-day average", a == null ? "No Data" : valHTML(k, p, a)]);
+}
+function chartOf(k, p, pts, label, o = {}){
+  const m = METRICS[k];
+  return lchart(pts.map((x, i) => ({ lab: o.dense ? (i === 0 || i === pts.length - 1 || i === 15 ? shortDate(x.d) : "") : dayLetter(x.d), n: x.n, txt: x.v == null ? "" : k === "bp" ? String(Math.round(x.v.sys)) : m.html ? String(round(x.n, 1)) : plain(m.fmt(x.v, p)) })), mColor(k), label, { min: m.chartMin, dense: o.dense });
+}
+// The last n readings of a metric, newest first.
+function recentOf(k, n = 3){
+  const m = METRICS[k], out = [];
+  if (k === "weight") { for (const w of entries("weights").sort((a, b) => a.date < b.date ? 1 : -1).slice(0, n)) out.push({ d:w.date, v:w.kg }); return out; }
+  if (m.fields) { for (const d of vitalDates(k === "bp" ? "sys" : k).slice(0, n)) out.push({ d, v:m.get(d) }); return out; }
+  for (let i = 0; i < 60 && out.length < n; i++) { const d = addDays(today(), -i), v = m.get(d); if (v != null) out.push({ d, v }); }
+  return out;
+}
+const WATER_GOAL_ML = 2700; // National Academies guidance, the same goal the Today rings use
+// The Large body of each metric card. Each returns the parts after the Medium content; nothing here is invented, an empty source says "No Data".
+function largeOf(p, k){
+  const m = METRICS[k], t = today(), color = mColor(k), pts = seriesOf(k, 7);
+  const chart7 = lsec("Last 7 days", chartOf(k, p, pts, `${m.n}, last 7 days`)), vs = todayVsAvg(k, p, pts);
+  const recent = lsec("Last 3 readings", lrows(recentOf(k).map(r => [esc(whenLabel(r.d)), valHTML(k, p, r.v)])));
+  const sumKcal = a => a.reduce((x, y) => x + (y.cal || 0), 0);
+  if (k === "calories") {
+    const meals = onDate("meals", t), snacks = onDate("snacks", t), drinks = onDate("drinks", t), eaten = intakeOn(t), goal = p.calorieGoal, any = loggedFood(t);
+    const slots = [...SLOTS.map(([s, n]) => [n, meals.filter(x => x.slot === s).reduce((a, x) => a + mealTotal(x), 0)]), ["Snacks", sumKcal(snacks)], ["Drinks", sumKcal(drinks)]].filter(r => r[1] > 0);
+    const foods = [...meals.map(x => [x.name, mealTotal(x)]), ...snacks.map(x => [x.name, x.cal || 0]), ...drinks.map(x => [x.name || "Drink", x.cal || 0])].sort((a, b) => b[1] - a[1]).slice(0, 3);
+    return [vs, goal ? lgoal("Remaining today", any ? eaten / goal : 0, !any ? `Nothing logged · target ${goal.toLocaleString()} cal` : eaten <= goal ? `${(goal - eaten).toLocaleString()} cal left of ${goal.toLocaleString()}` : `${(eaten - goal).toLocaleString()} cal over ${goal.toLocaleString()}`, color) : "",
+      chart7, lsec("Today by meal", slots.length ? lrows(slots.map(r => [esc(r[0]), `${Math.round(r[1]).toLocaleString()} cal`])) : lnone()),
+      lsec("Top 3 foods today", foods.length ? lrows(foods.map(r => [esc(r[0]), `${Math.round(r[1]).toLocaleString()} cal`])) : lnone())];
+  }
+  if (k === "snacks") {
+    const top = onDate("snacks", t).sort((a, b) => (b.cal || 0) - (a.cal || 0)).slice(0, 3);
+    return [vs, chart7, lsec("Top 3 snacks today", top.length ? lrows(top.map(r => [esc(r.name), `${Math.round(r.cal || 0).toLocaleString()} cal`])) : lnone())];
+  }
+  if (k === "water") {
+    const v = pts[pts.length - 1].v;
+    return [vs, lgoal("Water today", v == null ? 0 : v / WATER_GOAL_ML, v == null ? `No Data · goal ${valText(k, p, WATER_GOAL_ML)}` : `${valText(k, p, v)} of ${valText(k, p, WATER_GOAL_ML)}`, color),
+      chart7, lsec("Last drink", lnone("Water is saved as a daily total, so there is no drink time.")), recent];
+  }
+  if (k === "weight") {
+    const all = entries("weights").sort((a, b) => a.date < b.date ? -1 : 1), first = all[0], last = all[all.length - 1], unit = m.unit(p), conv = kg => p.units === "metric" ? kg : kgToLb(kg);
+    const signed = x => `${x > 0 ? "+" : x < 0 ? "−" : ""}${round(Math.abs(conv(x)), 1)} ${unit}`;
+    const rows = [["Change since start", all.length > 1 ? `${signed(last.kg - first.kg)}<small> since ${esc(shortDate(first.date))}</small>` : "No Data"]];
+    rows.push(["Goal weight", p.targetKg ? `${round(conv(p.targetKg), 1)} ${unit}` : "Not set"]);
+    if (p.targetKg && last) { const gap = last.kg - p.targetKg; rows.push(["Distance to goal", Math.abs(gap) < 0.05 ? "Goal reached" : `${round(Math.abs(conv(gap)), 1)} ${unit} to ${gap > 0 ? "lose" : "gain"}`]); }
+    return [vs, lsec("Last 30 days", chartOf(k, p, seriesOf(k, 30), "Weight, last 30 days", { dense:true })), lsec("Since you started", lrows(rows))];
+  }
+  if (k === "steps") {
+    const wk = pts.filter(x => x.d >= weekStart(t) && x.v != null).sort((a, b) => b.v - a.v)[0];
+    return [vs, lsec("Today by hour", lnone("Steps are saved as a daily total, not by the hour.")), chart7,
+      lsec("Best day this week", wk ? lrows([[esc(`${wk.d === t ? "Today" : fmtDay(wk.d).replace(/,.*/, "")}`), valHTML(k, p, wk.v)]]) : lnone())];
+  }
+  if (k === "workouts") {
+    const all = entries("workouts").sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : (b.at || 0) - (a.at || 0)), last = all[0], wk = weekWorkouts(p), mins = wk.reduce((a, w) => a + (w.minutes || 0), 0), goal = p.workoutGoal, streak = currentStreak(p);
+    return [lsec(last ? `Last workout · ${whenLabel(last.date)}` : "Last workout", last ? lrows([["Type", esc(last.type || "Workout")], ["Duration", `${Math.round(last.minutes || 0)} min`], ["Calories", last.cal ? `${Math.round(last.cal)} cal` : "No Data"]]) : lnone()),
+      goal ? lgoal("This week", wk.length / goal, `${mins} min · ${wk.length} of ${goal} workouts`, color) : lsec("This week", lrows([["Minutes", `${mins} min`], ["Workouts", String(wk.length)], ["Goal", "Not set"]])),
+      lsec("Streak", lrows([["In a row", `${streak} ${streak === 1 ? "day" : "days"}`]])), chart7];
+  }
+  return [vs, chart7, recent];
+}
+// Meals and Coach are not METRICS; each has its own definition.
+function mealsDef(p, L){
+  const picks = dailyPicks(today(), p), planned = picks.reduce((a, d) => a + (d.cal || 0), 0), meals = onDate("meals", today()), logged = meals.length;
+  const o = { key:"meals", href:"#/nutrition", color:"var(--c-nutrition)", icon:"apple", name:"Meals", when:"Today",
+    val: picks.length ? `<div class="mval">${countUp(planned.toLocaleString())}<small> cal</small></div>` : NODATA,
+    sub: picks.length ? `${picks.length} planned · ${logged} logged` : "", chart: picks.length ? barsSVG(picks.map(d => d.cal || 0), "var(--c-nutrition)", 14, 6) : "" };
+  if (L) {
+    const pts = Array.from({ length:7 }, (_, i) => { const d = addDays(today(), i - 6), ms = onDate("meals", d); return { d, v: ms.length ? ms.reduce((a, x) => a + mealTotal(x), 0) : null }; });
+    pts.forEach(x => x.n = x.v);
+    o.cover = true;
+    o.extra = lx([lsec("Planned for today", picks.length ? `<ul class="lrows">${picks.map((d, i) => `<li><a href="${dishLink(d)}"><span>${esc(SLOTS[i]?.[1] || "")} · ${esc(d.n)}</span></a><b>${d.cal || 0} cal</b></li>`).join("")}</ul>` : lnone()),
+      lsec("Logged today", meals.length ? lrows(meals.map(x => [esc(`${SLOTS.find(s => s[0] === x.slot)?.[1] || "Meal"} · ${x.name}`), `${Math.round(mealTotal(x)).toLocaleString()} cal`])) : lnone()),
+      lsec("Logged meals, last 7 days", lchart(pts.map(x => ({ lab: dayLetter(x.d), n: x.n, txt: x.n == null ? "" : Math.round(x.n).toLocaleString() })), "var(--c-nutrition)", "Logged meal calories, last 7 days")),
+      `<div class="lsec lcta"><a class="lbtn" href="#/recipes">${p.plan ? "See full plan" : "Build a plan"}</a></div>`]);
+  }
+  return o;
+}
+function coachWDef(p, L){
+  const streak = currentStreak(p), tip = motivation(p);
+  const o = { key:"coach", href:"#/coach", color:"var(--c-coach)", icon:"stopwatch", name:"Coach", when:"Today",
+    val: `<div class="mval">${streak}<small> ${streak === 1 ? "day" : "days"} in a row</small></div>`, sub: tip, subL: "" };
+  if (L) {
+    const dow = new Date().getDay(), day = p.workoutPlan?.days?.find(d => d.dow === dow), done = onDate("workouts", today()).length > 0;
+    const next = !p.workoutPlan ? ["Set up a workout plan", "#/coach"] : day && !done ? [`Today: ${day.title || day.type} · ${day.minutes} min`, "#/coach"] : day ? ["Today's workout is logged", ""] : ["Rest day, nothing planned", ""];
+    const pts = seriesOf("workouts", 7);
+    o.cover = true;
+    o.extra = lx([lsec("Today's advice", `<p class="ladvice">${esc(tip)}</p>`),
+      lsec("Streak", lrows([["In a row", `${streak} ${streak === 1 ? "day" : "days"}`]])),
+      lsec("Next action", next[1] ? `<ul class="lrows"><li><a href="${next[1]}"><span>${esc(next[0])}</span></a>${icon("chevR","row-chev",16)}</li></ul>` : lrows([[esc(next[0]), ""]])),
+      lsec("Workout minutes, last 7 days", chartOf("workouts", p, pts, "Workout minutes, last 7 days"))]);
+  }
+  return o;
+}
+// size: "s" | "m" | "l". Returns the dcard options for one widget at that size.
+function wdef(p, k, size){
+  const L = size === "l";
+  if (k === "meals") return mealsDef(p, L);
+  if (k === "coach") return coachWDef(p, L);
+  const m = METRICS[k], color = mColor(k), base = { key:k, href: m.link || `#/metric/${k}`, color, icon: m.icon, name: m.n };
   if (k === "estimate") {
     const pr = projection(p); let val = NODATA, sub = "", when = "";
     if (!pr.ready) sub = `Add ${pr.missing.join(", ")} to turn this on`;
     else if (!pr.days) sub = "Starts after a full day of logging";
     else { const per = p.units === "metric" ? `${round(Math.abs(pr.kgPerWeek),2)} kg` : `${round(Math.abs(pr.lbPerWeek),1)} lb`; const dir = Math.abs(pr.lbPerWeek) < 0.1 ? "steady" : pr.lbPerWeek < 0 ? "loss" : "gain";
       val = `<div class="mval">${dir === "steady" ? "About steady" : `≈ ${per}<small> ${dir}</small>`}</div>`; sub = dir === "steady" ? `Last ${pr.days} logged days` : `per week · last ${pr.days} logged days`; when = "Now"; }
-    return dcard({ ...base, when, val, sub });
+    const o = { ...base, when, val, sub };
+    if (L) {
+      const ok = pr.ready && pr.days, wt = kg => `${p.units === "metric" ? round(kg, 1) : round(kgToLb(kg), 1)} ${METRICS.weight.unit(p)}`;
+      o.extra = lx([lsec("Where you could be", ok && pr.at ? lrows([["In 1 week", wt(pr.at.w1)], ["In 4 weeks", wt(pr.at.w4)], ["In 12 weeks", wt(pr.at.w12)]]) : lnone()),
+        lsec("What it is based on", ok ? lrows([["Logged days used", String(pr.days)], ["Average intake", `${Math.round(pr.avgIntake).toLocaleString()} cal`], ["Average daily balance", `${pr.avg > 0 ? "+" : pr.avg < 0 ? "−" : ""}${Math.abs(Math.round(pr.avg)).toLocaleString()} cal`]]) : lnone()),
+        p.targetKg && pr.kg ? lsec("Goal", lrows([["Goal weight", wt(p.targetKg)], ["Latest weight", wt(pr.kg)]])) : ""]);
+    }
+    return o;
   }
-  const L = latestOf(k);
-  const goal = k === "calories" && p.calorieGoal ? `Goal ${p.calorieGoal.toLocaleString()} cal` : "";
-  return dcard({ ...base, when: L ? whenLabel(L.date) : "", val: L ? `<div class="mval">${m.html ? m.fmt(L.v,p) : `${countUp(m.fmt(L.v,p))}<small> ${esc(m.unit(p))}</small>`}</div>` : NODATA, sub: L ? goal : "", chart: L ? spark(k, o.wide ? 14 : 7) : "" });
+  const Lt = latestOf(k), goal = k === "calories" && p.calorieGoal ? `Goal ${p.calorieGoal.toLocaleString()} cal` : "";
+  return { ...base, when: Lt ? whenLabel(Lt.date) : "", val: Lt ? `<div class="mval">${m.html ? m.fmt(Lt.v, p) : `${countUp(m.fmt(Lt.v, p))}<small> ${esc(m.unit(p))}</small>`}</div>` : NODATA, sub: Lt ? goal : "", chart: Lt && size !== "s" ? spark(k, 7) : "", extra: L ? lx(largeOf(p, k)) : "" };
 }
+// The card for the grids that are not widget layouts (Health data, categories, Trends, Nutrition): always Medium.
+function metricCard(p, k, o = {}){ return dcard({ ...wdef(p, k, "m"), size:"m", key:null, ...o }); }
 
 // =================== PROFILE PHOTO ===================
 function avatarHTML(p, size = 64, cls = ""){
@@ -9237,37 +9470,6 @@ function initLastUpdatedFade(){
     LU_TIMER = setTimeout(() => el.classList.add("lu-gone"), 200);
   }, toFade);
 }
-const EXTRA_WIDGETS = { meals:{ n:"Today's meals", icon:"apple", color:"var(--c-nutrition)" }, coach:{ n:"Coach", icon:"stopwatch", color:"var(--c-coach)" } };
-const DEFAULT_WIDGETS = [{k:"meals",size:"l"},{k:"calories",size:"s"},{k:"estimate",size:"s"},{k:"workouts",size:"s"},{k:"steps",size:"s"},{k:"sleep",size:"s"},{k:"rhr",size:"s"},{k:"coach",size:"l"}];
-const widgetName = k => METRICS[k]?.n || EXTRA_WIDGETS[k]?.n || k;
-const widgetIcon = k => METRICS[k] ? cicon(METRICS[k].icon, mColor(k), 16) : cicon(EXTRA_WIDGETS[k].icon, EXTRA_WIDGETS[k].color, 16);
-function widgetsOf(p){
-  let w = Array.isArray(p.widgets) ? p.widgets : Array.isArray(p.pinned) ? p.pinned.map(k => ({k, size:"s"})) : DEFAULT_WIDGETS;
-  return w.filter(x => x && (METRICS[x.k] || EXTRA_WIDGETS[x.k])).map(x => ({ k:x.k, size: ["s","m","l"].includes(x.size) ? x.size : "s" }));
-}
-function widgetTools(i, n, w){
-  return `<button class="wx" data-act="w-remove" data-i="${i}" aria-label="Remove ${esc(widgetName(w.k))}">−</button>
-  <div class="wtools"><span class="btn-group" role="group" aria-label="Move"><button class="btn sm icon-btn" data-act="w-move" data-i="${i}" data-d="-1"${i === 0 ? " disabled" : ""} aria-label="Move earlier">${icon("arrowL","",15)}</button><button class="btn sm icon-btn" data-act="w-move" data-i="${i}" data-d="1"${i === n-1 ? " disabled" : ""} aria-label="Move later">${icon("arrowR","",15)}</button></span>
-  <div class="seg" role="group" aria-label="Size"><button data-act="w-size" data-i="${i}" data-v="s" aria-pressed="${w.size==="s"}">Small</button><button data-act="w-size" data-i="${i}" data-v="m" aria-pressed="${w.size==="m"}">Medium</button><button data-act="w-size" data-i="${i}" data-v="l" aria-pressed="${w.size==="l"}">Wide</button></div></div>`;
-}
-// Meals (8.2.6): the planned calories for today. The Breakfast, Lunch and Dinner list, "Build a plan" and the food-culture prompt live on the Meals detail page (#/nutrition).
-function mealsWidget(p, w, tools){
-  const picks = dailyPicks(today(), p), planned = picks.reduce((a, d) => a + (d.cal || 0), 0), logged = onDate("meals", today()).length;
-  return dcard({ cls: sizeCls({ wide: w.size === "l", med: w.size === "m" }), tools, href: "#/nutrition", color: "var(--c-nutrition)", icon: "apple", name: "Meals", when: "Today",
-    val: picks.length ? `<div class="mval">${countUp(planned.toLocaleString())}<small> cal</small></div>` : NODATA,
-    sub: picks.length ? `${picks.length} planned · ${logged} logged` : "", chart: picks.length ? barsSVG(picks.map(d => d.cal || 0), "var(--c-nutrition)", 14, 6) : "" });
-}
-function coachWidget(p, w, tools){
-  const streak = typeof currentStreak === "function" ? currentStreak(p) : 0;
-  return dcard({ cls: sizeCls({ wide: w.size === "l", med: w.size === "m" }), tools, href: "#/coach", color: "var(--c-coach)", icon: "stopwatch", name: "Coach", when: "Today",
-    val: `<div class="mval">${streak}<small> ${streak === 1 ? "day" : "days"} in a row</small></div>`, sub: motivation(p) });
-}
-function renderWidget(p, w, i, n, editing){
-  const tools = editing ? widgetTools(i, n, w) : "";
-  if (w.k === "meals") return mealsWidget(p, w, tools);
-  if (w.k === "coach") return coachWidget(p, w, tools);
-  return metricCard(p, w.k, { wide: w.size === "l", med: w.size === "m", tools });
-}
 function glanceCard(p){ return ringsCard(p); }
 function glanceCardOld(p){
   const eaten = intakeOn(today()), goal = p.calorieGoal, ww = weekWorkouts(p).length, wg = p.workoutGoal;
@@ -9280,8 +9482,7 @@ function glanceCardOld(p){
   </section>`;
 }
 function homeView(p){
-  const ws = widgetsOf(p); const at = lastUpdated(); const editing = !!UI.editPins;
-  const unused = [...Object.keys(EXTRA_WIDGETS), ...Object.keys(METRICS)].filter(k => !ws.some(w => w.k === k));
+  const at = lastUpdated();
   const when = at ? `${new Date(at).toDateString() === new Date().toDateString() ? "today" : new Date(at).toLocaleDateString(undefined,{month:"short",day:"numeric"})} at ${new Date(at).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}` : null;
   return `
   <!-- Section 8: the profile is a compact strip of its own, separate from the rings. -->
@@ -9299,11 +9500,7 @@ function homeView(p){
     </div>
   </div>
   ${glanceCard(p)}
-  <div class="row between"><h2 class="sec-title">Pinned</h2><button class="link-btn" data-act="edit-pins">${editing ? "Done" : "Edit widgets"}</button></div>
-  ${editing ? `<section class="card"><div class="row between"><b>Add widgets</b><button class="btn sm ghost" data-act="w-reset">Reset to default</button></div>
-    <div class="addtray">${unused.map(k => `<button class="chip" data-act="w-add" data-v="${k}">+ ${widgetIcon(k)} ${esc(widgetName(k))}</button>`).join("") || `<span class="small muted">Every widget is already on your Summary.</span>`}</div>
-    <p class="tiny muted">Use the arrows to reorder, pick Small or Wide, and tap − to remove.</p></section>` : ""}
-  <div class="mgrid">${ws.map((w,i) => renderWidget(p, w, i, ws.length, editing)).join("") || `<div class="empty">No widgets. Tap Edit widgets to add some.</div>`}</div>
+  ${widgetSection(p, "home")}
   ${typeof isPremium === "function" && isPremium() && typeof microWidget === "function"
       ? `<div class="mgrid premrow">${microWidget(p)}${typeof recoveryWidget === "function" ? recoveryWidget(p) : ""}${typeof pantryWidget === "function" ? pantryWidget(p) : ""}</div>` : ""}
   ${trendsSection(p)}
@@ -9631,6 +9828,9 @@ const I = {
  moonfill:'<path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.6 8.6 0 1 0 10.7 10.7z" fill="currentColor" stroke="none"/>',
  sunmoon:'<circle cx="6.9" cy="12" r="3.1"/><path d="M6.9 5.9v1.3M6.9 16.8v1.3M1.8 12h1.3M4 9.1l.9.9M4 14.9l.9-.9"/><path d="M21.5 14.7a4.7 4.7 0 0 1-5.8-5.8 4.9 4.9 0 1 0 5.8 5.8z"/>',
  chevR:'<path d="M9 5l7 7-7 7"/>',
+ chevU:'<path d="M5 15l7-7 7 7"/>',
+ chevD:'<path d="M5 9l7 7 7-7"/>',
+ grip:'<circle cx="9" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1.3" fill="currentColor" stroke="none"/>',
  arrowL:'<path d="M19 12H5M11 6l-6 6 6 6"/>',
  arrowR:'<path d="M5 12h14M13 6l6 6-6 6"/>',
  alert:'<path d="M12 4.5l9 16H3z"/><path d="M12 10v4M12 17.4v.2"/>',
@@ -10037,7 +10237,7 @@ function render(){
           <div class="head-sentinel" aria-hidden="true"></div>
         </header>
         ${notifPanel(p)}
-        <div class="section active ${animate ? "enter " : ""}stack lg" id="sec-${UI.route}">${typeof pageWidgetHTML === "function" && PAGE_WIDGETS[UI.route] && UI.route !== "home" ? pageWidgetHTML(p, UI.route) : ""}${view(p)}</div>
+        <div class="section active ${animate ? "enter " : ""}stack lg" id="sec-${UI.route}">${PAGE_WIDGETS[UI.route] ? widgetSection(p, UI.route) : ""}${view(p)}</div>
         ${typeof siteFooter === "function" ? siteFooter() : ""}
       </div>
     </main>
@@ -10679,7 +10879,6 @@ function nutritionView(p){
   const pend = UI.pendingExtras && meals.find(m => m.id === UI.pendingExtras);
   const slotGuess = new Date().getHours() < 11 ? "breakfast" : new Date().getHours() < 16 ? "lunch" : "dinner";
   return `
-  <div class="mgrid">${metricCard(p, "water")}${metricCard(p, "estimate")}</div>
   ${mealsTodayCard(p)}
   <div class="grid g2">
     <section class="card">
@@ -11609,12 +11808,6 @@ document.addEventListener("click", async e => {
       } catch { toast("This browser wouldn't save the file."); }
       break; }
     case "theme-toggle": toggleTheme(); break;
-    case "edit-pins": UI.editPins = !UI.editPins; render(); break;
-    case "w-add": { const w = widgetsOf(p); w.push({ k:t.dataset.v, size: t.dataset.v === "meals" || t.dataset.v === "coach" ? "l" : "s" }); p.widgets = w; saveProfile(); render(); break; }
-    case "w-remove": { const w = widgetsOf(p); w.splice(+t.dataset.i, 1); p.widgets = w; saveProfile(); render(); break; }
-    case "w-move": { const w = widgetsOf(p); const i = +t.dataset.i, j = i + +t.dataset.d; if (j >= 0 && j < w.length) { [w[i], w[j]] = [w[j], w[i]]; p.widgets = w; saveProfile(); render(); } break; }
-    case "w-size": { const w = widgetsOf(p); w[+t.dataset.i].size = t.dataset.v; p.widgets = w; saveProfile(); render(); break; }
-    case "w-reset": p.widgets = DEFAULT_WIDGETS.map(x => ({...x})); saveProfile(); render(); break;
     case "jump": e.preventDefault(); document.getElementById("sec-" + t.dataset.v)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"start" }); break;
     case "m-range": UI.mRange = +t.dataset.v; render(); break;
     case "del-metric": deleteMetric(t.dataset.k, t.dataset.d); render(); toast("Deleted"); break;
@@ -11683,7 +11876,7 @@ function resetUI(){
   // save it into B because clipSave() looks up P() fresh at save time, not at record time).
   if (typeof camStop === "function" && typeof CAM !== "undefined" && CAM.stream) camStop();
   if (typeof restStop === "function") restStop();
-  Object.assign(UI, { metricErr:null, editPins:false, secMsg:null, editGroup:null, groupErr:null, pendingExtras:null, navDate:null, prefill:null, prefillW:null, askCoach:null, askMeal:null, import:null, weightErr:null, mealBuild:null, coachAns:null, drinkPick:null, drinkQty:null, confirmDel:null, confirmDelMeal:null, confirmErase:false, cw:null, foodShot:null, gymShot:null, planUI:null, editBaseline:false, baselineDraft:null,
+  Object.assign(UI, { metricErr:null, editPage:null, resetAsk:null, secMsg:null, editGroup:null, groupErr:null, pendingExtras:null, navDate:null, prefill:null, prefillW:null, askCoach:null, askMeal:null, import:null, weightErr:null, mealBuild:null, coachAns:null, drinkPick:null, drinkQty:null, confirmDel:null, confirmDelMeal:null, confirmErase:false, cw:null, foodShot:null, gymShot:null, planUI:null, editBaseline:false, baselineDraft:null,
     fcState:null, fcPending:null, fcSecs:0, fcEx:null, fcErr:null, bdState:null, bdErr:null, obAgeErr:null, obAgeConfirm:false, confirmEraseAll:false });
 }
 // BUG-117/118/119 fix: these three two-tap confirms (erase everything, delete a profile, delete
@@ -12088,7 +12281,7 @@ function buildPalette(){
     { label: "Log a meal", go: () => location.hash = "#/nutrition" },
     { label: "Add a snack", go: () => location.hash = "#/snacks" },
     { label: "Log a workout", go: () => location.hash = "#/workouts" },
-    { label: "Edit Summary widgets", go: () => { location.hash = "#/home"; UI.editPins = true; render(); } },
+    { label: "Edit Summary widgets", go: () => { location.hash = "#/home"; UI.editPage = "home"; render(); } },
     { label: "Appearance settings", go: () => location.hash = "#/settings/appearance" },
     { label: "Privacy and security", go: () => location.hash = "#/settings/privacy" },
     ...(CRY.lock ? [{ label: "Lock now", go: () => lockNow() }] : []),
@@ -12739,7 +12932,7 @@ function photoAiOptIn(kind){
     ? { h:"Snap your plate", d:"Take a picture of your food and the app will guess what's on the plate and how many calories it is. Photo estimates only work when the app is opened inside Claude. On this site they fall back to an offline estimate." }
     : { h:"Log a machine from a photo", d:"Photograph the gym equipment you used and Claude will name it and suggest a safe starting point." };
   return `<section class="card shot" id="${kind}-photo-optin">
-    <div class="setrow"><div class="setlabel"><div class="eyebrow" style="color:var(--c-food)">Photo estimate</div><h2 style="margin-top:4px">${esc(copy.h)}</h2></div></div>
+    <div class="setrow"><div class="setlabel"><div class="mhead" style="color:var(--c-food)">${cicon("apple","var(--c-food)",18)}<b>Photo estimate</b></div><h2 style="margin-top:4px">${esc(copy.h)}</h2></div></div>
     <p class="small muted">${esc(copy.d)} Before the first photo goes anywhere, here is exactly what that means:</p>
     <ul class="clean small optin">
       <li>${icon("pmShare","",16)}<span>Inside Claude, the one photo you choose is sent to Claude for that one answer, along with a short summary of your profile so the answer fits you. It's shrunk and stripped of location data first.</span></li>
@@ -12755,7 +12948,7 @@ function foodPhotoCard(p){
   const st = UI.foodShot || {};
   const e = st.est;
   return `<section class="card shot" id="food-photo">
-    <div class="setrow"><div class="setlabel"><div class="eyebrow" style="color:var(--c-food)">Photo estimate</div>
+    <div class="setrow"><div class="setlabel"><div class="mhead" style="color:var(--c-food)">${cicon("apple","var(--c-food)",18)}<b>Photo estimate</b></div>
       <h2 style="margin-top:4px">Snap your plate</h2></div>
       ${UI.visionOk === false ? `<span class="guess setctl">Offline estimate</span>` : ""}</div>
     <p class="small muted">Take a picture of your food and the coach will guess what's on the plate and how many calories it is. It's a guess from a picture, not a measurement. Check it before you log it.</p>
@@ -14461,102 +14654,129 @@ function opacityRow(p){
     <span class="tiny muted">Sets how see-through the glass is on every panel, card and menu, live. Text stays at full contrast at every setting, so it never becomes hard to read.</span></div>`;
 }
 
-// Section 9 + 10: a layout per page, three sizes, show/hide and reorder, saved per profile.
+// ---- widget layouts (8.2.7): one engine for Summary and every page ----
+// Summary keeps its list in p.widgets, every other page in p.layouts[page]. Both are read and written through wlGet and wlSet,
+// so size, order, hide and add behave the same everywhere. A hidden widget is any widget on that page's list that is not shown.
+const EXTRA_WIDGETS = { meals:{ n:"Today's meals", icon:"apple", color:"var(--c-nutrition)" }, coach:{ n:"Coach", icon:"stopwatch", color:"var(--c-coach)" } };
+const DEFAULT_WIDGETS = [{k:"meals",size:"m"},{k:"calories",size:"s"},{k:"estimate",size:"s"},{k:"workouts",size:"s"},{k:"steps",size:"s"},{k:"sleep",size:"s"},{k:"rhr",size:"s"},{k:"coach",size:"m"}];
 const PAGE_WIDGETS = {
-  home:      ["rings","meals","coach","calories","estimate","workouts","water","steps","sleep","rhr"],
   nutrition: ["water","estimate","calories","meals"],
   workouts:  ["workouts","steps","active","coach"],
   coach:     ["coach","workouts","calories","estimate"],
   health:    ["steps","active","rhr","spo2","sleep","weight","water"],
   awards:    ["workouts","calories","water"]
 };
-const WIDGET_SIZES = [["s","Small"],["m","Medium"],["l","Large"]];
-function pageLayout(p, page){
-  p.layouts = p.layouts && typeof p.layouts === "object" ? p.layouts : {};
-  if (!Array.isArray(p.layouts[page])) {
-    p.layouts[page] = (PAGE_WIDGETS[page] || []).slice(0, 4).map((k, i) => ({ k, size: i === 0 ? "l" : "s", on: true }));
-  }
-  return p.layouts[page];
+const WIDGET_SIZES = [["s","S","Small"],["m","M","Medium"],["l","L","Large"]];
+const widgetName = k => METRICS[k]?.n || EXTRA_WIDGETS[k]?.n || k;
+const widgetIcon = k => METRICS[k] ? cicon(METRICS[k].icon, mColor(k), 16) : cicon(EXTRA_WIDGETS[k].icon, EXTRA_WIDGETS[k].color, 16);
+const wlPool = page => page === "home" ? [...Object.keys(EXTRA_WIDGETS), ...Object.keys(METRICS)] : (PAGE_WIDGETS[page] || []);
+// Before 8.2.7 "Large" and "Wide" both meant full width, which is Medium now. Saved layouts are moved over once.
+function wlMigrate(p){
+  if (p.wv === 2) return;
+  for (const w of Array.isArray(p.widgets) ? p.widgets : []) if (w && w.size === "l") w.size = "m";
+  for (const lay of Object.values(p.layouts && typeof p.layouts === "object" ? p.layouts : {})) for (const w of Array.isArray(lay) ? lay : []) if (w && w.size === "l") w.size = "m";
+  p.wv = 2;
 }
-function pageWidgetHTML(p, page){
-  const lay = pageLayout(p, page).filter(w => w.on !== false);
-  const editing = UI.editPage === page;
-  if (!lay.length && !editing) return "";
-  return `<div class="pagewidgets">
-    <div class="setrow"><span class="setlabel eyebrow">Your widgets</span>
-      <button class="link-btn" data-act="edit-page" data-v="${page}">${editing ? "Done" : "Customise"}</button></div>
-    <div class="mgrid">${lay.map((w, i) => renderPageWidget(p, page, w, i, editing)).join("")}</div>
-    ${editing ? pageWidgetTray(p, page) : ""}
+function wlGet(p, page){
+  wlMigrate(p);
+  const pool = wlPool(page);
+  let raw;
+  if (page === "home") raw = Array.isArray(p.widgets) ? p.widgets : Array.isArray(p.pinned) ? p.pinned.map(k => ({ k, size:"s" })) : DEFAULT_WIDGETS;
+  else { p.layouts = p.layouts && typeof p.layouts === "object" ? p.layouts : {};
+    raw = Array.isArray(p.layouts[page]) ? p.layouts[page].filter(w => w && w.on !== false) : pool.slice(0, 4).map((k, i) => ({ k, size: i === 0 ? "m" : "s" })); }
+  const seen = new Set(), shown = [];
+  for (const w of raw) if (w && pool.includes(w.k) && !seen.has(w.k)) { seen.add(w.k); shown.push({ k:w.k, size: ["s","m","l"].includes(w.size) ? w.size : "s" }); }
+  return { shown, hidden: pool.filter(k => !seen.has(k)) };
+}
+function wlSet(p, page, shown){
+  const list = shown.map(w => ({ k:w.k, size:w.size }));
+  if (page === "home") p.widgets = list; else { p.layouts = p.layouts && typeof p.layouts === "object" ? p.layouts : {}; p.layouts[page] = list.map(w => ({ ...w, on:true })); }
+  saveProfile();
+}
+function wlEdit(p, page, w, i, n){
+  const name = widgetName(w.k), at = `data-p="${page}" data-k="${esc(w.k)}"`;
+  return { minus: `<button class="wminus" data-act="wl-hide" ${at} aria-label="Hide ${esc(name)}"><span aria-hidden="true">−</span></button>`,
+    controls: `<span class="wctl"><span class="seg wseg" role="group" aria-label="${esc(name)} size">${WIDGET_SIZES.map(([v, l, full]) => `<button data-act="wl-size" ${at} data-v="${v}" aria-pressed="${w.size === v}" aria-label="${full}"><span aria-hidden="true">${l}</span></button>`).join("")}</span>
+      <span class="wmove"><button data-act="wl-move" ${at} data-d="-1" aria-label="Move ${esc(name)} up"${i === 0 ? " disabled" : ""}>${icon("chevU","",18)}</button><button data-act="wl-move" ${at} data-d="1" aria-label="Move ${esc(name)} down"${i === n - 1 ? " disabled" : ""}>${icon("chevD","",18)}</button></span>
+      <button class="wdrag" ${at} aria-label="Drag ${esc(name)} to reorder. With the keyboard, use the arrow keys." aria-keyshortcuts="ArrowUp ArrowDown">${icon("grip","",18)}</button></span>` };
+}
+function wcard(p, page, w, i, n, editing){
+  return dcard({ ...wdef(p, w.k, w.size), size: w.size, edit: editing ? wlEdit(p, page, w, i, n) : null });
+}
+function widgetSection(p, page){
+  const { shown, hidden } = wlGet(p, page), editing = UI.editPage === page, asking = UI.resetAsk === page;
+  return `<div class="wsec" data-page="${page}">
+    <div class="row between"><h2 class="sec-title">${page === "home" ? "Pinned" : "Widgets"}</h2><button class="link-btn" data-act="wl-edit" data-p="${page}">${editing ? "Done" : "Edit widgets"}</button></div>
+    <div class="wgrid${editing ? " editing" : ""}" data-page="${page}">${shown.map((w, i) => wcard(p, page, w, i, shown.length, editing)).join("") || `<div class="empty">No widgets. Tap Edit widgets to add some.</div>`}</div>
+    ${editing ? `<section class="card wlist" aria-label="Hidden widgets"><b class="wlist-h">Hidden widgets</b>
+      ${hidden.length ? `<ul class="wlist-rows">${hidden.map(k => `<li><span class="wlist-n">${widgetIcon(k)} ${esc(widgetName(k))}</span><button class="wadd" data-act="wl-add" data-p="${page}" data-k="${esc(k)}" aria-label="Add ${esc(widgetName(k))}"><span aria-hidden="true">+</span></button></li>`).join("")}</ul>` : `<span class="small muted">Nothing is hidden. Every widget for this page is showing.</span>`}</section>
+    <div class="wreset">${asking ? `<span class="small">Reset sizes and order to the default?</span> <button class="wreset-btn" data-act="wl-reset" data-p="${page}">Reset</button> <button class="wreset-no" data-act="wl-reset-no">Cancel</button>`
+      : `<button class="wreset-btn" data-act="wl-reset-ask" data-p="${page}">Reset layout</button>`}</div>` : ""}
   </div>`;
 }
-function renderPageWidget(p, page, w, i, editing){
-  const size = ["s","m","l"].includes(w.size) ? w.size : "s";
-  const body = widgetBody(p, w.k, size);
-  const cls = `pw pw-${size}${editing ? " editing" : ""}`;
-  return `<section class="${cls}" data-k="${esc(w.k)}">
-    ${body}
-    ${editing ? `<div class="wtools">
-      <button class="btn sm" data-act="pw-move" data-p="${page}" data-i="${i}" data-d="-1"${i === 0 ? " disabled" : ""} aria-label="Move earlier">${icon("arrowL","",15)}</button>
-      <button class="btn sm" data-act="pw-move" data-p="${page}" data-i="${i}" data-d="1" aria-label="Move later">${icon("arrowR","",15)}</button>
-      <div class="seg" role="group" aria-label="Size">${WIDGET_SIZES.map(([v, l]) => `<button data-act="pw-size" data-p="${page}" data-i="${i}" data-v="${v}" aria-pressed="${size === v}">${l}</button>`).join("")}</div>
-      <button class="btn sm ghost" data-act="pw-hide" data-p="${page}" data-i="${i}">Hide</button></div>` : ""}
-  </section>`;
-}
-function pageWidgetTray(p, page){
-  const lay = pageLayout(p, page);
-  const off = (PAGE_WIDGETS[page] || []).filter(k => !lay.some(w => w.k === k && w.on !== false));
-  return `<div class="card tray">
-    <div class="setrow"><b class="setlabel">Add to this page</b><button class="btn sm ghost setctl" data-act="pw-reset" data-p="${page}">Reset</button></div>
-    <div class="addtray">${off.length ? off.map(k => `<button class="chip" data-act="pw-add" data-p="${page}" data-v="${esc(k)}">${icon("plus","",14)} ${esc(widgetLabel(k))}</button>`).join("")
-      : `<span class="small muted">Everything available is already on this page.</span>`}</div>
-    <p class="tiny muted">Small shows the headline number, Medium adds context, Large shows the full widget. Your layout is saved per profile and survives reloads.</p>
-  </div>`;
-}
-const widgetLabel = k => k === "rings" ? "Activity rings" : k === "meals" ? "Today's meals" : k === "coach" ? "Coach"
-  : (METRICS[k]?.n || EXTRA_WIDGETS[k]?.n || k);
-// Size decides how much detail a widget shows.
-function widgetBody(p, k, size){
-  if (k === "rings") return size === "s" ? ringsMini(p) : size === "m" ? ringsMid(p) : ringsCard(p);
-  if (k === "meals") return mealsWidget(p, { k, size: size === "l" ? "l" : "s" }, "");
-  if (k === "coach") return coachWidget(p, { k, size: size === "l" ? "l" : "s" }, "");
-  if (METRICS[k]) return metricCard(p, k, { wide: size === "l", med: size === "m" });
-  return `<div class="empty small">Nothing to show.</div>`;
-}
-function ringsMini(p){
-  const rows = ringData(p); const closed = rows.filter(r => r.closed).length;
-  return `<a class="mcard rings-mini" href="#/home"><div class="mhead" style="color:var(--c-activity)">${cicon("grid","var(--c-activity)")}<b>Rings</b><span class="when"><span class="chev">${icon("chevR","go",13)}</span></span></div>
-    <div class="num mid">${closed}<span class="small muted"> of 3 closed</span></div>
-    <div class="rmini">${rows.map(r => `<span class="rmini-bar" style="--rc:${r.c2}"><i style="width:${Math.round(Math.min(1, r.pct) * 100)}%"></i></span>`).join("")}</div></a>`;
-}
-function ringsMid(p){
-  const rows = ringData(p);
-  return `<section class="mcard"><div class="mhead" style="color:var(--c-activity)">${cicon("grid","var(--c-activity)")}<b>Today at a glance</b></div>
-    <div class="rmid">${rows.map(r => { const fmt = r.fmt || (x => Math.round(x).toLocaleString());
-      return `<a class="rmid-row" href="${r.href}" style="--rc:${r.c2}"><span class="rleg-dot"></span>
-        <span class="grow"><b>${esc(r.n)}</b><span class="tiny muted"> ${fmt(r.v)} / ${r.goal > 0 ? fmt(r.goal) : "—"}</span></span>
-        <span class="tab">${r.goal > 0 ? Math.round(r.pct * 100) : 0}%</span></a>`; }).join("")}</div></section>`;
-}
-
-// --- actions for the per-page widgets and the opacity slider ---
+// Click actions. Widgets are found by key, never by position, so a hidden widget in the saved list cannot shift the target.
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-act]"); if (!t) return;
+  const t = e.target.closest("[data-act^='wl-']"); if (!t) return;
   const p = P(); if (!p) return;
-  const page = t.dataset.p;
-  const lay = page ? pageLayout(p, page) : null;
-  switch (t.dataset.act) {
-    case "edit-page": UI.editPage = UI.editPage === t.dataset.v ? null : t.dataset.v; render(); break;
-    case "pw-move": { const i = +t.dataset.i, j = i + +t.dataset.d;
-      if (j >= 0 && j < lay.length) { [lay[i], lay[j]] = [lay[j], lay[i]]; saveProfile(); render(); } break; }
-    case "pw-size": { lay[+t.dataset.i].size = t.dataset.v; saveProfile(); render();
-      const el = document.querySelectorAll(".pagewidgets .pw")[+t.dataset.i];
-      if (el && UI.motionOk) { el.classList.remove("resized"); void el.offsetWidth; el.classList.add("resized"); } break; }
-    case "pw-hide": { lay[+t.dataset.i].on = false; saveProfile(); render(); toast("Hidden. Add it back from the tray.", "info"); break; }
-    case "pw-add": { const k = t.dataset.v; const ex = lay.find(w => w.k === k);
-      if (ex) ex.on = true; else lay.push({ k, size:"s", on:true });
-      saveProfile(); render(); break; }
-    case "pw-reset": { delete p.layouts[page]; pageLayout(p, page); saveProfile(); render(); toast("Layout reset", "success"); break; }
-    case "op-reset": { p.look = { ...(p.look || {}), opacity: 1 }; applyOpacity(p); saveProfile(); render(); break; }
+  const a = t.dataset.act, page = t.dataset.p, k = t.dataset.k;
+  if (a === "wl-edit") { UI.editPage = UI.editPage === page ? null : page; UI.resetAsk = null; render(); return; }
+  if (a === "wl-reset-no") { UI.resetAsk = null; render(); return; }
+  if (a === "wl-reset-ask") { UI.resetAsk = page; render(); return; }
+  if (!page) return;
+  const { shown } = wlGet(p, page), i = shown.findIndex(w => w.k === k);
+  switch (a) {
+    case "wl-hide": if (i > -1) { shown.splice(i, 1); wlSet(p, page, shown); render(); } break;
+    case "wl-size": if (i > -1 && ["s","m","l"].includes(t.dataset.v)) { shown[i].size = t.dataset.v; wlSet(p, page, shown); render(); } break;
+    case "wl-move": { const j = i + +t.dataset.d;
+      if (i > -1 && j >= 0 && j < shown.length) { [shown[i], shown[j]] = [shown[j], shown[i]]; wlSet(p, page, shown); render();
+        const again = document.querySelector(`.wgrid[data-page="${page}"] [data-act="wl-move"][data-k="${CSS.escape(k)}"][data-d="${t.dataset.d}"]:not(:disabled)`) || document.querySelector(`.wgrid[data-page="${page}"] [data-act="wl-move"][data-k="${CSS.escape(k)}"]:not(:disabled)`);
+        again?.focus({ preventScroll:true }); } break; }
+    case "wl-add": if (i === -1 && wlPool(page).includes(k)) { shown.push({ k, size:"s" }); wlSet(p, page, shown); render(); } break;
+    case "wl-reset": { if (page === "home") p.widgets = DEFAULT_WIDGETS.map(x => ({ ...x })); else if (p.layouts) delete p.layouts[page]; UI.resetAsk = null; saveProfile(); render(); toast("Layout reset", "success"); break; }
   }
+});
+// Drag to reorder (desktop). The handle is the only drag target; phones use the up and down buttons, and the arrow keys work on the handle.
+let WDRAG = null;
+function wdropTarget(x, y){
+  const el = document.elementFromPoint(x, y)?.closest?.(".wgrid .dcard"); if (!el || el === WDRAG.card || el.parentElement !== WDRAG.grid) return null;
+  const r = el.getBoundingClientRect(), side = r.width < WDRAG.grid.clientWidth * 0.6;
+  return { el, before: side ? x < r.left + r.width / 2 : y < r.top + r.height / 2 };
+}
+document.addEventListener("pointerdown", e => {
+  const h = e.target.closest?.(".wdrag"); if (!h || e.button !== 0) return;
+  const card = h.closest(".dcard"); if (!card) return;
+  e.preventDefault();
+  WDRAG = { card, grid: card.parentElement, id: e.pointerId, page: h.dataset.p, k: h.dataset.k, hit: null };
+  card.classList.add("dragging"); try { h.setPointerCapture(e.pointerId); } catch {}
+});
+document.addEventListener("pointermove", e => {
+  if (!WDRAG || e.pointerId !== WDRAG.id) return;
+  WDRAG.grid.querySelectorAll(".drop-before,.drop-after").forEach(n => n.classList.remove("drop-before", "drop-after"));
+  const hit = wdropTarget(e.clientX, e.clientY); WDRAG.hit = hit;
+  if (hit) hit.el.classList.add(hit.before ? "drop-before" : "drop-after");
+});
+const wdragEnd = e => {
+  if (!WDRAG || e.pointerId !== WDRAG.id) return;
+  const { card, grid, page, k, hit } = WDRAG; WDRAG = null;
+  card.classList.remove("dragging"); grid.querySelectorAll(".drop-before,.drop-after").forEach(n => n.classList.remove("drop-before", "drop-after"));
+  const p = P(); if (e.type !== "pointerup" || !hit || !p) return;
+  const { shown } = wlGet(p, page), from = shown.findIndex(w => w.k === k), [moved] = shown.splice(from, 1);
+  let to = shown.findIndex(w => w.k === hit.el.dataset.k); if (to < 0) { shown.splice(from, 0, moved); return; }
+  shown.splice(hit.before ? to : to + 1, 0, moved); wlSet(p, page, shown); render();
+  document.querySelector(`.wgrid[data-page="${page}"] .dcard[data-k="${CSS.escape(k)}"] .wdrag`)?.focus({ preventScroll:true });
+};
+document.addEventListener("pointerup", wdragEnd); document.addEventListener("pointercancel", wdragEnd);
+document.addEventListener("keydown", e => {
+  const h = e.target.closest?.(".wdrag"); if (!h || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+  e.preventDefault(); const p = P(); if (!p) return;
+  const { shown } = wlGet(p, h.dataset.p), i = shown.findIndex(w => w.k === h.dataset.k), j = i + (e.key === "ArrowUp" ? -1 : 1);
+  if (i < 0 || j < 0 || j >= shown.length) return;
+  [shown[i], shown[j]] = [shown[j], shown[i]]; wlSet(p, h.dataset.p, shown); render();
+  document.querySelector(`.wgrid[data-page="${h.dataset.p}"] .dcard[data-k="${CSS.escape(h.dataset.k)}"] .wdrag`)?.focus({ preventScroll:true });
+});
+document.addEventListener("click", e => {
+  const t = e.target.closest('[data-act="op-reset"]'); const p = t && P(); if (!p) return;
+  p.look = { ...(p.look || {}), opacity: 1 }; applyOpacity(p); saveProfile(); render();
 });
 document.addEventListener("input", e => {
   if (e.target.id !== "ui-op") return;

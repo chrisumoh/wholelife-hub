@@ -50,6 +50,35 @@ At the owner's request, every dashboard card (the Summary pins, the same card on
 - **Glass is allowed only** on the floating top bar, the tab bar and menus (sidebar, popovers). Decorative backgrounds (aurora, home scenes, seasonal layers, caustics, sheen, beam) are removed from behind the cards and from the cards; the Scene and Season pickers were taken out of Settings, and the stored choices are kept but not drawn.
 - The styles live in one block at the end of the stylesheet (`8.2.6`); the markup is `dcard()` in `index.html`. `tests/browser/cards.mjs` checks the pattern at 375, 820 and 1440px in light, dark and OLED in every theme.
 
+### Widget sizes and edit mode (8.2.7)
+
+Summary ("Pinned") and the Nutrition, Workouts, Coach, Health data and Awards pages ("Widgets") share one engine. The size is saved per profile and per page (`p.widgets` for Summary, `p.layouts[page]` elsewhere), applies live and survives a reload. The card style from 8.2.6 is unchanged.
+
+| Size | Width | Content |
+|---|---|---|
+| **Small** | Half width: 2 per row under 700px, 4 per row from 700px. Square-ish. | Icon and name, then the one main value. Nothing else. |
+| **Medium** | Full width | Main value and unit, one gray context line, a small 7-day chart (gray bars, the latest in the category colour). |
+| **Large** | Full width, about twice the height of Medium | Everything in Medium plus: a labelled 7-day chart, today against the 7-day average, goal progress if a goal exists, and the top 3 items behind the value. Details below. |
+
+Large content per widget. Only real data is used; an empty source shows "No Data".
+
+| Widget | Large adds |
+|---|---|
+| Calories eaten | Remaining against the target (bar), today split by meal slot (Breakfast, Lunch, Dinner, Snacks, Drinks), top 3 foods today, 7-day chart, today against average. |
+| Meals | Planned meals for today with calories, meals logged today, 7-day chart of logged meal calories, and a "Build a plan" link ("See full plan" once a plan exists). |
+| Water | Amount against the 2,700 mL goal (bar), last drink time, 7-day chart, today against average, last 3 readings. Water is saved as a daily total, so the last drink time says No Data. |
+| Weight | 30-day trend chart, change since the first weigh-in, goal weight and distance to goal, today against the 7-day average. |
+| Steps | Hourly bars today, best day this week, 7-day chart, today against average. Steps are saved per day, so the hourly bars say No Data. |
+| Workouts | Last workout (type, duration, calories), this week's minutes and workouts against the weekly workout goal (bar), streak, 7-day chart. There is no minutes goal in the app. |
+| Coach | Today's advice line, streak, next action (today's planned workout, with a link), 7-day workout-minutes chart. |
+| Snacks | Today's top 3 snacks with calories, 7-day chart, today against average. There is no Drinks widget. |
+| Weight estimate | Where the weight could be in 1, 4 and 12 weeks, and what the estimate is based on (logged days, average intake, average daily balance); goal and latest weight if set. |
+| Active energy, Resting heart rate, Blood pressure, Blood oxygen, Sleep | Not specified, so the generic Large: labelled 7-day chart, today against 7-day average, last 3 readings. |
+
+Edit mode: tap "Edit widgets" (plain accent text, right of the section title). Each card's top row holds a red minus circle (hide), a compact S/M/L switch, and a drag handle (mouse) or up and down buttons (touch); all are 44px targets and the arrow keys move a card from its handle. Hidden widgets are listed at the bottom ("Hidden widgets") with a + to add each back. "Reset layout" is small red text that asks to confirm. Layouts saved before 8.2.7 are migrated once: the old Large and Wide (full width) read as Medium.
+
+Cards on these pages that are not widgets use the same header look: sentence case, 15px semibold labels (no uppercase tracked labels), and the Photo estimate card uses the icon and name header. The styles are in the `8.2.7` block at the end of the stylesheet; `tests/browser/widgets.mjs` checks every widget at S, M and L at 375, 820 and 1440px.
+
 ### Previously approved, now narrowed: liquid glass (8.1.20)
 
 The 8.1.20 glass, caustics and beam on cards were reversed for content cards by the Dashboard card rule above. What remains from 8.1.20: glass on the floating top bar, the tab bar and menus, and the Interface opacity slider (`--ui-op`), which tints that glass.

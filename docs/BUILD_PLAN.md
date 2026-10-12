@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.7 | Widget sizes work (Small, Medium, Large) on Summary and every page; widget edit mode rebuilt (minus, S/M/L, drag handle or arrows, Hidden widgets, Reset layout with confirm); leftover cards restyled | IN PROGRESS: build-8.2.7, stacked on build-8.2.6, pull request not yet opened |
 | 8.2.6 | One flat Apple Health-style dashboard card everywhere (Summary pins, Nutrition, Health data, Trends, premium widgets); Meals card; glass, caustics, beam and scenes removed from content | IN PROGRESS: build-8.2.6, stacked on build-8.2.5, pull request not yet opened |
 | 8.2.5 | Boot screen on the first bytes; coach portraits and home-screen icon moved to `img/` (first paint 3.7 s to 0.26 s on Fast 4G, download 541 to 450 KB) | IN PROGRESS: build-8.2.5, stacked on build-8.2.4, pull request not yet opened |
 | 8.2.4 | Profile sync: a new device shows your profiles, their basics and meals; edits and deletes travel between devices (`people` table, no schema change) | IN PROGRESS: build-8.2.4, stacked on build-8.2.3, pull request not yet opened |
@@ -56,6 +57,11 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Feature regression sweep: logging, plans, workouts, Summary, health integrations
 - Auth on the preview: sign up, confirmation link lands on the preview URL, log in, refresh stays logged in
 - Supabase (read-only): migrations in repo match migrations applied in the live DB; security advisor shows no new warnings; new data lands in the right table under the right owner
+
+### Checklist run for 8.2.7
+
+- Done: `node tests/browser/widgets.mjs` (502 checks: every widget at S, M and L at 375, 820 and 1440px with the layout and content differing; No Data with an empty profile; sizes surviving a reload per page and per profile; the old-layout migration; edit controls, Hidden widgets, Reset with confirm, keyboard and mouse reordering, touch arrows; leftover cards), `node tests/browser/cards.mjs` (143), the rest of `node tests/browser/run-all.mjs`, and `node tests/check-repo.mjs`.
+- Not run: a real phone and Safari (the drag handle versus arrows is chosen by the pointer type), the font and text-size sweep with Large cards, the deployed-preview checks. No Supabase files were touched.
 
 ### Checklist run for 8.2.6
 
