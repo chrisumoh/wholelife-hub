@@ -7853,8 +7853,8 @@ async function unlock(pass){
     CRY.key = key; CRY.lock = lock; await openRaw(); sbCheckGuest(); sbKindsRestore(); return true;
   } catch { return false; }
 }
-  const previous = { key: CRY.key, lock: CRY.lock };
 async function setPasscode(pass){ // turn on or change the lock, then re-save everything encrypted
+  const previous = { key: CRY.key, lock: CRY.lock }; // turn on or change the lock, then re-save everything encrypted
   const salt = b64(crypto.getRandomValues(new Uint8Array(16)));
   const key = await deriveKey(pass, salt, PBKDF2_ITER);
   CRY.key = key; CRY.lock = { salt, iter: PBKDF2_ITER, check: await encryptJSON("wholelife-ok", key), auto: CRY.lock?.auto ?? 15 };
@@ -7890,7 +7890,6 @@ function markLog(pid, mon){ if (typeof logIdxDrop === "function") logIdxDrop(); 
 function markAll(){ if (typeof logIdxDrop === "function") logIdxDrop(); dirty.add("root"); for (const pid in S.logs) for (const m in S.logs[pid]) { sbTrack(pid, m); dirty.add(`log:${pid}:${m}`); } schedule(); }
 function schedule(){ clearTimeout(flushTimer); flushTimer = setTimeout(flush, 600); }
 
-    return !failed;
 function flush(){
   if (flushing) return flushing.then(saved => saved && dirty.size ? flush() : saved);
   if (LEAVING || UI.locked || (CRY.lock && !CRY.key)) return Promise.resolve(false);
@@ -7922,6 +7921,7 @@ function flush(){
     if (!failed && !lsSet(local)) { toast("This browser's storage is full or blocked."); failed = true; }
     if (failed) for (const key of batch) dirty.add(key); else S.mode = "browser";
     S.saveState = failed ? "error" : "saved"; if (!failed) S.lastSaved = Date.now();
+    return !failed;
   })().finally(() => { flushing = null; paintSaveState(); });
   return flushing.then(saved => saved && dirty.size ? flush() : saved);
 }
