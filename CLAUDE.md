@@ -68,6 +68,7 @@ A health and fitness web app that lives in one file, `index.html` (markup, CSS a
 - **Never push or merge to `main` without asking me first.**
 - You may open a pull request into `main` when a build branch is ready. Never merge it. I merge.
 - Run the app locally by opening `index.html`, or serve it with `python3 -m http.server 8080`.
+- **Code review (Greptile).** After every push to a pull request, read Greptile's comments on it yourself (don't wait for me to paste them). For each one, say here whether it is valid, then fix the valid ones on the same branch with a test, and push. Ask me first only when the fix is a real design choice or touches `supabase/`. Reply on a thread only when a finding is wrong or won't be fixed. Never resolve or merge for me.
 
 ## 7. Single source
 
