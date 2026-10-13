@@ -26,6 +26,7 @@ Version goes up 0.1 per week (8.1, 8.2, ...). Extra builds inside the same week 
 - Fonts: 8-option picker, default system stack (Perplexity-style); metrics use tabular numerals
 - Themes via data-theme tokens: Forest, Ocean, Sunset, Midnight, Halloween; light and dark variants; Auto option
 - Sidebar icons: 30px gradient tiles (two-tone 135deg, white Lucide glyph) — same component everywhere a destination appears
+- Workout icons: the app's own figure art on a 48px frosted disc; ten types (ball, racket and strength sports) use Boxicons glyphs (CC BY 4.0) in the same disc, credited on the Credits page (8.2.17). Any new third-party icon must be added to the Credits page with its license.
 - Motion: spring cubic-bezier(0.32, 0.72, 0, 1), 150-450ms, max 3 staggered items, all disabled under prefers-reduced-motion
 - The centered hamburger/back-arrow morph is spec'd and tested in the master prompt (Task 6.1) — port that exact implementation
 
