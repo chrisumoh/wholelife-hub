@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.20, 2026-10-13. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.21, 2026-10-13. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.21 · Coach: Advice card: a repeat of yesterday is marked and escalated, and the evening card reviews today and sets up tomorrow
+
+- **Problem:** The coach advice card could show the same advice two days running when the data had not changed, and in the evening it was the same card as in the morning: it did not look back at what you logged today or look ahead to tomorrow.
+- **Change:** A repeat of yesterday's advice on the same figures now opens in the coach's own voice (Enforcer: "Second day running:", Motivator: "Still the one to fix:", Strategist: "Unchanged since yesterday:") instead of repeating word for word; a changed figure is not marked. From 5pm a new first item reviews what was logged today (calories against target, the lunch dish by name with its calories, today's workout), names your last earlier session by weekday, and sets up tomorrow by weekday name. It appears only when something was logged today. Only the short fingerprints of the last two days are kept, on this device (wlh.advice.<profile id>), and sign-out and Delete everything clear them. Voices, culture rules and the calorie-based reading are unchanged: the app stores no protein data, so protein is still never inferred.
+- **Where:** index.html: coachAdviceItems() (sig on each item, the evening item), adviceRepeats() (new), coachAdviceCard(), LS_USER_BASES. tests/browser/advice.mjs (new), tests/browser/run-all.mjs, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** node tests/browser/advice.mjs (14 checks: the evening item names the lunch and workout and tomorrow's weekday, is skipped with nothing logged, repeats are marked per voice, changed data is not marked, only two days are kept, sign-out clears the history). node tests/check-repo.mjs; node tests/browser/run-all.mjs. By hand: log a lunch and a workout, open Coach after 5pm; reload the next day with the same figures and see the marker.
+- **Known limits:** (1) Repeat history lives on this device only and is not synced, so a second device starts clean. (2) Matching is by figure bands (calories to the nearest 100, water pace to 500 ml), not exact numbers. (3) No protein or macro advice: the app stores calories only. (4) The Plan tomorrow button opens Coach, not a generated plan.
 
 ## 8.2.20 · Motion: Motion: sliding selection ring, animated links, top-right toasts, bell pulse, widgets that turn over, and tidier cards
 

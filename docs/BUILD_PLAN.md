@@ -8,9 +8,9 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Phase | Contents | Status |
 |---|---|---|
-| 1 | Bug fixes: duplicate avatar, clipped text, menu-over-Settings layering glitch, Settings tabs | PROMPTED |
-| 2 | Premium system: purchase-gated flag, badges, Telegram-style premium screen | PROMPTED |
-| 3 | Coach: full data access + personalized advice card (9 rules) | PROMPTED |
+| 1 | Bug fixes: duplicate avatar, clipped text, menu-over-Settings layering glitch, Settings tabs | DONE (already fixed in earlier builds; checked at 375px and 820px in 8.2.21) |
+| 2 | Premium system: purchase-gated flag, badges, Telegram-style premium screen | DONE except payments (isPremium flag, dev override and premium screen exist; BETA_OPEN is on; prices and checkout are placeholders) |
+| 3 | Coach: full data access + personalized advice card (9 rules) | PARTLY DONE: advice card built; 8.2.21 adds repeat marking and the evening review. No protein advice (calories only); Task 3.1 plan adjustments not audited |
 | 4 | Font system: 8 options, Perplexity-style default | PROMPTED |
 | 5 | UI cleanup: blue outlines, compact appearance controls, clean layout, gradient sidebar icons | PROMPTED |
 | 6 | Space + arrow: centered arrow morph (tested code in prompt), 12-col grid, one-row headers, two-pane Settings, sidebar grouping | PROMPTED |
@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.21 | Coach advice card: repeats of yesterday are marked in the coach's voice; evening card reviews today and sets up tomorrow by weekday | IN PROGRESS: build-8.2.21 |
 | 8.2.20 | Motion: sliding selection ring, animated external links, top-right toasts, bell pulse, widgets that turn over; tidier dish rows, coach card and weekly check-in | IN PROGRESS: build-8.2.20 |
 | 8.2.19 | Passcode restore keeps profile own-write times; a profile deleted on two devices settles; Greptile rule in CLAUDE.md | IN PROGRESS: build-8.2.19 |
 | 8.2.18 | Sync recovery: durable queues, expiry, photo retries/conflicts and failed local writes | IN PROGRESS: build-8.2.18 |

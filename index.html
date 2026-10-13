@@ -4059,7 +4059,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.20", channel: "Dev Testing", date: "2026-10-13", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.21", channel: "Dev Testing", date: "2026-10-13", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -4073,6 +4073,14 @@ const APP_VERSION = { update: "8.2", build: "8.2.20", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.21",
+      area:"Coach",
+      title:"Advice card: a repeat of yesterday is marked and escalated, and the evening card reviews today and sets up tomorrow",
+      bug:"The coach advice card could show the same advice two days running when the data had not changed, and in the evening it was the same card as in the morning: it did not look back at what you logged today or look ahead to tomorrow.",
+      fix:"A repeat of yesterday's advice on the same figures now opens in the coach's own voice (Enforcer: \"Second day running:\", Motivator: \"Still the one to fix:\", Strategist: \"Unchanged since yesterday:\") instead of repeating word for word; a changed figure is not marked. From 5pm a new first item reviews what was logged today (calories against target, the lunch dish by name with its calories, today's workout), names your last earlier session by weekday, and sets up tomorrow by weekday name. It appears only when something was logged today. Only the short fingerprints of the last two days are kept, on this device (wlh.advice.<profile id>), and sign-out and Delete everything clear them. Voices, culture rules and the calorie-based reading are unchanged: the app stores no protein data, so protein is still never inferred.",
+      where:"index.html: coachAdviceItems() (sig on each item, the evening item), adviceRepeats() (new), coachAdviceCard(), LS_USER_BASES. tests/browser/advice.mjs (new), tests/browser/run-all.mjs, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"node tests/browser/advice.mjs (14 checks: the evening item names the lunch and workout and tomorrow's weekday, is skipped with nothing logged, repeats are marked per voice, changed data is not marked, only two days are kept, sign-out clears the history). node tests/check-repo.mjs; node tests/browser/run-all.mjs. By hand: log a lunch and a workout, open Coach after 5pm; reload the next day with the same figures and see the marker.",
+      limits:"(1) Repeat history lives on this device only and is not synced, so a second device starts clean. (2) Matching is by figure bands (calories to the nearest 100, water pace to 500 ml), not exact numbers. (3) No protein or macro advice: the app stores calories only. (4) The Plan tomorrow button opens Coach, not a generated plan." },
     { id:"8.2.20",
       area:"Motion",
       title:"Motion: sliding selection ring, animated links, top-right toasts, bell pulse, widgets that turn over, and tidier cards",
@@ -7801,7 +7809,7 @@ const S = { profiles:[], activeId:null, logs:{}, mode:"memory" };
 const LS_KEY = "wlh.v62", LS_OLD = "wlh.v61";
 let STORE_UID = null, LEAVING = false; // account whose store is loaded (null = guest); LEAVING blocks every write while that store is being removed
 const ukey = base => STORE_UID ? `${base}@${STORE_UID}` : base;
-const LS_USER_BASES = ["wlh.v62", "wlh.v61", "wlh.notif.", "wlh.rem."]; // every key that holds a person's data
+const LS_USER_BASES = ["wlh.v62", "wlh.v61", "wlh.notif.", "wlh.rem.", "wlh.advice."]; // every key that holds a person's data
 // Remove one account's keys (uid), the guest keys (uid === null), or all of them (uid === undefined).
 function lsRemoveUserData(uid){
   try {
@@ -16812,6 +16820,28 @@ function coachAdviceItems(p = P()){
   const items = [];
   const has = k => items.some(x => x.k === k);
 
+  // ---- Evening: a review of what was actually logged today and a line for tomorrow, by weekday
+  // name. Built only from entries that exist; with nothing logged today it is skipped. ----
+  if (evening) {
+    const dow = d => parseYmd(d).toLocaleDateString("en-US", { weekday:"long" });
+    const lunch = onDate("meals", today()).find(m => m.slot === "lunch" && m.name);
+    const doneToday = onDate("workouts", today())[0];
+    const inToday = intakeOn(today());
+    const tcal = typeof intakeContext === "function" ? intakeContext(p).target : null;
+    const bits = [];
+    if (inToday > 0) bits.push(`${inToday.toLocaleString()} cal logged${tcal ? ` against about ${Math.round(tcal).toLocaleString()}` : ""}`);
+    if (lunch) bits.push(`lunch was ${lunch.name} (${mealTotal(lunch).toLocaleString()} cal)`);
+    if (doneToday) bits.push(`you did ${ACT[doneToday.type]?.n || "a workout"} for ${doneToday.minutes} min`);
+    if (bits.length) {
+      const last = entries("workouts", p.id).filter(w => w.date < today()).sort((a, b) => b.date.localeCompare(a.date))[0];
+      const next = last ? ` Your last earlier session was ${dow(last.date)} (${ACT[last.type]?.n || "workout"}).` : "";
+      const tmr = dow(addDays(today(), 1));
+      items.push({ k:"evening", sig: `${inToday}|${lunch?.name || ""}|${doneToday?.id || ""}`,
+        text: `${addr}today: ${bits.join(", ")}.${next} Set up ${tmr} now: decide what you'll eat first and when you'll move.`,
+        note: "From today's log.", action: { label:"Plan tomorrow", href:"#/coach" } });
+    }
+  }
+
   // ---- Recovery: real check-in answers or real recent load, from the same Strategist engine
   // that drives the intensity dial, so this card and that dial never disagree. ----
   const rec = typeof recommendedIntensity === "function" ? recommendedIntensity(p) : null;
@@ -16821,7 +16851,7 @@ function coachAdviceItems(p = P()){
     const y = dailyLog(p, addDays(today(), -1)) || {};
     const again = y.sore === "yes" || y.energy === "low";
     const why = rec.why.charAt(0).toLowerCase() + rec.why.slice(1);
-    items.push({ k:"recover",
+    items.push({ k:"recover", sig: rec.why,
       text: id === "enforcer" ? `${addr}${rec.why} ${again ? "Same call as yesterday — the rest is doing its job, don't skip it twice." : "Cut the heaviest sets; the session still counts."}`
         : id === "motivator" ? `${addr}${why} ${again ? "Two days of listening to your body in a row — that's the harder skill." : "A lighter version still moves you forward."}`
         : `${addr}${rec.why}${again ? " Same read as yesterday, so the recovery block extends rather than resets." : ""}`,
@@ -16845,7 +16875,7 @@ function coachAdviceItems(p = P()){
     const sf = typeof shortfallAdvice === "function" ? shortfallAdvice(p) : null;
     const gap = Math.round(c.maint - c.avg);
     const dish = sf && sf.dense[0] ? `${sf.dense[0].n} (${sf.dense[0].cal} cal)` : null;
-    items.push({ k:"deficit",
+    items.push({ k:"deficit", sig: String(Math.round(gap / 100)),
       text: id === "enforcer" ? `${addr}averaging ${c.avg.toLocaleString()} cal against about ${c.maint.toLocaleString()} to hold steady — ${gap.toLocaleString()} short, most days.${yDeep ? " Two days running now." : ""} ${dish ? `Close it with ${dish}.` : "Eat closer to target today."}`
         : id === "motivator" ? `${addr}you've been under target by about ${gap.toLocaleString()} calories a day this week.${yDeep ? " Yesterday too, so let's actually fix it today:" : " Today's the day to close it:"} ${dish ? `${dish} would do it.` : "add a proper meal before the day gets away from you."}`
         : `${addr}${c.days} days logged, averaging ${c.avg.toLocaleString()} against ${c.maint.toLocaleString()} to maintain — a ${gap.toLocaleString()}-calorie gap.${yDeep ? " Same shape as yesterday, so today's plan should close it, not repeat it." : ""} ${dish ? `${dish} is on your list and closes most of it.` : ""}`,
@@ -16853,7 +16883,7 @@ function coachAdviceItems(p = P()){
       action: { label:"Log a meal", href:"#/nutrition" } });
   } else if (todayIn > 0 && namedToday.length && !evening && c.target) {
     const left = Math.max(0, c.target - todayIn);
-    if (left > 100) items.push({ k:"remaining",
+    if (left > 100) items.push({ k:"remaining", sig: String(Math.round(left / 100)),
       text: `${addr}you've had ${namedToday.join(" and ")} so far today (${todayIn.toLocaleString()} cal) — about ${left.toLocaleString()} left for the rest of the day.`,
       note: "From today's log.",
       action: { label:"Log a meal", href:"#/nutrition" } });
@@ -16866,7 +16896,7 @@ function coachAdviceItems(p = P()){
     const dayFrac = Math.min(1, Math.max(0, (hour - 6) / 15));
     const pace = Math.round(2700 * dayFrac);
     if (dayFrac > 0.35 && water < pace - 500) {
-      items.push({ k:"water",
+      items.push({ k:"water", sig: String(Math.round(pace / 500)),
         text: id === "enforcer" ? `${addr}${Math.round(water)}ml of water logged, should be nearer ${pace.toLocaleString()}ml by now. Fix it before dinner, not after.`
           : id === "motivator" ? `${addr}water's a bit behind today — ${Math.round(water)}ml so far. A glass now gets you back on pace.`
           : `${addr}${Math.round(water)}ml logged against a rough ${pace.toLocaleString()}ml pace for this hour.`,
@@ -16888,7 +16918,7 @@ function coachAdviceItems(p = P()){
       const pace = Math.round(usual * dayFrac);
       const behind = pace - todaySteps;
       if (dayFrac > 0.45 && usual > 0 && behind > usual * 0.25) {
-        items.push({ k:"steps",
+        items.push({ k:"steps", sig: String(Math.round(behind / 500)),
           text: id === "enforcer" ? `${addr}${todaySteps.toLocaleString()} steps so far, ${behind.toLocaleString()} behind your usual pace (${usual.toLocaleString()}/day average). Move before the day closes it out for you.`
             : id === "motivator" ? `${addr}you're at ${todaySteps.toLocaleString()} steps today — a bit behind your usual ${usual.toLocaleString()}. A short walk after your next meal gets you back near it.`
             : `${addr}${todaySteps.toLocaleString()} steps logged against roughly ${usual.toLocaleString()} usual by this hour.`,
@@ -16904,14 +16934,14 @@ function coachAdviceItems(p = P()){
     const wDone = typeof weekWorkouts === "function" ? weekWorkouts(p).length : 0;
     const m = typeof momentum === "function" ? momentum(p) : { days:0, wins:[] };
     if (wGoal && wDone < wGoal && evening && !onDate("workouts", today()).length) {
-      items.push({ k:"adherence",
+      items.push({ k:"adherence", sig: `${wDone}/${wGoal}`,
         text: id === "enforcer" ? `${addr}${wDone}/${wGoal} sessions this week, and today came and went without one. Tomorrow isn't optional.`
           : id === "motivator" ? `${addr}${wDone} of ${wGoal} workouts in so far. Today didn't have one, and that's fine — tomorrow's a fresh shot at it.`
           : `${addr}${wDone}/${wGoal} done this week. Tomorrow's plan should account for the one you're behind.`,
         note: "From this week's log.",
         action: { label:"Open tomorrow's plan", href:"#/coach" } });
     } else if (m.days >= 3) {
-      items.push({ k:"streak",
+      items.push({ k:"streak", sig: String(m.days),
         text: id === "enforcer" ? `${addr}${m.days}-day run, no gaps. Keep the standard where it is.`
           : id === "motivator" ? `${addr}${m.days} days of momentum in a row${m.wins.length ? `, and today you already ${m.wins.join(" and ")}` : ""} — that's the pattern that actually works.`
           : `${addr}${m.days} consecutive days counted. The plan is working; no changes needed.`,
@@ -16922,8 +16952,27 @@ function coachAdviceItems(p = P()){
 
   return items.slice(0, 2);
 }
+// Same advice on the same data two days running reads as nagging, so a repeat is marked as one and
+// escalated in the coach's own voice instead of repeated word for word. Only the short fingerprints
+// of the last two days are kept, on this device (wlh.advice.<profile id>).
+function adviceRepeats(items, p = P()){
+  const key = ukey("wlh.advice." + p.id), t = today(), y = addDays(t, -1);
+  let hist = {};
+  try { hist = JSON.parse(localStorage.getItem(key) || "{}") || {}; } catch {}
+  const prev = Array.isArray(hist[y]) ? hist[y] : [];
+  const id = coachDef(p).id;
+  const lead = id === "enforcer" ? "Second day running: " : id === "motivator" ? "Still the one to fix: " : "Unchanged since yesterday: ";
+  const out = items.map(it => {
+    const fp = `${it.k}:${it.sig ?? ""}`;
+    const rep = prev.includes(fp) && it.k !== "streak";
+    return { ...it, fp, text: rep ? lead + it.text.charAt(0).toLowerCase() + it.text.slice(1) : it.text };
+  });
+  const keep = {}; keep[y] = prev; keep[t] = out.map(x => x.fp);
+  if (!LEAVING && JSON.stringify(hist[t]) !== JSON.stringify(keep[t])) { try { localStorage.setItem(key, JSON.stringify(keep)); } catch {} }
+  return out;
+}
 function coachAdviceCard(p = P()){
-  const items = coachAdviceItems(p);
+  const items = adviceRepeats(coachAdviceItems(p), p);
   if (!items.length) return "";
   const hour = new Date().getHours();
   const heading = hour < 12 ? "This morning" : hour < 17 ? "Today" : "This evening";
