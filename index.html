@@ -569,6 +569,8 @@ table.tbl-storage code{font-size:calc((12px) * var(--text-scale,1));background:v
 
 .logo-svg{display:block;flex:none;border-radius:28%;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 35%,transparent)}
 .brand .hub{font-weight:600;color:var(--muted)}
+.brand-home{color:inherit;text-decoration:none;border-radius:var(--r-xs);cursor:pointer}
+.brand-home:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .brand b{white-space:nowrap}
 .brand .hub{display:inline}
 /* v9.1 TASK 4: the sidebar's icon tile -- one rounded-square, 30px, diagonal two-tone
@@ -1554,6 +1556,13 @@ input,select,textarea{font-size:calc((var(--t-base)) * var(--text-scale,1));font
 .app.rail .who-row{padding:0;border-radius:50%}
 @media (hover:hover) and (pointer:fine){.app.rail .who-row:hover{background:none;transform:scale(1.06)}}
 .app.rail .who-row .avatar{width:40px!important;height:40px!important;font-size:calc((15px!important) * var(--text-scale,1))}
+/* 8.2.22: collapsed rows share one 44px box on one centre line and one 6px gap, inside a group
+   as well as between groups (items were 2px apart, group joins 6px, and the Premium button
+   was 40px tall and 2px off centre). */
+.app.rail .navgrp-items{gap:6px}
+.app.rail .nav a.upsell{margin-top:0}
+.app.rail .nav button.prem-trigger span:not(.si-tile){display:none}
+.app.rail .nav button.prem-trigger{box-sizing:border-box;width:100%;min-width:44px;height:44px;min-height:0;padding:0;justify-content:center}
 .side,.app{transition:grid-template-columns var(--dur-page) var(--ease-spring)}
 /* (removed: an old rule rotated the whole menu SVG 90deg, tangling the morph) */
 .side-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -4059,7 +4068,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.21", channel: "Dev Testing", date: "2026-10-13", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.22", channel: "Dev Testing", date: "2026-10-13", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -4073,6 +4082,14 @@ const APP_VERSION = { update: "8.2", build: "8.2.21", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.22",
+      area:"Sidebar",
+      title:"Collapsed sidebar: icons share one centre line and one even spacing",
+      bug:"With the sidebar collapsed to icons, the column looked off-centre and unevenly spaced. Rows inside a group sat 2px apart but 6px apart between groups, so the icons bunched and then jumped. The Premium button was 40px tall where every other row was 44px, and it sat 2px left of the centre line because its label's gap still took up room beside the crown. The Go Premium link carried an extra 12px of top margin.",
+      fix:"In the collapsed rail every row is now the same 44px box on one centre line, with one 6px gap between rows inside a group and between groups; the Premium button's label is hidden like the others and the button fills the rail row, and the Go Premium link loses its extra top margin. The logo, every icon and the profile picture now share the rail's centre line. Only the collapsed rail changes; the open sidebar, the phone drawer and every colour, size and icon are untouched. The WholeLife logo and wordmark at the top of the sidebar are now also a link back to Summary (collapsed rail and open sidebar alike; keyboard focusable).",
+      where:"index.html: CSS block v7.5 SIDE RAIL (.app.rail .navgrp-items, .app.rail .nav button.prem-trigger, .app.rail .nav a.upsell), wordmark() and .brand-home. tests/browser/rail.mjs (new), tests/browser/run-all.mjs, CHANGELOG.md, README.md, docs/BUILD_PLAN.md (status of 8.2.20 and 8.2.21 set to merged).",
+      test:"node tests/browser/rail.mjs (13 checks, for a free profile and a subscriber: the logo, every icon and the avatar share the rail's centre line, every row is the same height, rows are evenly spaced with one wider step only at the divider; most of them fail on 8.2.21). node tests/check-repo.mjs; node tests/browser/run-all.mjs; node tests/perf/measure.mjs --gate. By hand: on a desktop-width window collapse the sidebar with the menu button and look down the icon column; click the logo from any page and you land on Summary.",
+      limits:"(1) The rail keeps its 6px gap, which is looser than the open sidebar's 2px. (2) Spacing is checked at 1280x1000; on a very short window the list scrolls as before. (3) The hairline above Premium is still a wider step on purpose." },
     { id:"8.2.21",
       area:"Coach",
       title:"Advice card: a repeat of yesterday is marked and escalated, and the evening card reviews today and sets up tomorrow",
@@ -9828,7 +9845,8 @@ function logoSVG(size = 36, label = true){
     <circle cx="45" cy="47" r="2.4" fill="#fff" opacity=".85"/>
   </svg>`;
 }
-const wordmark = (sub = true) => `<div class="brand">${logoSVG(38)}<div><b>WholeLife<span class="hub"> Hub</span></b>${sub ? `<span class="tiny muted">Move well. Eat with intention.</span>` : ""}</div></div>`;
+// home: the sidebar's wordmark is also the link back to Summary; the loading skeleton stays inert.
+const wordmark = (sub = true, home = false) => `<${home ? 'a href="#/home" aria-label="WholeLife Hub, back to Summary" title="Summary"' : "div"} class="brand${home ? " brand-home" : ""}">${logoSVG(38)}<div><b>WholeLife<span class="hub"> Hub</span></b>${sub ? `<span class="tiny muted">Move well. Eat with intention.</span>` : ""}</div></${home ? "a" : "div"}>`;
 
 // =================== HOME BACKGROUNDS ===================
 // Drawn in code (no photos): each scene has a light and a dark palette.
@@ -11129,7 +11147,7 @@ function render(){
     </main>
     ${(() => { // SPEED: the sidebar is ~half the page markup and rarely changes, so it is only re-diffed when it did
       const inner = `
-      ${wordmark()}
+      ${wordmark(true, true)}
       <nav class="nav">${sideNav()}</nav>
       <div class="who stack">
         <div class="who-top">
