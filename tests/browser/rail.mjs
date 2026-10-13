@@ -59,6 +59,10 @@ for (const premium of [false, true]) {
   // The one larger step is the hairline that sets Premium and Settings apart from the daily rows.
   const steps = [...new Set(m.pitch)].sort((a, b) => a - b);
   ok(`${tag}: rows are evenly spaced, with one wider step for the divider only`, steps[0] === m.heights[0] + 6 && m.pitch.filter(p => p !== steps[0]).length === 1, JSON.stringify(m.pitch));
+  ok(`${tag}: the logo is a link to Summary`, await ev(`(() => { const a = document.querySelector(".side a.brand-home"); return !!a && a.getAttribute("href") === "#/home" && !!a.getAttribute("aria-label"); })()`));
+  await ev(`location.hash = "#/settings"; true`); await sleep(500);
+  await ev(`document.querySelector(".side a.brand-home").click(); true`); await sleep(500);
+  ok(`${tag}: clicking the logo opens Summary`, await ev(`location.hash === "#/home"`));
   await shot("rail-" + (premium ? "subscriber" : "free"));
 }
 console.log(`\n${pass} passed, ${fail} failed`);
