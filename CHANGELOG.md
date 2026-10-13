@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.21, 2026-10-13. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.22, 2026-10-13. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.22 · Sidebar: Collapsed sidebar: icons share one centre line and one even spacing
+
+- **Problem:** With the sidebar collapsed to icons, the column looked off-centre and unevenly spaced. Rows inside a group sat 2px apart but 6px apart between groups, so the icons bunched and then jumped. The Premium button was 40px tall where every other row was 44px, and it sat 2px left of the centre line because its label's gap still took up room beside the crown. The Go Premium link carried an extra 12px of top margin.
+- **Change:** In the collapsed rail every row is now the same 44px box on one centre line, with one 6px gap between rows inside a group and between groups; the Premium button's label is hidden like the others and the button fills the rail row, and the Go Premium link loses its extra top margin. The logo, every icon and the profile picture now share the rail's centre line. Only the collapsed rail changes; the open sidebar, the phone drawer and every colour, size and icon are untouched.
+- **Where:** index.html: CSS block v7.5 SIDE RAIL (.app.rail .navgrp-items, .app.rail .nav button.prem-trigger, .app.rail .nav a.upsell). tests/browser/rail.mjs (new), tests/browser/run-all.mjs, CHANGELOG.md, README.md, docs/BUILD_PLAN.md (status of 8.2.20 and 8.2.21 set to merged).
+- **How to test:** node tests/browser/rail.mjs (9 checks, for a free profile and a subscriber: the logo, every icon and the avatar share the rail's centre line, every row is the same height, rows are evenly spaced with one wider step only at the divider; 6 of them fail on 8.2.21). node tests/check-repo.mjs; node tests/browser/run-all.mjs; node tests/perf/measure.mjs --gate. By hand: on a desktop-width window collapse the sidebar with the menu button and look down the icon column.
+- **Known limits:** (1) The rail keeps its 6px gap, which is looser than the open sidebar's 2px. (2) Spacing is checked at 1280x1000; on a very short window the list scrolls as before. (3) The hairline above Premium is still a wider step on purpose.
 
 ## 8.2.21 · Coach: Advice card: a repeat of yesterday is marked and escalated, and the evening card reviews today and sets up tomorrow
 

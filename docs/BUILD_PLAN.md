@@ -21,8 +21,9 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
-| 8.2.21 | Coach advice card: repeats of yesterday are marked in the coach's voice; evening card reviews today and sets up tomorrow by weekday | IN PROGRESS: build-8.2.21 |
-| 8.2.20 | Motion: sliding selection ring, animated external links, top-right toasts, bell pulse, widgets that turn over; tidier dish rows, coach card and weekly check-in | IN PROGRESS: build-8.2.20 |
+| 8.2.22 | Collapsed sidebar: icons, logo and profile picture on one centre line, even row height and spacing | IN PROGRESS: claude/project-thread-dhtwj9 |
+| 8.2.21 | Coach advice card: repeats of yesterday are marked in the coach's voice; evening card reviews today and sets up tomorrow by weekday | MERGED: PR #32 |
+| 8.2.20 | Motion: sliding selection ring, animated external links, top-right toasts, bell pulse, widgets that turn over; tidier dish rows, coach card and weekly check-in | MERGED: PR #30 |
 | 8.2.19 | Passcode restore keeps profile own-write times; a profile deleted on two devices settles; Greptile rule in CLAUDE.md | IN PROGRESS: build-8.2.19 |
 | 8.2.18 | Sync recovery: durable queues, expiry, photo retries/conflicts and failed local writes | IN PROGRESS: build-8.2.18 |
 | 8.2.17 | Ten workout types (soccer, basketball, American football, volleyball, cricket, baseball, tennis, badminton, strength, bodyweight) use Boxicons glyphs on the app's disc; Boxicons credited (CC BY 4.0) on the Credits page | IN PROGRESS: build-8.2.17, pull request open, not merged |
