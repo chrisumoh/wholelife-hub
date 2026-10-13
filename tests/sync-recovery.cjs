@@ -71,9 +71,9 @@ test('four failed photo uploads remain pending and warn before sign-out; recover
 test('storage failure keeps dirty work and stops uploads until a durable retry succeeds',async()=>{
  const h=env();h.run(`function lsGet(){return null}let writeCount=0,blocked=true;function lsSet(){writeCount++;return !blocked}async function pack(x){return x}function paintSaveState(){}sbSweep=()=>0;sbCacheSave=()=>true;`);
  vm.runInContext(part('function flush(){','// =================== ACCOUNT + MEAL SYNC'),h.c);
- h.run(`dirty.add('root')`);await assert.rejects(h.run(`sbPersistNow()`),/could not be saved/);
+ h.run(`dirty.add('root')`);assert.equal(await h.run(`flush()`),false);
  assert.equal(h.run(`S.saveState`),'error');assert.equal(h.run(`dirty.has('root')`),true);
- h.run(`blocked=false`);await h.run(`sbPersistNow()`);
+ h.run(`blocked=false`);assert.equal(await h.run(`flush()`),true);
  assert.equal(h.run(`writeCount`),2);assert.equal(h.run(`dirty.size`),0);
 });
 test('encryption failure neither writes a partial snapshot nor discards dirty work',async()=>{
