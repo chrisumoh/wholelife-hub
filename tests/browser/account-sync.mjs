@@ -469,7 +469,63 @@ await d1.synced(25000); await sleep(1500); await d1.synced(25000);
 await d1.ev(`__fake.beforeWrite = null; true`);
 ok("the edit made during the upload is uploaded next and is not removed from the queue by the first upload finishing", live("workouts", A).find(r => r.app_id === q4)?.duration_min === 99 && (await d1.ev(`!SB.kp.workouts.pend["${q4}"]`)), JSON.stringify(live("workouts", A).find(r => r.app_id === q4)));
 
-console.log("--- 15. no script errors");
+console.log("--- 15. recovery across acknowledged writes, expiry and storage failures");
+for (const mode of ["reload", "lock"]) {
+  // The older write reaches the server after the next edit, but further writes fail. Restart at exactly that point.
+  if (mode === "lock") await d1.ev(`setPasscode("recovery-passcode").then(() => true)`);
+  backend.delay = 100;
+  const id = await d1.ev(`(() => { const id = uid(); window.__edited = false; __fake.beforeWrite = name => { if (name === "workouts" && !window.__edited) { window.__edited = true; updateEntry("workouts", id, x => { x.minutes = 88; }); __fake.failWrites = true; } }; addEntry("workouts", { id, date: today(), type: "run", minutes: 30, cal: 80, note: "recover ${mode}", photo: null }); return id; })()`);
+  ok(`${mode}: the older write is acknowledged while the newer edit stays queued`, await d1.waitFor(`SB.kp.workouts.own.has("${id}") && SB.kp.workouts.pend["${id}"] === "up"`));
+  await d1.ev(`__fake.beforeWrite = null; flush().then(() => true)`); backend.delay = 0;
+  if (mode === "reload") ok("reload with a newer edit waiting", await d1.reload());
+  else {
+    await d1.ev(`lockNow(); true`); ok("lock with a newer edit waiting", await d1.waitFor(`UI.locked === true`));
+    await d1.ev(`__fake.failWrites = false; document.getElementById("unlock-pass").value = "recovery-passcode"; document.querySelector('form[data-form="unlock"]').requestSubmit(); true`);
+    ok("unlock restores the pending edit", await d1.waitFor(`UI.locked === false`));
+  }
+  ok(`${mode}: 88 minutes reaches the account instead of being replaced by the acknowledged 30`, await d1.synced(25000) && live("workouts", A).find(r => r.app_id === id)?.duration_min === 88);
+  if (mode === "lock") await d1.ev(`removePasscode().then(() => true)`);
+}
+await d1.synced();
+const recovery = await d1.ev(`(() => { const m = uid(), w = uid(); addEntry("meals", { id:m, date:today(), slot:"lunch", name:"Expiry deletion", cal:200, extras:[], photo:null }); addEntry("weights", { id:w, date:today(), kg:72 }); return {m,w,p:P().id}; })()`);
+await d1.synced();
+await d1.ev(`setPasscode("recovery-passcode").then(() => true)`);
+const queued = await d1.ev(`(async () => { __fake.offline=true; removeEntry("meals","${recovery.m}"); removeEntry("weights","${recovery.w}"); P().name="Kept after expiry"; saveProfile(); await flush(); return JSON.stringify({m:SB.pt["${recovery.m}"],p:SB.ppt["${recovery.p}"],w:SB.kp.weights.t["${recovery.w}"]}); })()`);
+await d1.ev(`__fake.expireNow(); true`);
+ok("expiry shows the sign-in screen", await d1.waitFor(`UI.sessionExpired === true`));
+const restoredQueue = await d1.ev(`(async () => { await flush(); const root=await unpack(JSON.parse(localStorage.getItem("wlh.v62@u_axcom")).root); return JSON.stringify({m:root.kp.m.t["${recovery.m}"],p:root.kp.p.t["${recovery.p}"],w:root.kp.k.weights.t["${recovery.w}"]}); })()`);
+ok("expiry preserves all three original queue timestamps in encrypted storage", restoredQueue === queued, restoredQueue);
+ok("reload after expiry", await d1.reload());
+ok("sign in to the same account after expiry", await d1.signIn("a@x.com"));
+ok("the account store remains passcode locked", await d1.waitFor(`UI.locked === true`));
+await d1.ev(`document.getElementById("unlock-pass").value="recovery-passcode"; document.querySelector('form[data-form="unlock"]').requestSubmit(); true`);
+ok("after sign-in the deleted meal and weigh-in stay deleted and the profile edit uploads", await d1.synced(25000) && !!rows("meal_logs",A).find(r=>r.app_id===recovery.m)?.deleted_at && !!rows("weight_entries",A).find(r=>r.app_id===recovery.w)?.deleted_at && live("people",A).some(r=>r.app_id===recovery.p && r.display_name==="Kept after expiry"));
+await d1.ev(`removePasscode().then(() => true)`); await d1.synced();
+
+console.log("--- 16. repeated photo failures stay pending and a winning remote photo replaces a losing local edit");
+const failedPhoto = await d1.ev(`(() => { __fake.failUpload=true; const id=uid(); addEntry("workouts",{id,date:today(),type:"run",minutes:25,cal:100,note:"photo retry",photo:__photo(70,70,false)}); return id; })()`);
+await d1.ev(`(async () => { for(let i=0;i<4;i++) await sbRun(async()=>{await sbPersistNow();await sbPushKinds();}); return true; })()`);
+ok("four failed photo uploads leave the workout queued", await d1.ev(`SB.pfc.get("${failedPhoto}")>=4 && SB.kp.workouts.pend["${failedPhoto}"]==="up"`));
+await d1.ev(`sbSignOut(false).then(()=>true)`);
+ok("sign-out warns instead of erasing the unsent photo", await d1.ev(`!!UI.sbConfirmOut && !!SB.user && [...sbAllOf("workouts")].some(x=>x.e.id==="${failedPhoto}" && !!x.e.photo)`));
+await d1.ev(`UI.sbConfirmOut=null; __fake.failUpload=false; sbKick(); true`);
+ok("successful retry clears the photo's pending change", await d1.synced(25000) && !!live("workouts",A).find(r=>r.app_id===failedPhoto)?.photo_path);
+await d2.kick();
+const losingHash = await d1.ev(`(() => { __fake.offline=true; const photo=__photo(90,90,false); updateEntry("workouts","${failedPhoto}",x=>{x.photo=photo;x.minutes=26;}); return sbHash(photo); })()`);
+await sleep(150);
+await d2.ev(`updateEntry("workouts","${failedPhoto}",x=>{x.photo=__photo(130,130,false);x.minutes=27;}); true`); await d2.synced();
+const winningVersion = ver(live("workouts",A).find(r=>r.app_id===failedPhoto).photo_path);
+await d1.ev(`__fake.offline=false; sbKick(); true`);
+ok("the later account row wins including its photo", await d1.synced() && await d1.waitFor(`(()=>{const e=[...sbAllOf("workouts")].find(x=>x.e.id==="${failedPhoto}")?.e;return e?.minutes===27 && e.pv===${JSON.stringify(winningVersion)} && !!e.photo && sbHash(e.photo)!=="${losingHash}" && !sbReplacedHere(e);})()`));
+
+console.log("--- 17. blocked local storage prevents upload and retains dirty work for recovery");
+const blocked = await d1.ev(`(() => { window.__setItem=Storage.prototype.setItem; Storage.prototype.setItem=function(k,v){if(k.startsWith("wlh."))throw new DOMException("full","QuotaExceededError"); return window.__setItem.call(this,k,v);}; const id=uid(); addEntry("snacks",{id,date:today(),name:"Durable retry",qty:1,cal:50}); sbKick(); return id; })()`);
+ok("sync reports failure while browser storage is blocked", await d1.waitFor(`SB.state==="error"`));
+ok("failed persistence keeps dirty work and sends no snack", await d1.ev(`dirty.size>0 && SB.kp.snacks.pend["${blocked}"]==="up"`) && !live("snack_logs",A).some(r=>r.app_id===blocked));
+await d1.ev(`Storage.prototype.setItem=window.__setItem; sbKick(); true`);
+ok("freeing storage permits a durable retry and upload", await d1.synced() && live("snack_logs",A).some(r=>r.app_id===blocked));
+
+console.log("--- 18. no script errors");
 ok("no uncaught exceptions on any device", errorsAll.length === 0, errorsAll.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);
 procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(fail ? 1 : 0);
