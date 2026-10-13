@@ -469,7 +469,87 @@ await d1.synced(25000); await sleep(1500); await d1.synced(25000);
 await d1.ev(`__fake.beforeWrite = null; true`);
 ok("the edit made during the upload is uploaded next and is not removed from the queue by the first upload finishing", live("workouts", A).find(r => r.app_id === q4)?.duration_min === 99 && (await d1.ev(`!SB.kp.workouts.pend["${q4}"]`)), JSON.stringify(live("workouts", A).find(r => r.app_id === q4)));
 
-console.log("--- 15. no script errors");
+console.log("--- 15. our own writes are remembered with the queue; lost photos; a profile deleted on both devices");
+// An upload that finishes after a newer edit was queued gets an account time later than the edit. If the page reloads before the edit is sent,
+// that time must still be known as our own write, or the waiting edit is mistaken for an older one and dropped.
+await d1.kick();
+const inflightEdit = (kindTable, setup, editJs) => `(() => { ${setup} window.__once = false; __fake.beforeWrite = name => { if (name === ${JSON.stringify(kindTable)} && !window.__once) { window.__once = true; ${editJs} __fake.failWrites = true; } }; return true; })()`;
+// 1. a workout (one of the five log tables)
+const w15 = await d1.ev(`(() => { const id = uid(); addEntry("workouts", { id, date: today(), type: "run", minutes: 10, cal: 50, note: "own 1", src: null, equip: null, photo: null }); return id; })()`);
+await d1.synced();
+await d1.ev(inflightEdit("workouts", "", `updateEntry("workouts", "${w15}", x => { x.minutes = 77; });`));
+await d1.ev(`updateEntry("workouts", "${w15}", x => { x.minutes = 40; }); true`);
+await sleep(3500);
+ok("an edit made during an upload is still waiting once that upload has finished (the next writes fail)", (await d1.ev(`SB.kp.workouts.pend["${w15}"]`)) === "up" && live("workouts", A).find(r => r.app_id === w15)?.duration_min === 40);
+const stamp1 = await d1.ev(`JSON.stringify({ own: SB.kp.workouts.own.get("${w15}") > SB.kp.workouts.t["${w15}"], saved: JSON.parse(localStorage.getItem("wlh.v62@u_axcom")).root.kp.k.workouts.o["${w15}"] > 0 })`);
+ok("the account time of our own write is saved with the queue", stamp1 === JSON.stringify({ own: true, saved: true }), stamp1);
+ok("after a reload the waiting edit is sent, not dropped", await d1.reload() && await d1.synced(25000) && live("workouts", A).find(r => r.app_id === w15)?.duration_min === 77, JSON.stringify(live("workouts", A).find(r => r.app_id === w15)?.duration_min));
+// 2. a meal (offline cache, no passcode)
+const m15 = await d1.ev(`(() => { const id = uid(); addEntry("meals", { id, date: today(), slot: "lunch", name: "Own meal", cal: 200, dish: null, extras: [], est: false, photo: null }); return id; })()`);
+await d1.synced();
+await d1.ev(inflightEdit("meal_logs", "", `updateEntry("meals", "${m15}", x => { x.cal = 777; });`));
+await d1.ev(`updateEntry("meals", "${m15}", x => { x.cal = 400; }); true`);
+await sleep(3500);
+ok("a meal edited during its upload is still waiting, with its own-write time saved", (await d1.ev(`SB.pend["${m15}"] === "up" && SB.mown.get("${m15}") > SB.pt["${m15}"] && JSON.parse(localStorage.getItem(SB_CACHE)).mo["${m15}"] > 0`)) === true);
+ok("after a reload the meal's waiting edit is sent, not dropped", await d1.reload() && await d1.synced(25000) && live("meal_logs", A).find(r => r.app_id === m15)?.calories === 777);
+// 3. a profile
+const pn = await d1.ev(`P().name`);
+await d1.ev(inflightEdit("people", "", `P().name = "Own 777"; saveProfile();`));
+await d1.ev(`P().name = "Own 400"; saveProfile(); true`);
+await sleep(3500);
+ok("a profile edited during its upload is still waiting, with its own-write time saved", (await d1.ev(`SB.ppend[P().id] === "up" && SB.pown.get(P().id) > SB.ppt[P().id] && JSON.parse(localStorage.getItem(SB_CACHE)).po[P().id] > 0`)) === true);
+ok("after a reload the profile's waiting edit is sent, not dropped", await d1.reload() && await d1.synced(25000) && rows("people", A).some(r => r.display_name === "Own 777"), JSON.stringify(rows("people", A).map(r => r.display_name)));
+await d1.ev(`P().name = ${JSON.stringify(pn)}; saveProfile(); true`); await d1.synced();
+// 4. restoring: the queues come back first, then the stamps that belong to them (also the passcode layout, kept in the root)
+const rest = await d1.ev(`(() => {
+  const was = CRY.lock, pid = P().id, mid = uid(), wid = uid(); CRY.lock = { fake: 1 };
+  try {
+    SB.pend[mid] = "up"; SB.pt[mid] = 1000; SB.mown.set(mid, 2000); SB.ppend[pid] = "up"; SB.ppt[pid] = 1000; SB.pown.set(pid, 2000);
+    SB.kp.workouts.pend[wid] = "up"; SB.kp.workouts.t[wid] = 1000; SB.kp.workouts.own.set(wid, 2000); SB.kp.workouts.own.set("gone0001", 5);
+    const saved = JSON.parse(JSON.stringify(sbKindsSave()));
+    const out = { savedOnlyWaiting: !("gone0001" in saved.k.workouts.o), m: saved.m.o[mid], p: saved.p.o[pid], k: saved.k.workouts.o[wid] };
+    SB.pend = {}; SB.pt = {}; SB.ppend = {}; SB.ppt = {}; SB.mown = new Map(); SB.pown = new Map(); SB.kp.workouts.pend = {}; SB.kp.workouts.t = {}; SB.kp.workouts.own = new Map(); // the live queues are empty, as after a reload
+    S.kpSaved = sbKindsClean(saved); sbKindsRestore();
+    out.back = { m: SB.mown.get(mid), p: SB.pown.get(pid), k: SB.kp.workouts.own.get(wid), pend: SB.pend[mid] + "/" + SB.ppend[pid] + "/" + SB.kp.workouts.pend[wid] };
+    return JSON.stringify(out);
+  } finally { CRY.lock = was; }
+})()`);
+ok("with a passcode the stamps are saved for waiting items only, and come back with their queues", rest === JSON.stringify({ savedOnlyWaiting: true, m: 2000, p: 2000, k: 2000, back: { m: 2000, p: 2000, k: 2000, pend: "up/up/up" } }), rest);
+await d1.reload(); await d1.synced(25000);
+
+// A replacement picture made here that lost to a newer one elsewhere must give way to the account's picture.
+const lw = await d1.ev(`(() => { const id = uid(); addEntry("workouts", { id, date: today(), type: "run", minutes: 12, cal: 60, note: "lost photo", src: null, equip: null, photo: __photo(300, 200, false) }); return id; })()`);
+await d1.synced(); await d2.kick();
+ok("device 2 has the workout and its picture", await d2.waitFor(`[...sbAllOf("workouts")].some(x => x.e.id === "${lw}" && !!x.e.photo)`, 15000));
+await d2.ev(`__fake.offline = true; true`);
+const loser = await d2.ev(`(() => { const u = __photo(260, 260, false); updateEntry("workouts", "${lw}", x => { x.photo = u; x.note = "edited on 2"; }); return sbHash(u); })()`);
+await sleep(600);
+const winner = await d1.ev(`(() => { const u = __photo(500, 120, false); updateEntry("workouts", "${lw}", x => { x.photo = u; x.note = "edited on 1"; }); return sbHash(u); })()`);
+await d1.synced(); const accVer = (live("workouts", A).find(r => r.app_id === lw)?.photo_path || "").split("#")[1];
+await d2.ev(`__fake.offline = false; true`);
+ok("device 2's older edit is dropped and the newer picture arrives (not blocked by the replaced one)", await d2.kick() && await d2.waitFor(`(() => { const e = [...sbAllOf("workouts")].find(x => x.e.id === "${lw}").e; return e.note === "edited on 1" && e.pv === "${accVer}" && sbHash(e.photo) !== "${loser}"; })()`, 20000));
+ok("and the picture is the account's copy, settled", await d2.synced() && await d2.ev(`(() => { const e = [...sbAllOf("workouts")].find(x => x.e.id === "${lw}").e; return e.pt === sbPhotoTag(e) && !sbReplacedHere(e); })()`));
+// the same for a profile picture
+const la = await d1.ev(`(() => { P().photo = __photo(240, 240, false); saveProfile(); return true; })()`);
+await d1.synced(); await d2.kick(); await d2.waitFor(`!!P().photo && !!P().pv`, 15000);
+await d2.ev(`__fake.offline = true; P().photo = __photo(200, 300, false); P().name = "Pic on 2"; saveProfile(); true`);
+await sleep(600);
+await d1.ev(`P().photo = __photo(100, 400, false); P().name = "Pic on 1"; saveProfile(); true`); await d1.synced();
+const accPv = (rows("people", A).find(r => r.display_name === "Pic on 1")?.avatar_url || "").split("#")[1];
+await d2.ev(`__fake.offline = false; true`);
+ok("a profile picture replaced offline gives way to a newer one from another device", await d2.kick() && await d2.waitFor(`P().name === "Pic on 1" && P().pv === "${accPv}" && P().pt === sbPhotoTag(P())`, 20000));
+await d1.ev(`P().name = ${JSON.stringify(pn)}; saveProfile(); true`); await d1.synced(); await d2.kick();
+
+// A profile deleted on two devices: the second device's waiting deletion is settled by the account's row, not kept for ever.
+tmp = await mkTemp("Temp both");
+await d1.ev(`__fake.offline = true; dropProfile(${JSON.stringify(tmp)}); saveProfile(); true`); await sleep(300);
+await d2.ev(`dropProfile(${JSON.stringify(tmp)}); saveProfile(); true`); await d2.synced(); await sleep(200);
+await d1.ev(`__fake.offline = false; true`);
+ok("a profile deleted on both devices leaves no waiting deletion", await d1.kick() && await d1.ev(`!SB.ppend[${JSON.stringify(tmp)}] && !sbPending()`));
+const syncs0 = await d1.ev(`__fake.calls.filter(c => c[0] === "people" && c[1] === "select").length`); await sleep(2500);
+ok("and it does not keep syncing", (await d1.ev(`__fake.calls.filter(c => c[0] === "people" && c[1] === "select").length`)) === syncs0);
+
+console.log("--- 16. no script errors");
 ok("no uncaught exceptions on any device", errorsAll.length === 0, errorsAll.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);
 procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(fail ? 1 : 0);

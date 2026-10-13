@@ -4075,9 +4075,9 @@ const APP_VERSION = { update: "8.2", build: "8.2.16", channel: "Dev Testing", da
   const CHANGELOG = [
     { id:"8.2.16", area:"Sync", title:"Full account sync: the same data on every device",
       bug:"Only meals, workouts, weigh-ins and the basics of each profile reached the account. Snacks, drinks, vitals, plans, coach history, appearance, home layout and every photo stayed in one browser, a passcode switched syncing off, and signing out warned about (then deleted) everything that was not in the account. A second device showed only part of your data.",
-      fix:"Everything a person logs now syncs through the existing tables, with no database change: snacks (snack_logs), drinks (drink_logs), workouts, weigh-ins, and vitals plus imported Apple Health values (daily_vitals, one row per person per day, unknown fields in extra). Profiles write all their fields: the basics, allergies and nutrition_preferences (arrays) and avatar_url go to their columns, and everything else (theme and appearance, coach persona and name, home-screen widgets and sizes, reminders, units, plans, coach questions and check-ins, awards, menu choices, grocery and pantry, reviews, experiments, sharing choices, progress-photo list) goes in people.settings. Photos (meal, workout, progress, profile picture) upload to the private photos bucket at <user id>/<person id>/<type>/<app id>.jpg after being re-encoded through a canvas to about 200 KB or less (smaller for the types the app caps lower), which strips all metadata including location; the path is stored in photo_path, avatar_url or the profile settings. A Sync photos switch (Settings > Privacy & security, on by default) stops uploads and downloads. A new device downloads everything for the account in pages of 1000 under a 'Syncing your data…' screen, then pulls only rows changed since its last pull (an updated_at cursor) on the five log tables. Conflicts: the later change wins, judged by the time the waiting change was made against the row's updated_at; deletions sync through deleted_at (a vitals day, which has no such column, is written as an empty row marked in extra). Changes made offline are queued, kept across reloads and sent when back online; the account row shows saving, saved, offline or error. A passcode now locks and encrypts the device copy only: sync continues while unlocked, the waiting list is kept in the encrypted data and restored on unlock, and locked it sends and receives nothing. Signing out uploads what is waiting and warns only if something has not reached the account (or can never: form-check videos, or photos while Sync photos is off); otherwise it clears the device with no dialog. Guest import uploads every data type. The Privacy Policy, Terms (passcode paragraph), Settings texts, consent explainers and the sign-in and sign-out wording were rewritten to match. Review round: before a waiting change is sent, the account's row is read and a row updated after the change was made wins (meals, every log table, profiles, and the sign-out path alike); every edit of a waiting profile carries its own time; a profile deletion and an edit are compared by time in both directions; a profile row written by 8.2.15 is sent the newer fields once; a field cleared on one device (a plan, for example) is cleared on the others. Photos: the stored path carries a version after a '#', so a replaced photo is noticed and downloaded and a photo removed elsewhere is removed here; a photo that has not been downloaded yet is never mistaken for one the person deleted; a download that fails stays waiting; a file that could not be deleted stays on a saved retry list; work begun before a lock stops once the screen is locked. The waiting list is now explicit: a change is written to storage (and the write confirmed) before anything is sent, an item leaves the queue only after the server confirms it and only if it has not been edited since it was sent (judged on the live queue, not a copy), the shorter queue is written back at once, only one worker runs at a time (requests that arrive meanwhile ask it to go round again instead of starting another), and the account's own just-made write is no longer mistaken for another device's newer change. A photo replaced while Sync photos is off is sent when the switch comes back on and is never overwritten by the older account copy; a file deletion still queued for a path is cancelled when that path gets a new photo, and is never run for a path the account's rows use. Also fixed a bug found on the way: the encryption helper overflowed on a profile with several photos, so saving with a passcode failed without a word.",
-      where:"index.html: SB_KINDS and its helpers (sbMonthOf, sbAllOf, sbTrackKinds, sbPullKind, sbApplyKind, sbPushKinds, sbKindsSave/Clean/Restore, vitalId), the photo block (sbShrink, sbUploadPhotos, sbUploadMealPhotos, sbUploadProfilePhotos, sbNoteAvatar, sbFetchPhotos, sbPhotosKick), SB_PROF_SET, SB_PREM_SYNC, sbProfSettings, sbProfRow, sbProfFromRow, sbMergeRemote, sbApplyPeople, sbPushProfiles, sbActive, sbOnLock, sbOnLockScreen, sbAfterUnlock, unlock, lockNow, removePasscode, sbCacheSave, sbSyncBody, sbFail, sbSignOut, sbLocalOnly, sbStatusText, syncingView, render (first-load gate), photoSyncCard and the sync-photos-toggle action, cleanProfile (progress-photo path), the privacy policy sections 3, 4 and 6, the Terms passcode paragraph, the account-info popup, the guest-import text and the consent explainers. tests/browser/account-sync.mjs (new, 133 checks, two or three isolated browser contexts on one shared fake database), fake-supabase.js (updated_at, filters, paging, storage, shared mode), run-all.mjs, and updates to security.mjs, meal-sync.mjs, meal-upload.mjs, profile-sync.mjs, workout-sync.mjs and privacy.mjs. docs/DATABASE.md, docs/SECURITY.md, docs/BUILD_PLAN.md, CHANGELOG.md, README.md, CLAUDE.md. No file under supabase/ changed and nothing was applied to the project.",
-      test:"node tests/browser/account-sync.mjs (133 checks). By hand on the preview with a test account on two real browsers or devices: create a profile and log one of each thing (a meal with a photo, snack, drink, workout, weigh-in, water or steps) on the first; sign in on the second and watch 'Syncing your data…', then check everything and the photos. Edit the profile and delete an entry on one and refresh the other. Turn Wi-Fi off, log things, reload, turn it on. Set a passcode and keep logging. Turn Sync photos off and on in Settings > Privacy & security. Sign out with nothing waiting: no warning.",
+      fix:"Everything a person logs now syncs through the existing tables, with no database change: snacks (snack_logs), drinks (drink_logs), workouts, weigh-ins, and vitals plus imported Apple Health values (daily_vitals, one row per person per day, unknown fields in extra). Profiles write all their fields: the basics, allergies and nutrition_preferences (arrays) and avatar_url go to their columns, and everything else (theme and appearance, coach persona and name, home-screen widgets and sizes, reminders, units, plans, coach questions and check-ins, awards, menu choices, grocery and pantry, reviews, experiments, sharing choices, progress-photo list) goes in people.settings. Photos (meal, workout, progress, profile picture) upload to the private photos bucket at <user id>/<person id>/<type>/<app id>.jpg after being re-encoded through a canvas to about 200 KB or less (smaller for the types the app caps lower), which strips all metadata including location; the path is stored in photo_path, avatar_url or the profile settings. A Sync photos switch (Settings > Privacy & security, on by default) stops uploads and downloads. A new device downloads everything for the account in pages of 1000 under a 'Syncing your data…' screen, then pulls only rows changed since its last pull (an updated_at cursor) on the five log tables. Conflicts: the later change wins, judged by the time the waiting change was made against the row's updated_at; deletions sync through deleted_at (a vitals day, which has no such column, is written as an empty row marked in extra). Changes made offline are queued, kept across reloads and sent when back online; the account row shows saving, saved, offline or error. A passcode now locks and encrypts the device copy only: sync continues while unlocked, the waiting list is kept in the encrypted data and restored on unlock, and locked it sends and receives nothing. Signing out uploads what is waiting and warns only if something has not reached the account (or can never: form-check videos, or photos while Sync photos is off); otherwise it clears the device with no dialog. Guest import uploads every data type. The Privacy Policy, Terms (passcode paragraph), Settings texts, consent explainers and the sign-in and sign-out wording were rewritten to match. Review round: before a waiting change is sent, the account's row is read and a row updated after the change was made wins (meals, every log table, profiles, and the sign-out path alike); every edit of a waiting profile carries its own time; a profile deletion and an edit are compared by time in both directions; a profile row written by 8.2.15 is sent the newer fields once; a field cleared on one device (a plan, for example) is cleared on the others. Photos: the stored path carries a version after a '#', so a replaced photo is noticed and downloaded and a photo removed elsewhere is removed here; a photo that has not been downloaded yet is never mistaken for one the person deleted; a download that fails stays waiting; a file that could not be deleted stays on a saved retry list; work begun before a lock stops once the screen is locked. The waiting list is now explicit: a change is written to storage (and the write confirmed) before anything is sent, an item leaves the queue only after the server confirms it and only if it has not been edited since it was sent (judged on the live queue, not a copy), the shorter queue is written back at once, only one worker runs at a time (requests that arrive meanwhile ask it to go round again instead of starting another), and the account's own just-made write is no longer mistaken for another device's newer change. A photo replaced while Sync photos is off is sent when the switch comes back on and is never overwritten by the older account copy; a file deletion still queued for a path is cancelled when that path gets a new photo, and is never run for a path the account's rows use. Also fixed a bug found on the way: the encryption helper overflowed on a profile with several photos, so saving with a passcode failed without a word. The account times of this device's own writes are now saved with the waiting list (for items still waiting, with or without a passcode) and restored after the queues they belong to, so a reload or lock after an upload that finished later than a newer edit no longer drops that edit. A replacement picture that lost to a newer change from another device now gives way to the account's picture instead of blocking it. A profile deleted on two devices clears its waiting deletion when the account's row confirms it.",
+      where:"index.html: SB_KINDS and its helpers (sbMonthOf, sbAllOf, sbTrackKinds, sbPullKind, sbApplyKind, sbPushKinds, sbKindsSave/Clean/Restore, vitalId), the photo block (sbShrink, sbUploadPhotos, sbUploadMealPhotos, sbUploadProfilePhotos, sbNoteAvatar, sbFetchPhotos, sbPhotosKick), SB_PROF_SET, SB_PREM_SYNC, sbProfSettings, sbProfRow, sbProfFromRow, sbMergeRemote, sbApplyPeople, sbPushProfiles, sbActive, sbOnLock, sbOnLockScreen, sbAfterUnlock, unlock, lockNow, removePasscode, sbCacheSave, sbSyncBody, sbFail, sbSignOut, sbLocalOnly, sbStatusText, syncingView, render (first-load gate), photoSyncCard and the sync-photos-toggle action, cleanProfile (progress-photo path), the privacy policy sections 3, 4 and 6, the Terms passcode paragraph, the account-info popup, the guest-import text and the consent explainers. tests/browser/account-sync.mjs (new, 147 checks, two or three isolated browser contexts on one shared fake database), fake-supabase.js (updated_at, filters, paging, storage, shared mode), run-all.mjs, and updates to security.mjs, meal-sync.mjs, meal-upload.mjs, profile-sync.mjs, workout-sync.mjs and privacy.mjs. docs/DATABASE.md, docs/SECURITY.md, docs/BUILD_PLAN.md, CHANGELOG.md, README.md, CLAUDE.md. No file under supabase/ changed and nothing was applied to the project.",
+      test:"node tests/browser/account-sync.mjs (147 checks). By hand on the preview with a test account on two real browsers or devices: create a profile and log one of each thing (a meal with a photo, snack, drink, workout, weigh-in, water or steps) on the first; sign in on the second and watch 'Syncing your data…', then check everything and the photos. Edit the profile and delete an entry on one and refresh the other. Turn Wi-Fi off, log things, reload, turn it on. Set a passcode and keep logging. Turn Sync photos off and on in Settings > Privacy & security. Sign out with nothing waiting: no warning.",
       limits:"(1) Meals and profiles are still read in full (in pages) on every sync; only the five other tables use the updated_at cursor. (2) The 'later change wins' rule compares this device's clock with the database's updated_at, so a device whose clock is far wrong can lose or win by mistake. (3) daily_vitals has no deleted_at column, so a deleted vitals day is stored as an empty row with extra._d; progress photos have no table, so their paths live in the profile's settings. (4) Form-check videos, Premium status and your camera and photo-AI permission switches never upload. (5) With a passcode on, the account's copy and photo files are NOT encrypted with the passcode: anyone with the account can read them. That is stated in the policy, but it is a real change from before. (6) People who turned on the body progress studio when it promised 'on this device only' will have those photos uploaded now that Sync photos is on by default; the explainers were rewritten but nobody is asked again. (7) There is no separate Health Data Policy in the app; the Privacy Policy lists everything. (8) Tests use a fake Supabase that mimics the row-level and storage rules; the live project was only read to confirm the columns, so please try the preview with a test account. (9) Photos that fail to upload three times in a row stop holding the entry back until they change. (10) Between reading the account's row and writing, a few milliseconds remain in which another device's write can land; closing that completely needs a rule in the database, which this build did not add. (11) The shared photo version is a short hash kept in the stored path after a '#'; anything reading photo_path outside this app must strip it." },
     { id:"8.2.15", area:"Sync", title:"Workouts and weigh-ins sync to your account",
       bug:"Only meals and the basics of each profile reached your account. Workouts and weigh-ins stayed in one browser, so a second device showed none of them, and signing out (or losing the browser's data) lost them for good.",
@@ -8028,7 +8028,7 @@ function sbCacheSave(){
   if (!SB.user || LEAVING || CRY.lock) return false; // the cache is plain text: with a passcode on, meals stay in the encrypted months instead
   if (!SB.cacheDirty) return true;
   const meals = {}; for (const { pid, m } of sbAllMeals()) meals[m.id] = { pid, m };
-  try { localStorage.setItem(SB_CACHE, JSON.stringify({ v:1, uid:SB.user.id, pend:SB.pend, pt:SB.pt, meals, pp:SB.ppend, ppt:SB.ppt, ps:Object.fromEntries(SB.psig), pa:Object.fromEntries(SB.ppaths) })); SB.cacheDirty = false; return true; }
+  try { localStorage.setItem(SB_CACHE, JSON.stringify({ v:1, uid:SB.user.id, pend:SB.pend, pt:SB.pt, mo:sbOwnSave(SB.mown, SB.pend), po:sbOwnSave(SB.pown, SB.ppend), meals, pp:SB.ppend, ppt:SB.ppt, ps:Object.fromEntries(SB.psig), pa:Object.fromEntries(SB.ppaths) })); SB.cacheDirty = false; return true; }
   catch { if (!SB.cacheWarned) { SB.cacheWarned = true; toast("This browser's storage is full, so meals can't be kept offline until you free some space.", "warn"); } return false; }
 }
 function sbCacheDrop(){ try { localStorage.removeItem(SB_CACHE); } catch {} SB.cacheDirty = false; }
@@ -8050,6 +8050,7 @@ function sbLoadCache(c){
   for (const [id, v] of Object.entries(c.ps || {})) if (ID_RE.test(id) && typeof v === "string") SB.psig.set(id, v);
   for (const [id, v] of Object.entries(c.ppt || {})) if (ID_RE.test(id) && SB.ppend[id]) SB.ppt[id] = num(v, 0, 8.64e15) ?? Date.now();
   for (const [id, v] of Object.entries(c.pa || {})) if (ID_RE.test(id) && typeof v === "string" && v.length < 300) SB.ppaths.set(id, v);
+  SB.mown = new Map(); SB.pown = new Map(); sbOwnLoad(SB.mown, c.mo, SB.pend); sbOwnLoad(SB.pown, c.po, SB.ppend); // after the queues they belong to
 }
 // A different account used this browser before: its meals must not be uploaded into this one.
 function sbDropForeign(c){
@@ -8087,6 +8088,18 @@ async function sbStaleKind(kind, ids){
 // "was this row changed after my waiting edit?" does not count the write we ourselves just made.
 const sbOwn = (map, key, row) => { const t = Date.parse(row?.updated_at) || 0; if (t) { map.set(key, t); sbSeen(t); } };
 const sbForeign = (map, key, t) => map.get(key) !== t;
+// The stamps are kept with the waiting list (only for items still waiting), so a reload or a lock does not forget which account rows were our own writes.
+const sbOwnSave = (map, pend) => { const o = {}; for (const id in pend) if (map.has(id)) o[id] = map.get(id); return o; };
+const sbOwnLoad = (map, o, pend) => { for (const [id, v] of Object.entries(o && typeof o === "object" ? o : {})) { const t = pend[id] ? num(v, 0, 8.64e15) : null; if (t) map.set(id, t); } };
+// A waiting edit dropped because the account's copy is newer: a photo it replaced here lost too. Forget the hash it was sent as, so the account's photo is fetched over it.
+function sbPhotoLost(dom, ids){
+  const want = new Set(ids); if (!want.size) return;
+  const touched = new Set(), lose = e => { if (e && want.has(e.id) && sbReplacedHere(e)) { e.pt = undefined; return true; } return false; };
+  if (dom === "meals") { for (const { pid, mon, m } of sbAllMeals()) if (lose(m)) touched.add(pid + "|" + mon); }
+  else if (dom === "avatar") { let any = false; for (const p of S.profiles) if (lose(p)) any = true; if (any) markRoot(); }
+  else if (SB_KINDS[dom]?.photo) { for (const { pid, mon, e } of sbAllOf(dom)) if (lose(e)) touched.add(pid + "|" + mon); }
+  for (const k of touched) { const [pid, mon] = k.split("|"); markLog(pid, mon); }
+}
 const sbRepull = () => { clearTimeout(SB.timers.repull); SB.timers.repull = setTimeout(() => sbKick(), 50); };
 
 // ---- change tracking: markLog()/markAll() call this, so every way of changing a meal is seen ----
@@ -8151,6 +8164,7 @@ async function sbPushProfiles(){
   if (!sbLive(g)) return;
   if (stale.size) {
     for (const id of stale) { delete SB.ppend[id]; delete SB.ppt[id]; if (!S.profiles.some(p => p.id === id)) { SB.psig.delete(id); SB.plast.delete(id); } }
+    sbPhotoLost("avatar", [...stale]);
     ups = ups.filter(p => !stale.has(p.id)); dels = dels.filter(id => !stale.has(id)); sbRepull();
     if (!ups.length && !dels.length) return;
   }
@@ -8202,7 +8216,7 @@ async function sbPush(){
   for (const x of ups) if (!SB.people.has(x.pid)) { if (S.profiles.some(p => p.id === x.pid)) throw Object.assign(new Error("person_missing"), { code: "person_missing" }); delete SB.pend[x.m.id]; }
   const stale = await sbStale("meal_logs", [...ups.map(x => x.m.id), ...dels], SB.pt, "app_id", SB.mown);
   if (!sbLive(g)) return;
-  if (stale.size) { for (const id of stale) { delete SB.pend[id]; delete SB.pt[id]; } ups = ups.filter(x => !stale.has(x.m.id)); dels = dels.filter(id => !stale.has(id)); sbRepull(); }
+  if (stale.size) { for (const id of stale) { delete SB.pend[id]; delete SB.pt[id]; } sbPhotoLost("meals", [...stale]); ups = ups.filter(x => !stale.has(x.m.id)); dels = dels.filter(id => !stale.has(id)); sbRepull(); }
   for (let i = 0; i < ups.length; i += 200) {
     const chunk = ups.slice(i, i + 200).filter(x => SB.people.has(x.pid)), sent = chunk.map(x => [x.m.id, sbSig(x.m), SB.pt[x.m.id]]);
     if (!chunk.length) continue;
@@ -8262,7 +8276,9 @@ function sbApplyPeople(rows){
     const at = Date.parse(r.updated_at) || 0;
     if (r.deleted_at) {
       // Deleted in the account: it goes here too, unless an edit made here is later than the deletion (then the edit wins and brings it back).
-      if (S.profiles.some(p => p.id === id) && (SB.ppend[id] !== "up" || (at > (SB.ppt[id] || 0) && sbForeign(SB.pown, id, at)))) { dropProfile(id); SB.psig.delete(id); SB.plast.delete(id); delete SB.ppend[id]; delete SB.ppt[id]; changed = true; }
+      const here = S.profiles.some(p => p.id === id);
+      if (here && (SB.ppend[id] !== "up" || (at > (SB.ppt[id] || 0) && sbForeign(SB.pown, id, at)))) { dropProfile(id); SB.psig.delete(id); SB.plast.delete(id); delete SB.ppend[id]; delete SB.ppt[id]; changed = true; }
+      else if (!here && SB.ppend[id] === "del") { delete SB.ppend[id]; delete SB.ppt[id]; SB.psig.delete(id); SB.plast.delete(id); } // deleted here and in the account: nothing left to send
     } else if (SB.ppend[id] === "del" && at > (SB.ppt[id] || 0) && sbForeign(SB.pown, id, at)) { delete SB.ppend[id]; delete SB.ppt[id]; SB.psig.delete(id); SB.plast.delete(id); } // edited in the account after it was deleted here: it comes back
   }
   for (const r of live) {
@@ -8270,7 +8286,7 @@ function sbApplyPeople(rows){
     SB.people.set(id, r.id);
     const p = S.profiles.find(x => x.id === id);
     if (r.avatar_url) SB.ppaths.set(id, r.avatar_url);
-    if (SB.ppend[id] === "up" && p && (Date.parse(r.updated_at) || 0) > (SB.ppt[id] || 0) && sbForeign(SB.pown, id, Date.parse(r.updated_at) || 0)) { delete SB.ppend[id]; delete SB.ppt[id]; } // the account's copy is newer
+    if (SB.ppend[id] === "up" && p && (Date.parse(r.updated_at) || 0) > (SB.ppt[id] || 0) && sbForeign(SB.pown, id, Date.parse(r.updated_at) || 0)) { delete SB.ppend[id]; delete SB.ppt[id]; sbPhotoLost("avatar", [id]); } // the account's copy is newer
     const pend = SB.ppend[id];
     if (!p) {
       if (pend === "del" || S.profiles.length >= 12) continue;
@@ -8299,7 +8315,9 @@ function sbApplyRemote(list){
   const pids = new Set(S.profiles.map(p => p.id)), old = new Map();
   for (const { m } of sbAllMeals()) old.set(m.id, m);
   // The later change wins: a waiting change made before the account's row was last updated is dropped.
-  for (const x of list) { const id = x.row.app_id, t = Date.parse(x.row.updated_at) || 0; if (SB.pend[id] && t > (SB.pt[id] || 0) && sbForeign(SB.mown, id, t)) { delete SB.pend[id]; delete SB.pt[id]; } }
+  const lostM = [];
+  for (const x of list) { const id = x.row.app_id, t = Date.parse(x.row.updated_at) || 0; if (SB.pend[id] && t > (SB.pt[id] || 0) && sbForeign(SB.mown, id, t)) { delete SB.pend[id]; delete SB.pt[id]; lostM.push(id); } }
+  sbPhotoLost("meals", lostM);
   for (const pid in S.logs) for (const mon in S.logs[pid]) S.logs[pid][mon].meals = S.logs[pid][mon].meals.filter(m => SB.pend[m.id]);
   const rows = list.filter(x => pids.has(x.pid) && !x.row.deleted_at && !SB.pend[x.row.app_id]);
   for (const x of list) sbSeen(Date.parse(x.row.updated_at) || 0);
@@ -8401,9 +8419,9 @@ function sbTrackKinds(pid, mon){
 // or deleting everything removes it. `ready` says a first sync finished here, so what is on screen at load is a fair baseline.
 function sbKindsSave(){
   if (!STORE_UID || !SB.kstarted) return undefined; // STORE_UID, not SB.user: an expired session still owns this store
-  const k = {}; for (const kind in SB_KINDS) k[kind] = { pend: { ...SB.kp[kind].pend }, t: { ...SB.kp[kind].t } };
+  const k = {}; for (const kind in SB_KINDS) k[kind] = { pend: { ...SB.kp[kind].pend }, t: { ...SB.kp[kind].t }, o: sbOwnSave(SB.kp[kind].own, SB.kp[kind].pend) };
   const out = { ready: true, k, rq: SB.rmq.slice(0, 200) };
-  if (CRY.lock) { out.m = { pend: { ...SB.pend }, t: { ...SB.pt } }; out.p = { pend: { ...SB.ppend }, t: { ...SB.ppt } }; } // plain mode keeps these in the offline cache
+  if (CRY.lock) { out.m = { pend: { ...SB.pend }, t: { ...SB.pt }, o: sbOwnSave(SB.mown, SB.pend) }; out.p = { pend: { ...SB.ppend }, t: { ...SB.ppt }, o: sbOwnSave(SB.pown, SB.ppend) }; } // plain mode keeps these in the offline cache
   return out;
 }
 function sbKindsClean(kp){
@@ -8411,28 +8429,30 @@ function sbKindsClean(kp){
   const out = { ready: true, k: {}, rq: Array.isArray(kp.rq) ? kp.rq.filter(x => typeof x === "string" && x.length < 300).slice(0, 200) : [] };
   for (const kind in SB_KINDS) {
     const src = kp.k && kp.k[kind] && typeof kp.k[kind] === "object" ? kp.k[kind] : { pend: kp[kind], t: {} }; // 8.2.15 stored { workouts: { id: op } }
-    const pend = {}, t = {};
-    for (const [id, v] of Object.entries(src.pend && typeof src.pend === "object" ? src.pend : {})) if (KID_RE.test(id) && (v === "up" || v === "del")) { pend[id] = v; t[id] = num(src.t?.[id], 0, 8.64e15) ?? Date.now(); }
-    out.k[kind] = { pend, t };
+    const pend = {}, t = {}, o = {};
+    for (const [id, v] of Object.entries(src.pend && typeof src.pend === "object" ? src.pend : {})) if (KID_RE.test(id) && (v === "up" || v === "del")) { pend[id] = v; t[id] = num(src.t?.[id], 0, 8.64e15) ?? Date.now(); const w = num(src.o?.[id], 0, 8.64e15); if (w) o[id] = w; }
+    out.k[kind] = { pend, t, o };
   }
   for (const w of ["m", "p"]) if (kp[w] && typeof kp[w] === "object") {
-    const pend = {}, t = {};
-    for (const [id, v] of Object.entries(kp[w].pend && typeof kp[w].pend === "object" ? kp[w].pend : {})) if (ID_RE.test(id) && (v === "up" || v === "del")) { pend[id] = v; t[id] = num(kp[w].t?.[id], 0, 8.64e15) ?? Date.now(); }
-    out[w] = { pend, t };
+    const pend = {}, t = {}, o = {};
+    for (const [id, v] of Object.entries(kp[w].pend && typeof kp[w].pend === "object" ? kp[w].pend : {})) if (ID_RE.test(id) && (v === "up" || v === "del")) { pend[id] = v; t[id] = num(kp[w].t?.[id], 0, 8.64e15) ?? Date.now(); const x = num(kp[w].o?.[id], 0, 8.64e15); if (x) o[id] = x; }
+    out[w] = { pend, t, o };
   }
   return out;
 }
 function sbKindsRestore(){
   const kp = S.kpSaved; S.kpSaved = null;
   if (!kp || !SB.user || STORE_UID !== SB.user.id) return;
-  sbKindsReset();
-  for (const kind in SB_KINDS) { SB.kp[kind].pend = { ...kp.k[kind].pend }; SB.kp[kind].t = { ...kp.k[kind].t }; }
+  const mo = SB.mown, po = SB.pown; // loaded with the offline cache just before (no passcode): the reset below must not wipe them
+  sbKindsReset(); SB.mown = mo; SB.pown = po;
+  for (const kind in SB_KINDS) { SB.kp[kind].pend = { ...kp.k[kind].pend }; SB.kp[kind].t = { ...kp.k[kind].t }; sbOwnLoad(SB.kp[kind].own, kp.k[kind].o, SB.kp[kind].pend); }
   SB.rmq = [...kp.rq];
   sbKindsBaseline(); SB.kstarted = true;
   if (kp.m && kp.p) { // a passcode was on: meals are in the encrypted months, and what was waiting is here instead of in the offline cache
     SB.pend = { ...kp.m.pend }; SB.pt = { ...kp.m.t }; SB.shadow.clear();
     for (const { pid, mon, m } of sbAllMeals()) if (!SB.pend[m.id]) SB.shadow.set(m.id, { pid, mon, sig: sbSig(m) });
     sbProfReset(); SB.ppend = { ...kp.p.pend }; SB.ppt = { ...kp.p.t };
+    SB.mown = new Map(); SB.pown = new Map(); sbOwnLoad(SB.mown, kp.m.o, SB.pend); sbOwnLoad(SB.pown, kp.p.o, SB.ppend); // the queues first, then the stamps that belong to them
     for (const p of S.profiles) if (!SB.ppend[p.id]) sbSetPsig(p.id, sbProfSig(p));
     SB.started = true;
   }
@@ -8465,13 +8485,14 @@ function sbPutEntry(kind, pid, e){ const L = logFor(pid, monthOf(e.date)); if (S
 // Returns the months it changed.
 function sbApplyKind(kind, pulled){
   const touched = new Set(), { full, list } = pulled;
-  const D = SB_KINDS[kind], K = SB.kp[kind], pids = new Set(S.profiles.map(p => p.id)), live = new Map(), dead = new Set();
+  const D = SB_KINDS[kind], K = SB.kp[kind], pids = new Set(S.profiles.map(p => p.id)), live = new Map(), dead = new Set(), lost = [];
   for (const x of list) {
     if (!pids.has(x.pid)) continue;
     const id = D.idOf(x.pid, x.row);
-    if (K.pend[id] && (Date.parse(x.row.updated_at) || 0) > (K.t[id] || 0) && sbForeign(K.own, id, Date.parse(x.row.updated_at) || 0)) { delete K.pend[id]; delete K.t[id]; } // the account's copy is newer (and not just our own write)
+    if (K.pend[id] && (Date.parse(x.row.updated_at) || 0) > (K.t[id] || 0) && sbForeign(K.own, id, Date.parse(x.row.updated_at) || 0)) { delete K.pend[id]; delete K.t[id]; lost.push(id); } // the account's copy is newer (and not just our own write)
     if (D.dead(x.row)) { dead.add(id); live.delete(id); } else { live.set(id, x); dead.delete(id); }
   }
+  sbPhotoLost(kind, lost);
   const local = new Map(); for (const x of sbAllOf(kind)) local.set(x.e.id, x);
   const byPid = new Map(); for (const [id, x] of live) if (!K.pend[id]) (byPid.get(x.pid) || byPid.set(x.pid, []).get(x.pid)).push({ id, row: x.row });
   for (const [pid, items] of byPid) {
@@ -8515,7 +8536,7 @@ async function sbPushKinds(){
     if (!sbLive(g)) return;
     const stale = await sbStaleKind(kind, [...ups.map(x => x.e.id), ...dels]);
     if (!sbLive(g)) return;
-    if (stale.size) { for (const id of stale) { delete K.pend[id]; delete K.t[id]; } ups = ups.filter(x => !stale.has(x.e.id)); dels = dels.filter(id => !stale.has(id)); sbRepull(); }
+    if (stale.size) { for (const id of stale) { delete K.pend[id]; delete K.t[id]; } sbPhotoLost(kind, [...stale]); ups = ups.filter(x => !stale.has(x.e.id)); dels = dels.filter(id => !stale.has(id)); sbRepull(); }
     await sbUploadPhotos(kind, ups, g);
     if (!sbLive(g)) return;
     for (let i = 0; i < ups.length; i += 200) {
@@ -8639,7 +8660,8 @@ function sbPhotoNote(dom, id, field, e){
   if (path) {
     D.paths.set(id, path); D.ver.set(id, ver);
     // missing here, or replaced elsewhere since this device last had it; but not over a replacement made here that has not been sent yet
-    if (e && sbPhotosOn() && (!e.photo || (ver && ver !== e.pv && (!e.pt || sbPhotoTag(e) === e.pt)))) D.need.add(id);
+    // (pv without pt: this device's replacement lost to a newer change in the account, so the account's picture is taken)
+    if (e && sbPhotosOn() && (!e.photo || (e.pv && !e.pt) || (ver && ver !== e.pv && (!e.pt || sbPhotoTag(e) === e.pt)))) D.need.add(id);
     return false;
   }
   D.paths.delete(id); D.ver.delete(id); D.need.delete(id);
