@@ -4059,7 +4059,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.19", channel: "Dev Testing", date: "2026-10-13", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.20", channel: "Dev Testing", date: "2026-10-13", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -4073,6 +4073,14 @@ const APP_VERSION = { update: "8.2", build: "8.2.19", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.20",
+      area:"Motion",
+      title:"Motion: sliding selection ring, animated links, top-right toasts, bell pulse, widgets that turn over, and tidier cards",
+      bug:"Choosing an option in a segmented control just jumped; external links looked the same as plain text on touch screens and had no hover effect; toasts appeared at the bottom right; the bell's unread badge did not draw the eye; widgets showed only one face. Separately, three cards looked rough: a dish name ran straight into its details (\"Fura da nonoNiger / Nigeria\"), the coach card repeated the coach's name and showed the percentage twice (\"0%\" beside \"0% vs yesterday (0%)\"), and the weekly check-in bar filled up to \"Should be here\" even when nothing had been done. \"Only 0 days of food logged\" was also clumsy.",
+      fix:"A ring slides to the chosen option in every single-choice group (the segmented controls, the coach's How-are-you-feeling chips): it is one element that morphInto keeps, so a choice animates by moving it, and a group seen for the first time just appears. External links (href starting with http) keep a soft underline, and a full-strength line draws in from the left over 0.4s on hover or keyboard focus. Toasts now stack at the top right (newest first), spring in with a 0.5s overshoot curve and leave by shrinking up and out; swiping up dismisses them. The bell's unread badge pulses with a ring in the warning colour. Small and Medium widgets (not Large, and not while editing) have a corner button that turns the card over in 3D: the back is built when opened and shows today against the average for Small, or the full detail the Large size holds for Medium, with a link to the page; the hidden face is inert, Escape turns it back, and the state survives a re-render, and a render does not rebuild an unchanged back, so a focused Open link keeps focus. The ring also follows a playback-speed choice made in place. Everything respects Reduced motion. Clean-ups: dish rows put the details under the name; the coach greeting no longer repeats the coach's name or the percentage, and \"Same as yesterday (n%)\" replaces a zero change; the check-in bar fills only with sessions done; \"No food logged in the last week\" replaces \"Only 0 days\".",
+      where:"index.html: ringSync(), flipSync(), flipSet(), flipBackHTML(), wcard() (wrapper and faces), icon flip, swipeToast() (prepend, SG direction, overflow order), coachGreetingRich(), coachMechanic(), checkinCard() (donePos), the check-in advice text, mealsTodayCard() and the recipes list row (class stk), afterRender(); CSS block 8.2.20 at the end of the last style element (.focus-ring, external-link underline, #st-stack and .swipe-toast__lift, .bell-badge::after and bellPulse, .flipwrap, .flipin, .face, .flipbtn). tests/browser/motion.mjs (new), tests/browser/run-all.mjs, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"node tests/browser/motion.mjs (38 checks: the ring sits on the choice and moves the same element; external links draw their line on hover and internal links do not; toasts are at the top right, newest first, with the requested curve; the badge pulses and stops under Reduced motion; Small and Medium widgets turn, keep their size, make the hidden face inert, survive a render and turn back with Escape; edit mode is unchanged; the dish rows, coach card and check-in bar read cleanly). SHOTS=<folder> saves screenshots. node tests/browser/run-all.mjs; node tests/check-repo.mjs; node tests/perf/measure.mjs --gate. By hand: Settings > Appearance, tap a segmented control; open a Calories widget and tap the corner button; trigger a toast; on a phone, check the corner button and the back's scroll.",
+      limits:"(1) The back of a Small card is about 200px square, so it shows two figures and a link and scrolls for the rest. (2) A flipped widget stays flipped until it is turned back or the page changes. (3) backdrop blur on a turning card can drop to a plain colour in Safari. (4) The selection ring is on single-choice groups only; groups that allow several choices are left alone. (5) Toasts now sit over the page header at the top right while they show. (6) The bell's pulse uses the warning colour token rather than a fixed orange." },
     { id:"8.2.19",
       area:"Sync",
       title:"Passcode restores keep own-write times; a profile deleted twice settles",
@@ -7490,7 +7498,7 @@ function intakeContext(p){
 // Training intensity is capped when intake is well under maintenance.
 function trainingAdvice(p){
   const c = intakeContext(p);
-  if (c.days < 3) return { level: "normal", why: `Only ${c.days} day${c.days === 1 ? "" : "s"} of food logged in the last week, so I'm not adjusting your training off it yet. Log a few more and I'll start matching the two up.` };
+  if (c.days < 3) return { level: "normal", why: `${c.days ? `Only ${c.days} day${c.days === 1 ? "" : "s"} of food logged` : "No food logged"} in the last week, so I'm not adjusting your training off it yet. Log a few ${c.days ? "more" : "days"} and I'll start matching the two up.` };
   if (c.deep) return { level: "easy", why: `You're averaging ${c.avg.toLocaleString()} calories against roughly ${c.maint.toLocaleString()} to hold steady. That's a deep hole to train hard out of, so this week stays moderate: keep the sessions, drop the heaviest sets and the intervals.` };
   if (c.deficit != null && c.deficit > 0) return { level: "moderate", why: `You're eating about ${Math.round(c.deficit)} calories a day under maintenance. That's a workable deficit. Keep the strength work, but don't add volume on top of it this week.` };
   if (c.deficit != null && c.deficit < -250) return { level: "push", why: `You're eating above maintenance, which is the right place to be for building. This is the week to add a set or a little weight.` };
@@ -10695,7 +10703,7 @@ const I = {
  moon:'<path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.6 8.6 0 1 0 10.7 10.7z"/>',
  moonfill:'<path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.6 8.6 0 1 0 10.7 10.7z" fill="currentColor" stroke="none"/>',
  sunmoon:'<circle cx="6.9" cy="12" r="3.1"/><path d="M6.9 5.9v1.3M6.9 16.8v1.3M1.8 12h1.3M4 9.1l.9.9M4 14.9l.9-.9"/><path d="M21.5 14.7a4.7 4.7 0 0 1-5.8-5.8 4.9 4.9 0 1 0 5.8 5.8z"/>',
- chevR:'<path d="M9 5l7 7-7 7"/>',
+ chevR:'<path d="M9 5l7 7-7 7"/>', flip:'<path d="M20 11a8 8 0 0 0-14.5-3M4 5v4h4M4 13a8 8 0 0 0 14.5 3M20 19v-4h-4"/>',
  chevU:'<path d="M5 15l7-7 7 7"/>',
  chevD:'<path d="M5 9l7 7 7-7"/>',
  grip:'<circle cx="9" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1.3" fill="currentColor" stroke="none"/>',
@@ -11292,6 +11300,7 @@ function afterRender(){
   revealActive();
   if (typeof tourAfterRender === "function") tourAfterRender(); // 8.1.7 app tour
   if (typeof stepperAfterRender === "function") stepperAfterRender(); // 8.1.9 stepper motion
+  ringSync(); flipSync(); // 8.2.20: sliding selection ring, widget flip state
   if (typeof applyCanonical === "function") applyCanonical();
   if (typeof applyTheme === "function") applyTheme(P());
   if (typeof applyOpacity === "function") applyOpacity(P());
@@ -11696,7 +11705,7 @@ function mealsTodayCard(p){
   return `<section class="card" id="meals-today">
     <div class="setrow"><div class="setlabel"><div class="eyebrow">Picked for you today</div><h2 style="margin-top:4px">Today's meals</h2>
       ${cultureTag(p)}</div><a class="btn sm" href="#/recipes">${p.plan ? "See full plan" : "Build a plan"}</a></div>
-    <div class="list">${picks.map((d,i) => `<a class="li tap-row" href="${dishLink(d)}"><span class="grow"><span class="eyebrow">${SLOTS[i]?.[1] || ""}</span><b>${esc(d.n)}</b><span class="tiny muted">${esc(d.c)} · ≈${d.cal} cal · ${d.t[1]} min cook${goalNote(d,p) ? " · " + esc(goalNote(d,p)) : ""}</span></span>${icon("chevR","row-chev",16)}</a>`).join("")}</div>
+    <div class="list">${picks.map((d,i) => `<a class="li tap-row" href="${dishLink(d)}"><span class="grow stk"><span class="eyebrow">${SLOTS[i]?.[1] || ""}</span><b>${esc(d.n)}</b><span class="tiny muted">${esc(d.c)} · ≈${d.cal} cal · ${d.t[1]} min cook${goalNote(d,p) ? " · " + esc(goalNote(d,p)) : ""}</span></span>${icon("chevR","row-chev",16)}</a>`).join("")}</div>
     <p class="tiny faint">Changes daily. ${p.diet || p.allergies ? "Filtered for your food preference and allergies." : "Add food preferences or allergies in Settings to filter these."}</p>
   </section>`;
 }
@@ -13022,14 +13031,15 @@ function swipeToast(opts = {}){
       <span class="swipe-toast__body"><span class="swipe-toast__title">${esc(o.title || "")}</span>${o.description ? `<span class="swipe-toast__desc">${esc(o.description)}</span>` : ""}</span>
       ${o.actionLabel ? `<button type="button" class="swipe-toast__action">${esc(o.actionLabel)}</button>` : ""}
       <i class="swipe-toast__fuse" aria-hidden="true"></i></div></div></div>`;
-  // newest toast sits at the bottom, nearest the thumb
-  stack.append(root);
+  // the stack is at the top right (8.2.20): the newest toast sits first
+  stack.prepend(root);
   const card = root.querySelector(".swipe-toast__card"), fuseEl = root.querySelector(".swipe-toast__fuse");
   const flags = { hover:false, interacting:false, focus:false, hidden:document.hidden };
   let phase = "open", leaving = false, drag = null, pendingClose = null, closeTimer = 0, burn = null, lastInput = "pointer";
   let y = 0, vy = 0, fade = 1, springTo = null, raf = 0;
 
-  const paint = () => { card.style.transform = y ? `translateY(${y}px)` : ""; card.style.opacity = fade === 1 ? "" : fade; };
+  const SG = -1; // y is the distance moved toward the edge the toast leaves by: up, now that the stack is at the top
+  const paint = () => { card.style.transform = y ? `translateY(${SG * y}px)` : ""; card.style.opacity = fade === 1 ? "" : fade; };
   // critically-damped-or-bouncy spring for y, Motion-style (duration + bounce)
   const spring = (to, dur, bounce, v0, done) => {
     const k = Math.pow(2 * Math.PI / dur, 2), c = 2 * (1 - bounce) * Math.sqrt(k);
@@ -13103,8 +13113,8 @@ function swipeToast(opts = {}){
   });
   card.addEventListener("pointermove", e => {
     const d = drag; if (!d || d.id !== e.pointerId) return;
-    if (d.grab === null) { if (Math.abs(e.clientY - d.startY) < 3) return; d.grab = e.clientY - y; card.dataset.swiping = ""; }
-    const raw = e.clientY - d.grab;
+    if (d.grab === null) { if (Math.abs(e.clientY - d.startY) < 3) return; d.grab = SG * e.clientY - y; card.dataset.swiping = ""; }
+    const raw = SG * e.clientY - d.grab;
     y = raw >= 0 ? raw : rubber(raw, 24); paint();
     d.moved = true; d.hist.push([performance.now(), y]); if (d.hist.length > 4) d.hist.shift();
   });
@@ -13138,7 +13148,7 @@ function swipeToast(opts = {}){
   root._st = { close };
   // keep the stack short: the oldest open toast leaves first
   const open = [...stack.querySelectorAll('.swipe-toast[data-phase="open"]')];
-  if (open.length > ST.max) open.slice(0, open.length - ST.max).forEach(t => t._st?.close("overflow"));
+  if (open.length > ST.max) open.slice(ST.max).forEach(t => t._st?.close("overflow")); // newest first, so the oldest are at the end
   return root._st;
 }
 
@@ -14083,7 +14093,7 @@ function checkinCard(p){
   const c = weeklyCheckin(p);
   const pl = c.plan;
   const pos = pl ? Math.min(100, Math.max(0, Math.round(((c.idx + 1) / pl.days) * 100))) : Math.round((((parseYmd(today()).getDay() + 6) % 7) + 1) / 7 * 100);
-  const donePos = c.donePct == null ? pos : Math.min(100, c.donePct * pos / 100);
+  const donePos = c.donePct != null ? Math.min(100, c.donePct * pos / 100) : c.weekPlanned ? Math.min(100, c.doneWeek / c.weekPlanned * 100) : 0;
   return `<section class="card" id="checkin">
     <div class="setrow"><div class="setlabel"><div class="eyebrow" style="color:var(--c-coach)">Weekly check-in</div>
       <h2 style="margin-top:4px">${pl ? `Day ${Math.max(1, c.idx + 1)} of your ${pl.days}-day plan` : `Week of ${fmtDay(c.ws)}`}</h2></div></div>
@@ -14114,7 +14124,7 @@ function checkinCard(p){
       <ul class="recs">${c.recs.map((r, i) => `<li><span class="n">${i + 1}</span><span>${esc(r)}</span></li>`).join("")}</ul>
       ${(typeof coachDef === "function" && coachDef(p).id === "strategist") ? `<div class="coachask">
         <b>${esc(coachVoice(p).ask)}</b>
-        <div class="chips">${[["good","Good"],["ok","So-so"],["low","Low"],["sore","Sore"],["short","Short on time"]]
+        <div class="chips" data-ring>${[["good","Good"],["ok","So-so"],["low","Low"],["sore","Sore"],["short","Short on time"]]
           .map(([k, l]) => `<button class="chip${p.coach?.today === k ? " on" : ""}" data-act="coach-feel" data-v="${k}">${l}</button>`).join("")}</div>
         <span class="tiny muted">${esc(feelAdvice(p))}</span></div>` : ""}</div>
   </section>`;
@@ -15676,9 +15686,36 @@ function wlEdit(p, page, w, i, n){
       <span class="wmove"><button data-act="wl-move" ${at} data-d="-1" aria-label="Move ${esc(name)} up"${i === 0 ? " disabled" : ""}>${icon("chevU","",18)}</button><button data-act="wl-move" ${at} data-d="1" aria-label="Move ${esc(name)} down"${i === n - 1 ? " disabled" : ""}>${icon("chevD","",18)}</button></span>
       <button class="wdrag" ${at} aria-label="Drag ${esc(name)} to reorder. With the keyboard, use the arrow keys." aria-keyshortcuts="ArrowUp ArrowDown">${icon("grip","",18)}</button></span>` };
 }
+// A Small or Medium widget turns over to show the detail the Large size holds. The back is built when it is opened (home would
+// otherwise carry every widget's detail), and the runtime class and nodes survive a render because morphInto keeps them.
 function wcard(p, page, w, i, n, editing){
-  return dcard({ ...wdef(p, w.k, w.size), size: w.size, edit: editing ? wlEdit(p, page, w, i, n) : null });
+  const o = { ...wdef(p, w.k, w.size), size: w.size, edit: editing ? wlEdit(p, page, w, i, n) : null };
+  if (editing || w.size === "l") return dcard(o);
+  return `<div class="flipwrap ws-${w.size}" data-key="fw-${page}-${esc(w.k)}"><button type="button" class="flipbtn" data-act="wl-flip" aria-expanded="false" aria-label="More about ${esc(o.name)}">${icon("flip","",16)}</button>
+    <div class="flipin">${dcard({ ...o, cls: `${o.cls ? o.cls + " " : ""}face front` })}<div class="mcard face back" data-morph-skip></div></div></div>`;
 }
+function flipBackHTML(p, k, size){
+  const d = wdef(p, k, "l");
+  // A Small card is about 200px square: its back keeps the first section (today against the average, or the first block) and scrolls the rest.
+  const first = size === "s" && METRICS[k] && k !== "workouts" ? lx(largeOf(p, k).slice(0, 1)) : d.extra || "";
+  return `<div class="fb-head" style="color:${d.color}">${d.iconHTML || cicon(d.icon, d.color, 16)}<b>${esc(d.name)}</b></div><div class="fb-body">${first}</div><a class="fb-open" href="${d.href}">Open ${icon("chevR","",14)}</a>`;
+}
+function flipSet(wrap, on){
+  const front = wrap.querySelector(".face.front"), back = wrap.querySelector(".face.back"), btn = wrap.querySelector(".flipbtn"), p = P();
+  if (!front || !back || !btn || !p) return;
+  const name = front.querySelector(".mhead b")?.textContent || "widget";
+  if (on) {
+    // Rebuild only when the content changed, and hand focus back to the new link, so a render under a keyboard user keeps their place.
+    const html = flipBackHTML(p, front.dataset.k, wrap.classList.contains("ws-s") ? "s" : "m");
+    if (back._html !== html) { const hadFocus = back.contains(document.activeElement); back.innerHTML = html; back._html = html; if (hadFocus) back.querySelector(".fb-open")?.focus({ preventScroll:true }); }
+  }
+  wrap.classList.toggle("flipped", on); front.inert = on; back.inert = !on;
+  btn.setAttribute("aria-expanded", String(on)); btn.setAttribute("aria-label", on ? `Back to ${name}` : `More about ${name}`);
+}
+// After each render: keep inert and the back's content in step with the runtime class.
+function flipSync(){ document.querySelectorAll(".flipwrap").forEach(w => flipSet(w, w.classList.contains("flipped"))); }
+document.addEventListener("click", e => { const b = e.target.closest('[data-act="wl-flip"]'); if (!b) return; const w = b.closest(".flipwrap"); if (w) flipSet(w, !w.classList.contains("flipped")); });
+document.addEventListener("keydown", e => { if (e.key !== "Escape") return; const w = e.target.closest?.(".flipwrap.flipped"); if (!w) return; flipSet(w, false); w.querySelector(".flipbtn")?.focus({ preventScroll:true }); });
 function widgetSection(p, page){
   const { shown, hidden } = wlGet(p, page), editing = UI.editPage === page, asking = UI.resetAsk === page;
   return `<div class="wsec" data-page="${page}">
@@ -15690,6 +15727,29 @@ function widgetSection(p, page){
       : `<button class="wreset-btn" data-act="wl-reset-ask" data-p="${page}">Reset layout</button>`}</div>` : ""}
   </div>`;
 }
+// ---- sliding selection ring (8.2.20) ----
+// One ring per single-choice group (.seg, or anything marked data-ring). It lives in the group and slides to the chosen option;
+// morphInto keeps it (_keep), so the move animates instead of being redrawn. A group seen for the first time just appears.
+function ringSync(){
+  document.querySelectorAll(".seg:not(.wseg),.seg-display,[data-ring]").forEach(box => {
+    const on = box.querySelector('[aria-pressed="true"],[aria-checked="true"],.on');
+    let ring = box.querySelector(":scope > .focus-ring");
+    if (!on || !on.offsetWidth) { ring?.remove(); return; }
+    const first = !ring;
+    if (first) { ring = document.createElement("i"); ring.className = "focus-ring"; ring.setAttribute("aria-hidden", "true"); ring._keep = true; box.append(ring); }
+    // layout metrics, not rects: the chosen button pops in with a scale animation, which a rect would catch half way
+    const own = on.offsetParent === box;
+    const b = box.getBoundingClientRect(), r = on.getBoundingClientRect(), sc = b.width && box.offsetWidth ? b.width / box.offsetWidth : 1;
+    if (first) ring.classList.add("still");
+    ring.style.setProperty("--x", `${own ? on.offsetLeft : (r.left - b.left) / sc - box.clientLeft + box.scrollLeft}px`);
+    ring.style.setProperty("--y", `${own ? on.offsetTop : (r.top - b.top) / sc - box.clientTop + box.scrollTop}px`);
+    ring.style.setProperty("--w", `${own ? on.offsetWidth : r.width / sc}px`); ring.style.setProperty("--h", `${own ? on.offsetHeight : r.height / sc}px`);
+    ring.style.borderRadius = getComputedStyle(on).borderRadius;
+    if (first) { void ring.offsetWidth; ring.classList.remove("still"); }
+  });
+}
+let ringTimer = 0;
+window.addEventListener("resize", () => { clearTimeout(ringTimer); ringTimer = setTimeout(() => { document.querySelectorAll(".focus-ring").forEach(r => r.classList.add("still")); ringSync(); requestAnimationFrame(() => document.querySelectorAll(".focus-ring").forEach(r => r.classList.remove("still"))); }, 120); });
 // Click actions. Widgets are found by key, never by position, so a hidden widget in the saved list cannot shift the target.
 document.addEventListener("click", e => {
   const t = e.target.closest("[data-act^='wl-']"); if (!t) return;
@@ -16718,8 +16778,8 @@ function coachMechanic(p = P()){
     const sign = a.delta > 0 ? "+" : "";
     return `<div class="mech mech-en">
       <span class="mech-num">${a.today}<i>%</i></span>
-      <span class="mech-side"><b class="mono ${a.delta < 0 ? "down" : a.delta > 0 ? "up" : ""}">${sign}${a.delta}%</b>
-        <span class="tiny muted">vs yesterday (${a.yesterday}%)</span></span>
+      <span class="mech-side">${a.delta ? `<b class="mono ${a.delta < 0 ? "down" : "up"}">${sign}${a.delta}%</b>
+        <span class="tiny muted">vs yesterday (${a.yesterday}%)</span>` : `<span class="tiny muted">Same as yesterday (${a.yesterday}%)</span>`}</span>
       <span class="mech-checks">${det.checks.map(c => `<span class="mck ${c.ok ? "ok" : "no"}">${c.ok ? icon("check","",13) : icon("x","",13)} ${esc(c.k)}</span>`).join("")}</span>
     </div>`;
   }
@@ -16885,15 +16945,15 @@ function coachAdviceCard(p = P()){
 
 // ---------- Greetings that reference the mechanic ----------
 function coachGreetingRich(p = P()){
-  const id = coachDef(p).id, n = coachName(p);
+  const id = coachDef(p).id;
   if (id === "motivator") {
     const y = addDays(today(), -1);
     const win = loggedFood(y) ? "you logged your food yesterday" : onDate("workouts", y).length ? "you trained yesterday" : null;
-    return win ? `${n} here. ${win[0].toUpperCase()}${win.slice(1)}, so let's keep that going.` : `${n} here. Let's look at what went well.`;
+    return win ? `${win[0].toUpperCase()}${win.slice(1)}, so let's keep that going.` : `Let's look at what went well.`;
   }
-  if (id === "enforcer") { const a = adherence(p); return `${n}. Target today: 100%. You're at ${a.pct}%.`; }
+  if (id === "enforcer") return "Target today: 100%.";
   const sh = intensityShape(p);
-  return `${n} here. Today is ${INTENSITIES.find(i => i[0] === sh.k)[1].toLowerCase()}, about ${sh.minutes} minutes.`;
+  return `Today is ${INTENSITIES.find(i => i[0] === sh.k)[1].toLowerCase()}, about ${sh.minutes} minutes.`;
 }
 
 // =================== THE DAILY CHECK-IN, ONE SET PER COACH ===================
@@ -18401,7 +18461,7 @@ function mealPhotoCard(p){
         <div class="stack" style="gap:6px;margin-top:8px"${st.guessOff ? ' hidden' : ''}>
           ${(st.guesses || []).map(d => `
             <button type="button" class="guessrow" data-act="ms-pick" data-v="${d.id}">
-              <span class="grow"><b>${esc(d.n)}</b><span class="tiny muted">${esc(d.c)} · ${d.cal} cal · ${d.pr}g protein</span></span>
+              <span class="grow stk"><b>${esc(d.n)}</b><span class="tiny muted">${esc(d.c)} · ${d.cal} cal · ${d.pr}g protein</span></span>
               ${icon("chevR","go",14)}</button>`).join("") || `<p class="small muted">No close match. Type what it was above.</p>`}
         </div>
         <div class="row" style="margin-top:10px;gap:8px">
@@ -19677,7 +19737,7 @@ document.addEventListener("click", e => {
     case "fc-rate": { UI.fcRate = t.dataset.v; const v = document.getElementById("fc-pl");
       if (v) v.playbackRate = parseFloat(t.dataset.v) || 1;
       document.querySelectorAll('[data-act="fc-rate"]').forEach(b => b.setAttribute("aria-pressed", b.dataset.v === t.dataset.v));
-      break; }
+      ringSync(); break; }
     case "fc-del": {
       const list = clipState(p); const i = list.findIndex(c => c.id === t.dataset.v);
       if (i < 0) return; const [gone] = list.splice(i, 1);
@@ -21769,6 +21829,45 @@ input[type=date]::-webkit-calendar-picker-indicator{opacity:.6}
 .auth-pop .auth-links{justify-content:center;gap:0 20px;padding-top:12px;border-top:1px solid var(--line)}
 .auth-pop .note{border-radius:10px}
 #pop-auth .pop-card{border-radius:20px;box-shadow:var(--bu-pop)}
+
+/* ===================== 8.2.20 MOTION: selection ring, external links, top-right toasts, bell pulse, flip widgets ===================== */
+.seg,.seg-display,[data-ring]{position:relative}
+.focus-ring{position:absolute;left:0;top:0;width:var(--w);height:var(--h);translate:var(--x) var(--y);border:1.5px solid var(--gold);pointer-events:none;z-index:1;
+  transition:translate .48s cubic-bezier(.34,1.56,.64,1),width .48s cubic-bezier(.34,1.56,.64,1),height .48s cubic-bezier(.34,1.56,.64,1)}
+.focus-ring.still{transition:none}
+.stk>b,.stk>.tiny{display:block}
+a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not(.links a){position:relative;text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 38%,transparent);text-underline-offset:3px}
+a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not(.links a)::after{content:"";position:absolute;left:0;bottom:-4px;width:100%;height:2px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.65,0,.35,1)}
+a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not(.links a):is(:hover,:focus-visible)::after{transform:scaleX(1)}
+#st-stack{top:calc(24px + env(safe-area-inset-top,0px));bottom:auto}
+@media (max-width:600px){#st-stack{top:calc(16px + env(safe-area-inset-top,0px));bottom:auto}}
+.swipe-toast__lift{transition:transform .5s cubic-bezier(.18,1.25,.4,1),opacity .3s ease}
+@starting-style{.swipe-toast__lift{opacity:0;transform:translateY(-100%) scale(.9)}}
+.swipe-toast[data-mounted='false'] .swipe-toast__lift{opacity:0;transform:translateY(-100%) scale(.9)}
+.swipe-toast[data-phase='closing'] .swipe-toast__lift{opacity:0;transform:translateY(-20px) scale(.9);transition:transform .5s cubic-bezier(.18,1.25,.4,1),opacity .3s ease}
+.swipe-toast[data-phase='gone'] .swipe-toast__lift{opacity:0;visibility:hidden;transform:translateY(-20px) scale(.9)}
+.bell-badge{isolation:isolate}
+.bell-badge::after{content:"";position:absolute;inset:0;z-index:-1;border-radius:50%;background:var(--warn);animation:bellPulse 1.8s ease-out infinite;pointer-events:none}
+@keyframes bellPulse{0%{transform:scale(1);opacity:.55}70%,100%{transform:scale(2.6);opacity:0}}
+.flipwrap{position:relative;display:grid;perspective:1100px;min-width:0}
+.flipin{display:grid;position:relative;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.34,1.56,.64,1)}
+.flipwrap.flipped .flipin{transform:rotateY(180deg)}
+.flipin>.face{grid-area:1/1;min-width:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.flipin>.face.back{position:absolute;inset:0;transform:rotateY(180deg);overflow:auto;display:flex;flex-direction:column;gap:10px;padding:16px}
+.flipin>.face.front .mhead{padding-right:34px}
+.fb-head{display:flex;align-items:center;gap:8px;padding-right:34px;font-size:calc((16px) * var(--text-scale,1));line-height:1.25}
+.flipwrap.ws-s .flipin>.face.back{padding:14px;gap:8px;scrollbar-width:thin}
+.flipwrap.ws-s .fb-body .lstats{grid-template-columns:minmax(0,1fr);gap:8px}
+.flipwrap.ws-s .fb-body .lstat b{font-size:calc((18px) * var(--text-scale,1))}
+.fb-head b{font-weight:600}
+.fb-body .lx{margin-top:0;padding-top:0;border-top:0;grid-template-columns:minmax(0,1fr)}
+.fb-open{margin-top:auto;display:inline-flex;align-items:center;gap:4px;font-weight:600;color:var(--accent);min-height:36px}
+.flipbtn{position:absolute;top:6px;right:6px;z-index:3;width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:999px;background:transparent;color:var(--muted);cursor:pointer}
+.flipbtn::before{content:"";position:absolute;inset:-4px}
+.flipbtn:hover{color:var(--text);background:var(--raise)}
+.flipbtn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+:root[data-motion="reduced"] .focus-ring,:root[data-motion="reduced"] .flipin,:root[data-motion="reduced"] .bell-badge::after{transition:none;animation:none}
+@media (prefers-reduced-motion:reduce){.focus-ring,.flipin{transition:none}.bell-badge::after{animation:none}}
 </style>
 <script>
 (() => {
