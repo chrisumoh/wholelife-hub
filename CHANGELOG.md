@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.18, 2026-10-13. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.19, 2026-10-13. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.19 · Sync: Passcode restores keep own-write times; a profile deleted twice settles
+
+- **Problem:** With a passcode on, the saved profile own-write times were loaded before the profile queue they belong to had been restored, so they were all thrown away. After a reload or lock, an older upload that finished late could be mistaken for another device's change and overwrite a newer profile edit. Separately, a profile deleted on two devices kept its waiting deletion for ever, because the account's matching deleted row was ignored once the profile was already gone here. The app then re-synced every 50 ms and sign-out kept warning about a deletion that had already happened.
+- **Change:** Restore the profile queue first, then load its own-write times, so they are kept for the items still waiting. When the account's row for a profile is deleted and the profile is already gone here, clear its waiting deletion and its saved signature, and queue removal of its picture and progress-photo files (the other device may have deleted the row without removing them). A profile changed in a way that skipped the change tracker while its upload was in flight (a meal logged, an award earned) was left marked as waiting with nothing to send it, so the status could stay on waiting to upload; it is now sent in a follow-up round. The follow-up keeps the time of the edit that is waiting, so it can never override a newer edit made on another device in the meantime. This was what made the `meal-upload` browser test fail on GitHub's slower machines. CLAUDE.md now says to read and fix Greptile review findings after each push.
+- **Where:** index.html: sbKindsRestore (order of the profile queue and its own-write times) and sbApplyPeople (a deleted row for a profile already deleted here). tests/browser/account-sync.mjs (section 18). CLAUDE.md (section 6). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** node tests/browser/account-sync.mjs: section 18 has two tests that fail against 8.2.18 and pass now (the passcode layout is saved for waiting items only and comes back with its queues, with the live queues emptied first; a profile deleted on two devices leaves no waiting deletion and stops syncing). node tests/check-repo.mjs; node tests/browser/run-all.mjs. By hand: set a passcode, edit a profile offline, reload, unlock, go online: the edit is uploaded, not replaced. Delete the same profile on two devices (one offline) and bring it online: sign-out shows no unsaved-changes warning.
+- **Known limits:** Same as 8.2.18: the later-change rule compares this device's clock with the database's updated_at, and a write landing between the check and the save needs a database rule to close.
 
 ## 8.2.18 · Sync: Keep pending changes through expiry, reload and failed saves
 
