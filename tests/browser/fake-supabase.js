@@ -72,7 +72,7 @@
     async upload(path, blob, opts) {
       if (F.offline) throw new TypeError("Failed to fetch");
       if (!session || !path.startsWith(session.user.id + "/")) return { data: null, error: { message: "new row violates row-level security policy", statusCode: "403" } };
-      if (F.failWrites) return { data: null, error: { message: "simulated write failure", statusCode: "500" } };
+      if (F.failWrites || F.failUpload) return { data: null, error: { message: "simulated write failure", statusCode: "500" } };
       const buf = new Uint8Array(await blob.arrayBuffer()); let s = ""; for (const x of buf) s += String.fromCharCode(x);
       return exec((DB, mark) => {
         const files = (DB.__files ||= {});

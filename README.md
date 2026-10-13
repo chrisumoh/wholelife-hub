@@ -1,6 +1,6 @@
 # Whole Life Hub
 
-A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.2 (Dev Testing), build 8.2.17**.
+A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.2 (Dev Testing), build 8.2.18**.
 
 ## What's in this repository
 
@@ -13,7 +13,7 @@ A health and fitness web app: meal and snack logging, workouts, health metrics, 
 | `supabase/migrations/` | The SQL that built the database, in the order it was applied. |
 | `img/` | Images the app loads on demand: the three coach portraits and the home-screen icon. |
 | `.github/` | Bug-report and pull-request templates for testers, and the `Tests` workflow. |
-| `tests/` | Browser tests (`tests/browser/`, run with `node tests/browser/run-all.mjs`), fast repo checks (`node tests/check-repo.mjs`) and the SQL isolation test. The phone performance measurement is `node tests/perf/measure.mjs` (see `docs/PERFORMANCE.md`). |
+| `tests/` | Browser tests (`tests/browser/`, run with `node tests/browser/run-all.mjs`), fast repo checks (`node tests/check-repo.mjs`), sync recovery checks (`node --test tests/sync-recovery.cjs`) and the SQL isolation test. The phone performance measurement is `node tests/perf/measure.mjs` (see `docs/PERFORMANCE.md`). |
 
 ## Run it locally
 

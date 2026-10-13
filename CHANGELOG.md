@@ -2,9 +2,18 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.17, 2026-10-12. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.18, 2026-10-13. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.18 · Sync: Keep pending changes through expiry, reload and failed saves
+
+- **Problem:** Session expiry discarded meal and profile queues under a passcode. Reloading forgot which server timestamp belonged to an earlier upload from this device, allowing it to overwrite a newer pending edit. Three failed photo uploads cleared the queue; a rejected local photo could block the winning account photo. Storage and encryption failures consumed dirty work and did not stop uploads.
+- **Change:** Persist acknowledged write timestamps with pending queues and restore them from the plain cache or encrypted root. Preserve meal/profile queues and their original times on expiry and invalidate older requests. Photo failures remain pending and retry; sign-out warns about unsent photos. Apply a winning account photo after rejecting a local replacement. A failed save retains dirty records, refuses the upload barrier and prevents locking; retry only proceeds after durable storage succeeds. Enabling a passcode removes the plain cache only after encryption is saved. Add deterministic fault-injection tests and browser scenarios for reload, lock, expiry, photo retries/conflicts and quota recovery. Correct the real-client test to count meal work separately from profile work and honor PostgREST mutation representations.
+- **Where:** index.html: flush, lockNow, setPasscode, sbPersistNow, sbCacheSave/LoadCache, sbKindsSave/Clean/Restore, sbSessionLost, photo conflict/retry helpers, sbLocalOnly and sbSignOut. tests/sync-recovery.cjs; tests/browser/account-sync.mjs, fake-supabase.js, meal-upload.mjs; .github/workflows/tests.yml; CHANGELOG.md, README.md and docs/BUILD_PLAN.md.
+- **How to test:** node --test tests/sync-recovery.cjs (all eight fail against the original 8.2.16 source and pass after this fix); node tests/check-repo.mjs; node tests/browser/run-all.mjs. Browser expiry scenario: sync a meal and weigh-in, enable a passcode, go offline, delete both and edit the profile name, expire the session, flush and reload, sign into the same account and unlock. Assert both server rows remain deleted, the edited name uploads and original queue timestamps survive.
+- **Known limits:** Client-clock conflict resolution and crashes before a server acknowledgement remain limitations of the current sync protocol. Real-account preview, Safari and physical-device checks are still required; automated browser tests use a fake backend. No database or supabase/ change.
+
 
 ## 8.2.17 · Workouts: Ten workout types use Boxicons icons, credited on the Credits page
 

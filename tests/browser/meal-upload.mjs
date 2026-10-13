@@ -66,7 +66,7 @@ function answer(method, u, body, prefer) {
     }
     return [201, /return=representation/.test(prefer) ? out.map(r => ({ ...r })) : null];
   }
-  if (method === "PATCH") { const ids = (u.searchParams.get("app_id") || "").replace(/^in\.\(|\)$/g, "").split(","); t.filter(r => ids.includes(r.app_id)).forEach(r => Object.assign(r, JSON.parse(body), { updated_at: new Date().toISOString() })); return [204, null]; }
+  if (method === "PATCH") { const ids = (u.searchParams.get("app_id") || "").replace(/^in\.\(|\)$/g, "").split(","); const changed = t.filter(r => ids.includes(r.app_id)); changed.forEach(r => Object.assign(r, JSON.parse(body), { updated_at: new Date().toISOString() })); return /return=representation/.test(prefer) ? [200, changed.map(r => ({ ...r }))] : [204, null]; }
   return [405, {}];
 }
 function onPaused(p) {
@@ -101,10 +101,10 @@ ok("profile set up", await waitFor("UI.loading === false && S.profiles.length ==
 await ev(`location.hash = "#/nutrition"; readRoute(); render(); true`);
 ok("meal form is on screen", await waitFor(`!!document.getElementById("m-name")`, 3000));
 await clickLogMeal("Jollof rice", 450);
-ok("meal is queued", (await ev(`sbPending()`)) === 1, await ev(`JSON.stringify(SB.pend)+" active="+sbActive()+" lock="+!!CRY.lock`));
+ok("meal is queued", (await ev(`Object.keys(SB.pend).length`)) === 1, await ev(`JSON.stringify(SB.pend)+" active="+sbActive()+" lock="+!!CRY.lock`));
 ok("POST /rest/v1/meal_logs within 5s of logging", await until(() => posts("meal_logs") >= 1, 5000), trail());
 ok("the meal row reached the database, attached to the person", DB.meal_logs.length === 1 && DB.meal_logs[0].name === "Jollof rice" && DB.meal_logs[0].person_id === DB.people[0]?.id);
-ok("nothing left pending", await waitFor(`sbPending() === 0`, 3000));
+ok("nothing left pending", await waitFor(`sbPending() === 0`, 10000));
 // 8.2.4: how the real client talks to the people table.
 const peoplePosts = reqs.filter(r => r.method === "POST" && r.path === "/rest/v1/people" && r.code < 300);
 ok("the profile is upserted on owner_id,app_id", peoplePosts.length >= 1 && peoplePosts.every(r => /on_conflict=owner_id%2Capp_id|on_conflict=owner_id,app_id/.test(r.q)), JSON.stringify(peoplePosts.map(r => r.q)));

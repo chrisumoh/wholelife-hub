@@ -4059,7 +4059,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.17", channel: "Dev Testing", date: "2026-10-12", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.18", channel: "Dev Testing", date: "2026-10-13", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -4073,6 +4073,11 @@ const APP_VERSION = { update: "8.2", build: "8.2.17", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.18",
+      area:"Sync",
+      title:"Keep pending changes through expiry, reload and failed saves",
+      bug:"Session expiry discarded meal and profile queues under a passcode. Reloading forgot which server timestamp belonged to an earlier upload from this device, allowing it to overwrite a newer pending edit. Three failed photo uploads cleared the queue; a rejected local photo could block the winning account photo. Storage and encryption failures consumed dirty work and did not stop uploads.",
+      fix:"Persist acknowledged write timestamps with pending queues and restore them from the plain cache or encrypted root. Preserve meal/profile queues and their original times on expiry and invalidate older requests. Photo failures remain pending and retry; sign-out warns about unsent photos. Apply a winning account photo after rejecting a local replacement. A failed save retains dirty records, refuses the upload barrier and prevents locking; retry only proceeds after durable storage succeeds. Enabling a passcode removes the plain cache only after encryption is saved. Add deterministic fault-injection tests and browser scenarios for reload, lock, expiry, photo retries/conflicts and quota recovery. Correct the real-client test to count meal work separately from profile work and honor PostgREST mutation representations.",
     { id:"8.2.17", area:"Workouts", title:"Ten workout types use Boxicons icons, credited on the Credits page",
       bug:"The owner chose the Boxicons free pack for the workout icons. Ten workout types have a matching Boxicons icon; the other 34 have no match in the pack.",
       fix:"Soccer, basketball, American football, volleyball, cricket, baseball, tennis, badminton, strength training and bodyweight now draw a Boxicons glyph (football, basketball, rugby-ball, volleyball, cricket-ball, baseball, tennis, shuttlecock, dumbbell and biceps from Boxicons v3.0.8). Each glyph is scaled from the 24px grid to 36px inside the 48px tile, filled with that activity's existing colour gradient, and set on the same frosted disc as every other workout icon, so the picker, the workout list and the coach sports keep one frame. Soccer and basketball keep their bounce on hover, tennis its swing and strength its pump. The other 34 workout types keep their original artwork. The Credits page lists Boxicons with a link to boxicons.com and to the CC BY 4.0 license, the ten workouts it covers, the changes made, and that Boxicons does not endorse the app (the license requires the credit, the link and a note of the changes). Its opening line now reads that nothing is taken from another icon set without its license.",
@@ -7848,18 +7853,21 @@ async function unlock(pass){
     CRY.key = key; CRY.lock = lock; await openRaw(); sbCheckGuest(); sbKindsRestore(); return true;
   } catch { return false; }
 }
+  const previous = { key: CRY.key, lock: CRY.lock };
 async function setPasscode(pass){ // turn on or change the lock, then re-save everything encrypted
   const salt = b64(crypto.getRandomValues(new Uint8Array(16)));
   const key = await deriveKey(pass, salt, PBKDF2_ITER);
   CRY.key = key; CRY.lock = { salt, iter: PBKDF2_ITER, check: await encryptJSON("wholelife-ok", key), auto: CRY.lock?.auto ?? 15 };
-  sbOnLock(); // 8.1.11: meals stay on this device and are encrypted with the rest; the plain cache goes
-  markAll(); await flush();
+  markAll();
+  if (!await flush()) { CRY.key = previous.key; CRY.lock = previous.lock; throw new Error("Your changes could not be saved. The passcode was not changed."); }
+  sbOnLock(); // remove the plain cache only after the encrypted copy is safely stored
 }
 async function removePasscode(){ CRY.key = null; CRY.lock = null; SB.cacheDirty = true; markAll(); await flush(); sbResume(); }
 function lockNow(){ // forget the key and the decrypted data in this tab
   if (!CRY.lock) return;
   dirty.add("root");
-  flush().then(async () => {
+  flush().then(async saved => {
+    if (!saved) { toast("Your changes could not be saved. Free some browser storage before locking.", "warn"); return; }
     const snap = await readBack();
     CRY.raw = snap; CRY.key = null; S.profiles = []; S.logs = {}; S.activeId = null;
     sbOnLockScreen();
@@ -7882,10 +7890,11 @@ function markLog(pid, mon){ if (typeof logIdxDrop === "function") logIdxDrop(); 
 function markAll(){ if (typeof logIdxDrop === "function") logIdxDrop(); dirty.add("root"); for (const pid in S.logs) for (const m in S.logs[pid]) { sbTrack(pid, m); dirty.add(`log:${pid}:${m}`); } schedule(); }
 function schedule(){ clearTimeout(flushTimer); flushTimer = setTimeout(flush, 600); }
 
+    return !failed;
 function flush(){
-  if (flushing) return flushing.then(() => dirty.size ? flush() : undefined);
-  if (LEAVING || UI.locked || (CRY.lock && !CRY.key)) return Promise.resolve();
-  if (!dirty.size) return Promise.resolve();
+  if (flushing) return flushing.then(saved => saved && dirty.size ? flush() : saved);
+  if (LEAVING || UI.locked || (CRY.lock && !CRY.key)) return Promise.resolve(false);
+  if (!dirty.size) return Promise.resolve(true);
   S.saveState = "saving"; paintSaveState();
   flushing = (async () => {
     let failed = false;
@@ -7894,8 +7903,8 @@ function flush(){
     // Signed in with sync running: meals are saved to the account and the local cache instead of
     // the month blobs. Only strip them once the cache write has succeeded, so they're never lost.
     const stripMeals = sbActive() && SB.started && !CRY.lock && sbCacheSave();
-    while (dirty.size) {
-      const key = dirty.values().next().value; dirty.delete(key);
+    const batch = [...dirty]; for (const key of batch) dirty.delete(key);
+    for (const key of batch) {
       try {
         if (key === "root") {
           const body = { v: 62, lock: CRY.lock || null, ...(await pack({ profiles: S.profiles, activeId: S.activeId, kp: sbKindsSave(), sp: S.syncPhotos === false ? false : undefined })) };
@@ -7905,14 +7914,16 @@ function flush(){
           const id = `${pid}_${mon}`;
           if (!L) delete local.logs[id]; else local.logs[id] = await pack({ pid, month: mon, ...L });
         }
+        failed = true;
       } catch (e) {
         console.warn("save failed:", e?.name || "error"); // not the key or the error object: they can name the record
       }
     }
-    if (S.mode === "browser" && !LEAVING && !lsSet(local)) { toast("This browser's storage is full or blocked."); failed = true; }
+    if (!failed && !lsSet(local)) { toast("This browser's storage is full or blocked."); failed = true; }
+    if (failed) for (const key of batch) dirty.add(key); else S.mode = "browser";
     S.saveState = failed ? "error" : "saved"; if (!failed) S.lastSaved = Date.now();
   })().finally(() => { flushing = null; paintSaveState(); });
-  return flushing.then(() => dirty.size ? flush() : undefined);
+  return flushing.then(saved => saved && dirty.size ? flush() : saved);
 }
 
 // =================== ACCOUNT + MEAL SYNC (8.1.11) ===================
@@ -8031,10 +8042,10 @@ function sbClient(){
 // ---- local cache ----
 function sbCacheRead(){ try { const c = JSON.parse(localStorage.getItem(SB_CACHE) || "null"); return c && c.v === 1 && typeof c.uid === "string" ? c : null; } catch { return null; } }
 function sbCacheSave(){
-  if (!SB.user || LEAVING || CRY.lock) return false; // the cache is plain text: with a passcode on, meals stay in the encrypted months instead
+  if (!STORE_UID || LEAVING || CRY.lock) return false; // the cache is plain text: with a passcode on, meals stay in the encrypted months instead
   if (!SB.cacheDirty) return true;
   const meals = {}; for (const { pid, m } of sbAllMeals()) meals[m.id] = { pid, m };
-  try { localStorage.setItem(SB_CACHE, JSON.stringify({ v:1, uid:SB.user.id, pend:SB.pend, pt:SB.pt, meals, pp:SB.ppend, ppt:SB.ppt, ps:Object.fromEntries(SB.psig), pa:Object.fromEntries(SB.ppaths) })); SB.cacheDirty = false; return true; }
+  try { localStorage.setItem(SB_CACHE, JSON.stringify({ v:1, uid:STORE_UID, pend:SB.pend, pt:SB.pt, meals, pp:SB.ppend, ppt:SB.ppt, ps:Object.fromEntries(SB.psig), pa:Object.fromEntries(SB.ppaths), mo:sbOwnSave(SB.mown, SB.pend), po:sbOwnSave(SB.pown, SB.ppend), server:SB.lastServer })); SB.cacheDirty = false; return true; }
   catch { if (!SB.cacheWarned) { SB.cacheWarned = true; toast("This browser's storage is full, so meals can't be kept offline until you free some space.", "warn"); } return false; }
 }
 function sbCacheDrop(){ try { localStorage.removeItem(SB_CACHE); } catch {} SB.cacheDirty = false; }
@@ -8055,6 +8066,7 @@ function sbLoadCache(c){
   for (const [id, v] of Object.entries(c.pp || {})) if (ID_RE.test(id) && (v === "up" || v === "del")) SB.ppend[id] = v;
   for (const [id, v] of Object.entries(c.ps || {})) if (ID_RE.test(id) && typeof v === "string") SB.psig.set(id, v);
   for (const [id, v] of Object.entries(c.ppt || {})) if (ID_RE.test(id) && SB.ppend[id]) SB.ppt[id] = num(v, 0, 8.64e15) ?? Date.now();
+  SB.mown = sbOwnLoad(c.mo, SB.pend); SB.pown = sbOwnLoad(c.po, SB.ppend); sbSeen(num(c.server, 0, 8.64e15) || 0);
   for (const [id, v] of Object.entries(c.pa || {})) if (ID_RE.test(id) && typeof v === "string" && v.length < 300) SB.ppaths.set(id, v);
 }
 // A different account used this browser before: its meals must not be uploaded into this one.
@@ -8092,6 +8104,9 @@ async function sbStaleKind(kind, ids){
 // Our own write comes back from the account with a time later than the edit we may have made while it was in flight. Remember it, so the check
 // "was this row changed after my waiting edit?" does not count the write we ourselves just made.
 const sbOwn = (map, key, row) => { const t = Date.parse(row?.updated_at) || 0; if (t) { map.set(key, t); sbSeen(t); } };
+// Keep the acknowledged write's timestamp while a newer edit is waiting, including across reloads and a passcode lock.
+const sbOwnSave = (map, pend) => Object.fromEntries([...map].filter(([id]) => pend[id]));
+const sbOwnLoad = (own, pend) => new Map(Object.entries(own && typeof own === "object" ? own : {}).filter(([id, t]) => pend[id] && num(t, 1, 8.64e15) != null));
 const sbForeign = (map, key, t) => map.get(key) !== t;
 const sbRepull = () => { clearTimeout(SB.timers.repull); SB.timers.repull = setTimeout(() => sbKick(), 50); };
 
@@ -8132,7 +8147,11 @@ function sbSchedule(key, fn){
 }
 // The waiting list is written to storage (and the write confirmed) before anything is sent, so a crash or a closed tab between "queued" and
 // "uploaded" cannot lose the change.
-async function sbPersistNow(){ if (sbPending()) SB.cacheDirty = true; sbCacheSave(); await flush(); }
+async function sbPersistNow(){
+  if (sbPending()) SB.cacheDirty = true;
+  const cached = !STORE_UID || CRY.lock || sbCacheSave(), saved = await flush();
+  if (!cached || !saved) throw new Error("Local changes could not be saved");
+}
 const sbPushSoon = () => sbSchedule("push", async () => { await sbPersistNow(); await sbPushAll(); });
 function sbFail(e){
   console.warn("meal sync failed:", e?.code || e?.name || "error"); // never the error object: it can echo the failing row
@@ -8156,7 +8175,7 @@ async function sbPushProfiles(){
   const stale = await sbStale("people", [...ups.map(p => p.id), ...dels], SB.ppt, "app_id", SB.pown);
   if (!sbLive(g)) return;
   if (stale.size) {
-    for (const id of stale) { delete SB.ppend[id]; delete SB.ppt[id]; if (!S.profiles.some(p => p.id === id)) { SB.psig.delete(id); SB.plast.delete(id); } }
+    // Keep the rejected change until the winning row is pulled and applied, including its photo.
     ups = ups.filter(p => !stale.has(p.id)); dels = dels.filter(id => !stale.has(id)); sbRepull();
     if (!ups.length && !dels.length) return;
   }
@@ -8208,7 +8227,7 @@ async function sbPush(){
   for (const x of ups) if (!SB.people.has(x.pid)) { if (S.profiles.some(p => p.id === x.pid)) throw Object.assign(new Error("person_missing"), { code: "person_missing" }); delete SB.pend[x.m.id]; }
   const stale = await sbStale("meal_logs", [...ups.map(x => x.m.id), ...dels], SB.pt, "app_id", SB.mown);
   if (!sbLive(g)) return;
-  if (stale.size) { for (const id of stale) { delete SB.pend[id]; delete SB.pt[id]; } ups = ups.filter(x => !stale.has(x.m.id)); dels = dels.filter(id => !stale.has(id)); sbRepull(); }
+  if (stale.size) { ups = ups.filter(x => !stale.has(x.m.id)); dels = dels.filter(id => !stale.has(id)); sbRepull(); }
   for (let i = 0; i < ups.length; i += 200) {
     const chunk = ups.slice(i, i + 200).filter(x => SB.people.has(x.pid)), sent = chunk.map(x => [x.m.id, sbSig(x.m), SB.pt[x.m.id]]);
     if (!chunk.length) continue;
@@ -8276,7 +8295,7 @@ function sbApplyPeople(rows){
     SB.people.set(id, r.id);
     const p = S.profiles.find(x => x.id === id);
     if (r.avatar_url) SB.ppaths.set(id, r.avatar_url);
-    if (SB.ppend[id] === "up" && p && (Date.parse(r.updated_at) || 0) > (SB.ppt[id] || 0) && sbForeign(SB.pown, id, Date.parse(r.updated_at) || 0)) { delete SB.ppend[id]; delete SB.ppt[id]; } // the account's copy is newer
+    if (SB.ppend[id] === "up" && p && (Date.parse(r.updated_at) || 0) > (SB.ppt[id] || 0) && sbForeign(SB.pown, id, Date.parse(r.updated_at) || 0)) { sbRejectPhoto("avatar", id); delete SB.ppend[id]; delete SB.ppt[id]; } // the account's copy is newer
     const pend = SB.ppend[id];
     if (!p) {
       if (pend === "del" || S.profiles.length >= 12) continue;
@@ -8305,7 +8324,7 @@ function sbApplyRemote(list){
   const pids = new Set(S.profiles.map(p => p.id)), old = new Map();
   for (const { m } of sbAllMeals()) old.set(m.id, m);
   // The later change wins: a waiting change made before the account's row was last updated is dropped.
-  for (const x of list) { const id = x.row.app_id, t = Date.parse(x.row.updated_at) || 0; if (SB.pend[id] && t > (SB.pt[id] || 0) && sbForeign(SB.mown, id, t)) { delete SB.pend[id]; delete SB.pt[id]; } }
+  for (const x of list) { const id = x.row.app_id, t = Date.parse(x.row.updated_at) || 0; if (SB.pend[id] && t > (SB.pt[id] || 0) && sbForeign(SB.mown, id, t)) { sbRejectPhoto("meals", id); delete SB.pend[id]; delete SB.pt[id]; } }
   for (const pid in S.logs) for (const mon in S.logs[pid]) S.logs[pid][mon].meals = S.logs[pid][mon].meals.filter(m => SB.pend[m.id]);
   const rows = list.filter(x => pids.has(x.pid) && !x.row.deleted_at && !SB.pend[x.row.app_id]);
   for (const x of list) sbSeen(Date.parse(x.row.updated_at) || 0);
@@ -8407,9 +8426,9 @@ function sbTrackKinds(pid, mon){
 // or deleting everything removes it. `ready` says a first sync finished here, so what is on screen at load is a fair baseline.
 function sbKindsSave(){
   if (!STORE_UID || !SB.kstarted) return undefined; // STORE_UID, not SB.user: an expired session still owns this store
-  const k = {}; for (const kind in SB_KINDS) k[kind] = { pend: { ...SB.kp[kind].pend }, t: { ...SB.kp[kind].t } };
-  const out = { ready: true, k, rq: SB.rmq.slice(0, 200) };
-  if (CRY.lock) { out.m = { pend: { ...SB.pend }, t: { ...SB.pt } }; out.p = { pend: { ...SB.ppend }, t: { ...SB.ppt } }; } // plain mode keeps these in the offline cache
+  const k = {}; for (const kind in SB_KINDS) k[kind] = { pend: { ...SB.kp[kind].pend }, t: { ...SB.kp[kind].t }, own: sbOwnSave(SB.kp[kind].own, SB.kp[kind].pend) };
+  const out = { ready: true, k, rq: SB.rmq.slice(0, 200), server: SB.lastServer };
+  if (CRY.lock) { out.m = { pend: { ...SB.pend }, t: { ...SB.pt }, own: sbOwnSave(SB.mown, SB.pend) }; out.p = { pend: { ...SB.ppend }, t: { ...SB.ppt }, own: sbOwnSave(SB.pown, SB.ppend) }; } // plain mode keeps these in the offline cache
   return out;
 }
 function sbKindsClean(kp){
@@ -8419,25 +8438,26 @@ function sbKindsClean(kp){
     const src = kp.k && kp.k[kind] && typeof kp.k[kind] === "object" ? kp.k[kind] : { pend: kp[kind], t: {} }; // 8.2.15 stored { workouts: { id: op } }
     const pend = {}, t = {};
     for (const [id, v] of Object.entries(src.pend && typeof src.pend === "object" ? src.pend : {})) if (KID_RE.test(id) && (v === "up" || v === "del")) { pend[id] = v; t[id] = num(src.t?.[id], 0, 8.64e15) ?? Date.now(); }
-    out.k[kind] = { pend, t };
+    out.k[kind] = { pend, t, own: Object.fromEntries(sbOwnLoad(src.own, pend)) };
   }
   for (const w of ["m", "p"]) if (kp[w] && typeof kp[w] === "object") {
     const pend = {}, t = {};
     for (const [id, v] of Object.entries(kp[w].pend && typeof kp[w].pend === "object" ? kp[w].pend : {})) if (ID_RE.test(id) && (v === "up" || v === "del")) { pend[id] = v; t[id] = num(kp[w].t?.[id], 0, 8.64e15) ?? Date.now(); }
-    out[w] = { pend, t };
+    out[w] = { pend, t, own: Object.fromEntries(sbOwnLoad(kp[w].own, pend)) };
   }
-  return out;
+  out.server = num(kp.server, 0, 8.64e15) || 0; return out;
 }
 function sbKindsRestore(){
   const kp = S.kpSaved; S.kpSaved = null;
   if (!kp || !SB.user || STORE_UID !== SB.user.id) return;
-  sbKindsReset();
-  for (const kind in SB_KINDS) { SB.kp[kind].pend = { ...kp.k[kind].pend }; SB.kp[kind].t = { ...kp.k[kind].t }; }
+  const mown = SB.mown, pown = SB.pown; sbKindsReset(); SB.mown = mown; SB.pown = pown; sbSeen(kp.server || 0);
+  for (const kind in SB_KINDS) { SB.kp[kind].pend = { ...kp.k[kind].pend }; SB.kp[kind].t = { ...kp.k[kind].t }; SB.kp[kind].own = sbOwnLoad(kp.k[kind].own, SB.kp[kind].pend); }
   SB.rmq = [...kp.rq];
   sbKindsBaseline(); SB.kstarted = true;
   if (kp.m && kp.p) { // a passcode was on: meals are in the encrypted months, and what was waiting is here instead of in the offline cache
     SB.pend = { ...kp.m.pend }; SB.pt = { ...kp.m.t }; SB.shadow.clear();
     for (const { pid, mon, m } of sbAllMeals()) if (!SB.pend[m.id]) SB.shadow.set(m.id, { pid, mon, sig: sbSig(m) });
+    SB.mown = sbOwnLoad(kp.m.own, SB.pend); SB.pown = sbOwnLoad(kp.p.own, SB.ppend);
     sbProfReset(); SB.ppend = { ...kp.p.pend }; SB.ppt = { ...kp.p.t };
     for (const p of S.profiles) if (!SB.ppend[p.id]) sbSetPsig(p.id, sbProfSig(p));
     SB.started = true;
@@ -8475,7 +8495,7 @@ function sbApplyKind(kind, pulled){
   for (const x of list) {
     if (!pids.has(x.pid)) continue;
     const id = D.idOf(x.pid, x.row);
-    if (K.pend[id] && (Date.parse(x.row.updated_at) || 0) > (K.t[id] || 0) && sbForeign(K.own, id, Date.parse(x.row.updated_at) || 0)) { delete K.pend[id]; delete K.t[id]; } // the account's copy is newer (and not just our own write)
+    if (K.pend[id] && (Date.parse(x.row.updated_at) || 0) > (K.t[id] || 0) && sbForeign(K.own, id, Date.parse(x.row.updated_at) || 0)) { sbRejectPhoto(kind, id); delete K.pend[id]; delete K.t[id]; } // the account's copy is newer (and not just our own write)
     if (D.dead(x.row)) { dead.add(id); live.delete(id); } else { live.set(id, x); dead.delete(id); }
   }
   const local = new Map(); for (const x of sbAllOf(kind)) local.set(x.e.id, x);
@@ -8521,7 +8541,7 @@ async function sbPushKinds(){
     if (!sbLive(g)) return;
     const stale = await sbStaleKind(kind, [...ups.map(x => x.e.id), ...dels]);
     if (!sbLive(g)) return;
-    if (stale.size) { for (const id of stale) { delete K.pend[id]; delete K.t[id]; } ups = ups.filter(x => !stale.has(x.e.id)); dels = dels.filter(id => !stale.has(id)); sbRepull(); }
+    if (stale.size) { ups = ups.filter(x => !stale.has(x.e.id)); dels = dels.filter(id => !stale.has(id)); sbRepull(); }
     await sbUploadPhotos(kind, ups, g);
     if (!sbLive(g)) return;
     for (let i = 0; i < ups.length; i += 200) {
@@ -8581,6 +8601,16 @@ function sbDom(name){
   if (name === "meals") return { type: "meals", bytes: 60000, paths: SB.mpaths, ver: SB.mver, need: SB.mneed, fail: SB.mfail };
   if (name === "avatar") return { type: "avatar", bytes: 100000, paths: SB.ppaths, ver: SB.pver, need: SB.pneed, fail: SB.pfail };
   const K = SB.kp[name]; return { type: SB_KINDS[name].photo, bytes: 60000, paths: K.paths, ver: K.ver, need: K.need, fail: K.pfail };
+// A later account row won the conflict. Its photo must win too; a rejected local replacement must not block the download.
+function sbRejectPhoto(dom, id){
+  if (!sbPhotosOn() || (dom !== "avatar" && dom !== "meals" && !SB_KINDS[dom]?.photo)) return;
+  const x = dom === "avatar" ? { e: S.profiles.find(p => p.id === id) } : dom === "meals" ? [...sbAllMeals()].map(x => ({ ...x, e: x.m })).find(x => x.e.id === id) : [...sbAllOf(dom)].find(x => x.e.id === id);
+  if (!x?.e) return;
+  x.e.photo = null; x.e.pv = x.e.pt = undefined;
+  if (dom === "avatar") { if (x.e.prem?.body) x.e.prem.body.shots = []; SB.sneed = SB.sneed.filter(n => n.pid !== id); }
+  if (x.pid && x.mon) dirty.add(`log:${x.pid}:${x.mon}`);
+  dirty.add("root"); SB.cacheDirty = true;
+}
 }
 const sbPhotoRef = (dom, id) => { const D = sbDom(dom), p = D.paths.get(id); return p ? (D.ver.get(id) ? `${p}#${D.ver.get(id)}` : p) : null; };
 const sbPathOf = (kind, id) => sbPhotoRef(kind, id);
@@ -8619,8 +8649,8 @@ async function sbRetryRemovals(){
   const use = sbPathsInUse(), q = SB.rmq.filter(p => !use.has(p)); // never delete a path the account's rows point at now
   SB.rmq = []; await sbRemoveFiles(q); dirty.add("root"); schedule();
 }
-// Never the path or the error object in the log. After three failed tries in a row the photo stops holding the entry back (it is tried again when it changes).
-const sbPhotoFail = (err, key) => { console.warn("photo upload failed:", err?.statusCode || err?.name || "error"); SB.pfc.set(key, (SB.pfc.get(key) || 0) + 1); return SB.pfc.get(key) < 3; };
+// Never the path or the error object in the log. A failed photo is still pending, however many retries it needs.
+const sbPhotoFail = (err, key) => { console.warn("photo upload failed:", err?.statusCode || err?.name || "error"); SB.pfc.set(key, (SB.pfc.get(key) || 0) + 1); clearTimeout(SB.timers.retry); SB.timers.retry = setTimeout(sbKick, 20000); return true; };
 // Send one entry's photo if it is new or changed (or remove it if it was removed on purpose). Returns true if the entry's markers changed.
 async function sbPhotoUp(dom, personId, id, e, g){
   const D = sbDom(dom);
@@ -8851,7 +8881,9 @@ async function sbUserChanged(now){
 // Only an explicit sign-out (sbSignOut) clears the device.
 function sbSessionLost(){
   clearTimeout(SB.timers.push); clearTimeout(SB.timers.retry);
-  SB.started = false; SB.pend = {}; SB.shadow.clear(); sbProfReset(); SB.people = new Map(); SB.state = "idle"; SB.err = "";
+  clearTimeout(SB.timers.pp); SB.gen++; // invalidate requests started under the expired session
+  SB.people = new Map(); SB.state = "idle"; SB.err = "";
+  SB.cacheDirty = true; sbCacheSave(); // preserve meal/profile queues as well as the kind queues in the root
   UI.sessionExpired = true; // the workout and weigh-in waiting list is kept on purpose: signing back in sends it
 
   markAll(); render(); // sync is off now, so meals go back into the saved months on this device
@@ -9009,13 +9041,12 @@ function sbLocalOnly(){
   const out = [], pl = (k, one, many = one + "s") => `${k} ${k === 1 ? one : many}`;
   const clips = S.profiles.reduce((t, p) => t + (p.prem?.clips?.length || 0), 0);
   if (clips) out.push(pl(clips, "form-check video"));
-  if (!sbPhotosOn()) {
-    let n = 0;
-    for (const { m } of sbAllMeals()) if (m.photo) n++;
-    for (const { e } of sbAllOf("workouts")) if (e.photo) n++;
-    for (const p of S.profiles) n += (p.photo ? 1 : 0) + (p.prem?.body?.shots?.length || 0);
-    if (n) out.push(pl(n, "photo") + " (Sync photos is off)");
-  }
+  const off = !sbPhotosOn(), unsent = e => e.photo && (off || !e.pv || e.pt !== sbPhotoTag(e));
+  let n = 0;
+  for (const { m } of sbAllMeals()) if (unsent(m)) n++;
+  for (const { e } of sbAllOf("workouts")) if (unsent(e)) n++;
+  for (const p of S.profiles) n += (unsent(p) ? 1 : 0) + (p.prem?.body?.shots || []).filter(s => s.img && (off || !s.path)).length;
+  if (n) out.push(pl(n, "photo") + (off ? " (Sync photos is off)" : " not saved to your account"));
   return out;
 }
 async function sbSignOut(force){
@@ -9025,7 +9056,7 @@ async function sbSignOut(force){
     // Upload what is waiting (meals, workouts, weigh-ins and profile changes) before anything is deleted.
     let failed = navigator.onLine === false;
     // If the first sync never finished (it failed while pulling), workouts and weigh-ins were never compared with the account: run it now.
-    if (sbActive() && !failed) await sbRun(async () => { try { if (!SB.kstarted || !SB.started) await sbSyncBody(); else { await sbPushProfiles(); await sbPush(); await sbPushKinds(); } } catch (e) { failed = true; throw e; } });
+    if (sbActive() && !failed) await sbRun(async () => { try { await sbPersistNow(); if (!SB.kstarted || !SB.started) await sbSyncBody(); else { await sbPushProfiles(); await sbPush(); await sbPushKinds(); } } catch (e) { failed = true; throw e; } });
     // The warning appears only when something has not reached the account (or never can): otherwise nothing is lost, so it just signs out.
     const unconfirmed = sbActive() && (!SB.kstarted || !SB.started);
     const local = sbLocalOnly();
