@@ -4059,7 +4059,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.18", channel: "Dev Testing", date: "2026-10-13", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.19", channel: "Dev Testing", date: "2026-10-13", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -4073,6 +4073,14 @@ const APP_VERSION = { update: "8.2", build: "8.2.18", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.19",
+      area:"Sync",
+      title:"Passcode restores keep own-write times; a profile deleted twice settles",
+      bug:"With a passcode on, the saved profile own-write times were loaded before the profile queue they belong to had been restored, so they were all thrown away. After a reload or lock, an older upload that finished late could be mistaken for another device's change and overwrite a newer profile edit. Separately, a profile deleted on two devices kept its waiting deletion for ever, because the account's matching deleted row was ignored once the profile was already gone here. The app then re-synced every 50 ms and sign-out kept warning about a deletion that had already happened.",
+      fix:"Restore the profile queue first, then load its own-write times, so they are kept for the items still waiting. When the account's row for a profile is deleted and the profile is already gone here, clear its waiting deletion and its saved signature. CLAUDE.md now says to read and fix Greptile review findings after each push.",
+      where:"index.html: sbKindsRestore (order of the profile queue and its own-write times) and sbApplyPeople (a deleted row for a profile already deleted here). tests/browser/account-sync.mjs (section 18). CLAUDE.md (section 6). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"node tests/browser/account-sync.mjs: section 18 has two tests that fail against 8.2.18 and pass now (the passcode layout is saved for waiting items only and comes back with its queues, with the live queues emptied first; a profile deleted on two devices leaves no waiting deletion and stops syncing). node tests/check-repo.mjs; node tests/browser/run-all.mjs. By hand: set a passcode, edit a profile offline, reload, unlock, go online: the edit is uploaded, not replaced. Delete the same profile on two devices (one offline) and bring it online: sign-out shows no unsaved-changes warning.",
+      limits:"Same as 8.2.18: the later-change rule compares this device's clock with the database's updated_at, and a write landing between the check and the save needs a database rule to close." },
     { id:"8.2.18",
       area:"Sync",
       title:"Keep pending changes through expiry, reload and failed saves",
@@ -8290,7 +8298,9 @@ function sbApplyPeople(rows){
     const at = Date.parse(r.updated_at) || 0;
     if (r.deleted_at) {
       // Deleted in the account: it goes here too, unless an edit made here is later than the deletion (then the edit wins and brings it back).
-      if (S.profiles.some(p => p.id === id) && (SB.ppend[id] !== "up" || (at > (SB.ppt[id] || 0) && sbForeign(SB.pown, id, at)))) { dropProfile(id); SB.psig.delete(id); SB.plast.delete(id); delete SB.ppend[id]; delete SB.ppt[id]; changed = true; }
+      const here = S.profiles.some(p => p.id === id);
+      if (here && (SB.ppend[id] !== "up" || (at > (SB.ppt[id] || 0) && sbForeign(SB.pown, id, at)))) { dropProfile(id); SB.psig.delete(id); SB.plast.delete(id); delete SB.ppend[id]; delete SB.ppt[id]; changed = true; }
+      else if (!here && SB.ppend[id] === "del") { delete SB.ppend[id]; delete SB.ppt[id]; SB.psig.delete(id); SB.plast.delete(id); } // deleted here and in the account: nothing left to send
     } else if (SB.ppend[id] === "del" && at > (SB.ppt[id] || 0) && sbForeign(SB.pown, id, at)) { delete SB.ppend[id]; delete SB.ppt[id]; SB.psig.delete(id); SB.plast.delete(id); } // edited in the account after it was deleted here: it comes back
   }
   for (const r of live) {
@@ -8460,8 +8470,8 @@ function sbKindsRestore(){
   if (kp.m && kp.p) { // a passcode was on: meals are in the encrypted months, and what was waiting is here instead of in the offline cache
     SB.pend = { ...kp.m.pend }; SB.pt = { ...kp.m.t }; SB.shadow.clear();
     for (const { pid, mon, m } of sbAllMeals()) if (!SB.pend[m.id]) SB.shadow.set(m.id, { pid, mon, sig: sbSig(m) });
-    SB.mown = sbOwnLoad(kp.m.own, SB.pend); SB.pown = sbOwnLoad(kp.p.own, SB.ppend);
     sbProfReset(); SB.ppend = { ...kp.p.pend }; SB.ppt = { ...kp.p.t };
+    SB.mown = sbOwnLoad(kp.m.own, SB.pend); SB.pown = sbOwnLoad(kp.p.own, SB.ppend); // the queues first: a stamp is kept only for an item that is waiting
     for (const p of S.profiles) if (!SB.ppend[p.id]) sbSetPsig(p.id, sbProfSig(p));
     SB.started = true;
   }

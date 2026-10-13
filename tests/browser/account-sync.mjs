@@ -525,7 +525,33 @@ ok("failed persistence keeps dirty work and sends no snack", await d1.ev(`dirty.
 await d1.ev(`Storage.prototype.setItem=window.__setItem; sbKick(); true`);
 ok("freeing storage permits a durable retry and upload", await d1.synced() && live("snack_logs",A).some(r=>r.app_id===blocked));
 
-console.log("--- 18. no script errors");
+console.log("--- 18. restoring a saved queue; a profile deleted on two devices");
+// 4. restoring: the queues come back first, then the stamps that belong to them (also the passcode layout, kept in the root)
+const rest = await d1.ev(`(() => {
+  const was = CRY.lock, pid = P().id, mid = uid(), wid = uid(); CRY.lock = { fake: 1 };
+  try {
+    SB.pend[mid] = "up"; SB.pt[mid] = 1000; SB.mown.set(mid, 2000); SB.ppend[pid] = "up"; SB.ppt[pid] = 1000; SB.pown.set(pid, 2000);
+    SB.kp.workouts.pend[wid] = "up"; SB.kp.workouts.t[wid] = 1000; SB.kp.workouts.own.set(wid, 2000); SB.kp.workouts.own.set("gone0001", 5);
+    const saved = JSON.parse(JSON.stringify(sbKindsSave()));
+    const out = { savedOnlyWaiting: !("gone0001" in saved.k.workouts.own), m: saved.m.own[mid], p: saved.p.own[pid], k: saved.k.workouts.own[wid] };
+    SB.pend = {}; SB.pt = {}; SB.ppend = {}; SB.ppt = {}; SB.mown = new Map(); SB.pown = new Map(); SB.kp.workouts.pend = {}; SB.kp.workouts.t = {}; SB.kp.workouts.own = new Map(); // the live queues are empty, as after a reload
+    S.kpSaved = sbKindsClean(saved); sbKindsRestore();
+    out.back = { m: SB.mown.get(mid), p: SB.pown.get(pid), k: SB.kp.workouts.own.get(wid), pend: SB.pend[mid] + "/" + SB.ppend[pid] + "/" + SB.kp.workouts.pend[wid] };
+    return JSON.stringify(out);
+  } finally { CRY.lock = was; }
+})()`);
+ok("with a passcode the stamps are saved for waiting items only, and come back with their queues", rest === JSON.stringify({ savedOnlyWaiting: true, m: 2000, p: 2000, k: 2000, back: { m: 2000, p: 2000, k: 2000, pend: "up/up/up" } }), rest);
+await d1.reload(); await d1.synced(25000);
+// A profile deleted on two devices: the second device's waiting deletion is settled by the account's row, not kept for ever.
+tmp = await mkTemp("Temp both");
+await d1.ev(`__fake.offline = true; dropProfile(${JSON.stringify(tmp)}); saveProfile(); true`); await sleep(300);
+await d2.ev(`dropProfile(${JSON.stringify(tmp)}); saveProfile(); true`); await d2.synced(); await sleep(200);
+await d1.ev(`__fake.offline = false; true`);
+ok("a profile deleted on both devices leaves no waiting deletion", await d1.kick() && await d1.ev(`!SB.ppend[${JSON.stringify(tmp)}] && !sbPending()`));
+const syncs0 = await d1.ev(`__fake.calls.filter(c => c[0] === "people" && c[1] === "select").length`); await sleep(2500);
+ok("and it does not keep syncing", (await d1.ev(`__fake.calls.filter(c => c[0] === "people" && c[1] === "select").length`)) === syncs0);
+
+console.log("--- 19. no script errors");
 ok("no uncaught exceptions on any device", errorsAll.length === 0, errorsAll.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);
 procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(fail ? 1 : 0);

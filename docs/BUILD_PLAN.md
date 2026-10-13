@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.19 | Passcode restore keeps profile own-write times; a profile deleted on two devices settles; Greptile rule in CLAUDE.md | IN PROGRESS: build-8.2.19 |
 | 8.2.18 | Sync recovery: durable queues, expiry, photo retries/conflicts and failed local writes | IN PROGRESS: build-8.2.18 |
 | 8.2.17 | Ten workout types (soccer, basketball, American football, volleyball, cricket, baseball, tennis, badminton, strength, bodyweight) use Boxicons glyphs on the app's disc; Boxicons credited (CC BY 4.0) on the Credits page | IN PROGRESS: build-8.2.17, pull request open, not merged |
 | 8.2.16 | Full account sync: every log type, all profile fields and photos; later change wins; offline queue; passcode keeps syncing (no database change) | IN PROGRESS: build-8.2.16, pull request not yet opened (stacked on 8.2.15) |
