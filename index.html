@@ -7914,8 +7914,8 @@ function flush(){
           const id = `${pid}_${mon}`;
           if (!L) delete local.logs[id]; else local.logs[id] = await pack({ pid, month: mon, ...L });
         }
-        failed = true;
       } catch (e) {
+        failed = true;
         console.warn("save failed:", e?.name || "error"); // not the key or the error object: they can name the record
       }
     }
@@ -8601,6 +8601,7 @@ function sbDom(name){
   if (name === "meals") return { type: "meals", bytes: 60000, paths: SB.mpaths, ver: SB.mver, need: SB.mneed, fail: SB.mfail };
   if (name === "avatar") return { type: "avatar", bytes: 100000, paths: SB.ppaths, ver: SB.pver, need: SB.pneed, fail: SB.pfail };
   const K = SB.kp[name]; return { type: SB_KINDS[name].photo, bytes: 60000, paths: K.paths, ver: K.ver, need: K.need, fail: K.pfail };
+}
 // A later account row won the conflict. Its photo must win too; a rejected local replacement must not block the download.
 function sbRejectPhoto(dom, id){
   if (!sbPhotosOn() || (dom !== "avatar" && dom !== "meals" && !SB_KINDS[dom]?.photo)) return;
