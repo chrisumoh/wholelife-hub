@@ -550,6 +550,19 @@ await d1.ev(`__fake.offline = false; true`);
 ok("a profile deleted on both devices leaves no waiting deletion", await d1.kick() && await d1.ev(`!SB.ppend[${JSON.stringify(tmp)}] && !sbPending()`));
 const syncs0 = await d1.ev(`__fake.calls.filter(c => c[0] === "people" && c[1] === "select").length`); await sleep(2500);
 ok("and it does not keep syncing", (await d1.ev(`__fake.calls.filter(c => c[0] === "people" && c[1] === "select").length`)) === syncs0);
+// ... and the files of that profile are still removed, even when the other device deleted the row but failed to remove them
+tmp = await mkTemp("Temp pic");
+await d1.ev(`S.profiles.find(p => p.id === ${JSON.stringify(tmp)}).photo = __photo(120, 120, false); saveProfile(); true`); await d1.synced(); await d2.kick();
+const picRow = rows("people", A).find(r => r.app_id === tmp);
+const picFiles = () => Object.keys(files()).filter(p => p.startsWith(`${A}/${picRow?.id}/`));
+ok("the profile's picture is in the account", picFiles().length > 0, JSON.stringify(Object.keys(files())));
+await d2.ev(`__fake.failRemove = true; true`);
+await d1.ev(`__fake.offline = true; dropProfile(${JSON.stringify(tmp)}); saveProfile(); true`); await sleep(300);
+await d2.ev(`dropProfile(${JSON.stringify(tmp)}); saveProfile(); true`); await d2.synced(); await sleep(300);
+ok("the other device deleted the profile but its file removal failed", picFiles().length > 0 && !!rows("people", A).find(r => r.app_id === tmp)?.deleted_at);
+await d1.ev(`__fake.offline = false; true`);
+ok("this device, settling its own deletion, removes the leftover files", await d1.kick() && await d1.waitFor(`SB.rmq.length === 0`, 10000) && picFiles().length === 0, JSON.stringify(picFiles()));
+await d2.ev(`__fake.failRemove = false; true`);
 
 console.log("--- 19. no script errors");
 ok("no uncaught exceptions on any device", errorsAll.length === 0, errorsAll.join(" | "));

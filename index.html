@@ -4077,7 +4077,7 @@ const APP_VERSION = { update: "8.2", build: "8.2.19", channel: "Dev Testing", da
       area:"Sync",
       title:"Passcode restores keep own-write times; a profile deleted twice settles",
       bug:"With a passcode on, the saved profile own-write times were loaded before the profile queue they belong to had been restored, so they were all thrown away. After a reload or lock, an older upload that finished late could be mistaken for another device's change and overwrite a newer profile edit. Separately, a profile deleted on two devices kept its waiting deletion for ever, because the account's matching deleted row was ignored once the profile was already gone here. The app then re-synced every 50 ms and sign-out kept warning about a deletion that had already happened.",
-      fix:"Restore the profile queue first, then load its own-write times, so they are kept for the items still waiting. When the account's row for a profile is deleted and the profile is already gone here, clear its waiting deletion and its saved signature. CLAUDE.md now says to read and fix Greptile review findings after each push.",
+      fix:"Restore the profile queue first, then load its own-write times, so they are kept for the items still waiting. When the account's row for a profile is deleted and the profile is already gone here, clear its waiting deletion and its saved signature, and queue removal of its picture and progress-photo files (the other device may have deleted the row without removing them). CLAUDE.md now says to read and fix Greptile review findings after each push.",
       where:"index.html: sbKindsRestore (order of the profile queue and its own-write times) and sbApplyPeople (a deleted row for a profile already deleted here). tests/browser/account-sync.mjs (section 18). CLAUDE.md (section 6). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
       test:"node tests/browser/account-sync.mjs: section 18 has two tests that fail against 8.2.18 and pass now (the passcode layout is saved for waiting items only and comes back with its queues, with the live queues emptied first; a profile deleted on two devices leaves no waiting deletion and stops syncing). node tests/check-repo.mjs; node tests/browser/run-all.mjs. By hand: set a passcode, edit a profile offline, reload, unlock, go online: the edit is uploaded, not replaced. Delete the same profile on two devices (one offline) and bring it online: sign-out shows no unsaved-changes warning.",
       limits:"Same as 8.2.18: the later-change rule compares this device's clock with the database's updated_at, and a write landing between the check and the save needs a database rule to close." },
@@ -8300,7 +8300,13 @@ function sbApplyPeople(rows){
       // Deleted in the account: it goes here too, unless an edit made here is later than the deletion (then the edit wins and brings it back).
       const here = S.profiles.some(p => p.id === id);
       if (here && (SB.ppend[id] !== "up" || (at > (SB.ppt[id] || 0) && sbForeign(SB.pown, id, at)))) { dropProfile(id); SB.psig.delete(id); SB.plast.delete(id); delete SB.ppend[id]; delete SB.ppt[id]; changed = true; }
-      else if (!here && SB.ppend[id] === "del") { delete SB.ppend[id]; delete SB.ppt[id]; SB.psig.delete(id); SB.plast.delete(id); } // deleted here and in the account: nothing left to send
+      else if (!here && SB.ppend[id] === "del") { // deleted here and in the account: no row left to send, but the other device may not have removed the files
+        const gone = [SB.ppaths.get(id), ...(SB.shotPaths.get(id) || [])].filter(Boolean).map(x => sbSplit(x).path);
+        SB.ppaths.delete(id); SB.pver.delete(id); SB.shotPaths.delete(id);
+        for (const x of gone) if (!SB.rmq.includes(x)) SB.rmq.push(x); // sbRetryRemovals runs right after this
+        if (gone.length) { dirty.add("root"); schedule(); }
+        delete SB.ppend[id]; delete SB.ppt[id]; SB.psig.delete(id); SB.plast.delete(id);
+      }
     } else if (SB.ppend[id] === "del" && at > (SB.ppt[id] || 0) && sbForeign(SB.pown, id, at)) { delete SB.ppend[id]; delete SB.ppt[id]; SB.psig.delete(id); SB.plast.delete(id); } // edited in the account after it was deleted here: it comes back
   }
   for (const r of live) {
