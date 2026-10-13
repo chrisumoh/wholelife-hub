@@ -8612,7 +8612,6 @@ function sbRejectPhoto(dom, id){
   if (x.pid && x.mon) dirty.add(`log:${x.pid}:${x.mon}`);
   dirty.add("root"); SB.cacheDirty = true;
 }
-}
 const sbPhotoRef = (dom, id) => { const D = sbDom(dom), p = D.paths.get(id); return p ? (D.ver.get(id) ? `${p}#${D.ver.get(id)}` : p) : null; };
 const sbPathOf = (kind, id) => sbPhotoRef(kind, id);
 function sbDataToBlob(url){
