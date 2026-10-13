@@ -31,7 +31,7 @@ await new Promise(r => ws.onopen = r);
 let id = 0; const pending = new Map(); const errors = [];
 ws.onmessage = m => { const d = JSON.parse(m.data); if (d.id && pending.has(d.id)) { pending.get(d.id)(d.result); pending.delete(d.id); } else if (d.method === "Runtime.exceptionThrown") errors.push(d.params.exceptionDetails.exception?.description || d.params.exceptionDetails.text); };
 const send = (method, params = {}) => new Promise(r => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
-const ev = async expr => { const r = await send("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true }); if (r.result.exceptionDetails) throw new Error(r.result.exceptionDetails.exception?.description || r.result.exceptionDetails.text); return r.result.value; };
+const ev = async expr => { const r = await send("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true }); if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text); return r.result.value; };
 const waitFor = async (expr, ms = 8000) => { const t = Date.now(); while (Date.now() - t < ms) { try { if (await ev(expr)) return true; } catch {} await sleep(120); } return false; };
 let pass = 0, fail = 0;
 const ok = (name, cond, extra = "") => { cond ? pass++ : fail++; console.log(`${cond ? "PASS" : "FAIL"}  ${name}${cond ? "" : "  " + String(extra).slice(0, 300)}`); };
@@ -128,6 +128,15 @@ ok("the button says what it will do", before.label === "More about Calories eate
 ok("it is turned half way round", /matrix3d\(-1/.test(back.rot), back.rot);
 await ev(`render(); true`); await sleep(200);
 ok("a re-render does not turn it back, and the back keeps its content", await ev(`(() => { const w = document.querySelector(".flipwrap.flipped"); return !!w && /7-day average/.test(w.querySelector(".face.back").textContent) && w.querySelector(".face.front").inert === true; })()`));
+ok("a render under a focused Open link leaves the focus on it", await (async () => { await ev(`document.querySelector(".flipwrap.flipped .fb-open").focus(); render(); true`); await sleep(200); return ev(`document.activeElement?.classList.contains("fb-open") && !!document.activeElement.closest(".flipwrap.flipped")`); })());
+ok("choosing a playback speed moves the ring", await (async () => {
+  await ev(`(() => { const d = document.createElement("div"); d.id = "rt"; d.className = "seg sm"; d.style.cssText = "position:fixed;top:0;left:0;z-index:9"; d.innerHTML = ["0.25","0.5","1"].map(v => '<button data-act="fc-rate" data-v="' + v + '" aria-pressed="' + (v === "1") + '">' + v + '</button>').join(""); document.body.append(d); ringSync(); return true; })()`);
+  const x0 = await ev(`document.querySelector("#rt .focus-ring").style.getPropertyValue("--x")`);
+  await ev(`document.querySelector('#rt [data-v="0.25"]').click(); true`); await sleep(100);
+  const x1 = await ev(`document.querySelector("#rt .focus-ring").style.getPropertyValue("--x")`);
+  await ev(`document.getElementById("rt").remove(); true`);
+  return x0 !== x1;
+})());
 await ev(`document.querySelector(".flipwrap.flipped .flipbtn").focus(); true`);
 await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 }); await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
 await sleep(900);
