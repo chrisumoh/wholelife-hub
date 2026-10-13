@@ -8211,7 +8211,7 @@ async function sbPushProfiles(){
       SB.psig.set(id, sig); const cur = S.profiles.find(p => p.id === id);
       if (SB.ppend[id] !== "up" || SB.ppt[id] !== t) continue; // edited again while this was sent: its own timer sends it
       if (cur && sbProfSig(cur) === sig) { if (!SB.pfail.has(id)) { delete SB.ppend[id]; delete SB.ppt[id]; } }
-      else if (cur) again = true; // changed in a way that did not go through markRoot() (a meal logged, an award earned): send it too, still dated by the edit that is waiting, so it never beats a newer edit from another device
+      else if (cur) again = true; // keep the waiting edit's time so a retry cannot outrank a newer account edit
     }
     if (again) { clearTimeout(SB.timers.pp); SB.timers.pp = setTimeout(() => sbSchedule("pp", async () => { await sbPersistNow(); await sbPushProfiles(); }), 300); }
     SB.cacheDirty = true; sbCacheSave(); if (CRY.lock) { dirty.add("root"); await flush(); }
