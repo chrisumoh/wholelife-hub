@@ -91,3 +91,34 @@ Re-run `node tests/perf/measure.mjs` after any of the changes above and update t
 - **Making it required:** a failing check only blocks a merge if "Performance gate" is marked required in the repository's branch protection (Settings, Branches). That setting is yours, not in the code.
 - **Still not covered:** real phones, Safari, GPU cost (blur, animation) and the supabase-js download, as listed above. The gate is a floor against regressions, not a promise of smoothness.
 - **The next thing it will catch:** Workouts and Recipes are at 1,795 and 1,768 nodes with a year of data. Capping long lists (recommendation 3 above) would bring both down, and the limits could then be lowered.
+
+
+## Size trim and early warning (8.2.23)
+
+62 long CSS comments now live in `docs/CSS_NOTES.md`; short numbered labels remain
+in the same places. All CSS outside comments is byte-for-byte identical. No app
+features, runtime dependency, or build step was added or removed.
+
+Measured locally with the gate's compression settings, including the new in-app
+change log (KB means 1024 bytes):
+
+| index.html | 8.2.22 | 8.2.23 | Existing limit |
+| --- | --- | --- | --- |
+| Raw | 1972.56 KB | 1949.75 KB | 2000 KB |
+| Brotli, quality 9 | 502.70 KB | 494.42 KB | 510 KB |
+| Gzip, level 9 | 593.62 KB | 583.15 KB | 600 KB |
+
+Run `node tests/perf/size.mjs` for a fast, browser-free check of those same limits.
+Set `PERF_BASE_SHA` to a full locally available commit SHA to also report growth
+or savings against that commit. CI supplies the PR base SHA and fetches history.
+A missing/invalid baseline fails the command rather than silently dropping the
+comparison. Omitting the environment variable runs the absolute checks alone.
+Below 5% headroom prints an advisory warning; exceeding a limit exits with failure.
+The script never raises or rewrites a budget. Growth within the budget is reported,
+not automatically rejected: its value still needs review in the pull request.
+
+The existing `measure.mjs --gate` remains responsible for phone timing and screen
+checks; its limits and implementation are unchanged. Browser tests and timing
+measurements could not run locally because Chrome was unavailable and its download
+failed. Use the PR's CI results before merging. These size savings are measured;
+a timing improvement has not been measured.

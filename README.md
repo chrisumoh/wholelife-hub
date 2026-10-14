@@ -1,6 +1,6 @@
 # Whole Life Hub
 
-A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.2 (Dev Testing), build 8.2.22**.
+A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.2 (Dev Testing), build 8.2.23**.
 
 ## What's in this repository
 
@@ -53,3 +53,4 @@ Project **Whole Life Hub** (`https://zemxqbinpehkrkyvzlue.supabase.co`, region u
 ## For testers
 
 In the browser console run `WLH.help()`. On a phone use Settings › Data & about › Diagnostics, and attach **Copy log for a bug report** to every issue.
+
