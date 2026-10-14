@@ -40,28 +40,13 @@
      load) -- falls back to the system font stack. -->
 <style>
 :root{
-  /* =================== v9.0: APPLE HEALTH-STYLE FLAT DESIGN SYSTEM ===================
-     Site-wide restyle (redesign prompt, Sep 2026). Values below match the reference
-     screenshots: pure black canvas / #1C1C1E cards in dark, #F2F2F7 / #FFFFFF in light.
-     Liquid Glass is retired everywhere except the compact sticky header and the tab bar
-     (see --chrome-glass below) — every other surface reads var(--surface) flat, no blur. */
+  /* =================== v9.0: APPLE HEALTH-STYLE FLAT DESIGN SYSTEM =================== [CSS_NOTES 1] */
   --ground:#F2F2F7; --surface:#FFFFFF; --raise:#EFEFF4; --line:#E0E0E6; --line2:#C9C9D1;
   --text:#101014; --muted:#5E5E6B; --faint:#6B6B75; --chevron:#B8B8C2;
   --accent:#0070EB; --accent-ink:#FFFFFF; --accent-soft:#E3EEFF;
   --gold:#8A6100; --gold-soft:color-mix(in srgb,#8A6100 14%,#FFFFFF); --gold-ink:#FFFFFF;
   --good:#167548; --good-soft:#DDF3E7; --warn:#A5530F; --warn-soft:#FBEADA; --bad:#B1342E; --bad-soft:#FADFDD;
-  /* v9.0: a large legacy "Panels/Controls" ruleset further down the cascade still re-applies
-     var(--glass*)/var(--blur) backgrounds, borders and shadows to cards/buttons/chips/the
-     side menu etc. (a third instance of the same class of bug fixed in the token block and
-     in the z-index fix: a later cascade rule silently overriding an earlier flat one).
-     --glass/--glass-strong/--blur/--glass-rim/--glass-shadow already resolve to flat/none, so
-     those re-applications repaint the same flat value or are dropped as invalid (a
-     none-only box-shadow list) — but --glass-brd previously equalled --line, a *visible*
-     hairline color, so every one of those rules was still drawing a real 1px border across
-     otherwise-flat Apple Health surfaces. Making it transparent here neutralizes every one of
-     those ~15 border declarations in a single place; the seasonal accent borders that also
-     read --glass-brd (color-mix with a season hue) are untouched, since mixing with
-     transparent still yields a visible tinted line. */
+  /* v9.0: a large legacy "Panels/Controls" ruleset further down the cascade still re-applies [CSS_NOTES 2] */
   --glass:var(--surface); --glass-strong:var(--surface); --glass-brd:transparent; --glass-rim:none; --glass-shadow:none; --blur:none;
   --chrome-glass:rgba(255,255,255,.72); --scrim:rgba(10,10,20,.35);
   --shadow:none;
@@ -73,21 +58,11 @@
      paddings/margins (existing hand-tuned spacing is left as-is per "targeted edits only" —
      new and touched rules use these). */
   --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px; --space-8:32px;
-  /* v9.1 TASK 1: the one "selected" language for every picker card/row/chip in the app --
-     a soft accent tint plus a single 1px hairline, replacing the thick 2-3px accent
-     box-shadow rings (stacked on top of an already-accent-colored border) that read as a
-     messy double outline. color-mix keeps both relative to whatever --accent the person has
-     chosen, light or dark. --sel-tick-size is the small filled check badge's diameter. */
+  /* v9.1 TASK 1: the one "selected" language for every picker card/row/chip in the app -- [CSS_NOTES 3] */
   --sel-line:color-mix(in srgb,var(--accent) 35%,var(--line2));
   --sel-bg:color-mix(in srgb,var(--accent) 11%,transparent);
   --sel-tick-size:16px;
-  /* v9.1 TASK 4: SidebarIcon gradient tiles. One fixed brand palette per main destination,
-     as custom properties so a future theme could retune any pair -- but of this app's four
-     themes (Forest/Ocean/Sunset/Midnight) none calls for a different sidebar-icon palette
-     the way the brief's "Halloween" example would (this app has no Halloween theme), so a
-     single global set below is the correct, complete implementation of "retunable per
-     theme" today. Premium feature rows reuse the existing --cat-* pairs (PREM_GRAD_PAIRS in
-     app24.js) instead of a new token, since those are already theme-aware per item. */
+  /* v9.1 TASK 4: SidebarIcon gradient tiles. One fixed brand palette per main destination, [CSS_NOTES 4] */
   --si-summary-a:#FF5E7E; --si-summary-b:#FF2D55;
   --si-health-a:#4DA3FF; --si-health-b:#5E5CE6;
   --si-meals-a:#5BDB7F; --si-meals-b:#22A653;
@@ -98,25 +73,13 @@
   --si-coach-a:#8E7BFF; --si-coach-b:#4F6BFF;
   --si-awards-a:#FFD60A; --si-awards-b:#F5A100;
   --si-settings-a:#9A9AA2; --si-settings-b:#6B6B73;
-  /* Phase 6 TASK 6.7: group-family pairs for premium features once they're merged into their
-     topical group instead of one separate "Premium" cluster. INSIGHTS and ACCOUNT reuse the
-     Health/Settings pairs above verbatim -- the doc specs them as the same blue-to-indigo and
-     neutral-gray already in use, so a second identical token would just be a second name for
-     the same two colors. */
+  /* Phase 6 TASK 6.7: group-family pairs for premium features once they're merged into their [CSS_NOTES 5] */
   --si-log-a:#34D399; --si-log-b:#0D9488;
   --si-eat-a:#FF9F5A; --si-eat-b:#E1442B;
   --si-share-a:#B48CFF; --si-share-b:#EC4899;
   /* Apple Health category accents — dark (native) values; light-mode variants below are
      deepened for 4.5:1 body/label contrast against #FFFFFF, same hue identity. */
-  /* v9.0 fix: this base block is the LIGHT default (see --ground/--surface above), exactly
-     like every other token here -- --cat-* must follow that same convention (light-safe hex
-     by default, re-asserted as the vivid dark-native hex inside every dark-ish block below,
-     the same way --gold already does just below), or "auto" mode on a light system would
-     paint category colors from the dark-native palette straight onto a white background and
-     fail the 4.5:1 body/label contrast this whole deepened-light-variant system exists for.
-     This mirrors the legacy --c-activity/--c-heart/--c-sleep/--c-nutrition/--c-food/--c-water/
-     --c-coach tokens further down (used by mColor()/CATS/aurora/etc. site-wide), which are
-     now aliased straight to --cat-* so there is exactly one place these hues are chosen. */
+  /* v9.0 fix: this base block is the LIGHT default (see --ground/--surface above), exactly [CSS_NOTES 6] */
   --cat-activity:#C1440E; --cat-sleep:#4A48C4; --cat-coach:#0077A6; --cat-heart:#D6114B;
   --cat-food:#1E7B37; --cat-water:#0E7A8C; --cat-gold:#8A6100; --cat-secondary:#6B6B75;
   --spring:linear(0,0.009,0.035 2.1%,0.141,0.281 6.7%,0.723 12.9%,0.938 16.7%,1.017,1.077,1.121,1.149 24.3%,1.159,1.163,1.161,1.154 29.9%,1.129 32.8%,1.051 39.6%,1.017 43.1%,0.991,0.977 51%,0.974 53.8%,0.975 57.1%,0.997 69.8%,1.003 76.9%,1);
@@ -189,10 +152,7 @@ h3{font-size:calc((16px) * var(--text-scale,1));font-weight:700}
 p{margin:0}
 a{color:var(--accent)}
 button,input,select,textarea{font:inherit;color:inherit}
-/* v9.1 TASK 1: keyboard-only focus ring. :focus-visible already excludes mouse/touch taps in
-   every modern engine, so the per-element rules below (same treatment, kept local to each
-   component for specificity) never show a ring after a click -- only after Tab. Softened to
-   60% accent per the cleanup spec, was solid 100%. */
+/* v9.1 TASK 1: keyboard-only focus ring. :focus-visible already excludes mouse/touch taps in [CSS_NOTES 7] */
 :focus-visible{outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:2px;border-radius:6px}
 /* Shared selected-state check badge (Task 1 rule 2): 16px filled circle, white check, sits in
    a card/row/chip's top-right corner. Markup adds one <span class="sel-tick"> child; visibility
@@ -215,10 +175,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
 
 /* shell */
-/* v9.1 TASK 3: persistent sidebar widened 240px -> 280px, and its breakpoint moved from 900px
-   to 1024px (updated in lockstep below and in the matching matchMedia("(max-width:...)")
-   calls in app2.js/app17.js) so "drawer below 1024px, persistent rail at 1024px+" matches the
-   cleanup brief exactly -- the mobile drawer itself was already 280px (min(280px,86vw)). */
+/* v9.1 TASK 3: persistent sidebar widened 240px -> 280px, and its breakpoint moved from 900px [CSS_NOTES 8] */
 .app{display:grid;grid-template-columns:280px 1fr;min-height:100%}
 .side{position:sticky;top:0;height:100vh;padding:20px 14px;border-right:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;gap:18px;overflow-y:auto}
 .brand{display:flex;gap:10px;align-items:center;padding:0 6px}
@@ -234,10 +191,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .nav .grp-chev{flex:none;transition:transform var(--dur-tap) var(--ease-smooth);transform:rotate(90deg)}
 .navgrp.collapsed .grp-chev{transform:rotate(0deg)}
 .navgrp-items{display:flex;flex-direction:column;gap:2px}
-/* The explicit .navgrp-items{display:flex} above would otherwise beat the [hidden] attribute's
-   own UA-stylesheet rule (author styles always outrank the browser default), silently
-   un-hiding every "collapsed" group. State this rule needs, so collapsed groups actually
-   collapse instead of just showing a rotated chevron over a still-expanded list. */
+/* The explicit .navgrp-items{display:flex} above would otherwise beat the [hidden] attribute's [CSS_NOTES 9] */
 .navgrp.collapsed .navgrp-items{display:none}
 /* 8.1.6: Log / Plan / Progress are plain labels again (nothing collapses). Premium + Settings sit
    below a hairline so the account-ish rows read as separate from the daily ones. */
@@ -322,10 +276,7 @@ button.st-dot:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 :root[data-motion="reduced"] .st-activedot{animation:none}
 @media (prefers-reduced-motion: reduce){.st-check path{animation:none;stroke-dashoffset:0}}
 
-/* v9.1 TASK 3: sidebar rows -- 40px tall, 8px radius, 12px horizontal padding, 10px icon/label
-   gap, 15px/500 label. Hover/active use a flat neutral tint rather than the accent-soft wash
-   this had before, so the accent stays reserved for primary actions/links/the icon tile itself
-   (Task 4) instead of tinting the whole row. */
+/* v9.1 TASK 3: sidebar rows -- 40px tall, 8px radius, 12px horizontal padding, 10px icon/label [CSS_NOTES 10] */
 .nav a{display:flex;gap:10px;align-items:center;min-height:40px;padding:0 12px;border-radius:8px;text-decoration:none;color:var(--muted);font-weight:500;font-size:calc((15px) * var(--text-scale,1))}
 @media (hover:hover) and (pointer:fine){.nav a:hover{background:rgba(128,128,128,.10);color:var(--text)}}
 .nav a[aria-current="page"],.nav button.prem-trigger[aria-current="page"]{background:rgba(128,128,128,.16);color:var(--text);font-weight:600}
@@ -333,34 +284,11 @@ button.st-dot:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .side .who{margin-top:auto}
 .main{min-width:0;padding-inline:clamp(16px,3vw,36px);padding-block:20px 60px}
 .wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
-/* Master prompt STRICT RULE 10 supersedes the old v9.1 TASK 3 reading-width choice below: a
-   720px column was deliberate then (most pages read as a centered column, Summary/Health kept
-   960px for their charts and stat grids), but the new brief calls that wasted space and asks
-   for it gone everywhere except long-form text inside its own card (legal pages, recipe body,
-   coach chat bubbles -- those still cap at 68ch where they're rendered, unrelated to this
-   page-level container). Every route now gets the same 960px a data-dense page already had;
-   the full Phase 6.3 12-column grid (per-card column spans) is real further work this pass
-   didn't reach -- see the Phase 6 changelog. */
+/* Master prompt STRICT RULE 10 supersedes the old v9.1 TASK 3 reading-width choice below: a [CSS_NOTES 11] */
 @media (min-width:768px){.wrap{max-width:960px}}
-/* Bug fix: one z-index tier, defined once, for the side menu vs. the rest of the page.
-   Any fixed/sticky element that is part of the main page (header card, floating action
-   buttons) must declare its z-index using var(--z-chrome) or lower, so it can never again
-   render above the menu's scrim or panel. (--z-chrome/--z-scrim/--z-menu themselves are
-   defined once, down in the "v10: HEADER, MENU TOGGLE" block, alongside the rest of that
-   stacking scale -- a second, now-removed :root rule here used to redeclare them with a
-   different number range; being later in the file it silently won, so the values below had
-   no effect, but two definitions of the same tier is exactly the kind of thing that bites
-   later, so only the real one remains.) */
+/* Bug fix: one z-index tier, defined once, for the side menu vs. the rest of the page. [CSS_NOTES 12] */
 :root{--page-margin:12px}
-/* v9.0: the header used to be one floating glass card (.top), always in view, holding the
-   date, the hamburger and both quick actions. Health's Summary instead starts with a large,
-   plain title (.page-head) that scrolls away with the page, and only shows a compact
-   translucent bar (.compact-head) once the title has scrolled out of view -- see
-   initHeadCollapse() in app2.js, which toggles .compact-head's "show" class from an
-   IntersectionObserver on .head-sentinel. .compact-head is page chrome exactly like .top
-   was, so it keeps the same sticky position, var(--z-chrome) tier and menu-open safety
-   behaviour (see the .app.menu-on rule further down) -- nothing about the z-index bug fix
-   changes here, only which element carries it. */
+/* v9.0: the header used to be one floating glass card (.top), always in view, holding the [CSS_NOTES 13] */
 .page-head{display:flex;flex-direction:column;gap:10px;padding-top:2px}
 .page-head-top{display:flex;align-items:center;gap:12px}
 .page-title{font-size:calc((32px) * var(--text-scale,1));font-weight:700;line-height:1.15;margin:0;letter-spacing:-.01em}
@@ -413,14 +341,7 @@ a.card:active,a.li:active,a.mcard:active,.tap-row:active{transform:scale(.98)}
 :root[data-motion="reduced"] a.card:active,:root[data-motion="reduced"] a.li:active,:root[data-motion="reduced"] a.mcard:active,:root[data-motion="reduced"] .tap-row:active{transform:none}
 
 /* controls */
-/* v9.1 TASK 3: buttons -- primary solid accent, secondary (the unlabelled default) surface-
-   toned with no border, tertiary (.ghost) text-only, all >=40px tall, radius 10px, weight 600.
-   Secondary uses --raise rather than a literal border-less --surface, since most buttons sit
-   inside a --surface card and a truly borderless --surface button would be invisible against
-   it -- --raise gives the "no border" look the spec asks for while staying visible anywhere
-   it's dropped. .danger drops its old colored-border look for the same flat, borderless
-   language (tinted background instead), so no button in the app still relies on a border to
-   read as a distinct state. */
+/* v9.1 TASK 3: buttons -- primary solid accent, secondary (the unlabelled default) surface- [CSS_NOTES 14] */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;background:var(--raise);color:var(--text);padding:0 16px;min-height:40px;border-radius:10px;font-weight:600;cursor:pointer;text-decoration:none;font-size:calc((14px) * var(--text-scale,1));line-height:1.2;white-space:nowrap}
 .btn{transition:transform var(--dur-page) var(--ease-spring),background-color var(--dur-tap) var(--ease-smooth),filter var(--dur-tap) var(--ease-smooth)}
 @media (hover:hover) and (pointer:fine){.btn:hover{background:color-mix(in srgb,var(--raise) 82%,var(--text) 8%)}}
@@ -444,10 +365,7 @@ a.card:active,a.li:active,a.mcard:active,.tap-row:active{transform:scale(.98)}
 .tag.good{background:var(--good-soft);color:var(--good)}
 .tag.warn{background:var(--warn-soft);color:var(--warn)}
 .tag.bad{background:var(--bad-soft);color:var(--bad)}
-/* Master final check fix: a nested .tiny.muted count (e.g. "25 dishes") was falling back to
-   the flat --muted gray instead of the tag's own already-tuned tone color, so it read at
-   3.4-3.6:1 on the tinted good/warn/gold backgrounds above (axe: color-contrast, needs 4.5:1).
-   Inheriting the parent .tag's color reuses that already-passing combination everywhere. */
+/* Master final check fix: a nested .tiny.muted count (e.g. "25 dishes") was falling back to [CSS_NOTES 15] */
 .tag .tiny.muted{color:inherit}
 label.f{display:flex;flex-direction:column;gap:6px;font-size:calc((13px) * var(--text-scale,1));font-weight:600;color:var(--muted);min-width:0}
 /* v9.1 TASK 3: inputs -- 44px tall, radius 10px, no resting border (a --raise fill separates
@@ -529,10 +447,7 @@ table.tbl-storage code{font-size:calc((12px) * var(--text-scale,1));background:v
 .crumbs{display:flex;flex-wrap:wrap;gap:6px;font-size:calc((13px) * var(--text-scale,1));color:var(--muted)}
 .crumbs a{color:var(--muted);text-decoration:none}@media (hover:hover) and (pointer:fine){.crumbs a:hover{color:var(--accent);text-decoration:underline}}
 .crumbs span[aria-current]{color:var(--text);font-weight:600}
-/* v9.1 TASK 2: accent swatches shrink to 28px in a single scrollable row (reuses the .tabs
-   mask-image edge-fade mechanism -- see initEdgeFades()). Selected state drops the old
-   scale-up + neutral border for a 2px surface-color inner ring (an iOS-style "target") plus a
-   small white check glyph, no outer outline. */
+/* v9.1 TASK 2: accent swatches shrink to 28px in a single scrollable row (reuses the .tabs [CSS_NOTES 16] */
 .swatches{--fade-l:0px;--fade-r:0px;display:flex;gap:12px;flex-wrap:nowrap;overflow-x:auto;padding:2px;
   scrollbar-width:none;-ms-overflow-style:none;
   -webkit-mask-image:linear-gradient(to right,transparent,#000 var(--fade-l),#000 calc(100% - var(--fade-r)),transparent 100%);
@@ -546,11 +461,7 @@ table.tbl-storage code{font-size:calc((12px) * var(--text-scale,1));background:v
 .swatch[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--surface),inset 0 0 0 3px rgba(0,0,0,.08)}
 .swatch[aria-pressed="true"] svg{opacity:1;transform:scale(1)}
 .swatch.dyn{background:conic-gradient(#F0B429,#0A6CFF,#C0265F,#00808A,#F0B429)}
-/* v9.1 TASK 2: Display mode is now a real segmented control -- one continuous 36px-tall bar,
-   4 equal segments, the active one getting a plain surface-color highlight (no border, no
-   outline, no ring). This replaced an earlier "4 pill buttons in a row" compaction, which was
-   itself a fix for the original "4 full-height 2x2 cards" bloat -- each pass got closer to
-   what the cleanup brief specifically asks for: a true segmented control, not a row of chips. */
+/* v9.1 TASK 2: Display mode is now a real segmented control -- one continuous 36px-tall bar, [CSS_NOTES 17] */
 .seg-display{display:flex;width:100%;height:36px;border-radius:10px;padding:2px;background:var(--raise);gap:2px}
 .seg-display button{flex:1;min-width:0;border:0;background:transparent;border-radius:8px;font-size:calc((13px) * var(--text-scale,1));font-weight:600;
   color:var(--muted);cursor:pointer;transition:background-color var(--dur-tap) var(--ease-smooth),color var(--dur-tap) var(--ease-smooth)}
@@ -573,13 +484,7 @@ table.tbl-storage code{font-size:calc((12px) * var(--text-scale,1));background:v
 .brand-home:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .brand b{white-space:nowrap}
 .brand .hub{display:inline}
-/* v9.1 TASK 4: the sidebar's icon tile -- one rounded-square, 30px, diagonal two-tone
-   gradient (color set by whichever --si-a/--si-b pair the row's inline style points at),
-   a subtle inner top highlight instead of any outer shadow, and a plain 18px white glyph.
-   Every nav-style row (main rail links, premium feature rows, the Premium upsell/what's-new
-   rows) wraps its icon in this one span, so the same component appears everywhere a
-   destination is listed. Size never changes on hover/active -- only a scale transform on
-   press, which doesn't affect layout. */
+/* v9.1 TASK 4: the sidebar's icon tile -- one rounded-square, 30px, diagonal two-tone [CSS_NOTES 18] */
 .si-tile{width:30px;height:30px;flex:none;border-radius:8px;display:grid;place-items:center;
   background:linear-gradient(135deg,var(--si-a),var(--si-b));
   box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
@@ -612,18 +517,11 @@ table.tbl-storage code{font-size:calc((12px) * var(--text-scale,1));background:v
 .scenes .thumb{display:block;aspect-ratio:16/10;max-width:100%;border-radius:var(--r-xs);overflow:hidden;background:repeating-linear-gradient(45deg,var(--raise) 0 8px,var(--surface) 8px 16px)}
 .scenes .thumb svg{width:100%;height:100%;display:block}
 
-/* v9.0: these are the pre-existing category colors that mColor()/CATS/aurora/etc. actually
-   read site-wide -- Task 1's exact Apple Health hues live on --cat-* above, so the ones this
-   spec names are aliased straight there (one definition, not two hue systems drifting apart);
-   --resp/--body/--snack aren't in that spec, so they keep their own original hex, dark and
-   light, unchanged. */
+/* v9.0: these are the pre-existing category colors that mColor()/CATS/aurora/etc. actually [CSS_NOTES 19] */
 :root{--c-activity:var(--cat-activity);--c-heart:var(--cat-heart);--c-resp:#1472A2;--c-sleep:var(--cat-sleep);--c-nutrition:var(--cat-food);--c-body:#9B3AD2;--c-water:var(--cat-water);--c-snack:#945E07;--c-food:var(--cat-food);--c-coach:var(--cat-coach)}
 :root:is([data-scheme="dark"],[data-scheme="oled"]){--c-resp:#4FC3F7;--c-body:#C77DFF;--c-snack:#FFB340}
 .ci{display:block;flex:none}
-/* v9.1 TASK 4: :not(.si-tile) -- the label span should grow to fill the row, but .si-tile is
-   also a bare <span> (it carries no extra class of its own to hang a selector off), so this
-   rule was stretching the 30px icon tile out to fill the row's remaining width before this
-   exclusion was added. */
+/* v9.1 TASK 4: :not(.si-tile) -- the label span should grow to fill the row, but .si-tile is [CSS_NOTES 20] */
 .nav a span:not(.si-tile){flex:1}
 .grp-btn{display:flex;align-items:center;justify-content:space-between;width:100%;border:0;background:none;cursor:pointer;font:inherit;font-size:calc((12px) * var(--text-scale,1));font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:16px 10px 8px;text-align:left}
 .grp-btn .chev{display:inline-block;font-size:calc((14px) * var(--text-scale,1));transition:transform var(--dur-menu) var(--ease-spring)}
@@ -646,10 +544,7 @@ a.plain{text-decoration:none;color:inherit}
 img.avatar{background:var(--raise)}
 .avatar.big{box-shadow:0 10px 30px rgba(0,0,0,.18),0 0 0 4px var(--surface)}
 .ava-link{position:relative;display:inline-flex;border-radius:50%;transition:transform var(--dur-page) var(--ease-spring)}.ava-link:active{transform:scale(.95)}
-/* v11.0 TASK 2: the trailing-chevron badge on the greeting-card avatar was removed (it read as
-   a stray disclosure arrow with no dropdown behind it). The avatar itself stays the whole tap
-   target -- .ava-link already wraps it and already navigates to Settings, so nothing about the
-   navigation changes, only this decorative badge is gone. */
+/* v11.0 TASK 2: the trailing-chevron badge on the greeting-card avatar was removed (it read as [CSS_NOTES 21] */
 .photo-edit{display:flex;flex-direction:column;align-items:center;gap:6px}
 .todaycard .li{align-items:center}
 .li.plain{text-decoration:none;color:inherit;border-radius:var(--r-xs)}
@@ -671,17 +566,10 @@ img.avatar{background:var(--raise)}
 .mval.nodata{font-size:calc((26px) * var(--text-scale,1))}
 .mval.xl{font-size:calc((44px) * var(--text-scale,1))}
 .spark{flex:none}
-/* Chart draw-in (Task 4): each bar scales up from its own baseline once initSparks()
-   (app6.js) adds .drawn, via the same motionOK()-gated IntersectionObserver pattern as the
-   activity rings. Reduced motion never applies the hidden state below, so a bar is always
-   fully drawn there -- nothing to reverse, nothing to skip. */
+/* Chart draw-in (Task 4): each bar scales up from its own baseline once initSparks() [CSS_NOTES 22] */
 .spark rect,.chart-svg rect{transform-box:fill-box;transform-origin:bottom;transition:transform var(--dur-page) var(--ease-spring),opacity var(--dur-menu) var(--ease-smooth)}
 :root:not([data-motion="reduced"]) .spark:not(.drawn) rect,:root:not([data-motion="reduced"]) .chart-svg:not(.drawn) rect{transform:scaleY(0);opacity:.001}
-/* v9.0 Task 4: the line-chart type (lineChart() in app6.js) draws in differently from the bar
-   charts above -- the path strokes on with pathLength="1" so stroke-dasharray/dashoffset are
-   unit-independent of the path's real length, then the point dots pop in just after, once the
-   line has finished. Same .chart-svg marker, same initSparks() gate -- only how .drawn animates
-   this element differs. */
+/* v9.0 Task 4: the line-chart type (lineChart() in app6.js) draws in differently from the bar [CSS_NOTES 23] */
 .chart-svg .line-path{stroke-dasharray:1;stroke-dashoffset:0;transition:stroke-dashoffset var(--dur-page) var(--ease-spring)}
 :root:not([data-motion="reduced"]) .chart-svg:not(.drawn) .line-path{stroke-dashoffset:1}
 .chart-svg .line-dot{transform-box:fill-box;transform-origin:center;transition:transform var(--dur-page) var(--ease-spring) .5s,opacity var(--dur-menu) var(--ease-smooth) .5s}
@@ -773,10 +661,7 @@ img.avatar{background:var(--raise)}
 .card,.mcard,.cattile{position:relative;overflow:hidden}
 .card.hero{background:linear-gradient(140deg, color-mix(in srgb,var(--hero-tint,var(--accent)) 18%,transparent), var(--glass) 60%)}
 .well{background:color-mix(in srgb,var(--surface) 45%,transparent);border:1px solid var(--line);box-shadow:var(--glass-rim)}
-/* v9.1 TASK 3/5: same dead-glass-token pattern as the Controls block above -- this was hiding
-   the sidebar's real var(--line) hairline (set in .side's base rule) behind a transparent
-   override and adding a decorative 30px drop-shadow bleeding past its edge. Deleted; the base
-   rule's hairline already does the job with no shadow. */
+/* v9.1 TASK 3/5: same dead-glass-token pattern as the Controls block above -- this was hiding [CSS_NOTES 24] */
 .top{margin-top:6px}
 /* Specular sheen sweeping across on hover */
 .card::after,.mcard::after,.cattile::after{content:"";position:absolute;inset:-40% -60%;pointer-events:none;
@@ -785,24 +670,8 @@ img.avatar{background:var(--raise)}
 @media (hover:hover) and (pointer:fine){.card:hover::after,.mcard:hover::after,.cattile:hover::after{opacity:.5;animation:sheen var(--dur-page) var(--ease)}}
 @keyframes sheen{from{transform:translate3d(-45%,0,0)}to{transform:translate3d(45%,0,0)}}
 :root[data-motion="reduced"] .card::after,:root[data-motion="reduced"] .mcard::after,:root[data-motion="reduced"] .cattile::after{display:none}
-/* Controls
-   v9.1 TASK 3/5: this whole block used to re-skin buttons/chips/segments for the pre-v9.0
-   "Liquid Glass" look. The v9.0 flat redesign aliased --glass-strong/--glass-brd/--glass-rim/
-   --blur to flat/transparent/none so most of it became a no-op, but three real bugs survived
-   that aliasing and were live on every page: a hardcoded drop-shadow under every button, a
-   gradient + inset glow on every primary button and every selected chip (the exact "gradient
-   reserved for the Premium screen only" and "no decorative shadows/glows" rules this cleanup
-   pass calls for), and --glass-brd resolving to transparent, which silently overrode chips'
-   and segmented controls' intentional 1px var(--line2) hairline (set in their base rules
-   above) with an invisible one. Removing the block restores those intended hairlines and
-   drops the shadow/gradient leaks; the new flat .btn/.btn.primary rules above already cover
-   what this was otherwise trying to do. */
-/* v9.1 TASK 3/5: another dead-glass leftover, and unlike the .btn/.chip/.seg ones above this
-   one wasn't even neutralized by the v9.0 token aliasing -- backdrop-filter:blur(8px) is a
-   literal hardcoded value, not var(--blur), so every text input/select/textarea in the app has
-   been rendering with a real background blur this whole time despite "Liquid Glass retired
-   everywhere except the compact header and tab bar" being the stated v9.0 rule. Deleted; the
-   new resting-state rule above already sets the fill and border this was trying to override. */
+/* Controls [CSS_NOTES 25] */
+/* v9.1 TASK 3/5: another dead-glass leftover, and unlike the .btn/.chip/.seg ones above this [CSS_NOTES 26] */
 .divider,.li,table.ing td{border-color:var(--line)}
 .sumtop{border:1px solid var(--glass-brd);box-shadow:var(--glass-rim), var(--glass-shadow);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
 .has-scene .card,.has-scene .mcard,.has-scene .side,.has-scene .who-head,.has-scene .dish{background:var(--glass)}
@@ -1032,11 +901,7 @@ select,.setctl select,.setctl input{max-width:100%;min-width:0}
 .checkin{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))}
 .ci-col{display:flex;flex-direction:column;gap:6px;padding:14px;border-radius:var(--r-sm);background:var(--raise);border:1px solid var(--line);min-width:0}
 .ci-col .eyebrow{color:var(--cc,var(--muted))}
-/* Master final check fix: in light/system scheme, --c-coach and --c-activity (used here via
-   --cc) measured 4.25:1 and 4.33:1 on this card's --raise background at this weight/size —
-   just under the 4.5:1 axe requires. Dark and OLED already use their own brighter --cat-*
-   values against a dark card and were not flagged, so this nudges only the light scheme,
-   darkening each color by the same small amount that reaches 4.5:1+ without changing the hue. */
+/* Master final check fix: in light/system scheme, --c-coach and --c-activity (used here via [CSS_NOTES 27] */
 :root[data-scheme="light"] .ci-col .eyebrow{color:color-mix(in srgb,var(--cc,var(--muted)) 92%,#000)}
 .ci-col .num{font-size:calc((28px) * var(--text-scale,1));line-height:1.1}
 .ci-col.target{--cc:var(--c-coach)} .ci-col.actual{--cc:var(--c-activity)} .ci-col.gap{--cc:var(--c-nutrition)}
@@ -1387,11 +1252,7 @@ svg:not(.logo-svg):not(.scene-svg):not(.chart){max-width:100%}
 .wrow-tag{margin:-2px 0 2px}
 .culture-tag{text-decoration:none;display:inline-flex;align-items:center;gap:6px;max-width:100%}
 .culture-tag .tiny{opacity:.8}
-/* Master final check fix: this de-emphasis opacity blends the tag's already-tuned tone color
-   toward its own soft background, which reads fine in dark/OLED (their tones have plenty of
-   contrast margin) but pushed light scheme's good/warn/gold text below 4.5:1 (axe:
-   color-contrast). The "25 dishes" count already reads as secondary at 12px next to the bold
-   culture name, so light scheme keeps full opacity rather than compounding a second fade. */
+/* Master final check fix: this de-emphasis opacity blends the tag's already-tuned tone color [CSS_NOTES 28] */
 :root[data-scheme="light"] .culture-tag .tiny{opacity:1}
 
 /* ===================== ONBOARDING BACKDROP ===================== */
@@ -1483,13 +1344,7 @@ html,body{margin:0;padding:0}
   --font:var(--font-app);
   --display:var(--font-app);
   --t-xs:12px; --t-sm:13px; --t-base:15px; --t-lg:17px; --t-h3:18px; --t-h2:21px; --t-h1:28px;
-  /* v12.0: Dynamic Type-style text scaling. Every font-size rule above and below is wrapped in
-     calc(value * var(--text-scale,1)), so one multiplier re-scales the whole app's text while
-     preserving each rule's original relative size -- the same idea as Apple's text styles all
-     scaling together under one Larger Text setting. 1 = the existing "Large" default; see the
-     TEXT_SIZES step table in app2.js for the other 11 steps (xSmall..XXXLarge, then the AX1..AX5
-     "Larger Accessibility Sizes" range), which mirror Apple's own named size categories and the
-     Body text style's real point ratios at each one. */
+  /* v12.0: Dynamic Type-style text scaling. Every font-size rule above and below is wrapped in [CSS_NOTES 29] */
   --text-scale:1;
 }
 html,body,button,input,select,textarea,optgroup{font-family:var(--font);font-feature-settings:"cv05" 1,"ss01" 1}
@@ -1635,10 +1490,7 @@ input,select,textarea{font-size:calc((var(--t-base)) * var(--text-scale,1));font
 .oprow input[type=range]{flex:1 1 180px;min-width:140px;accent-color:var(--accent);height:26px}
 .opval{font-variant-numeric:tabular-nums;font-weight:700;min-width:48px;text-align:right}
 
-/* v12.0: Dynamic Type text-size control. Same live-slider shape as .oprow above, but flanked
-   by small/large "Aa" glyphs the way Apple's own Settings > Text Size slider is, plus a
-   preview line below that re-renders at the live scale on every drag so the effect is seen,
-   not just described. */
+/* v12.0: Dynamic Type text-size control. Same live-slider shape as .oprow above, but flanked [CSS_NOTES 30] */
 .tsrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .tsrow input[type=range]{flex:1 1 160px;min-width:120px;accent-color:var(--accent);height:26px}
 .ts-a{font-weight:700;color:var(--muted);line-height:1;flex:0 0 auto}
@@ -1762,24 +1614,11 @@ input,select,textarea{font-size:calc((var(--t-base)) * var(--text-scale,1));font
 .app{position:relative;z-index:1}
 
 
-/* =================== v7.6: SCROLL, THE ARROW, DRINKS, AND MORE SPRING ===================
-   1. With the drawer open the page underneath must hold still and the drawer must scroll
-      on its own. 2. A Google-style arrow collapses and expands the menu. 3. Drinks fold
-      into Meals. 4. Interactions get a consistent spring. */
+/* =================== v7.6: SCROLL, THE ARROW, DRINKS, AND MORE SPRING =================== [CSS_NOTES 31] */
 
 /* --- 1. Scroll containment ------------------------------------------------------------ */
 :root.menu-open{overflow:hidden}
-/* Bug (8.1.4, reverted in 8.1.5): a fix attempt here added transform:translateZ(0) to this rule
-   to try to stop iOS Safari from blanking the screen when the drawer opened after a scroll. That
-   broke something worse: per spec, ANY transform (even translateZ(0)) on an element becomes a new
-   containing block for its position:fixed descendants -- and .side and .scrim are both fixed-
-   position descendants of body. So the moment body got a transform, the drawer stopped being
-   positioned against the real viewport and started being positioned against body's own (shifted,
-   top:-Ypx) box instead, i.e. it visibly scrolled along with the page exactly as far as the page
-   had scrolled -- reported back as "the side menu also scrolls with it ... gets lost at the top".
-   Removed. Do not add transform/filter/backdrop-filter/will-change:transform/contain to body (or
-   any other ancestor of .side/.scrim) while menu-open -- it will silently break their fixed
-   positioning the same way, independent of whatever else it was meant to fix. */
+/* Bug (8.1.4, reverted in 8.1.5): a fix attempt here added transform:translateZ(0) to this rule [CSS_NOTES 32] */
 :root.menu-open body{position:fixed;left:0;right:0;width:100%;overflow:hidden;overscroll-behavior:none}
 .side{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 @media (max-width:1024px){
@@ -1865,11 +1704,7 @@ input,select,textarea{font-size:calc((var(--t-base)) * var(--text-scale,1));font
   .ps-actions{align-self:center}
 }
 
-/* =================== v7.8: LEGAL PAGES, FOOTER, BUTTONS, CALMER MOTION ===================
-   Action buttons move from a full pill to a 12px rounded rectangle; chips, tags and
-   segmented controls keep the capsule shape, which is where it reads as deliberate rather
-   than as a template. Entrance motion is cut back to the shell only, because this app is
-   opened several times a day to log a meal and content should be there on arrival. */
+/* =================== v7.8: LEGAL PAGES, FOOTER, BUTTONS, CALMER MOTION =================== [CSS_NOTES 33] */
 
 /* --- Buttons: rounded rectangle for actions, pill for the small stuff ----------------- */
 .btn{border-radius:12px;min-height:44px;padding:0 20px;font-weight:600}
@@ -1963,17 +1798,8 @@ svg.ico.go{width:13px;height:13px;opacity:.55;flex:none;vertical-align:-1px}
 /* --- Shared easing. Two curves, defined once, used everywhere. --------------------- */
 :root{ --ease-spring:cubic-bezier(.32,.72,0,1); --ease-smooth:cubic-bezier(.4,0,.2,1); }
 
-/* --- Task 6: the real cause of the cut-off profile ---------------------------------
-   The drawer was one scrolling column, so on a short screen (a 640px Android, or any
-   phone in landscape) the nav pushed the profile block past the bottom edge and it was
-   left half-drawn with nothing to show it could be scrolled to. It was not the slide
-   distance: the panel always travelled its full width. The fix is to stop the drawer
-   scrolling as a whole and let the nav be the scrolling part, so the profile is pinned
-   in view at every height. */
-/* 100vh is the wrong unit for a sticky panel: on a phone it includes the browser chrome,
-   and inside an embed it can exceed what is actually on screen, which drops the bottom of
-   the sidebar (the profile block) below the fold. dvh tracks the real visible height, with
-   vh left as the fallback for anything that doesn't support it. */
+/* --- Task 6: the real cause of the cut-off profile --------------------------------- [CSS_NOTES 34] */
+/* 100vh is the wrong unit for a sticky panel: on a phone it includes the browser chrome, [CSS_NOTES 35] */
 .side{overflow:hidden;height:100vh;height:100dvh}
 .side .nav{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 /* The profile block keeps its natural height, but is allowed to scroll rather than be cut
@@ -2078,10 +1904,7 @@ svg[data-icon="trophy"],svg[data-icon="pumpkin"]{stroke-width:1.75}
 
 /* =================== v8.0: SETTINGS TABS AND THE SIDEBAR FOOTER =================== */
 
-/* --- Settings tabs: text only, one row, nothing outside the container ---------------
-   The selected tab used to carry its own white pill with a shadow, which read as spilling
-   past the container's rounded edge, and the row wrapped onto a second line once there
-   were seven tabs. The pill is gone; weight and size carry the selection instead. */
+/* --- Settings tabs: text only, one row, nothing outside the container --------------- [CSS_NOTES 36] */
 .tabwrap{position:relative;align-self:stretch;min-width:0;max-width:100%}
 .tabs{display:flex;flex-wrap:nowrap;gap:24px;align-items:center;
   overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;
@@ -2106,15 +1929,7 @@ svg[data-icon="trophy"],svg[data-icon="pumpkin"]{stroke-width:1.75}
 .tabs a[aria-current="page"]>span::after{content:"";position:absolute;left:0;right:0;bottom:4px;height:2px;
   border-radius:2px;background:var(--accent)}
 .tabs a:focus-visible{outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:-3px;border-radius:6px}
-/* Bug fix: this used to be a fixed-color gradient painted over the container edge, sized to
-   a hardcoded --raise background, and it only ever turned on via a ".more" class that no JS
-   in the app ever added -- the fade-hint was fully-styled dead CSS, so a long tab row (eight
-   tabs in Settings) hard-clipped its last label at the container edge with no cue it could be
-   scrolled to. Fixed with a mask-image on the scrollable row itself: it fades the REAL content
-   to transparent (so it looks right on any background, not just --raise) and is driven by two
-   classes, .fade-l/.fade-r, that initEdgeFades() (app7.js, run after every render from initFx())
-   toggles from the row's actual scroll position -- both edges, only when there's really more
-   to scroll to. */
+/* Bug fix: this used to be a fixed-color gradient painted over the container edge, sized to [CSS_NOTES 37] */
 .tabs{--fade-l:0px;--fade-r:0px;
   -webkit-mask-image:linear-gradient(to right,transparent,#000 var(--fade-l),#000 calc(100% - var(--fade-r)),transparent 100%);
   mask-image:linear-gradient(to right,transparent,#000 var(--fade-l),#000 calc(100% - var(--fade-r)),transparent 100%)}
@@ -2140,10 +1955,7 @@ svg[data-icon="trophy"],svg[data-icon="pumpkin"]{stroke-width:1.75}
 .side .who-status{font-size:calc((11.5px) * var(--text-scale,1))}
 .app.rail .who{border-top:1px solid var(--line);padding:10px 0 4px}
 .app.rail .who-top{justify-content:center}
-/* Every nav row is a real tap target at every width -- 40px per the v9.1 Task 3 row spec,
-   which already clears the ~44px fingertip guideline once the row's own vertical padding is
-   counted from the outside (border-box), so no extra override is needed here beyond the rail
-   (icon-only, collapsed) variant, which stays its own larger square tap target. */
+/* Every nav row is a real tap target at every width -- 40px per the v9.1 Task 3 row spec, [CSS_NOTES 38] */
 .app.rail .nav a{min-height:44px}
 @media (max-width:1024px){.side .who{padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}}
 
@@ -2158,20 +1970,9 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
 /* Press feedback is ours, lasts only while held, and leaves nothing behind on release. */
 /* v9.1 TASK 5 sweep: dropped a redundant per-button focus-visible override (currentColor,
    no radius-match) -- the global :focus-visible rule already covers every element site-wide. */
-/* Open, the button still morphs to a close arrow, but the drawer itself (var(--z-menu)) now
-   always renders above the header (var(--z-chrome)), same as every other piece of page chrome,
-   so it can never again cover or clip the open menu. Tapping the scrim closes the menu.
-   Belt-and-suspenders on top of the z-index fix: the header also fades out and, once the
-   fade finishes, is fully hidden (visibility, not display, so nothing reflows) while the menu
-   is open, so zero pixels of it can show through the scrim or be tapped by mistake. Opening
-   reverses this immediately so the header is visible again the instant it starts fading in. */
+/* Open, the button still morphs to a close arrow, but the drawer itself (var(--z-menu)) now [CSS_NOTES 39] */
 @media (max-width:1024px){
-  /* v9.0: .top is retired (see .compact-head above), but it's still the only piece of page
-     chrome that floats over the content on mobile, so the same belt-and-suspenders fix
-     applies to it verbatim: fade out AND go fully invisible (not just dimmed) while the
-     drawer is open, so zero pixels of it can show through the scrim or be tapped by mistake.
-     .app.menu-on .compact-head (3 classes) always outranks .compact-head.show (2 classes),
-     so this wins over the scroll-collapse "show" state with no !important needed. */
+  /* v9.0: .top is retired (see .compact-head above), but it's still the only piece of page [CSS_NOTES 40] */
   .app.menu-on .compact-head{opacity:0;pointer-events:none;visibility:hidden;
     transition:opacity var(--dur-menu) var(--ease-spring),visibility 0s linear var(--dur-menu)}
 }
@@ -2187,15 +1988,7 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
   .side.open{transform:translateX(0)}
 }
 @media (min-width:1025px){ .scrim{display:none} }
-/* Bug fix (Settings menu layering): the site-wide "UI opacity" setting (section 11 above,
-   .app .card/.mcard/.side/... ) intentionally tints ordinary surface cards so the pastel
-   scene shows through -- correct for cards sitting in the page flow. But on a phone .side
-   is not a card, it's a full-height modal drawer stacked over a dimmed copy of the page
-   (the scrim). Inheriting that same translucency let the dimmed page title/breadcrumbs
-   behind it show through and visually collide with the drawer's own nav labels. The drawer
-   must always be fully legible regardless of the opacity slider, so pin it back to a solid
-   surface at the width where it becomes an overlay; the persistent desktop sidebar (which
-   never covers dimmed content) keeps the glass tint untouched. */
+/* Bug fix (Settings menu layering): the site-wide "UI opacity" setting (section 11 above, [CSS_NOTES 41] */
 @media (max-width:1024px){
   .app .side,.app.has-scene .side{background-color:var(--surface)}
 }
@@ -2267,12 +2060,7 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
 :root[data-motion="reduced"] .coach-say,:root[data-motion="reduced"] .st-out{animation:none}
 @media (prefers-reduced-motion:reduce){.coach-say,.st-out{animation:none}}
 
-/* =================== v8.1: THEME SYSTEM (Task 7) ===================
-   One token set per theme on a data-theme attribute. No component style is forked: every
-   card, button and chip keeps reading the same variables it always did, so adding a theme
-   later is one block here and one row in the list. Forest is the existing palette and is
-   deliberately left untouched. Every value below was checked to 4.5:1 against both the card
-   surface and the raised panel, in each theme's light and dark variant. */
+/* =================== v8.1: THEME SYSTEM (Task 7) =================== [CSS_NOTES 42] */
 :root{--accent2:var(--accent);--accent-hover:color-mix(in srgb,var(--accent) 84%,#000)}
 :root:is([data-scheme="dark"],[data-scheme="oled"]){--accent-hover:color-mix(in srgb,var(--accent) 84%,#fff)}
 @media (hover:hover) and (pointer:fine){.btn.primary:hover:not(:disabled){background:var(--accent-hover)}}
@@ -2353,20 +2141,12 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
   background:var(--surface);color:var(--accent);border:1px solid var(--line)}
 .premcard.flat{cursor:default}
 
-/* =================== v8.4: PREMIUM STORE SCREEN (bug doc: Premium screen, Telegram-styled,
-   original assets only) ===================
-   Every graphic here is built from this file's own gradients, the existing icon registry (I)
-   and plain shapes -- nothing is copied, traced or extracted from any third-party app. The one
-   deliberate exception to the site's no-gradient rule lives entirely in this section: the CTA
-   pill and the small "Premium" active badge, both reserved for Premium surfaces only. */
+/* =================== v8.4: PREMIUM STORE SCREEN (bug doc: Premium screen, Telegram-styled, [CSS_NOTES 43] */
 .prem-badge-sm{display:inline-flex;align-items:center;font-size:calc((11px) * var(--text-scale,1));font-weight:800;letter-spacing:.04em;
   text-transform:uppercase;line-height:1;padding:3px 6px;border-radius:5px;flex:none}
 :root:not([data-scheme="dark"]):not([data-scheme="oled"]) .prem-badge-sm{background:var(--gold);color:#141200}
 :root:is([data-scheme="dark"],[data-scheme="oled"]) .prem-badge-sm{background:transparent;color:var(--gold);border:1px solid var(--gold)}
-/* v9.1: the full text pill above squeezed sidebar labels ("Grocer...", "Pantry...") in the
-   240px column, and a follow-up small gold dot per row was tried as a fix -- removed again at
-   the user's request. The "PREMIUM" section heading plus the crown icon already say what this
-   group is, so an unlocked row now matches every other nav row exactly, no per-row badge. */
+/* v9.1: the full text pill above squeezed sidebar labels ("Grocer...", "Pantry...") in the [CSS_NOTES 44] */
 
 .prem-store{display:flex;flex-direction:column;gap:22px;align-items:center;text-align:center;padding:8px 4px 4px}
 .prem-emblem{position:relative;width:96px;height:96px;flex:none;margin-bottom:2px}
@@ -2388,11 +2168,7 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
 
 .plansel{width:100%;display:flex;flex-direction:column;gap:8px;padding:6px;border-radius:var(--r-sm);
   background:var(--raise);border:1px solid var(--line);text-align:left}
-/* Bug-hardening: with a checkmark, a label+sub, a discount pill AND a price all on one row,
-   four fixed-width things easily add up to more than a phone's width -- exactly the kind of
-   hard-to-notice overflow the clipped-text bug report was about. flex-wrap plus grouping the
-   pill+price as one unit (.ps-meta) means that unit drops to its own line, right-aligned,
-   instead of squeezing or clipping when the row is narrow. */
+/* Bug-hardening: with a checkmark, a label+sub, a discount pill AND a price all on one row, [CSS_NOTES 45] */
 .plansel-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:11px 10px;border-radius:var(--r-xs);cursor:pointer;
   border:1px solid transparent;transition:background-color var(--dur-tap) var(--ease-smooth),border-color var(--dur-tap) var(--ease-smooth)}
 @media (hover:hover) and (pointer:fine){.plansel-row:hover{background:var(--surface)}}
@@ -2408,20 +2184,14 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
   padding:3px 7px;border-radius:999px;background:var(--good-soft);color:var(--good);white-space:nowrap}
 .ps-price{flex:none;font-size:calc((13.5px) * var(--text-scale,1));font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
 
-/* Master final check fix: this pill's text was hardcoded near-black, which only reads (3.44:1)
-   against light scheme's dark-brown --gold background; dark/OLED's --gold is bright yellow,
-   where near-black text was already correct. --gold-ink flips with --gold per scheme (added
-   above, next to each --gold definition) the same way --accent-ink already does for --accent. */
+/* Master final check fix: this pill's text was hardcoded near-black, which only reads (3.44:1) [CSS_NOTES 46] */
 .prem-active-pill{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:999px;
   background:var(--gold);color:var(--gold-ink);font-weight:800;font-size:calc((14px) * var(--text-scale,1))}
 
 .prem-feat-list{width:100%;display:flex;flex-direction:column;gap:2px;text-align:left}
 .prem-feat-head{align-self:flex-start;font-size:calc((12.5px) * var(--text-scale,1));font-weight:800;letter-spacing:.06em;text-transform:uppercase;
   color:var(--faint);margin:4px 0 2px}
-/* v11.0 TASK 1: these rows are <a> elements with no text-decoration override, so they picked up
-   the browser's default anchor underline on their title text -- not a global body-link rule,
-   just a missing override on this one component. Fixed at the actual cause (this rule), with
-   focus-visible given its own accent outline instead so keyboard users don't lose the cue. */
+/* v11.0 TASK 1: these rows are <a> elements with no text-decoration override, so they picked up [CSS_NOTES 47] */
 .prem-feat-row{display:flex;align-items:center;gap:12px;padding:10px 4px;text-decoration:none;color:inherit;border-radius:12px}
 .prem-feat-row:focus-visible{outline:2px solid var(--accent);outline-offset:2px;text-decoration:none}
 .prem-feat-ic{display:grid;place-items:center;width:44px;height:44px;flex:none;border-radius:12px;color:#fff}
@@ -2655,11 +2425,7 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
   transition:transform var(--dur-tap) var(--ease-spring),border-color var(--dur-tap) var(--ease-smooth)}
 .widgetlink .row-chev{position:absolute;top:var(--card-padding);right:var(--card-padding)}
 @media (hover:hover) and (pointer:fine){.widgetlink:hover{transform:translateY(-2px);border-color:var(--accent)}}
-/* PHASE 1 TASK 1.2 fix: .action-row is a bare <a class="card action-row">text + icon</a> --
-   it never overrode .card's own display:flex;flex-direction:column, so its text and chevron
-   were stacking vertically inside the card's fixed content height, and .card's overflow:hidden
-   silently clipped the second "line" instead of showing it -- this is the "Show All Trends"
-   clip on Summary. Row layout (like every other single-line card link) fixes it at the cause. */
+/* PHASE 1 TASK 1.2 fix: .action-row is a bare <a class="card action-row">text + icon</a> -- [CSS_NOTES 48] */
 .card.action-row{flex-direction:row;align-items:center;justify-content:space-between;
   text-decoration:none;color:var(--text);font-weight:600}
 .premrow{margin-top:12px}
@@ -2731,10 +2497,7 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
 .nav a[aria-current="page"] svg.pi{color:var(--accent)}
 /* Every animated part turns about its own box, never the 24x24 canvas. */
 .nav svg.pi *{transform-box:fill-box}
-/* v9.1 TASK 4: premium rows now sit on a gradient .si-tile like every other nav row, so the
-   glyph itself is always flat white -- never the muted/gold/accent state tint above. The
-   extra "html" type selector (rather than another class) is what wins the specificity tie
-   against the three state rules just above: same class count, one more type selector. */
+/* v9.1 TASK 4: premium rows now sit on a gradient .si-tile like every other nav row, so the [CSS_NOTES 49] */
 html .side .nav a .si-tile svg{color:#fff}
 
 /* ---- sparkles: three stars twinkle in sequence ---- */
@@ -3202,20 +2965,7 @@ html .side .nav a .si-tile svg{color:#fff}
 .shday:first-child{border-top:0}
 .shitems{display:flex;flex-direction:column;gap:2px;padding-left:2px}
 
-/* =================== v10.0 FRESH DIRECTION (Oct 2026) ===================
-   A visual-identity pass on top of the existing Apple Health-style flat system, scoped to
-   four areas (Home/Dashboard, Nutrition+Snacks+Culture, Workouts+Coach, Onboarding) per the
-   Apple HIG + mobile-concept art-direction review. Additive only: no existing class is
-   renamed, no markup/JS/behavior changes, nothing here touches layout, routes or data --
-   every rule below is a new background/accent/texture treatment layered onto hooks that
-   already exist (.rings-card, .dish, .coachcard, .coach-says, .ob). --accent stays exactly
-   what the user picked in Settings; the brand gradient below is a second, fixed identity
-   layer (the same teal/green/lime stops as the WholeLife logo mark) used only for texture
-   and decorative wash, never for text color, so it can't fight the user's accent choice or
-   regress contrast. HIG materials guidance: Liquid Glass stays retired everywhere except the
-   compact sticky header (see the v9.0 token comment above) -- nothing below is blur/glass,
-   it's flat color plus a very low-opacity grain, which HIG's materials guidance treats as
-   ordinary surface texture, not a material. */
+/* =================== v10.0 FRESH DIRECTION (Oct 2026) =================== [CSS_NOTES 50] */
 :root{
   --brand-teal:#0E8397; --brand-green:#1FA36B; --brand-lime:#63C832;
   --brand-grad:linear-gradient(135deg,var(--brand-teal) 0%,var(--brand-green) 48%,var(--brand-lime) 100%);
@@ -3230,10 +2980,7 @@ html .side .nav a .si-tile svg{color:#fff}
   --terracotta:#E0762C;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--terracotta:#E0762C}}
-/* Home: the daily-glance hero gets a quiet brand wash (grain + two soft radial tints in the
-   logo's own teal/lime) instead of a flat surface panel -- the single highest-traffic screen,
-   so it's the one place the new identity layer is easiest to feel. Still just background
-   layers on the card's own box, clipped to its existing border-radius automatically. */
+/* Home: the daily-glance hero gets a quiet brand wash (grain + two soft radial tints in the [CSS_NOTES 51] */
 .rings-card{
   background-image:var(--grain),
     radial-gradient(ellipse 70% 60% at 0% 0%,color-mix(in srgb,var(--brand-green) 12%,transparent),transparent 65%),
@@ -3241,10 +2988,7 @@ html .side .nav a .si-tile svg{color:#fff}
   background-color:var(--surface);
   background-repeat:repeat,no-repeat,no-repeat;
 }
-/* Nutrition, Snacks, Food Culture and Recipes all render their picks as .dish cards -- a
-   warm terracotta/gold top edge (the existing --gold token plus the new --terracotta,
-   decorative only) ties that whole food-forward identity together without touching the
-   system --accent used for buttons/links everywhere else. */
+/* Nutrition, Snacks, Food Culture and Recipes all render their picks as .dish cards -- a [CSS_NOTES 52] */
 .dish{position:relative;overflow:hidden}
 .dish::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--terracotta-grad);opacity:.85}
 @media (hover:hover) and (pointer:fine){.dish:hover{box-shadow:0 10px 24px -14px color-mix(in srgb,var(--terracotta) 55%,transparent)}}
@@ -3257,22 +3001,13 @@ html .side .nav a .si-tile svg{color:#fff}
 .coachcard.on{border-color:color-mix(in srgb,var(--brand-green) 55%,var(--sel-line))}
 .coach-says .bubble{position:relative;border-left:3px solid var(--brand-green);border-top-left-radius:var(--r-sm)}
 .coach-says .cb{background:var(--brand-grad)}
-/* Onboarding / welcome: the tagline's emphasised word now carries the actual brand gradient
-   (the same three stops as the logo mark) via a text clip, with --gold kept as the literal
-   color fallback for browsers without background-clip:text support -- never a contrast risk
-   since it only ever sits on the large, bold tagline, not body copy. The loading-screen logo
-   gets a soft brand-colored glow instead of sitting flat on the panel. */
+/* Onboarding / welcome: the tagline's emphasised word now carries the actual brand gradient [CSS_NOTES 53] */
 .ob .tagline em{background:var(--brand-grad);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;color:var(--gold)}
 @supports not (-webkit-background-clip:text){.ob .tagline em{color:var(--gold)}}
 .pulse{box-shadow:0 0 0 10px color-mix(in srgb,var(--brand-green) 14%,transparent),0 0 44px 6px color-mix(in srgb,var(--brand-lime) 22%,transparent)}
 
 /* =================== v11.0: PREMIUM POPUP, COMPACT APPEARANCE, STATUS BADGES =================== */
-/* Shared centered popover: the Premium feature list (TASK 1), the accent color picker (TASK 4)
-   and the typeface picker (TASK 5) all open the same dialog shell instead of three near-copies
-   of the same focus-trap/Escape/backdrop plumbing. It reads --glass/--glass-strong/--blur, the
-   same tokens every other card on the site now reads -- the v9.0 flat redesign aliased those to
-   plain --surface/none, so this "glass surface... same as current cards" automatically matches
-   today's flat look, and would pick blur back up on its own if that alias is ever restored. */
+/* Shared centered popover: the Premium feature list (TASK 1), the accent color picker (TASK 4) [CSS_NOTES 54] */
 .pop-wrap{position:fixed;inset:0;z-index:95;display:grid;place-items:center;padding:16px}
 .pop-scrim{position:absolute;inset:0;background:var(--scrim);opacity:0;transition:opacity var(--dur-tap) var(--ease-smooth)}
 .pop-wrap.on .pop-scrim{opacity:1}
@@ -3353,11 +3088,7 @@ html .side .nav a .si-tile svg{color:#fff}
 .font-row[aria-checked="true"]{outline:2px solid var(--accent);outline-offset:-2px}
 .font-row .f-check{flex:none;color:var(--accent)}
 
-/* Theme / seasonal chips (TASK 6): 148x40 compact chips. Themes already shrank from full-width
-   banners to vertical tiles once (v9.1 TASK 2, see themePicker()) -- this reshapes that same
-   tile into the horizontal two-dot chip asked for here, same per-theme colors, no new ones.
-   Seasonal cards (still the pre-compaction vertical form) get the identical chip treatment,
-   with their description text moved to aria-label/title since there's no room for a caption. */
+/* Theme / seasonal chips (TASK 6): 148x40 compact chips. Themes already shrank from full-width [CSS_NOTES 55] */
 .chip-row{display:flex;flex-wrap:wrap;gap:10px}
 .theme-chip,.season-chip{position:relative;display:flex;align-items:center;gap:8px;width:148px;height:40px;
   padding:0 10px;border-radius:12px;border:1px solid color-mix(in srgb,var(--muted) 40%,transparent);
@@ -3379,13 +3110,7 @@ html .side .nav a .si-tile svg{color:#fff}
 .lu-indicator.lu-gone{visibility:hidden}
 :root[data-motion="reduced"] .lu-indicator{transition:none}
 
-/* ===================== v10 WELCOME REDESIGN (Oct 2026) =====================
-   The welcome screen is now the first thing a new user sees (it used to come after the coach
-   picker) and it is full-bleed instead of a card over the pastel figures. Palette is taken from
-   kente cloth: palm green ground, sun gold, coral and mint. The one memorable element is the
-   three-part "whole" ring (Eat / Move / Recover) that draws itself in on load. Every animation
-   below animates FROM a hidden state, so with reduced motion (which strips all animation) the
-   page simply shows its finished state. */
+/* ===================== v10 WELCOME REDESIGN (Oct 2026) ===================== [CSS_NOTES 56] */
 :root{--wl-ground:#0D3A2C;--wl-ground2:#12503B;--wl-gold:#F2B33D;--wl-coral:#F0705A;--wl-mint:#8EDDB3;
   --wl-ink:#F7F4EC;--wl-muted:rgba(247,244,236,.74);--wl-faint:rgba(247,244,236,.56);
   --wl-display:"Familjen Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
@@ -3638,10 +3363,7 @@ html.camshot-open{overflow:hidden}
   .ph-right .bell-btn{grid-area:bell;margin-left:0}
   .ph-row>.menu-toggle{align-self:start}
 }
-/* Over a background scene (Summary only) the header can't rely on the page's text colour: the
-   Night sky scene is dark even in Light mode, which left a dark title, date, time and ☰ on a dark
-   sky. The header's right cluster and the toggle now sit on frosted chips in the theme's surface
-   colour, so their text keeps theme contrast over any scene, in Light, Dark and OLED. */
+/* Over a background scene (Summary only) the header can't rely on the page's text colour: the [CSS_NOTES 57] */
 .has-scene .page-head .ph-right{background:color-mix(in srgb,var(--surface) 84%,transparent);color:var(--text);
   -webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);
   border:1px solid color-mix(in srgb,var(--text) 10%,transparent);border-radius:18px;padding:8px 8px 8px 14px;
@@ -3822,10 +3544,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 /* light surfaces: no additive blending (it would wash out to white) */
 :root[data-scheme="light"] .border-glow-card>.bg-fill,:root[data-scheme="light"] .border-glow-card>.edge-light{mix-blend-mode:normal}
 
-/* =================== 8.1.20: LIQUID GLASS, CAUSTICS, BEAM BORDER, GLASS SLIDER ===================
-   Approved exception to the flat rules in docs/CONTEXT.md (owner's request, Oct 2026): cards are
-   frosted glass again. The Interface opacity slider (--ui-op) still sets how much surface colour
-   sits in the glass, so lowering it makes every card more see-through. */
+/* =================== 8.1.20: LIQUID GLASS, CAUSTICS, BEAM BORDER, GLASS SLIDER =================== [CSS_NOTES 58] */
 :root{--glass-line:rgba(255,255,255,.12);--glass-hi:rgba(255,255,255,.18);--glass-streak:rgba(255,255,255,.35);--glass-blur:14px;
   --caustic-a:color-mix(in srgb,var(--accent) 24%,transparent);--caustic-b:rgba(255,255,255,.09)}
 :root[data-scheme="light"]{--glass-line:rgba(0,0,0,.07);--glass-hi:rgba(255,255,255,.8);--glass-streak:rgba(255,255,255,.65);
@@ -3897,10 +3616,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
   .app :is(.card,.mcard,.cattile,.dish,.profstrip,.tabs){-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background-color:var(--surface)!important}
 }
 
-/* =================== 8.2.6: DASHBOARD CARD, one flat Apple Health-style pattern (original code, Lucide and the app's own icons) ===================
-   Supersedes the glass, caustic, sheen, beam, season-tint and aurora rules above for content cards and for the page behind them.
-   Glass stays only on the floating top bar (.top), the tab bar (.tabs) and menus (.side, popovers). Rule is recorded in docs/CONTEXT.md.
-   The two :not() filler selectors lift specificity above the per-theme token blocks, so every theme gets the same card and page colours. */
+/* =================== 8.2.6: DASHBOARD CARD, one flat Apple Health-style pattern (original code, Lucide and the app's own icons) =================== [CSS_NOTES 59] */
 :root{--chart-gray:#D1D1D6}
 :root:is([data-scheme="dark"],[data-scheme="oled"]){--chart-gray:#3A3A3C}
 :root[data-scheme="light"]:not(.x1):not(.x2){--ground:#F2F2F7;--surface:#FFFFFF}
@@ -3932,9 +3648,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 .app .sec-title{font-size:calc((22px) * var(--text-scale,1));font-weight:700}
 /* "Edit widgets" / "Done": plain accent text, no background. */
 .link-btn{background:none;border:0;padding:0 2px;min-height:44px;color:var(--accent);font-size:calc((17px) * var(--text-scale,1));font-weight:500;cursor:pointer;box-shadow:none}
-/* =================== 8.2.7: WIDGET SIZES AND EDIT MODE ===================
-   Small is half width (2 per row on phones, 4 from 700px up) and roughly square: icon, name, one value. Medium and Large are full width.
-   Edit controls sit in the card's top row. The red minus, the S/M/L switch and the drag handle or arrows are all 44px targets. */
+/* =================== 8.2.7: WIDGET SIZES AND EDIT MODE =================== [CSS_NOTES 60] */
 .app .wgrid{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
 @media (min-width:700px){.app .wgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .app .wgrid>.ws-m,.app .wgrid>.ws-l,.app .wgrid>.empty{grid-column:1/-1}
@@ -4023,10 +3737,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 .app :is(#sec-nutrition,#sec-workouts,#sec-coach,#sec-health,#sec-awards,#sec-snacks,#sec-culture,#sec-recipes,#sec-alcohol) .card .eyebrow{text-transform:none;letter-spacing:0;font-size:calc((15px) * var(--text-scale,1));font-weight:600}
 .app .li .eyebrow{display:block}
 .app .card .mhead{margin-bottom:4px}
-/* =================== 8.2.8: DISH TILES AND FOOD CULTURE PAGE ===================
-   Dish tiles (Food culture, Recipes, Today's menu) follow the flat card pattern: no border, glow, top bar or hover lift, 20px radius,
-   16px padding, the slot as a sentence-case label in the Nutrition colour, the dish name 17px semibold, calories in gray. Text only.
-   On the page a tile is a card; inside a card it is a slightly different gray tile (an inner card cannot share its parent's colour). */
+/* =================== 8.2.8: DISH TILES AND FOOD CULTURE PAGE =================== [CSS_NOTES 61] */
 :root{--tile:#F2F2F7}
 :root:is([data-scheme="dark"],[data-scheme="oled"]){--tile:#2C2C2E}
 :root[data-scheme="oled"]:not(.x1):not(.x2){--tile:#1C1C1E}
@@ -4068,7 +3779,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.22", channel: "Dev Testing", date: "2026-10-13", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.23", channel: "Dev Testing", date: "2026-10-13", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -4082,6 +3793,14 @@ const APP_VERSION = { update: "8.2", build: "8.2.22", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.23",
+      area:"Speed",
+      title:"Trim CSS notes and report size growth before the phone gate",
+      bug:"The app was near its unchanged size budgets, with only about 6 KB of gzip headroom. Long CSS explanations were downloaded on every cold visit.",
+      fix:"Move 62 long CSS comments into docs/CSS_NOTES.md, retaining numbered section labels in the inline styles. CSS declarations, rule order and app behavior are unchanged. Add a browser-free size check using the same compression settings and budgets as the phone gate; report the difference from the pull request base and warn below 5% headroom. Keep all size and timing limits unchanged.",
+      where:"index.html (CSS comments, APP_VERSION and change log); docs/CSS_NOTES.md; tests/perf/size.mjs and size.test.mjs; .github/workflows/tests.yml; docs/PERFORMANCE.md; README.md; CHANGELOG.md; docs/BUILD_PLAN.md.",
+      test:"Run node --test tests/perf/size.test.mjs, node tests/perf/size.mjs and node tests/check-repo.mjs. Run node tests/perf/measure.mjs --gate in CI for phone timings. PERF_BASE_SHA=<full commit SHA> adds the before/after size comparison.",
+      limits:"This trims documentation bytes, not executable code. Phone timings and browser regressions require Chrome; real-phone and Safari checks remain separate. Near-limit warnings are advisory; exceeding a budget fails." },
     { id:"8.2.22",
       area:"Sidebar",
       title:"Collapsed sidebar: icons share one centre line and one even spacing",
@@ -21778,9 +21497,7 @@ PREMIUM_VIEWS.share = p => UI.sharePreview
 .auth-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* ---- 8.1.18 density: one place for spacing ---- */
 .main{padding-block:12px 40px;padding-inline:clamp(12px,2.5vw,28px)}.wrap{gap:12px}.page-head{gap:6px}.page-head-actions{margin-top:0}.card{padding:16px;gap:8px}.card.hero{padding:16px}.card>h2{margin:0}.stack{gap:8px}.stack.lg{gap:12px}.card .form{gap:8px}.setgroup{gap:8px}#appearance{gap:16px}@media (max-width:600px){.main{padding-block:8px 64px}.wrap{gap:10px}.card,.ob .panel{padding:12px}}
-/* ---- 8.1.19 form controls, restyled to match BoardUI's look (approved exception, see docs/CONTEXT.md) ----
-   One block, last in the sheet. Colors come from the existing tokens, so every scheme, accent and
-   theme follows. Radii stay in the allowed set; the only shadows are the soft control shadows below. */
+/* ---- 8.1.19 form controls, restyled to match BoardUI's look (approved exception, see docs/CONTEXT.md) ---- [CSS_NOTES 62] */
 :root{--bu-shadow:0 1px 2px rgba(16,16,20,.07);--bu-pop:0 10px 28px rgba(16,16,20,.16),0 0 0 1px var(--line);--bu-ring:color-mix(in srgb,var(--accent) 26%,transparent);--bu-hover:color-mix(in srgb,var(--text) 30%,var(--line2));--bu-bad-ink:#FFFFFF;--bu-chev:#8E8E93}
 :root:is([data-scheme="dark"],[data-scheme="oled"]){--bu-shadow:0 1px 2px rgba(0,0,0,.45);--bu-pop:0 12px 32px rgba(0,0,0,.6),0 0 0 1px var(--line2);--bu-bad-ink:#2A0606}
 /* Input, select, textarea */

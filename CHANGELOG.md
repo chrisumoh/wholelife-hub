@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.22, 2026-10-13. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.23, 2026-10-13. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.23 · Speed: Trim CSS notes and report size growth before the phone gate
+
+- **Problem:** The app was near its unchanged size budgets, with only about 6 KB of gzip headroom. Long CSS explanations were downloaded on every cold visit.
+- **Change:** Move 62 long CSS comments into docs/CSS_NOTES.md, retaining numbered section labels in the inline styles. CSS declarations, rule order and app behavior are unchanged. Add a browser-free size check using the same compression settings and budgets as the phone gate; report the difference from the pull request base and warn below 5% headroom. Keep all size and timing limits unchanged.
+- **Where:** index.html (CSS comments, APP_VERSION and change log); docs/CSS_NOTES.md; tests/perf/size.mjs and size.test.mjs; .github/workflows/tests.yml; docs/PERFORMANCE.md; README.md; CHANGELOG.md; docs/BUILD_PLAN.md.
+- **How to test:** Run node --test tests/perf/size.test.mjs, node tests/perf/size.mjs and node tests/check-repo.mjs. Run node tests/perf/measure.mjs --gate in CI for phone timings. PERF_BASE_SHA=<full commit SHA> adds the before/after size comparison.
+- **Known limits:** This trims documentation bytes, not executable code. Phone timings and browser regressions require Chrome; real-phone and Safari checks remain separate. Near-limit warnings are advisory; exceeding a budget fails.
 
 ## 8.2.22 · Sidebar: Collapsed sidebar: icons share one centre line and one even spacing
 
@@ -490,3 +498,4 @@ Note: entries dated before 2026-10-02 describe the earlier claude.ai artifact ve
 - Menu slide (320ms spring), hamburger->arrow morph v1, trophy + confetti, achievement animations. Status: APPLIED; arrow recentered by the 2026-09-29 reference-code fix
 - Privacy Policy + Terms pages, favicon, footer links, copy cleanup (em dashes, fake social proof removal). Status: APPLIED
 - Known issues logged later from screenshots: menu-over-Settings layering glitch, duplicate avatar, clipped text, off-center arrow — all specced in master prompt Phase 1 / 6.1. Status: PROMPTED
+

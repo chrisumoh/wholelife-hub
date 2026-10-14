@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.23 | Move long CSS explanations out of the app download; fast size-budget check and PR base comparison; all budgets retained | IN PROGRESS: build-8.2.23 |
 | 8.2.22 | Collapsed sidebar: icons, logo and profile picture on one centre line, even row height and spacing | IN PROGRESS: claude/project-thread-dhtwj9 |
 | 8.2.21 | Coach advice card: repeats of yesterday are marked in the coach's voice; evening card reviews today and sets up tomorrow by weekday | MERGED: PR #32 |
 | 8.2.20 | Motion: sliding selection ring, animated external links, top-right toasts, bell pulse, widgets that turn over; tidier dish rows, coach card and weekly check-in | MERGED: PR #30 |
@@ -183,3 +184,10 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Not run: the 375/820/1440px layout sweep, theme and font sweep, premium flag, coach voices, and the feature regression sweep (the build changes storage, sign-in and text, not layout). The new Import / Discard screen has not been checked at 375px.
 - Not run (needs the deployed preview and a real account): sign up with the confirmation link, log in, refresh stays logged in, and the Supabase read-only checks.
 
+
+
+### Checklist run for 8.2.23
+
+- Local: size-check unit tests, unchanged CSS token stream, unchanged executable scripts except version and change log, repository checks and compressed-size measurement.
+- Pending CI: browser suite and phone performance gate. Chrome was unavailable locally and the browser download failed. No claim of measured timing improvement.
+- Not run: preview layout/theme/font sweep, real sign-in, real-phone/Safari checks and live database checks. No auth, database, rendering or CSS declarations changed.
