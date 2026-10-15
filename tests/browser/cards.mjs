@@ -169,6 +169,10 @@ ok("Done returns to normal cards", await ev(`document.querySelectorAll(".dcard.e
 await goto("#/health");
 const pgEdit = await ev(`(() => { const b = document.querySelector('[data-act="wl-edit"]'); if (!b) return "none"; const c = getComputedStyle(b); return JSON.stringify({ t: b.textContent, bg: c.backgroundColor, bw: c.borderTopWidth, sh: c.boxShadow }); })()`);
 ok("page widgets: 'Edit widgets' is plain accent text too", /"t":"Edit widgets","bg":"rgba\(0, 0, 0, 0\)","bw":"0px","sh":"none"/.test(pgEdit), pgEdit);
+console.log("--- 4b. daily progress cards follow the text-size setting");
+await goto("#/home"); await sleep(300);
+const sc = await ev(`(() => { const n = document.querySelector(".rleg-num"); if (!n) return null; const de = document.documentElement, was = de.style.getPropertyValue("--text-scale"); de.style.setProperty("--text-scale", "1"); const a = parseFloat(getComputedStyle(n).fontSize); de.style.setProperty("--text-scale", "1.3"); const b = parseFloat(getComputedStyle(n).fontSize); was ? de.style.setProperty("--text-scale", was) : de.style.removeProperty("--text-scale"); return { a, b }; })()`);
+ok("progress values grow with the text-size setting", !!sc && Math.abs(sc.b / sc.a - 1.3) < 0.02, JSON.stringify(sc));
 console.log("--- 5. legal text keeps its underlines, nothing else does");
 await goto("#/privacy-policy");
 ok("links in the legal text are still underlined", await ev(`[...document.querySelectorAll(".legal a")].some(a => getComputedStyle(a).textDecorationLine === "underline")`) || await ev(`document.querySelectorAll(".legal a").length === 0`));
