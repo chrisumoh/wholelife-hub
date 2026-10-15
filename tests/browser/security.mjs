@@ -90,6 +90,12 @@ for (const route of ["#/home", "#/settings", "#/nutrition"]) {
 }
 ok("alert() never fired", dialogs.length === 0, JSON.stringify(dialogs));
 
+// A stored notification link that is not an in-app route (for example javascript:) must be dropped, not rendered as a link.
+await ev(`localStorage.setItem(NOTIF_KEY(P()), JSON.stringify([{ id: "n-js", kind: "x", title: "t", body: "b", href: "javascript:window.__pwn=1", at: Date.now(), read: false }, { id: "n-ok", kind: "x", title: "t2", body: "b", href: "#/coach", at: Date.now(), read: false }])); true`);
+ok("a javascript: notification link is dropped on read", await ev(`(() => { const l = loadNotifs(P()); return l.find(n => n.id === "n-js").href === null && l.find(n => n.id === "n-ok").href === "#/coach"; })()`));
+ok("notify() drops a javascript: link too", await ev(`(() => { notify("x", "t3", "b", "javascript:window.__pwn=2"); return loadNotifs(P()).every(n => !/^javascript/i.test(n.href || "")); })()`));
+await ev(`localStorage.removeItem(NOTIF_KEY(P())); true`);
+
 // ---------------------------------------------------------------- (b)
 console.log("--- (b) account A's data is not shown to account B");
 await ev(`localStorage.clear(); true`);
