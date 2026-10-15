@@ -1749,6 +1749,9 @@ input,select,textarea{font-size:calc((var(--t-base)) * var(--text-scale,1));font
 .legal ul.clean li::before{content:"";position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
 .legal .note{margin:10px 0 12px}
 .legal a{color:var(--accent)}
+.legal .legal-sum{color:var(--muted)}
+.legal .legal-more{margin:2px 0 6px}
+.legal .note.legal-red,.legal p.note{border-left-color:var(--bad);background:var(--bad-soft);color:var(--bad);font-style:italic;font-weight:500;line-height:1.55;padding:10px 14px}
 /* The "go" chevron on cards and links: drawn, so it matches the rest of the icon set. */
 svg.ico.go{width:13px;height:13px;opacity:.55;flex:none;vertical-align:-1px}
 .season-chip .sc-ic svg{width:16px;height:16px;display:block}
@@ -3779,7 +3782,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.24", channel: "Dev Testing", date: "2026-10-15", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.25", channel: "Dev Testing", date: "2026-10-15", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3793,6 +3796,14 @@ const APP_VERSION = { update: "8.2", build: "8.2.24", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.25",
+      area:"Legal",
+      title:"Legal pages: long sections fold behind Read more, and Not medical advice is red italics",
+      bug:"The Terms and the Privacy Policy showed every section in full, so each page was a very long scroll on a phone, and the Not medical advice box was a heavy orange block that did not stand out as the key warning.",
+      fix:"On the Terms and the Privacy Policy, every section keeps its heading but long sections show only their first sentence with a Read more button, which opens the full section in a popup (Escape, the close button or the backdrop closes it, and a link inside it closes it too). Short sections such as Contact stay open. The Not medical advice note is now neater red italic text with a red edge, on the page and in its popup. The wording of the Terms and the Privacy Policy is unchanged.",
+      where:"index.html: legalFold(), openLegalMore() and LEGAL_FOLD (before privacyPolicyView), the .legal CSS block (.legal-sum, .legal-more, .note.legal-red), privacyPolicyView() and termsView() now return through legalFold(). tests/browser/legal.mjs: new fold checks and the policy-text check reads folded sections too. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open #/terms and #/privacy-policy: headings stay, long sections show one sentence and Read more; press it to read the full section in a popup and close it with Escape, X or the backdrop. Not medical advice is red italic. Run node tests/browser/legal.mjs (55 checks).",
+      limits:"Refunds and Contact pages are not folded (they are short). The first sentence is cut at the first full stop, so a section whose first sentence is long shows its start and an ellipsis. Checked in headless Chrome at phone width only; the axe accessibility test could not run here (no axe-core), so red-on-red contrast was checked by eye. The same popup covers screen readers through the shared dialog, but no VoiceOver run was made." },
     { id:"8.2.24",
       area:"Security",
       title:"Notification links can only open screens inside the app",
@@ -15954,9 +15965,41 @@ function paintFooterYear(){
 function medicalNote(){ return `<p class="tiny faint discl-inline">${esc(MEDICAL_LINE)} <a href="#/terms">Read the terms</a>.</p>`; }
 
 // =================== PRIVACY POLICY ===================
+// ---- legal pages: long sections fold to a short summary with a Read more popup ----
+const LEGAL_FOLD = new Map(); // id -> { title, html }; built from static page text, so no user text goes in here
+function legalFold(html){
+  const sec = new DOMParser().parseFromString(`<body>${html}</body>`, "text/html").querySelector("section.legal");
+  if (!sec) return html;
+  const page = sec.querySelector("h2")?.textContent || "Legal", kids = [...sec.children], out = [];
+  for (let i = 0; i < kids.length; i++) {
+    const h = kids[i];
+    if (h.tagName !== "H3") { out.push(h.outerHTML); continue; }
+    const body = []; while (kids[i + 1] && kids[i + 1].tagName !== "H3") body.push(kids[++i]);
+    const text = body.map(b => b.textContent).join(" ").trim();
+    if (text.length < 260) { out.push(h.outerHTML, ...body.map(b => b.outerHTML)); continue; }
+    const id = `${page}|${h.textContent}`.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    LEGAL_FOLD.set(id, { title: h.textContent, html: body.map(b => b.outerHTML).join("") });
+    const first = body[0], flat = first.textContent.trim(), m = flat.match(/^.{40,}?[.!?](\s|$)/), sum = (m ? m[0].trim() : flat).slice(0, 170);
+    const warn = first.classList.contains("note");
+    out.push(h.outerHTML, `<p class="${warn ? "note legal-red" : "legal-sum"}">${esc(sum)}${/[.!?]$/.test(sum) ? "" : " …"}</p>`,
+      `<button type="button" class="btn sm legal-more" data-act="legal-more" data-id="${esc(id)}" aria-haspopup="dialog">Read more</button>`);
+  }
+  return `<section class="card legal">${out.join("\n")}</section>`;
+}
+function openLegalMore(id, triggerEl){
+  const e = LEGAL_FOLD.get(id); if (!e) return;
+  const pop = openPopover("legal", { labelledby: "legal-pop-title", width: "min(560px, calc(100vw - 32px))", triggerEl,
+    bodyHTML: `<div class="pop-head"><h2 id="legal-pop-title">${esc(e.title)}</h2><button type="button" class="pop-x" data-pop="close" aria-label="Close">${icon("x","",24)}</button></div>
+      <div class="pop-body legal">${e.html}</div>` });
+  pop.card.addEventListener("click", ev => { if (ev.target.closest("a[href]")) pop.shut(); }); // a link inside leaves the page, so the popup goes too
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest?.("[data-act='legal-more']"); if (t) openLegalMore(t.dataset.id, t);
+});
+
 // Template, not legal advice. Review before publishing.
 function privacyPolicyView(){
-  return `
+  return legalFold(`
   <section class="card legal">
     <div class="eyebrow">Legal</div>
     <h2>Privacy Policy</h2>
@@ -16041,13 +16084,13 @@ function privacyPolicyView(){
     <h3>9. Contact</h3>
     <p>Questions about this policy: <b>${esc(CONTACT_EMAIL)}</b>, or see the <a href="#/contact">Contact page</a>.</p>
     <p class="tiny faint">If this policy changes, the date at the top changes with it.</p>
-  </section>`;
+  </section>`);
 }
 
 // =================== TERMS ===================
 // Template, not legal advice. Review before publishing.
 function termsView(){
-  return `
+  return legalFold(`
   <section class="card legal">
     <div class="eyebrow">Legal</div>
     <h2>Terms &amp; Conditions</h2>
@@ -16077,7 +16120,7 @@ function termsView(){
 
     <h3>Contact</h3>
     <p>Questions about these terms: <b>${esc(CONTACT_EMAIL)}</b>, or see the <a href="#/contact">Contact page</a>.</p>
-  </section>`;
+  </section>`);
 }
 
 // =================== REFUNDS ===================

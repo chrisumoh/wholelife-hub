@@ -167,9 +167,20 @@ await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = tr
 await click('[data-act="sb-open"][data-v="up"]'); await sleep(400);
 ok("ticking, closing the popup and opening Create account again asks again (unticked)", await ev(`document.getElementById("sb-agree")?.checked === false`));
 ok("a failed submit keeps the tick for a retry in the same form", await (async () => { await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = true; c.dispatchEvent(new Event("change", { bubbles: true })); document.getElementById("sb-email").value = "bad"; document.getElementById("sb-pass").value = "x"; document.querySelector('form[data-form="sb-auth"]').requestSubmit(); return true; })()`); await sleep(400); return ev(`document.getElementById("sb-agree")?.checked === true && !!document.querySelector("#pop-auth .note")`); })());
+console.log("--- 4b. long legal sections fold behind Read more");
+await ev(`location.hash = "#/terms"; true`); await sleep(500);
+ok("Terms keeps its headings and shows a Read more button for each long section", await ev(`document.querySelectorAll(".legal h3").length >= 8 && document.querySelectorAll(".legal .legal-more").length >= 5`));
+ok("the folded text is not on the page until Read more is pressed", await ev(`!document.querySelector(".legal").textContent.includes("Because a passcode encrypts")`));
+await ev(`[...document.querySelectorAll(".legal-more")].find(b => b.previousElementSibling.previousElementSibling.textContent === "Your responsibilities").click(); true`); await sleep(500);
+ok("Read more opens the full section in a popup with a close button", await ev(`/Because a passcode encrypts/.test(document.querySelector("#pop-legal")?.textContent || "") && !!document.querySelector("#pop-legal [data-pop='close']")`));
+await ev(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); true`); await sleep(500);
+ok("Escape closes it", await ev(`!document.querySelector("#pop-legal")`));
+ok("Not medical advice stays a red italic note", await ev(`(() => { const n = document.querySelector(".legal .note.legal-red"); if (!n) return false; const c = getComputedStyle(n); return c.fontStyle === "italic" && c.color !== getComputedStyle(document.body).color; })()`));
+
 console.log("--- 5. the policy text matches what the app does");
 await ev(`location.hash = "#/privacy-policy"; true`); await sleep(500);
-const pol = await ev(`document.querySelector("#sec-privacy-policy, .legal")?.textContent || document.body.textContent`);
+// Long sections are folded behind "Read more" (8.2.25), so the policy text is the page plus every folded section.
+const pol = await ev(`(document.querySelector("#sec-privacy-policy, .legal")?.textContent || document.body.textContent) + " " + [...LEGAL_FOLD.values()].map(e => { const d = document.createElement("div"); d.innerHTML = e.html; return d.textContent; }).join(" ")`);
 ok("the Privacy Policy describes the birth month and year, that only the age is kept, and the 24-hour retry block", /birth month and year/.test(pol) && /never your birth date/.test(pol) && /24 hours/.test(pol) && !/13-and-over confirmation/.test(pol), pol.slice(pol.indexOf("Children") - 10, pol.indexOf("Children") + 450));
 
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 400));
