@@ -201,5 +201,5 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 ### Checklist run for 8.2.25
 
-- Local: tests/browser/legal.mjs (55 passed), headers (17), privacy (28), security (93), repo checks (20), size check (within budgets, still near limit), screenshots at 400px wide.
+- Local: tests/browser/legal.mjs (57 passed), headers (17), privacy (28), security (93), repo checks (20), size check (within budgets, still near limit), screenshots at 400px wide.
 - Not run: a11y.mjs (axe-core unavailable here), phone timing gate, preview, real-phone/Safari checks. No auth, database or catalog changes.

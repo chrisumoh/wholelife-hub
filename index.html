@@ -3801,8 +3801,8 @@ const APP_VERSION = { update: "8.2", build: "8.2.25", channel: "Dev Testing", da
       title:"Legal pages: long sections fold behind Read more, and Not medical advice is red italics",
       bug:"The Terms and the Privacy Policy showed every section in full, so each page was a very long scroll on a phone, and the Not medical advice box was a heavy orange block that did not stand out as the key warning.",
       fix:"On the Terms and the Privacy Policy, every section keeps its heading but long sections show only their first sentence with a Read more button, which opens the full section in a popup (Escape, the close button or the backdrop closes it, and a link inside it closes it too). Short sections such as Contact stay open. The Not medical advice note is now neater red italic text with a red edge, on the page and in its popup. The wording of the Terms and the Privacy Policy is unchanged.",
-      where:"index.html: legalFold(), openLegalMore() and LEGAL_FOLD (before privacyPolicyView), the .legal CSS block (.legal-sum, .legal-more, .note.legal-red), privacyPolicyView() and termsView() now return through legalFold(). tests/browser/legal.mjs: new fold checks and the policy-text check reads folded sections too. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
-      test:"Open #/terms and #/privacy-policy: headings stay, long sections show one sentence and Read more; press it to read the full section in a popup and close it with Escape, X or the backdrop. Not medical advice is red italic. Run node tests/browser/legal.mjs (55 checks).",
+      where:"index.html: legalFold(), openLegalMore() and LEGAL_FOLD (before privacyPolicyView), the legal-more case in the main click switch, the .legal CSS block (.legal-sum, .legal-more, .note.legal-red), privacyPolicyView() and termsView() now return through legalFold(). tests/browser/legal.mjs: new fold checks and the policy-text check reads folded sections too. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open #/terms and #/privacy-policy: headings stay, long sections show one sentence and Read more; press it to read the full section in a popup and close it with Escape, X or the backdrop. Not medical advice is red italic. Run node tests/browser/legal.mjs (57 checks).",
       limits:"Refunds and Contact pages are not folded (they are short). The first sentence is cut at the first full stop, so a section whose first sentence is long shows its start and an ellipsis. Checked in headless Chrome at phone width only; the axe accessibility test could not run here (no axe-core), so red-on-red contrast was checked by eye. The same popup covers screen readers through the shared dialog, but no VoiceOver run was made." },
     { id:"8.2.24",
       area:"Security",
@@ -12358,6 +12358,7 @@ document.addEventListener("click", async e => {
   const a = t.dataset.act, p = P();
   switch (a) {
     case "menu": setMenu(!UI.menu); break;
+    case "legal-more": openLegalMore(t.dataset.id, t); break;
     case "skip-main": { const m = document.querySelector(".section.active"); if (m) { m.focus({ preventScroll:true }); m.scrollIntoView({ block:"start" }); } break; }
     // onboarding
     case "ob-next": {
@@ -15993,9 +15994,6 @@ function openLegalMore(id, triggerEl){
       <div class="pop-body legal">${e.html}</div>` });
   pop.card.addEventListener("click", ev => { if (ev.target.closest("a[href]")) pop.shut(); }); // a link inside leaves the page, so the popup goes too
 }
-document.addEventListener("click", e => {
-  const t = e.target.closest?.("[data-act='legal-more']"); if (t) openLegalMore(t.dataset.id, t);
-});
 
 // Template, not legal advice. Review before publishing.
 function privacyPolicyView(){
