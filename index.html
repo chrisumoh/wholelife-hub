@@ -1108,16 +1108,18 @@ svg:not(.logo-svg):not(.scene-svg):not(.chart){max-width:100%}
   font-family:var(--display);font-weight:800;font-size:calc((26px) * var(--text-scale,1));line-height:1;color:var(--text);pointer-events:none}
 .rings-mid span{font-family:var(--font);font-size:calc((10px) * var(--text-scale,1));font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-top:3px}
 .rings-legend{display:flex;flex-direction:column;gap:10px;flex:1 1 220px;min-width:0}
-.rleg{display:flex;gap:10px;align-items:flex-start;text-decoration:none;color:var(--text);padding:8px 10px;border-radius:var(--r-xs);
-  background:color-mix(in srgb,var(--rc) 8%,transparent);border:1px solid color-mix(in srgb,var(--rc) 22%,transparent);min-width:0;
+.rleg{display:flex;gap:10px;align-items:flex-start;text-decoration:none;color:var(--text);padding:6px 10px;border-radius:var(--r-xs);
+  background:color-mix(in srgb,var(--rc) 5%,transparent);border:1px solid color-mix(in srgb,var(--rc) 16%,transparent);min-width:0;
   transition:transform var(--dur-menu) var(--ease-spring),background-color var(--dur-popup)}
 @media (hover:hover) and (pointer:fine){.rleg:hover{transform:translateX(2px);background:color-mix(in srgb,var(--rc) 14%,transparent)}}
-.rleg-dot{width:8px;height:8px;border-radius:50%;background:var(--rc);flex:none;margin-top:7px;box-shadow:0 0 8px var(--rc)}
-.rleg-body{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
-.rleg-top{display:flex;align-items:center;gap:6px;font-size:calc((13px) * var(--text-scale,1));flex-wrap:wrap}
-.rleg-num{font-family:var(--display);font-size:calc((17px) * var(--text-scale,1));font-variant-numeric:tabular-nums}
-.rleg-bar{height:5px;border-radius:3px;background:color-mix(in srgb,var(--text) 10%,transparent);overflow:hidden}
-.rleg-bar i{display:block;height:100%;border-radius:3px;background:var(--rc);transition:width var(--dur-page) var(--ease-spring)}
+.rleg-dot{width:6px;height:6px;border-radius:50%;background:var(--rc);flex:none;margin-top:6px}
+.rleg-body{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.rleg-top{display:flex;align-items:center;gap:6px;font-size:calc((12px) * var(--text-scale,1));flex-wrap:wrap}
+.rleg-body>.tiny{font-size:calc((11px) * var(--text-scale,1));opacity:.8}
+.rleg-num{font-family:var(--display);font-size:calc((15px) * var(--text-scale,1));font-variant-numeric:tabular-nums}
+.rleg-num .muted{font-weight:400}
+.rleg-bar{height:3px;border-radius:2px;background:color-mix(in srgb,var(--text) 10%,transparent);overflow:hidden}
+.rleg-bar i{display:block;height:100%;border-radius:2px;background:var(--rc);transition:width var(--dur-page) var(--ease-spring)}
 :root[data-motion="reduced"] .rleg-bar i{transition:none}
 @media (max-width:600px){
   .rings-row{gap:14px;justify-content:center}
@@ -3782,7 +3784,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.25", channel: "Dev Testing", date: "2026-10-15", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.26", channel: "Dev Testing", date: "2026-10-15", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3796,6 +3798,14 @@ const APP_VERSION = { update: "8.2", build: "8.2.25", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.26",
+      area:"Dashboard",
+      title:"The three daily progress cards are more minimal",
+      bug:"The three daily cards (Move, Exercise, Hydration) carried a lot of visual detail: a glowing dot, strong tinted boxes, large numbers and a thick bar.",
+      fix:"Same cards, same colours, dots, icons and text, with the detail turned down: no glow on the dot, a lighter tint and border, smaller heading and amounts, a thin 3px bar and a quieter helper line.",
+      where:"index.html: the rings legend CSS only (.rleg, .rleg-dot, .rleg-body, .rleg-top, .rleg-num, .rleg-bar, .rleg-body > .tiny). No markup or JavaScript changed. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open Home and look at Today at a glance in light and dark: the cards keep their colours but look lighter and smaller. Values, targets, closed tags, bars and links are as before.",
+      limits:"Only sizes, tint strength and the glow changed, so nothing is removed. If a detail should go entirely (for example the helper line), say which. Checked in headless Chrome only." },
     { id:"8.2.25",
       area:"Legal",
       title:"Legal pages: long sections fold behind Read more, and Not medical advice is red italics",

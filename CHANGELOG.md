@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.25, 2026-10-15. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.26, 2026-10-15. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.26 · Dashboard: The three daily progress cards are more minimal
+
+- **Problem:** The three daily cards (Move, Exercise, Hydration) carried a lot of visual detail: a glowing dot, strong tinted boxes, large numbers and a thick bar.
+- **Change:** Same cards, same colours, dots, icons and text, with the detail turned down: no glow on the dot, a lighter tint and border, smaller heading and amounts, a thin 3px bar and a quieter helper line.
+- **Where:** index.html: the rings legend CSS only (.rleg, .rleg-dot, .rleg-body, .rleg-top, .rleg-num, .rleg-bar, .rleg-body > .tiny). No markup or JavaScript changed. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open Home and look at Today at a glance in light and dark: the cards keep their colours but look lighter and smaller. Values, targets, closed tags, bars and links are as before.
+- **Known limits:** Only sizes, tint strength and the glow changed, so nothing is removed. If a detail should go entirely (for example the helper line), say which. Checked in headless Chrome only.
 
 ## 8.2.25 · Legal: Legal pages: long sections fold behind Read more, and Not medical advice is red italics
 
