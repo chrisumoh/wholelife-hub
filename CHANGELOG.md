@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.25, 2026-10-15. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.26, 2026-10-15. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.26 · Dashboard: Dashboard: the three daily progress cards get compact accent cards
+
+- **Problem:** The Move, Exercise and Hydration cards on Today at a glance had a large glowing edge and sat in one tall column beside the rings, so they took a lot of room and were hard to scan.
+- **Change:** The three cards now use compact cards with a slim category accent on the left edge instead of the glowing border, a heading line with the dot and icon, a larger current amount with the target in muted text, a slim progress bar and a quieter detail line. They sit three across under the rings when there is room and stack on phones (760px and narrower). The accent colours are the existing per-ring colours, and the surface, track and muted colours follow the app's light and dark theme tokens. All text, values, units, targets, progress amounts and links are unchanged.
+- **Where:** index.html: the rings legend CSS (.rings-legend, .rleg, .rleg-dot, .rleg-body, .rleg-top, .rleg-num, .rleg-bar, .rleg-body > .tiny), .rings-row, and a 760px media rule next to the existing phone rule. No markup or JavaScript changed. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open Home and look at Today at a glance: three cards across on a wide screen, stacked on a phone, in light and dark. Values, targets, 'closed' tags, progress bars and the links to each page are as before.
+- **Known limits:** Class names in the supplied CSS were mapped to the app's: dashboard-progress is .rings-legend, the card is .rleg, heading .rleg-top, value .rleg-num, track .rleg-bar, detail .tiny. The legend now takes the full row under the rings on wide screens so three cards fit. Colours come from theme tokens and --rc rather than the example's fixed hex values, so light theme keeps working. Checked in headless Chrome at 400px and 1100px only.
 
 ## 8.2.25 · Legal: Legal pages: long sections fold behind Read more, and Not medical advice is red italics
 

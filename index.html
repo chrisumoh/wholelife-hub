@@ -1096,7 +1096,7 @@ svg:not(.logo-svg):not(.scene-svg):not(.chart){max-width:100%}
 
 /* Section 5: our own three-ring dial. Track always visible, so zero still reads as a ring. */
 .rings-card{overflow:visible}
-.rings-row{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.rings-row{display:flex;gap:22px;align-items:center;justify-content:center;flex-wrap:wrap}
 .rings{position:relative;flex:none;display:grid;place-items:center}
 .rings svg{display:block;overflow:visible}
 .rg-track{stroke:color-mix(in srgb,var(--text) 10%,transparent)}
@@ -1107,17 +1107,24 @@ svg:not(.logo-svg):not(.scene-svg):not(.chart){max-width:100%}
 .rings-mid{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;
   font-family:var(--display);font-weight:800;font-size:calc((26px) * var(--text-scale,1));line-height:1;color:var(--text);pointer-events:none}
 .rings-mid span{font-family:var(--font);font-size:calc((10px) * var(--text-scale,1));font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-top:3px}
-.rings-legend{display:flex;flex-direction:column;gap:10px;flex:1 1 220px;min-width:0}
-.rleg{display:flex;gap:10px;align-items:flex-start;text-decoration:none;color:var(--text);padding:8px 10px;border-radius:var(--r-xs);
-  background:color-mix(in srgb,var(--rc) 8%,transparent);border:1px solid color-mix(in srgb,var(--rc) 22%,transparent);min-width:0;
+/* Daily progress cards: three across when there is room, stacked on phones; slim accent bar instead of a glowing border. */
+.rings-legend{--progress-surface:color-mix(in srgb,var(--text) 5%,var(--surface));--progress-track:color-mix(in srgb,var(--text) 14%,transparent);--progress-text:var(--text);--progress-muted:var(--muted);--progress-radius:14px;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;flex:1 1 100%;min-width:0}
+.rings-legend .rleg-head{grid-column:1/-1}
+.rleg{--accent:var(--rc,#55d887);display:flex;gap:10px;align-items:flex-start;text-decoration:none;color:var(--progress-text);min-width:0;padding:16px;
+  border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);border-left:3px solid var(--accent);border-radius:var(--progress-radius);
+  background:var(--progress-surface);box-shadow:0 2px 8px rgb(0 0 0 / 14%);
   transition:transform var(--dur-menu) var(--ease-spring),background-color var(--dur-popup)}
-@media (hover:hover) and (pointer:fine){.rleg:hover{transform:translateX(2px);background:color-mix(in srgb,var(--rc) 14%,transparent)}}
-.rleg-dot{width:8px;height:8px;border-radius:50%;background:var(--rc);flex:none;margin-top:7px;box-shadow:0 0 8px var(--rc)}
-.rleg-body{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
-.rleg-top{display:flex;align-items:center;gap:6px;font-size:calc((13px) * var(--text-scale,1));flex-wrap:wrap}
-.rleg-num{font-family:var(--display);font-size:calc((17px) * var(--text-scale,1));font-variant-numeric:tabular-nums}
-.rleg-bar{height:5px;border-radius:3px;background:color-mix(in srgb,var(--text) 10%,transparent);overflow:hidden}
-.rleg-bar i{display:block;height:100%;border-radius:3px;background:var(--rc);transition:width var(--dur-page) var(--ease-spring)}
+@media (hover:hover) and (pointer:fine){.rleg:hover{transform:translateX(2px);background:color-mix(in srgb,var(--accent) 8%,var(--progress-surface))}}
+.rleg-dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:var(--accent);margin-top:6px}
+.rleg-body{display:flex;flex-direction:column;gap:0;min-width:0;flex:1}
+.rleg-top{display:flex;align-items:center;gap:10px;margin:0 0 12px;font-size:calc((16px) * var(--text-scale,1));font-weight:650;line-height:1.25;flex-wrap:wrap}
+.rleg-top .ico{color:var(--accent)}
+.rleg-num{margin:0 0 10px;font-family:var(--display);font-size:clamp(1.25rem,2vw,1.65rem);font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.rleg-num .muted{color:var(--progress-muted);font-weight:550}
+.rleg-bar{height:7px;border-radius:999px;background:var(--progress-track);overflow:hidden}
+.rleg-bar i{display:block;height:100%;border-radius:inherit;background:var(--accent);transition:width var(--dur-page) var(--ease-spring)}
+.rleg-body>.tiny{margin:9px 0 0;color:var(--progress-muted);font-size:calc((14px) * var(--text-scale,1));line-height:1.4}
 :root[data-motion="reduced"] .rleg-bar i{transition:none}
 @media (max-width:600px){
   .rings-row{gap:14px;justify-content:center}
@@ -1126,6 +1133,7 @@ svg:not(.logo-svg):not(.scene-svg):not(.chart){max-width:100%}
   .rings-mid{font-size:calc((22px) * var(--text-scale,1))}
   .rings-legend{flex:1 1 100%}
 }
+@media (max-width:760px){.rings-legend{grid-template-columns:1fr;gap:10px}.rleg{padding:14px 16px}}
 
 /* Widget sizes: small (1 col), medium (2), wide (full row) */
 .mcard.med{grid-column:span 2}
@@ -3782,7 +3790,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.25", channel: "Dev Testing", date: "2026-10-15", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.26", channel: "Dev Testing", date: "2026-10-15", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3796,6 +3804,14 @@ const APP_VERSION = { update: "8.2", build: "8.2.25", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.26",
+      area:"Dashboard",
+      title:"Dashboard: the three daily progress cards get compact accent cards",
+      bug:"The Move, Exercise and Hydration cards on Today at a glance had a large glowing edge and sat in one tall column beside the rings, so they took a lot of room and were hard to scan.",
+      fix:"The three cards now use compact cards with a slim category accent on the left edge instead of the glowing border, a heading line with the dot and icon, a larger current amount with the target in muted text, a slim progress bar and a quieter detail line. They sit three across under the rings when there is room and stack on phones (760px and narrower). The accent colours are the existing per-ring colours, and the surface, track and muted colours follow the app's light and dark theme tokens. All text, values, units, targets, progress amounts and links are unchanged.",
+      where:"index.html: the rings legend CSS (.rings-legend, .rleg, .rleg-dot, .rleg-body, .rleg-top, .rleg-num, .rleg-bar, .rleg-body > .tiny), .rings-row, and a 760px media rule next to the existing phone rule. No markup or JavaScript changed. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open Home and look at Today at a glance: three cards across on a wide screen, stacked on a phone, in light and dark. Values, targets, 'closed' tags, progress bars and the links to each page are as before.",
+      limits:"Class names in the supplied CSS were mapped to the app's: dashboard-progress is .rings-legend, the card is .rleg, heading .rleg-top, value .rleg-num, track .rleg-bar, detail .tiny. The legend now takes the full row under the rings on wide screens so three cards fit. Colours come from theme tokens and --rc rather than the example's fixed hex values, so light theme keeps working. Checked in headless Chrome at 400px and 1100px only." },
     { id:"8.2.25",
       area:"Legal",
       title:"Legal pages: long sections fold behind Read more, and Not medical advice is red italics",

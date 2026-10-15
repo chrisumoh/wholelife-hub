@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.26 | Daily progress cards (Move, Exercise, Hydration): compact accent cards, three across, stacked on phones | IN PROGRESS: claude/project-thread-88d00b |
 | 8.2.25 | Terms and Privacy Policy fold long sections behind Read more popups; Not medical advice in red italics | IN PROGRESS: claude/project-thread-88d00b |
 | 8.2.24 | Notification links limited to in-app routes (security audit finding) | IN PROGRESS: claude/project-thread-88d00b |
 | 8.2.23 | Move long CSS explanations out of the app download; fast size-budget check and PR base comparison; all budgets retained | IN PROGRESS: build-8.2.23 |
@@ -203,3 +204,8 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 - Local: tests/browser/legal.mjs (57 passed), headers (17), privacy (28), security (93), repo checks (20), size check (within budgets, still near limit), screenshots at 400px wide.
 - Not run: a11y.mjs (axe-core unavailable here), phone timing gate, preview, real-phone/Safari checks. No auth, database or catalog changes.
+
+### Checklist run for 8.2.26
+
+- Local: cards.mjs (143), glass.mjs (24), widgets.mjs (511), rail.mjs (13), repo checks (20), size check (within budgets); screenshots at 400px and 1100px, dark and light.
+- Not run: a11y.mjs (axe-core unavailable here), phone timing gate, preview, real-phone/Safari. CSS only: no markup, JavaScript, auth or database changes.
