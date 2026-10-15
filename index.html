@@ -3779,7 +3779,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.23", channel: "Dev Testing", date: "2026-10-13", week: "Sun 11 Oct – Sat 17 Oct 2026" };
+const APP_VERSION = { update: "8.2", build: "8.2.24", channel: "Dev Testing", date: "2026-10-15", week: "Sun 11 Oct – Sat 17 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3793,6 +3793,14 @@ const APP_VERSION = { update: "8.2", build: "8.2.23", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.2.24",
+      area:"Security",
+      title:"Notification links can only open screens inside the app",
+      bug:"A security audit found that a notification stored in the browser could carry a link starting with javascript:. Tapping it in the bell menu would run that script on the page. The app only ever creates in-app links itself, so this needed someone to change the browser's stored data first.",
+      fix:"Notification links are now accepted only when they start with #/ and use plain route characters. Any other link is dropped when the list is read and when a notification is created, so the row simply has no link.",
+      where:"index.html: NOTIF_HREF, safeNotifHref(), loadNotifs() and notify(). tests/browser/security.mjs: new notification link check. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/security.mjs: a stored notification with a javascript: link loses its link and nothing runs. By hand: add a notification to localStorage with href javascript:alert(1), open the bell, tap it: nothing runs.",
+      limits:"The page's Content-Security-Policy still allows inline scripts (docs/SECURITY.md section 8), so this closes one entry point, not the whole class. Checked in headless Chrome only." },
     { id:"8.2.23",
       area:"Speed",
       title:"Trim CSS notes and report size growth before the phone gate",
@@ -15175,10 +15183,13 @@ document.addEventListener("keydown", e => {
 
 // Section 5: notifications live behind a bell with an unread count.
 const NOTIF_KEY = p => ukey(`wlh.notif.${p.id}`);
-function loadNotifs(p){ try { const v = JSON.parse(localStorage.getItem(NOTIF_KEY(p)) || "[]"); return Array.isArray(v) ? v.slice(0, 40) : []; } catch { return []; } }
+const NOTIF_HREF = /^#\/[A-Za-z0-9\/_\-?=&.%]*$/; // in-app routes only: a stored javascript: link would run on tap
+const safeNotifHref = h => typeof h === "string" && NOTIF_HREF.test(h) ? h : null;
+function loadNotifs(p){ try { const v = JSON.parse(localStorage.getItem(NOTIF_KEY(p)) || "[]"); return Array.isArray(v) ? v.slice(0, 40).map(n => n && typeof n === "object" ? { ...n, href: safeNotifHref(n.href) } : n) : []; } catch { return []; } }
 function saveNotifs(p, list){ if (LEAVING) return; try { localStorage.setItem(NOTIF_KEY(p), JSON.stringify(list.slice(0, 40))); } catch {} }
 function notify(kind, title, body, href){
   const p = P(); if (!p) return;
+  href = safeNotifHref(href);
   const list = loadNotifs(p);
   const id = `${kind}-${today()}-${hash(title)}`;
   if (list.some(n => n.id === id)) return;                 // one of each kind per day

@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.23, 2026-10-13. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.24, 2026-10-15. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.24 · Security: Notification links can only open screens inside the app
+
+- **Problem:** A security audit found that a notification stored in the browser could carry a link starting with javascript:. Tapping it in the bell menu would run that script on the page. The app only ever creates in-app links itself, so this needed someone to change the browser's stored data first.
+- **Change:** Notification links are now accepted only when they start with #/ and use plain route characters. Any other link is dropped when the list is read and when a notification is created, so the row simply has no link.
+- **Where:** index.html (NOTIF_HREF, safeNotifHref(), loadNotifs() and notify()); tests/browser/security.mjs (new notification link check); CHANGELOG.md; README.md; docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/security.mjs: a stored notification with a javascript: link loses its link and nothing runs. By hand: add a notification to localStorage with href javascript:alert(1), open the bell, tap it: nothing runs.
+- **Known limits:** The page's Content-Security-Policy still allows inline scripts (docs/SECURITY.md section 8), so this closes one entry point, not the whole class. Checked in headless Chrome only.
 
 ## 8.2.23 · Speed: Trim CSS notes and report size growth before the phone gate
 

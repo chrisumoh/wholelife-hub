@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.24 | Notification links limited to in-app routes (security audit finding) | IN PROGRESS: claude/project-thread-88d00b |
 | 8.2.23 | Move long CSS explanations out of the app download; fast size-budget check and PR base comparison; all budgets retained | IN PROGRESS: build-8.2.23 |
 | 8.2.22 | Collapsed sidebar: icons, logo and profile picture on one centre line, even row height and spacing | IN PROGRESS: claude/project-thread-dhtwj9 |
 | 8.2.21 | Coach advice card: repeats of yesterday are marked in the coach's voice; evening card reviews today and sets up tomorrow by weekday | MERGED: PR #32 |
@@ -191,3 +192,8 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 - Local: size-check unit tests, unchanged CSS token stream, unchanged executable scripts except version and change log, repository checks and compressed-size measurement.
 - Pending CI: browser suite and phone performance gate. Chrome was unavailable locally and the browser download failed. No claim of measured timing improvement.
 - Not run: preview layout/theme/font sweep, real sign-in, real-phone/Safari checks and live database checks. No auth, database, rendering or CSS declarations changed.
+
+### Checklist run for 8.2.24
+
+- Local: node tests/browser/security.mjs (93 passed), a scripted hostile-data run (markup and javascript: values in names, notes, photos and notification links; nothing executed after the fix), repository checks.
+- Not run: other browser tests, preview, real sign-in, live database checks. No auth, database, CSS or catalog changes.
