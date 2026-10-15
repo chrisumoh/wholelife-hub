@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.25 | Terms and Privacy Policy fold long sections behind Read more popups; Not medical advice in red italics | IN PROGRESS: claude/project-thread-88d00b |
 | 8.2.24 | Notification links limited to in-app routes (security audit finding) | IN PROGRESS: claude/project-thread-88d00b |
 | 8.2.23 | Move long CSS explanations out of the app download; fast size-budget check and PR base comparison; all budgets retained | IN PROGRESS: build-8.2.23 |
 | 8.2.22 | Collapsed sidebar: icons, logo and profile picture on one centre line, even row height and spacing | IN PROGRESS: claude/project-thread-dhtwj9 |
@@ -197,3 +198,8 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 - Local: node tests/browser/security.mjs (93 passed), a scripted hostile-data run (markup and javascript: values in names, notes, photos and notification links; nothing executed after the fix), repository checks.
 - Not run: other browser tests, preview, real sign-in, live database checks. No auth, database, CSS or catalog changes.
+
+### Checklist run for 8.2.25
+
+- Local: tests/browser/legal.mjs (57 passed), headers (17), privacy (28), security (93), repo checks (20), size check (within budgets, still near limit), screenshots at 400px wide.
+- Not run: a11y.mjs (axe-core unavailable here), phone timing gate, preview, real-phone/Safari checks. No auth, database or catalog changes.

@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.2 (Dev Testing), build 8.2.24, 2026-10-15. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.2 (Dev Testing), build 8.2.25, 2026-10-15. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.2.25 · Legal: Legal pages: long sections fold behind Read more, and Not medical advice is red italics
+
+- **Problem:** The Terms and the Privacy Policy showed every section in full, so each page was a very long scroll on a phone, and the Not medical advice box was a heavy orange block that did not stand out as the key warning.
+- **Change:** On the Terms and the Privacy Policy, every section keeps its heading but long sections show only their first sentence with a Read more button, which opens the full section in a popup (Escape, the close button or the backdrop closes it, and a link inside it closes it too). Short sections such as Contact stay open. The Not medical advice note is now neater red italic text with a red edge, on the page and in its popup. The wording of the Terms and the Privacy Policy is unchanged.
+- **Where:** index.html: legalFold(), openLegalMore() and LEGAL_FOLD (before privacyPolicyView), the legal-more case in the main click switch, the .legal CSS block (.legal-sum, .legal-more, .note.legal-red), privacyPolicyView() and termsView() now return through legalFold(). tests/browser/legal.mjs: new fold checks and the policy-text check reads folded sections too. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open #/terms and #/privacy-policy: headings stay, long sections show one sentence and Read more; press it to read the full section in a popup and close it with Escape, X or the backdrop. Not medical advice is red italic. Run node tests/browser/legal.mjs (57 checks).
+- **Known limits:** Refunds and Contact pages are not folded (they are short). The first sentence is cut at the first full stop, so a section whose first sentence is long shows its start and an ellipsis. Checked in headless Chrome at phone width only; the axe accessibility test could not run here (no axe-core), so red-on-red contrast was checked by eye. The same popup covers screen readers through the shared dialog, but no VoiceOver run was made.
 
 ## 8.2.24 · Security: Notification links can only open screens inside the app
 

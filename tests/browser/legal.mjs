@@ -167,9 +167,27 @@ await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = tr
 await click('[data-act="sb-open"][data-v="up"]'); await sleep(400);
 ok("ticking, closing the popup and opening Create account again asks again (unticked)", await ev(`document.getElementById("sb-agree")?.checked === false`));
 ok("a failed submit keeps the tick for a retry in the same form", await (async () => { await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = true; c.dispatchEvent(new Event("change", { bubbles: true })); document.getElementById("sb-email").value = "bad"; document.getElementById("sb-pass").value = "x"; document.querySelector('form[data-form="sb-auth"]').requestSubmit(); return true; })()`); await sleep(400); return ev(`document.getElementById("sb-agree")?.checked === true && !!document.querySelector("#pop-auth .note")`); })());
+console.log("--- 4b. long legal sections fold behind Read more");
+// The auth popup from the checks above is still open; close it so the page behind is what a person would see.
+await ev(`closePopover("auth"); true`); await sleep(400);
+await ev(`location.hash = "#/terms"; true`); await sleep(500);
+ok("no other popup is open", await ev(`!document.querySelector(".pop-wrap")`));
+ok("Terms keeps its headings and shows a Read more button for each long section", await ev(`document.querySelectorAll(".legal h3").length >= 8 && document.querySelectorAll(".legal .legal-more").length >= 5`));
+ok("the folded text is not on the page until Read more is pressed", await ev(`!document.querySelector(".legal").textContent.includes("Because a passcode encrypts")`));
+// Real mouse and keyboard input through the browser, not element.click(), so this is the path a person takes.
+const centre = await ev(`(() => { const b = [...document.querySelectorAll(".legal-more")].find(b => b.previousElementSibling.previousElementSibling.textContent === "Your responsibilities"); b.setAttribute("data-t", "1"); b.scrollIntoView({ block: "center" }); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`); await sleep(300);
+const centre2 = await ev(`(() => { const r = document.querySelector("[data-t]").getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+for (const type of ["mousePressed", "mouseReleased"]) await send("Input.dispatchMouseEvent", { type, x: centre2.x, y: centre2.y, button: "left", clickCount: 1 }); await sleep(600);
+ok("Read more opens the full section in a popup with a close button", await ev(`/Because a passcode encrypts/.test(document.querySelector("#pop-legal")?.textContent || "") && !!document.querySelector("#pop-legal [data-pop='close']")`));
+for (const type of ["keyDown", "keyUp"]) await send("Input.dispatchKeyEvent", { type, key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 }); await sleep(600);
+ok("Escape closes it", await ev(`!document.querySelector("#pop-legal")`));
+ok("focus returns to the Read more button", await ev(`document.activeElement === document.querySelector("[data-t]")`));
+ok("Not medical advice stays a red italic note", await ev(`(() => { const n = document.querySelector(".legal .note.legal-red"); if (!n) return false; const c = getComputedStyle(n); return c.fontStyle === "italic" && c.color !== getComputedStyle(document.body).color; })()`));
+
 console.log("--- 5. the policy text matches what the app does");
 await ev(`location.hash = "#/privacy-policy"; true`); await sleep(500);
-const pol = await ev(`document.querySelector("#sec-privacy-policy, .legal")?.textContent || document.body.textContent`);
+// Long sections are folded behind "Read more" (8.2.25), so the policy text is the page plus every folded section.
+const pol = await ev(`(document.querySelector("#sec-privacy-policy, .legal")?.textContent || document.body.textContent) + " " + [...LEGAL_FOLD.values()].map(e => { const d = document.createElement("div"); d.innerHTML = e.html; return d.textContent; }).join(" ")`);
 ok("the Privacy Policy describes the birth month and year, that only the age is kept, and the 24-hour retry block", /birth month and year/.test(pol) && /never your birth date/.test(pol) && /24 hours/.test(pol) && !/13-and-over confirmation/.test(pol), pol.slice(pol.indexOf("Children") - 10, pol.indexOf("Children") + 450));
 
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 400));
