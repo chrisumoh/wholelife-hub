@@ -3802,7 +3802,7 @@ const APP_VERSION = { update: "8.3", build: "8.3.3", channel: "Dev Testing", dat
       area:"Premium",
       title:"Preview the payment receipt with sample numbers",
       bug:"The Payment successful receipt only shows after a real purchase, and payments are not live, so there was no way to look at its design.",
-      fix:"Opening the app with ?previewreceipt=1 on the address shows the receipt with clearly marked sample numbers (SAMPLE order, sample item and tax). It reads and writes nothing: no purchase happens, and Premium status is untouched. Nothing in the interface links to it.",
+      fix:"Opening the app with ?previewreceipt=1 on the address shows the receipt with clearly marked sample numbers (SAMPLE order, sample item and tax). The dialog heading, its accessible name, the stamp and the closing line all say it is a sample and that no payment was made (real receipts keep the Payment successful wording). It reads and writes nothing: no purchase happens, and Premium status is untouched, including an existing paid entitlement. Nothing in the interface links to it.",
       where:"index.html: boot() (the previewreceipt line before the premiumWanted check), APP_VERSION and the change log. tests/browser/receipt.mjs (new checks). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
       test:"Open the app address followed by ?previewreceipt=1 (for example https://wholelife-hub.vercel.app/?previewreceipt=1): the receipt prints out with SAMPLE labels. Without the parameter nothing appears. Run node tests/browser/receipt.mjs.",
       limits:"The numbers are made up on purpose and marked as samples. Real receipts will still come only from the payment provider's response. Checked in headless Chrome only." },
@@ -12800,7 +12800,7 @@ document.addEventListener("input", e => {
   render();
   // ?previewreceipt=1 shows the receipt with made-up sample numbers so its design can be seen. It reads nothing and writes nothing:
   // no purchase happens, and isPremium() and the saved entitlement are untouched.
-  try { if (new URLSearchParams(location.search).get("previewreceipt") === "1" && typeof showPurchaseReceipt === "function") setTimeout(() => showPurchaseReceipt({ orderNo:"SAMPLE", date:"SAMPLE PREVIEW", currency:"USD", items:[{ label:"Premium Monthly (sample)", amount:10 }], taxes:[{ label:"Tax (sample)", amount:2 }], total:12 }, "monthly"), 400); } catch {}
+  try { if (new URLSearchParams(location.search).get("previewreceipt") === "1" && typeof showPurchaseReceipt === "function") setTimeout(() => showPurchaseReceipt({ orderNo:"SAMPLE", date:"SAMPLE PREVIEW", currency:"USD", items:[{ label:"Premium Monthly (sample)", amount:10 }], taxes:[{ label:"Tax (sample)", amount:2 }], total:12 }, "monthly", true), 400); } catch {}
   if (UI.premiumWanted) { UI.premiumWanted = false; if (typeof afterPremiumBlock === "function") afterPremiumBlock(); }
   // Probe optional capabilities quietly (no prompts until used)
   window.claude?.use?.("sample").then(s => { if (!s) { UI.sampleOk = false; render(); } });
@@ -17630,7 +17630,7 @@ function rcptMoney(n, cur){
   try { return new Intl.NumberFormat(undefined, { style:"currency", currency:cur }).format(n); }
   catch { return null; }
 }
-function receiptHTML(r, plan){
+function receiptHTML(r, plan, sample = false){
   const cur = r.currency;
   const items = (Array.isArray(r.items) ? r.items : []).filter(i => i && typeof i === "object" && (rcptNum(i.amount) !== null || i.label));
   const taxes = Array.isArray(r.taxes) ? r.taxes.filter(t => t && typeof t === "object" && (rcptNum(t.amount) !== null || t.label)) : null;
@@ -17658,9 +17658,9 @@ function receiptHTML(r, plan){
     <div class="rc-rule"></div>${lines}
     ${taxHTML ? `<div class="rc-rule"></div>${taxHTML}` : ""}
     <div class="rc-rule"></div>
-    <div class="rc-totals">${total !== null ? row("TOTAL", total, "rc-total") : ""}<div class="rc-stamp">PAID</div></div>
+    <div class="rc-totals">${total !== null ? row("TOTAL", total, "rc-total") : ""}<div class="rc-stamp">${sample ? "SAMPLE" : "PAID"}</div></div>
     ${missing.length ? `<p class="rc-note">Your payment provider didn't send the ${esc(missing.join(", "))} for this order.</p>` : ""}
-    <div class="rc-bars" aria-hidden="true">${bars}</div><p class="rc-thanks">Thank you for your purchase!</p></div>`;
+    <div class="rc-bars" aria-hidden="true">${bars}</div><p class="rc-thanks">${sample ? "Sample only. No payment was made." : "Thank you for your purchase!"}</p></div>`;
 }
 function rcptPark(){
   const win = document.getElementById("rc-window"), paper = document.getElementById("rc-paper");
@@ -17678,16 +17678,16 @@ function rcptPrint(){
   paper.style.transition = `transform ${RCPT_PRINT_MS}ms cubic-bezier(.25,.6,.25,1)`;
   paper.style.transform = "translateY(0)";
 }
-function showPurchaseReceipt(receipt, plan){
+function showPurchaseReceipt(receipt, plan, sample = false){
   const r = receipt && typeof receipt === "object" ? receipt : {};
   openPopover("receipt", {
-    label: "Payment successful",
+    label: sample ? "Sample receipt, no payment made" : "Payment successful",
     width: "min(380px, calc(100vw - 32px))",
     focusSel: '[data-pop="close"].btn',
     bodyHTML: `<div class="rc-head"><span class="rc-check">${icon("check", "", 26)}</span>
-        <h2>Payment successful</h2><p class="muted small">Here is your receipt</p></div>
+        <h2>${sample ? "Sample receipt" : "Payment successful"}</h2><p class="muted small">${sample ? "Preview only. No payment was made." : "Here is your receipt"}</p></div>
       <div class="rc-stage"><div class="rc-slot" aria-hidden="true"></div>
-        <div class="rc-window" id="rc-window">${receiptHTML(r, plan)}</div></div>
+        <div class="rc-window" id="rc-window">${receiptHTML(r, plan, sample)}</div></div>
       <div class="rc-actions"><button type="button" class="btn" data-act="rcpt-again">Print again</button>
         <button type="button" class="btn primary" data-pop="close">Done</button></div>`
   });

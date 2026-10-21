@@ -135,6 +135,19 @@ ok("without the parameter no receipt appears", await ev(`!document.getElementByI
 await send("Page.navigate", { url: "http://127.0.0.1:8795/index.html?previewreceipt=1" }); await sleep(500); await waitFor(READY, 15000); await sleep(900);
 ok("with ?previewreceipt=1 the receipt shows, marked as a sample", await ev(`!!document.getElementById("pop-receipt") && /SAMPLE/.test(document.getElementById("pop-receipt").textContent) && /12\\.00/.test(document.getElementById("pop-receipt").textContent)`));
 ok("the preview buys nothing and saves no Premium entitlement", await ev(`!(S.profiles || []).some(p => p.premium?.source === "purchase" || p.premium?.active)`));
+ok("the preview says plainly it is a sample, not a payment", await ev(`(() => { const t = document.getElementById("pop-receipt").textContent, c = document.querySelector("#pop-receipt .pop-card"); return /Sample receipt/.test(t) && /No payment was made/.test(t) && !/Payment successful/.test(t) && !/PAID/.test(t) && !/Thank you for your purchase/.test(t) && /Sample receipt/.test(c.getAttribute("aria-label") || ""); })()`));
+
+console.log("--- the preview leaves an existing paid entitlement alone");
+await send("Page.navigate", { url: "http://127.0.0.1:8795/index.html" }); await sleep(500); await waitFor(READY, 15000);
+await fresh();
+await ev(`(async () => { const p = newProfile("Ada"); Object.assign(p, { onboarded: true, coachPrompted: true, tourSeen: "dismissed" }); p.premium = { active: true, since: "2026-10-01", source: "purchase", expires: "2027-10-01" }; S.profiles = [p]; S.activeId = p.id; saveProfile(); await flush(); render(); return true; })()`);
+await sleep(600);
+const before = await ev(`JSON.stringify(P().premium)`);
+await send("Page.navigate", { url: "http://127.0.0.1:8795/index.html?previewreceipt=1" }); await sleep(500); await waitFor(READY, 15000); await sleep(900);
+ok("with a paid profile the sample receipt still shows", await ev(`/Sample receipt/.test(document.getElementById("pop-receipt")?.textContent || "")`));
+ok("the entitlement is unchanged while the preview is open", await ev(`JSON.stringify(P().premium)`) === before, before);
+await send("Page.navigate", { url: "http://127.0.0.1:8795/index.html" }); await sleep(500); await waitFor(READY, 15000); await sleep(900);
+ok("after reloading without the parameter the saved entitlement is unchanged and no receipt shows", await ev(`JSON.stringify(P().premium)`) === before && await ev(`!document.getElementById("pop-receipt")`), before);
 
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 400));
 console.log(`\n${pass} passed, ${fail} failed`);
