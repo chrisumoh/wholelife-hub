@@ -8948,7 +8948,7 @@ function authFormHTML(){
   const link = (v, l) => `<button type="button" class="auth-link" data-act="sb-mode" data-v="${v}">${l}</button>`;
   const google = mode === "reset" ? "" : `<div class="auth-alt stack">
       <button type="button" class="btn auth-google" data-act="sb-google"${SB.busy ? " disabled" : ""}>${GOOGLE_G}<span>Continue with Google</span></button>
-      <p class="note" id="auth-g-msg" role="alert"></p>
+      <p class="auth-gmsg" id="auth-g-msg" role="alert"></p>
       <p class="tiny muted auth-terms">By continuing with Google you agree to the <a href="#/terms" target="_blank" rel="noopener">Terms</a> and the <a href="#/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
       <div class="auth-or" aria-hidden="true"><span>or use your email</span></div></div>`;
   return `${google}<form class="stack" data-form="sb-auth" data-kind="${mode}" novalidate>
@@ -21809,7 +21809,7 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .auth-pop .auth-alt{gap:10px;margin-bottom:16px}
 .auth-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
 .auth-terms{margin:0;text-align:center}
-#auth-g-msg:empty{display:none}#auth-g-msg{margin:0}
+#auth-g-msg{margin:0;padding:10px 12px;border-radius:10px;background:var(--bad-soft);color:var(--text);font-size:calc((13px) * var(--text-scale,1))}#auth-g-msg:empty{display:none}
 .auth-or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:calc((13px) * var(--text-scale,1))}
 .auth-or::before,.auth-or::after{content:"";flex:1;height:1px;background:var(--line)}
 </style>
