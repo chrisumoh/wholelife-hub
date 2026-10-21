@@ -86,19 +86,21 @@ console.log("--- Google");
 await ev(`(() => { localStorage.clear(); return true; })()`); await send("Page.reload"); await sleep(500); await waitFor(READY, 15000);
 const GOOGLE_OFF = `window.fetch = async () => ({ ok: true, json: async () => ({ external: { google: false } }) }); true`;
 const GOOGLE_ON = `window.fetch = async () => ({ ok: true, json: async () => ({ external: { google: true } }) }); true`;
-await ev(OPEN); await ev(GOOGLE_OFF); await ev(`document.querySelector('#pop-auth [data-act="sb-google"]').click(); true`); await sleep(400);
-ok("Google switched off: a clear message, no redirect attempted", await ev(`/isn't switched on/.test(document.querySelector("#pop-auth .note")?.textContent || "") && !(window.__oauth || []).length`));
+await ev(OPEN); await ev(`document.getElementById("sb-email").value = "keep@me.co"; document.getElementById("sb-pass").value = "typed-secret"; true`); await ev(GOOGLE_OFF); await ev(`document.querySelector('#pop-auth [data-act="sb-google"]').click(); true`); await sleep(400);
+ok("Google switched off: what was typed in the email and password fields is still there", await ev(`document.getElementById("sb-email").value === "keep@me.co" && document.getElementById("sb-pass").value === "typed-secret"`));
+ok("Google switched off: a clear message, no redirect attempted", await ev(`/isn't switched on/.test(document.getElementById("auth-g-msg")?.textContent || "") && !(window.__oauth || []).length`));
 await ev(GOOGLE_ON); await ev(`document.querySelector('#pop-auth [data-act="sb-google"]').click(); true`); await sleep(400);
 ok("Google switched on: signInWithOAuth is called for google, returning to this app", await ev(`(() => { const o = (window.__oauth || [])[0]; return !!o && o.provider === "google" && o.options.redirectTo === location.origin + location.pathname; })()`));
 ok("the button is usable again afterwards", await ev(`!document.querySelector('#pop-auth [data-act="sb-google"]').disabled`));
 await ev(`window.fetch = async () => { throw new TypeError("offline"); }; document.querySelector('#pop-auth [data-act="sb-google"]').click(); true`); await sleep(400);
-ok("a failed settings request shows a message, not an error", await ev(`/Couldn't reach sign-in|offline/i.test(document.querySelector("#pop-auth .note")?.textContent || "")`));
+ok("a failed settings request shows a message, not an error", await ev(`/Couldn't reach sign-in|offline/i.test(document.getElementById("auth-g-msg")?.textContent || "")`));
 
 console.log("--- layout");
 for (const [w, h] of [[375, 667], [375, 560], [820, 900], [1440, 900]]) {
   await view(w, h); await ev(OPEN); await sleep(500);
   const m = await ev(`(() => { const c = document.querySelector("#pop-auth .pop-card"), r = c.getBoundingClientRect(), l = document.querySelector("#pop-auth .lamp").getBoundingClientRect(); return { fitsX: c.scrollWidth <= c.clientWidth && r.left >= 0 && r.right <= innerWidth, docX: document.documentElement.scrollWidth <= innerWidth, lamp: l.width > 100 && l.height > 80 }; })()`);
   ok(`${w}x${h}: no sideways scroll, popup and lamp fit`, m.fitsX && m.docX && m.lamp, JSON.stringify(m));
+  ok(`${w}x${h}: the cord is at least 44px wide and tall`, await ev(`(() => { const r = document.querySelector("#pop-auth .lamp-cord").getBoundingClientRect(); return r.width >= 44 && r.height >= 44; })()`));
 }
 await view(1440);
 

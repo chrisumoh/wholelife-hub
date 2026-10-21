@@ -3784,7 +3784,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.2", build: "8.2.27", channel: "Dev Testing", date: "2026-10-21", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3", channel: "Dev Testing", date: "2026-10-21", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3798,11 +3798,11 @@ const APP_VERSION = { update: "8.2", build: "8.2.27", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
-    { id:"8.2.27",
+    { id:"8.3",
       area:"Sign-in",
       title:"Sign-in popup gets a lamp scene and Continue with Google",
       bug:"The sign-in popup was a plain email form, with no quicker way in and nothing to make the moment feel like Whole Life.",
-      fix:"The popup now opens with a small lamp scene: pull the cord to switch the light on or off, and a few fireflies drift in the light. It uses the app's own colours (the gold token, so every theme and light or dark follows). Above the email form there is a Continue with Google button; it asks Supabase whether Google is switched on and, if it is not yet, says so in the form instead of sending you to an error page. When Google is on it starts the normal Supabase sign-in and returns to this page. Email sign-in, Create account and Reset password are unchanged. The lamp is decoration only: the form never waits for it, and the cord is a real button (aria-pressed, labelled Lamp light). With reduced motion (system setting or the app's Reduced motion) the lamp is simply lit with no fireflies; fireflies pause while the lamp is off or the tab is hidden.",
+      fix:"The popup now opens with a small lamp scene: pull the cord to switch the light on or off, and a few fireflies drift in the light. It uses the app's own colours (the gold token, so every theme and light or dark follows). Above the email form there is a Continue with Google button; it asks Supabase whether Google is switched on and, if it is not yet, says so under the button (what you typed stays put) instead of sending you to an error page. When Google is on it starts the normal Supabase sign-in and returns to this page. Email sign-in, Create account and Reset password are unchanged. The lamp is decoration only: the form never waits for it, and the cord is a real button (aria-pressed, labelled Lamp light). With reduced motion (system setting or the app's Reduced motion) the lamp is simply lit with no fireflies; fireflies pause while the lamp is off or the tab is hidden.",
       where:"index.html: GOOGLE_G, sbGoogle(), lampReduced(), lampHTML(), lampStart(), lampSet(), authFormHTML() (Google block), openAuthPopup(), the sb-google and sb-lamp cases in the sb- click switch, CSS block 8.2.27 at the end of the stylesheet. tests/browser/lamp.mjs (new, 31 checks), tests/browser/fake-supabase.js (signInWithOAuth), tests/browser/run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
       test:"Settings > Account > Sign in: the lamp lights after a moment; press the cord (mouse, touch, or Tab to it and Enter) to switch it off and on. Try the popup at phone and desktop width, light and dark, and with Reduced motion on. Press Continue with Google: until Google is switched on in Supabase you see the message 'Google sign-in isn't switched on yet'. Run node tests/browser/lamp.mjs.",
       limits:"Google needs setup only the owner can do (below), so the real Google round trip was not tested here; the tests use a faked Supabase. Apple sign-in is not included (dropped for now). A person who creates an account through Google agrees to the Terms by the line under the button, but, unlike email sign-up, no consent version is saved with that account. The popup is still opened from Settings: the welcome screen has no sign-in link yet. Checked in headless Chrome only." },
@@ -8899,17 +8899,20 @@ function sbPaint(){ const el = document.getElementById("sb-status"); if (el) el.
 const GOOGLE_G = `<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
 async function sbGoogle(){
   const c = sbClient(); if (!c || SB.busy) return;
-  UI.sbMsg = null; SB.busy = true; sbRender();
+  // Touch only the button and the message line: a re-render would empty the email and password the person already typed.
+  const btn = document.querySelector('#auth-pop-body [data-act="sb-google"]'), msg = document.getElementById("auth-g-msg");
+  const say = t => { if (msg) msg.textContent = t; };
+  say(""); SB.busy = true; if (btn) btn.disabled = true;
   try {
     let on = false;
     try {
       const r = await fetch(`${SB_URL}/auth/v1/settings`, { headers: { apikey: SB_KEY } });
       on = r.ok && (await r.json())?.external?.google === true;
-    } catch { UI.sbMsg = { t: navigator.onLine === false ? "You're offline. Connect and try again." : "Couldn't reach sign-in. Try again in a moment." }; }
-    if (!on && !UI.sbMsg) UI.sbMsg = { t:"Google sign-in isn't switched on yet. Use your email for now." };
+      if (!on) say("Google sign-in isn't switched on yet. Use your email for now.");
+    } catch { say(navigator.onLine === false ? "You're offline. Connect and try again." : "Couldn't reach sign-in. Try again in a moment."); }
     if (on) { const r = await c.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: sbRedirect() } }); if (r.error) throw r.error; }
-  } catch (e) { UI.sbMsg = { t: sbErrText(e) }; }
-  SB.busy = false; sbRender();
+  } catch (e) { say(sbErrText(e)); }
+  SB.busy = false; if (btn?.isConnected) btn.disabled = false;
 }
 
 // ---- lamp scene in the sign-in popup ----
@@ -8945,6 +8948,7 @@ function authFormHTML(){
   const link = (v, l) => `<button type="button" class="auth-link" data-act="sb-mode" data-v="${v}">${l}</button>`;
   const google = mode === "reset" ? "" : `<div class="auth-alt stack">
       <button type="button" class="btn auth-google" data-act="sb-google"${SB.busy ? " disabled" : ""}>${GOOGLE_G}<span>Continue with Google</span></button>
+      <p class="note" id="auth-g-msg" role="alert"></p>
       <p class="tiny muted auth-terms">By continuing with Google you agree to the <a href="#/terms" target="_blank" rel="noopener">Terms</a> and the <a href="#/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
       <div class="auth-or" aria-hidden="true"><span>or use your email</span></div></div>`;
   return `${google}<form class="stack" data-form="sb-auth" data-kind="${mode}" novalidate>
@@ -21801,10 +21805,11 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 @keyframes lampBlink{0%,100%{opacity:.25}50%{opacity:.95}}
 @media (prefers-reduced-motion:reduce){.lamp-flies{display:none}}
 :root[data-motion="reduced"] .lamp-flies{display:none}
-@media (max-height:640px){.lamp{height:110px}.lamp-art{transform:scale(.72);transform-origin:top center}}
+@media (max-height:640px){.lamp{height:110px}.lamp-art svg,.lamp-cone{transform:scale(.72);transform-origin:top center}.lamp-cone{top:32px}.lamp-cord{left:55px;top:27px}.lamp-string{height:29px}}
 .auth-pop .auth-alt{gap:10px;margin-bottom:16px}
 .auth-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
 .auth-terms{margin:0;text-align:center}
+#auth-g-msg:empty{display:none}#auth-g-msg{margin:0}
 .auth-or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:calc((13px) * var(--text-scale,1))}
 .auth-or::before,.auth-or::after{content:"";flex:1;height:1px;background:var(--line)}
 </style>
