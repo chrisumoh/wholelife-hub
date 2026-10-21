@@ -3784,7 +3784,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.3", channel: "Dev Testing", date: "2026-10-21", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.4", channel: "Dev Testing", date: "2026-10-21", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3798,6 +3798,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.3", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.4",
+      area:"Premium",
+      title:"Slide to pay on the Premium payment button",
+      bug:"The Premium payment button was a plain tap button. CJ wanted a slide-to-pay control there, ready for when payments go live.",
+      fix:"The Continue button on the Premium screen is now a slide-to-pay control: drag the round handle across the track, or use the arrow keys (Home/Escape reset, End/Enter/Space confirm). Letting go early springs it back. Payments are not live, so a full slide never shows a paid state: it shakes, says Not available yet, shows the usual coming-soon message and resets. Premium is never activated and no receipt opens. It is an original vanilla-JS build, not the pasted React code. It has slider semantics for screen readers, a 48px handle, theme colours from the tokens, and no shake with Reduced motion.",
+      where:"index.html: slidePayHTML(), scTravel(), scMove(), scCommit() and the pointerdown/keydown handlers after premiumCtaTap(), the Premium CTA bar markup, CSS block 8.3.4 at the end of the stylesheet, APP_VERSION and the change log. tests/browser/slidepay.mjs (new, 24 checks) and run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app with ?premium=0#/premium (the slider only shows while Premium is locked) and drag the handle across: it ends in Not available yet and nothing is purchased. Try early release, the keyboard, Reduced motion and 375px. Run node tests/browser/slidepay.mjs.",
+      limits:"Cosmetic only until a payment provider is wired (see the TODO(payment) notes): the full slide must then start the real checkout. Checked in headless Chrome only." },
     { id:"8.3.3",
       area:"Premium",
       title:"Preview the payment receipt with sample numbers",
@@ -17377,8 +17385,7 @@ function premiumHub(p){
       <button type="button" data-act="prem-restore">Restore Purchases</button>
     </div>
   </section>
-  ${on ? "" : `<div class="prem-cta-bar"><button class="prem-cta" data-act="prem-cta" data-v="${plan}">
-    Continue with ${plan === "yearly" ? "Annual" : "Monthly"}</button>
+  ${on ? "" : `<div class="prem-cta-bar">${slidePayHTML(plan === "yearly" ? "Annual" : "Monthly")}
     <p class="tiny muted prem-cta-fine">[PRICE] billed ${plan === "yearly" ? "once a year" : "every month"}, renews automatically until you cancel. Cancel any time in Settings &gt; Premium — see <a href="#/refunds">Refunds</a>.</p></div>`}
   </div>
   ${subscriptionPanel(p)}`;
@@ -17392,6 +17399,49 @@ function premiumHub(p){
 //   3. [PRICE] and [REAL PERCENTAGE] above are placeholders on purpose (see PREMIUM_PLANS in
 //      data8.js): fill in real numbers there once a plan and processor are chosen.
 function premiumCtaTap(){ toast("Payments aren't live yet — coming soon."); }
+
+// ---- slide to pay ----
+// An original vanilla take on a slide-to-confirm control (the idea is common; no third-party code is used). Payments are not live, so
+// sliding all the way calls premiumCtaTap() and then shows the honest "not available" state. It never shows a paid state.
+const SC_PAD = 4;
+const slidePayHTML = plan => `<div class="sc" data-phase="idle">
+    <div class="sc-track"><span class="sc-fill" aria-hidden="true"></span>
+      <span class="sc-label" aria-hidden="true"><span class="sc-t-plain">Slide to pay</span><span class="sc-t-err">Not available yet</span></span>
+      <div class="sc-handle" role="slider" tabindex="0" aria-label="Slide to pay, ${esc(plan)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Slide to pay, 0%">${icon("chevR","",22)}</div></div>
+    <span class="sc-sr" role="status"></span></div>`;
+const scTravel = el => Math.max(1, el.querySelector(".sc-track").clientWidth - el.querySelector(".sc-handle").offsetWidth - SC_PAD * 2);
+function scMove(el, x){
+  const t = scTravel(el), p = Math.round(Math.min(1, Math.max(0, x / t)) * 100), h = el.querySelector(".sc-handle");
+  el.style.setProperty("--sc-x", Math.min(t, Math.max(0, x)) + "px"); el.style.setProperty("--sc-p", p / 100);
+  h.setAttribute("aria-valuenow", String(p)); h.setAttribute("aria-valuetext", "Slide to pay, " + p + "%");
+}
+function scCommit(el){
+  const t = scTravel(el); scMove(el, t);
+  premiumCtaTap(); // never simulates success: payments are not live, so this ends in the error state below
+  el.dataset.phase = "error"; el.querySelector(".sc-sr").textContent = "Not available yet. Payments aren't live.";
+  setTimeout(() => { if (el.isConnected) scMove(el, 0); }, 300);
+  setTimeout(() => { if (el.isConnected) { el.dataset.phase = "idle"; el.querySelector(".sc-sr").textContent = ""; } }, 1800);
+}
+document.addEventListener("pointerdown", e => {
+  const track = e.target.closest?.(".sc-track"), el = track?.parentElement; if (!el || el.dataset.phase !== "idle" || e.button !== 0) return;
+  const base = parseFloat(el.style.getPropertyValue("--sc-x")) || 0, x0 = e.clientX; el.dataset.held = "";
+  try { track.setPointerCapture(e.pointerId); } catch {}
+  const move = ev => scMove(el, base + ev.clientX - x0);
+  const up = () => {
+    track.removeEventListener("pointermove", move); track.removeEventListener("pointerup", up); track.removeEventListener("pointercancel", up);
+    delete el.dataset.held;
+    if ((parseFloat(el.style.getPropertyValue("--sc-x")) || 0) >= scTravel(el) - 1) scCommit(el); else scMove(el, 0);
+  };
+  track.addEventListener("pointermove", move); track.addEventListener("pointerup", up); track.addEventListener("pointercancel", up);
+});
+document.addEventListener("keydown", e => {
+  const h = e.target.closest?.(".sc-handle"), el = h?.closest(".sc"); if (!el || el.dataset.phase !== "idle") return;
+  const x = parseFloat(el.style.getPropertyValue("--sc-x")) || 0, step = scTravel(el) / 10;
+  if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); if (x + step >= scTravel(el) - 1) scCommit(el); else scMove(el, x + step); }
+  else if (e.key === "ArrowLeft" || e.key === "ArrowDown") { e.preventDefault(); scMove(el, x - step); }
+  else if (e.key === "Home" || e.key === "Escape") { e.preventDefault(); scMove(el, 0); }
+  else if (e.key === "End" || e.key === "Enter" || e.key === " ") { e.preventDefault(); scCommit(el); }
+});
 
 // ---------- Subscription panel: shared by the hub and Settings > Premium ----------
 function subscriptionPanel(p){
@@ -21947,6 +21997,21 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .rc-bars i{background:#111;display:block;flex:none}
 .rc-thanks{text-align:center;font-size:12px;color:var(--rc-ink);margin:6px 0 0}
 .rc-actions{display:flex;justify-content:center;gap:12px;padding:20px 16px}
+/* ===================== 8.3.4 slide to pay ===================== */
+.sc{--sc-x:0px;--sc-p:0;position:relative;width:100%}
+.sc-track{position:relative;height:56px;border-radius:999px;background:var(--raise);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;-webkit-tap-highlight-color:transparent}
+.sc[data-held] .sc-track{cursor:grabbing}
+.sc-fill{position:absolute;left:0;top:0;bottom:0;width:calc(var(--sc-x) + 52px);border-radius:999px;background:color-mix(in srgb,var(--accent) 28%,transparent)}
+.sc-label{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-size:calc((15px) * var(--text-scale,1));font-weight:600;color:var(--muted);opacity:calc(1 - var(--sc-p) * 1.8)}
+.sc-t-plain,.sc-t-err{grid-area:1/1}.sc-t-err{color:var(--bad);opacity:0}
+.sc[data-phase="error"] .sc-t-plain{opacity:0}.sc[data-phase="error"] .sc-t-err{opacity:1}.sc[data-phase="error"] .sc-label{opacity:1}
+.sc-handle{position:absolute;top:4px;left:4px;width:48px;height:48px;border-radius:999px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;outline:none;transform:translateX(var(--sc-x))}
+.sc:not([data-held]) .sc-handle,.sc:not([data-held]) .sc-fill{transition:transform .4s cubic-bezier(.34,1.4,.64,1),width .4s cubic-bezier(.34,1.4,.64,1)}
+.sc[data-phase="error"] .sc-handle{background:var(--bad)}
+.sc[data-phase="error"] .sc-track{animation:scShake .45s ease}
+.sc-handle:focus-visible{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent)}
+@keyframes scShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+.sc-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
 <script>
 (() => {
