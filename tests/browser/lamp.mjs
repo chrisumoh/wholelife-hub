@@ -95,6 +95,16 @@ ok("the button is usable again afterwards", await ev(`!document.querySelector('#
 await ev(`window.fetch = async () => { throw new TypeError("offline"); }; document.querySelector('#pop-auth [data-act="sb-google"]').click(); true`); await sleep(400);
 ok("a failed settings request shows a message, not an error", await ev(`/Couldn't reach sign-in|offline/i.test(document.getElementById("auth-g-msg")?.textContent || "")`));
 
+console.log("--- Google request still pending when the form is switched");
+await ev(`window.fetch = () => new Promise(r => setTimeout(() => r({ ok: true, json: async () => ({ external: { google: false } }) }), 700))`);
+await ev(OPEN); await sleep(400); await ev(`document.querySelector('#pop-auth [data-act="sb-google"]').click(); document.querySelector('#pop-auth [data-act="sb-mode"][data-v="up"]').click(); true`); await sleep(150);
+ok("switching forms mid-request leaves the new form's buttons usable", await ev(`!document.querySelector('#pop-auth form button[type="submit"]').disabled`));
+await sleep(800);
+ok("when the request ends the visible Google button is enabled and the result shows", await ev(`!document.querySelector('#pop-auth [data-act="sb-google"]').disabled && /isn't switched on/.test(document.getElementById("auth-g-msg").textContent || "")`));
+await ev(`document.querySelector('#pop-auth [data-act="sb-google"]').click(); document.querySelector('#pop-auth [data-act="sb-mode"][data-v="in"]').click(); true`); await sleep(100);
+await ev(`document.querySelector('#pop-auth [data-act="sb-mode"][data-v="reset"]').click(); true`); await sleep(900);
+ok("ending while on Reset password (no Google button) throws nothing and leaves the form usable", await ev(`!document.querySelector('#pop-auth form button[type="submit"]').disabled && !SB.gbusy`));
+
 console.log("--- layout");
 for (const [w, h] of [[375, 667], [375, 560], [820, 900], [1440, 900]]) {
   await view(w, h); await ev(OPEN); await sleep(500);
