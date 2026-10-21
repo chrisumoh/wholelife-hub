@@ -3784,7 +3784,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3", channel: "Dev Testing", date: "2026-10-21", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.1", channel: "Dev Testing", date: "2026-10-21", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3798,6 +3798,14 @@ const APP_VERSION = { update: "8.3", build: "8.3", channel: "Dev Testing", date:
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.1",
+      area:"Sign-in",
+      title:"A waiting Google sign-in is cancelled when you start an email sign-in",
+      bug:"If you pressed Continue with Google and then started an email sign-in before Google's check came back, the Google attempt could still send you to Google afterwards.",
+      fix:"Each Google attempt now carries a token. Starting an email sign-in invalidates it, and the attempt also stops if you are already signed in or the popup has closed, so it never redirects late.",
+      where:"index.html: sbGoogle() and sbAuth() (SB.gtok). tests/browser/lamp.mjs (new check: a wrong email password while Google waits cancels Google, and Google works again afterwards). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/lamp.mjs (41 checks). By hand: slow your network, press Continue with Google, then submit the email form with a wrong password: you stay on the form and are not sent to Google.",
+      limits:"A successful email sign-in reloads the page, which already ended a waiting Google attempt, so this covers a failed or slow email sign-in. Checked in headless Chrome only." },
     { id:"8.3",
       area:"Sign-in",
       title:"Sign-in popup gets a lamp scene and Continue with Google",
