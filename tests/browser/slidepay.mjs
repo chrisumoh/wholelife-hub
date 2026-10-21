@@ -87,6 +87,17 @@ ok("nothing was bought: Premium is not on and no receipt shows", await ev(`!P().
 await sleep(2000);
 ok("then it resets so it can be tried again", await phase() === "idle" && await val() === 0);
 
+console.log("--- cancelled and multi-finger gestures");
+// Synthetic pointer events: a cancelled drag must never confirm, and a second finger must not confirm twice.
+const pe = (type, id, x) => ev(`(() => { const t = document.querySelector(".sc-track"); t.dispatchEvent(new PointerEvent(${JSON.stringify(type)}, { pointerId: ${id}, clientX: ${x}, clientY: ${cy}, button: 0, bubbles: true, cancelable: true })); return true; })()`);
+await ev(`window.__tt = 0; const o = window.premiumCtaTap; window.premiumCtaTap = () => { window.__tt++; return o(); }; true`);
+await pe("pointerdown", 1, cx); await pe("pointermove", 1, cx + span * 1.2); await pe("pointercancel", 1, cx + span * 1.2); await sleep(500);
+ok("cancelling a drag at the end of the track does not confirm", await ev(`window.__tt`) === 0 && await phase() === "idle" && await val() === 0);
+await pe("pointerdown", 1, cx); await pe("pointerdown", 2, cx); await pe("pointermove", 1, cx + span * 1.2); await pe("pointerup", 1, cx + span * 1.2); await sleep(150);
+ok("a second finger on the track confirms at most once", await ev(`window.__tt`) === 1 && await phase() === "error");
+await pe("pointerup", 2, cx); await sleep(2200);
+ok("a stray second pointer does not leave the control stuck", await phase() === "idle" && await val() === 0 && await ev(`!("held" in document.querySelector(".sc").dataset)`));
+
 console.log("--- keyboard");
 await ev(`document.querySelector(".sc-handle").focus(); true`);
 await key("ArrowRight"); await key("ArrowRight"); await key("ArrowRight");
