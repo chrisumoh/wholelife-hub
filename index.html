@@ -17621,9 +17621,9 @@ function rcptMoney(n, cur){
 }
 function receiptHTML(r, plan){
   const cur = r.currency;
-  const items = (Array.isArray(r.items) ? r.items : []).filter(i => i && rcptNum(i.amount) !== null);
-  const taxes = Array.isArray(r.taxes) ? r.taxes.filter(t => t && rcptNum(t.amount) !== null) : null;
-  const row = (l, a, cls = "") => { const m = rcptMoney(a, cur); return `<div class="rc-row ${cls}"><span>${esc(l)}</span>${m === null ? "" : `<span>${esc(m)}</span>`}</div>`; };
+  const items = (Array.isArray(r.items) ? r.items : []).filter(i => i && typeof i === "object" && (rcptNum(i.amount) !== null || i.label));
+  const taxes = Array.isArray(r.taxes) ? r.taxes.filter(t => t && typeof t === "object" && (rcptNum(t.amount) !== null || t.label)) : null;
+  const row = (l, a, cls = "") => { const m = rcptNum(a) === null ? null : rcptMoney(a, cur); return `<div class="rc-row ${cls}"><span>${esc(l)}</span>${m === null ? "" : `<span>${esc(m)}</span>`}</div>`; };
   const total = rcptNum(r.total);
   const lines = items.length
     ? items.map(i => row(i.label || "Premium", i.amount)).join("")
@@ -17631,8 +17631,8 @@ function receiptHTML(r, plan){
   const taxHTML = taxes === null ? "" : taxes.map(t => row(t.label || "Tax", t.amount)).join("");
   const missing = [];
   if (rcptMoney(0, cur) === null) missing.push("currency");
-  if (!items.length) missing.push("price");
-  if (taxes === null) missing.push("tax");
+  if (!items.length || items.some(i => rcptNum(i.amount) === null)) missing.push("price");
+  if (taxes === null || taxes.some(t => rcptNum(t.amount) === null)) missing.push("tax");
   if (total === null) missing.push("total");
   let seed = 0;
   for (const ch of String(r.orderNo || "WLH")) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;

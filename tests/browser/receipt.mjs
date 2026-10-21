@@ -94,6 +94,11 @@ const t5 = await txt("#pop-receipt");
 ok("no currency from the provider: no amounts are shown and the note says so", !/\$|50/.test(t5.replace(/Payment successful/, "")) && /didn't send the currency/.test(t5), t5);
 await shut();
 
+await open({ currency: "USD", items: [{ label: "Premium Yearly" }], taxes: [{ label: "VAT" }], total: 50 }); await sleep(200);
+const t6 = await txt("#pop-receipt");
+ok("labels sent without amounts are kept, with no NaN, and the note names the missing amounts", /Premium Yearly/.test(t6) && /VAT/.test(t6) && !/NaN/.test(t6) && /didn't send the price, tax\b/.test(t6), t6);
+await shut();
+
 console.log("--- long provider text on a phone");
 await send("Emulation.setDeviceMetricsOverride", { width: 375, height: 700, deviceScaleFactor: 1, mobile: true });
 const LONG = "9f8e7d6c-5b4a-3210-fedc-ba9876543210-" + "X".repeat(40);
