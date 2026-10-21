@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.2.27 | Sign-in popup: lamp scene with fireflies and Continue with Google (email unchanged) | IN PROGRESS: claude/project-thread-7alpk4 |
 | 8.2.26 | The three daily progress cards keep their colours with less visual detail | IN PROGRESS: claude/project-thread-88d00b |
 | 8.2.25 | Terms and Privacy Policy fold long sections behind Read more popups; Not medical advice in red italics | IN PROGRESS: claude/project-thread-88d00b |
 | 8.2.24 | Notification links limited to in-app routes (security audit finding) | IN PROGRESS: claude/project-thread-88d00b |
@@ -209,3 +210,8 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 - Local: tests/browser/cards.mjs, glass, widgets, rail, repo checks, size check, screenshots at 400px wide.
 - Not run: a11y.mjs (axe-core unavailable here), phone timing gate, real-phone/Safari checks. CSS only; no auth, database or catalog changes.
+
+### Checklist run for 8.2.27
+
+- Local: tests/browser/lamp.mjs (31 passed), legal, security, account-sync, motion, repo checks, size check, screenshots at 390px wide (light and dark).
+- Not run: a real Google sign-in (the provider has to be switched on in Supabase first), a11y.mjs (axe-core unavailable here), real-phone/Safari checks. No database change.
