@@ -3802,9 +3802,9 @@ const APP_VERSION = { update: "8.3", build: "8.3.1", channel: "Dev Testing", dat
       area:"Sign-in",
       title:"A waiting Google sign-in is cancelled when you start an email sign-in",
       bug:"If you pressed Continue with Google and then started an email sign-in before Google's check came back, the Google attempt could still send you to Google afterwards.",
-      fix:"Each Google attempt now carries a token. Starting an email sign-in invalidates it, and the attempt also stops if you are already signed in or the popup has closed, so it never redirects late.",
-      where:"index.html: sbGoogle() and sbAuth() (SB.gtok). tests/browser/lamp.mjs (new check: a wrong email password while Google waits cancels Google, and Google works again afterwards). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
-      test:"Run node tests/browser/lamp.mjs (41 checks). By hand: slow your network, press Continue with Google, then submit the email form with a wrong password: you stay on the form and are not sent to Google.",
+      fix:"Each Google attempt now carries a token. Starting an email sign-in invalidates it, and the attempt also stops if you are already signed in or its popup was closed (even if it was closed and reopened), so it never redirects late.",
+      where:"index.html: sbGoogle() and sbAuth() (SB.gtok). tests/browser/lamp.mjs (new checks: a wrong email password while Google waits cancels Google and Google works again afterwards; closing the popup, or closing and reopening it, cancels it). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/lamp.mjs (43 checks). By hand: slow your network, press Continue with Google, then submit the email form with a wrong password: you stay on the form and are not sent to Google.",
       limits:"A successful email sign-in reloads the page, which already ended a waiting Google attempt, so this covers a failed or slow email sign-in. Checked in headless Chrome only." },
     { id:"8.3",
       area:"Sign-in",
@@ -8911,6 +8911,7 @@ async function sbGoogle(){
   // this waits. So the button and message are looked up again when it ends, in whichever form is showing.
   const btn = () => document.querySelector('#auth-pop-body [data-act="sb-google"]');
   const say = t => { const m = document.getElementById("auth-g-msg"); if (m) m.textContent = t; };
+  const pop = POPOVERS.auth; // closing the popup removes this entry at once (its element lingers 200 ms), and reopening makes a new one
   const tok = SB.gtok = (SB.gtok || 0) + 1; // sbAuth() bumps it, so starting an email sign-in cancels a Google attempt still waiting
   say(""); SB.gbusy = true; if (btn()) btn().disabled = true;
   try {
@@ -8920,7 +8921,7 @@ async function sbGoogle(){
       on = r.ok && (await r.json())?.external?.google === true;
       if (!on) say("Google sign-in isn't switched on yet. Use your email for now.");
     } catch { say(navigator.onLine === false ? "You're offline. Connect and try again." : "Couldn't reach sign-in. Try again in a moment."); }
-    if (on && (tok !== SB.gtok || SB.user || !document.getElementById("pop-auth"))) on = false; // another sign-in started, it finished, or the popup closed
+    if (on && (tok !== SB.gtok || SB.user || !pop || POPOVERS.auth !== pop)) on = false; // another sign-in started, it finished, or this popup was closed
     if (on) { const r = await c.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: sbRedirect() } }); if (r.error) throw r.error; }
   } catch (e) { say(sbErrText(e)); }
   SB.gbusy = false; if (btn()) btn().disabled = false;

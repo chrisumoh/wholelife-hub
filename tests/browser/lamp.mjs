@@ -117,6 +117,17 @@ ok("starting an email sign-in cancels a Google attempt that was still waiting", 
 await ev(`document.querySelector('#pop-auth [data-act="sb-google"]').click(); true`); await sleep(1200);
 ok("and Google works again afterwards", await ev(`(window.__oauth || []).length === 1`));
 
+console.log("--- popup closed while Google waits");
+await ev(`window.__oauth = []; window.fetch = () => new Promise(r => setTimeout(() => r({ ok: true, json: async () => ({ external: { google: true } }) }), 700)); true`);
+await ev(OPEN); await sleep(400);
+await ev(`document.querySelector('#pop-auth [data-act="sb-google"]').click(); document.querySelector('#pop-auth .pop-x').click(); true`);
+await sleep(1000);
+ok("closing the popup cancels a Google attempt that was still waiting", await ev(`!(window.__oauth || []).length && !SB.gbusy`));
+await ev(OPEN); await sleep(400);
+await ev(`document.querySelector('#pop-auth [data-act="sb-google"]').click(); document.querySelector('#pop-auth .pop-x').click(); ${OPEN.replace(" true", "")} true`);
+await sleep(1000);
+ok("closing and reopening before the answer also cancels it", await ev(`!(window.__oauth || []).length`));
+
 console.log("--- layout");
 for (const [w, h] of [[375, 667], [375, 560], [820, 900], [1440, 900]]) {
   await view(w, h); await ev(OPEN); await sleep(500);

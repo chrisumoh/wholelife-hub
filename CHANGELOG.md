@@ -9,9 +9,9 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 ## 8.3.1 · Sign-in: A waiting Google sign-in is cancelled when you start an email sign-in
 
 - **Problem:** If you pressed Continue with Google and then started an email sign-in before Google's check came back, the Google attempt could still send you to Google afterwards.
-- **Change:** Each Google attempt now carries a token. Starting an email sign-in invalidates it, and the attempt also stops if you are already signed in or the popup has closed, so it never redirects late.
-- **Where:** index.html: sbGoogle() and sbAuth() (SB.gtok). tests/browser/lamp.mjs (new check: a wrong email password while Google waits cancels Google, and Google works again afterwards). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
-- **How to test:** Run node tests/browser/lamp.mjs (41 checks). By hand: slow your network, press Continue with Google, then submit the email form with a wrong password: you stay on the form and are not sent to Google.
+- **Change:** Each Google attempt now carries a token. Starting an email sign-in invalidates it, and the attempt also stops if you are already signed in or its popup was closed (even if it was closed and reopened), so it never redirects late.
+- **Where:** index.html: sbGoogle() and sbAuth() (SB.gtok). tests/browser/lamp.mjs (new checks: a wrong email password while Google waits cancels Google and Google works again afterwards; closing the popup, or closing and reopening it, cancels it). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/lamp.mjs (43 checks). By hand: slow your network, press Continue with Google, then submit the email form with a wrong password: you stay on the form and are not sent to Google.
 - **Known limits:** A successful email sign-in reloads the page, which already ended a waiting Google attempt, so this covers a failed or slow email sign-in. Checked in headless Chrome only.
 
 ## 8.3 · Sign-in: Sign-in popup gets a lamp scene and Continue with Google
