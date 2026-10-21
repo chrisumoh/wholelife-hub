@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.1 | A waiting Google sign-in is cancelled when an email sign-in starts | IN PROGRESS: claude/project-thread-7alpk4 |
 | 8.3 | Sign-in popup: lamp scene with fireflies and Continue with Google (email unchanged) | IN PROGRESS: claude/project-thread-7alpk4 |
 | 8.2.26 | The three daily progress cards keep their colours with less visual detail | IN PROGRESS: claude/project-thread-88d00b |
 | 8.2.25 | Terms and Privacy Policy fold long sections behind Read more popups; Not medical advice in red italics | IN PROGRESS: claude/project-thread-88d00b |
