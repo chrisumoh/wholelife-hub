@@ -3784,7 +3784,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3", channel: "Dev Testing", date: "2026-10-21", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.2", channel: "Dev Testing", date: "2026-10-21", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3798,6 +3798,14 @@ const APP_VERSION = { update: "8.3", build: "8.3", channel: "Dev Testing", date:
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.2",
+      area:"Premium",
+      title:"Payment-successful receipt prints out after a Premium purchase",
+      bug:"Nothing marked the moment Premium was paid for, and a buyer had no record of what they were charged.",
+      fix:"After a paid activation a small dialog says Payment successful with a green check, and a receipt prints out of a slot (about 2.4 seconds, then Print again replays it and Done closes it). The receipt lists only what the payment provider sends back: the plan and price, each tax line, the total and the order number and date. Nothing is estimated: a tax or total line the provider did not send is left out and the receipt says which parts were missing. Provider text is escaped. With Reduced motion (system setting or the app's Reduced motion) the paper is already printed. Colours come from the app's tokens; the paper itself is white with dark ink, as paper is. Payment is not live yet, so today nothing opens it: activateLicense() still returns the beta message and grants nothing. The dialog is wired to the one place that grants a paid entitlement, after setPremium(purchase), inside a try so a receipt problem can never undo an activation.",
+      where:"index.html: RCPT_PRINT_MS, rcptMoney(), receiptHTML(), rcptPark(), rcptPrint(), showPurchaseReceipt() (after activateLicense), the rcpt-again click case, activateLicense() (one added line), CSS block 8.3.2 at the end of the stylesheet. tests/browser/receipt.mjs (new, 20 checks) and run-all.mjs. APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/receipt.mjs. By hand, in the browser console on a profile: showPurchaseReceipt({orderNo:'T-1',date:'21 OCT 2026',currency:'USD',items:[{label:'Premium Monthly',amount:10}],taxes:[{label:'VAT',amount:2}],total:12},'monthly') (test numbers only). Then try showPurchaseReceipt({}) to see the missing-data note, and repeat with Reduced motion on and at 375px.",
+      limits:"Payment is not live, so the real provider's receipt fields are not known yet: the shape above (items, taxes, total, currency, orderNo, date) is what validateLicenseKey() should return as receipt, and must be mapped from the provider when it is chosen. Plan prices are still TBA in the app, so no price is shown anywhere else. The receipt is not saved after it is closed and there is no download or email. Checked in headless Chrome only." },
     { id:"8.3",
       area:"Sign-in",
       title:"Sign-in popup gets a lamp scene and Continue with Google",
@@ -17580,16 +17588,93 @@ async function activateLicense(){
   if (res.state === "valid") {
     setPremium("purchase", res.expires || null);
     UI.licState = { ok:true, msg:"Activated. Premium is on." };
-    render(); toast("Premium activated.", "success"); return;
+    render(); toast("Premium activated.", "success");
+    try { showPurchaseReceipt(res.receipt, res.plan); } catch {}
+    return;
   }
   UI.licState = { ok:false, msg: res.message };
   render(); toast(res.message);
+}
+
+// ---------- Purchase receipt ----------
+// Shown after a paid activation. It prints only what the processor sent back in res.receipt
+// ({ orderNo, date, currency, items:[{label,amount}], taxes:[{label,amount}], total }); nothing
+// is estimated, so a missing tax or total line is left out and says so.
+const RCPT_PRINT_MS = 2400, RCPT_STRIP = 14;
+const rcptNum = n => typeof n === "number" && isFinite(n) ? n : null;
+function rcptMoney(n, cur){
+  try { return new Intl.NumberFormat(undefined, { style:"currency", currency:/^[A-Z]{3}$/.test(cur || "") ? cur : "USD" }).format(n); }
+  catch { return n.toFixed(2); }
+}
+function receiptHTML(r, plan){
+  const cur = r.currency;
+  const items = (Array.isArray(r.items) ? r.items : []).filter(i => i && rcptNum(i.amount) !== null);
+  const taxes = Array.isArray(r.taxes) ? r.taxes.filter(t => t && rcptNum(t.amount) !== null) : null;
+  const row = (l, a, cls = "") => `<div class="rc-row ${cls}"><span>${esc(l)}</span><span>${esc(rcptMoney(a, cur))}</span></div>`;
+  let total = rcptNum(r.total);
+  if (total === null && items.length && taxes) total = items.reduce((s, i) => s + i.amount, 0) + taxes.reduce((s, t) => s + t.amount, 0);
+  const lines = items.length
+    ? items.map(i => row(i.label || "Premium", i.amount)).join("")
+    : `<div class="rc-row"><span>${esc(plan ? "Premium · " + plan : "Premium")}</span></div>`;
+  const taxHTML = taxes === null ? "" : taxes.map(t => row(t.label || "Tax", t.amount)).join("");
+  const missing = [];
+  if (!items.length) missing.push("price");
+  if (taxes === null) missing.push("tax");
+  if (total === null) missing.push("total");
+  let seed = 0;
+  for (const ch of String(r.orderNo || "WLH")) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+  let bars = "";
+  for (let i = 0; i < 46; i++) {
+    seed = (seed * 1103515245 + 12345) >>> 0;
+    bars += `<i style="width:${1 + seed % 3}px;margin-right:${1 + ((seed >> 4) % 3)}px"></i>`;
+  }
+  return `<div class="rc-paper" id="rc-paper">
+    <p class="rc-brand">WHOLE LIFE HUB</p><p class="rc-sub">PREMIUM</p>
+    <p class="rc-meta">${esc([r.date, r.orderNo ? "ORDER #" + r.orderNo : ""].filter(Boolean).join("  ·  "))}</p>
+    <div class="rc-rule"></div>${lines}
+    ${taxHTML ? `<div class="rc-rule"></div>${taxHTML}` : ""}
+    <div class="rc-rule"></div>
+    <div class="rc-totals">${total !== null ? row("TOTAL", total, "rc-total") : ""}<div class="rc-stamp">PAID</div></div>
+    ${missing.length ? `<p class="rc-note">Your payment provider didn't send the ${esc(missing.join(", "))} for this order.</p>` : ""}
+    <div class="rc-bars" aria-hidden="true">${bars}</div><p class="rc-thanks">Thank you for your purchase!</p></div>`;
+}
+function rcptPark(){
+  const win = document.getElementById("rc-window"), paper = document.getElementById("rc-paper");
+  if (!win || !paper) return null;
+  win.style.height = "auto";
+  const h = paper.offsetHeight;
+  win.style.height = h + 22 + "px";
+  paper.style.transition = "none";
+  paper.style.transform = lampReduced() ? "none" : `translateY(${-(h - RCPT_STRIP)}px)`;
+  return paper;
+}
+function rcptPrint(){
+  const paper = rcptPark(); if (!paper || lampReduced()) return;
+  void paper.offsetHeight;
+  paper.style.transition = `transform ${RCPT_PRINT_MS}ms cubic-bezier(.25,.6,.25,1)`;
+  paper.style.transform = "translateY(0)";
+}
+function showPurchaseReceipt(receipt, plan){
+  const r = receipt && typeof receipt === "object" ? receipt : {};
+  openPopover("receipt", {
+    label: "Payment successful",
+    width: "min(380px, calc(100vw - 32px))",
+    focusSel: '[data-pop="close"].btn',
+    bodyHTML: `<div class="rc-head"><span class="rc-check">${icon("check", "", 26)}</span>
+        <h2>Payment successful</h2><p class="muted small">Here is your receipt</p></div>
+      <div class="rc-stage"><div class="rc-slot" aria-hidden="true"></div>
+        <div class="rc-window" id="rc-window">${receiptHTML(r, plan)}</div></div>
+      <div class="rc-actions"><button type="button" class="btn" data-act="rcpt-again">Print again</button>
+        <button type="button" class="btn primary" data-pop="close">Done</button></div>`
+  });
+  rcptPrint();
 }
 
 // ---------- Wiring ----------
 document.addEventListener("click", e => {
   const t = e.target.closest("[data-act]"); if (!t) return;
   const a = t.dataset.act;
+  if (a === "rcpt-again") { rcptPrint(); return; }
   if (a === "paywall") { e.preventDefault(); openPaywall(); return; }
   if (a === "premium-popup") { e.preventDefault(); openPremiumPopup(t); return; }
   if (a === "owner-tap") { ownerTap(); return; }
@@ -21813,6 +21898,30 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 #auth-g-msg{margin:0;padding:10px 12px;border-radius:10px;background:var(--bad-soft);color:var(--text);font-size:calc((13px) * var(--text-scale,1))}#auth-g-msg:empty{display:none}
 .auth-or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:calc((13px) * var(--text-scale,1))}
 .auth-or::before,.auth-or::after{content:"";flex:1;height:1px;background:var(--line)}
+/* ===================== 8.3.2 purchase receipt ===================== */
+.rc-head{text-align:center;padding:20px 16px 14px}
+.rc-head h2{margin:10px 0 2px;font-size:calc((20px) * var(--text-scale,1))}
+.rc-head p{margin:0}
+.rc-check{width:52px;height:52px;border-radius:50%;background:var(--good);color:#fff;display:inline-grid;place-items:center}
+.rc-stage{display:flex;flex-direction:column;align-items:center;padding:0 16px}
+.rc-slot{position:relative;z-index:3;width:100%;height:48px;border-radius:14px;background:linear-gradient(var(--line2),var(--raise) 70%,var(--line));box-shadow:0 8px 18px rgba(0,0,0,.35)}
+.rc-slot::after{content:"";position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:calc(100% - 28px);height:7px;border-radius:4px;background:#07090d;box-shadow:inset 0 2px 3px rgba(0,0,0,.9)}
+.rc-window{position:relative;z-index:1;overflow:hidden;width:calc(100% - 28px);margin-top:-8px}
+.rc-paper{--rc-paper:#fff;--rc-ink:#141414;--rc-soft:#555;background:var(--rc-paper);color:var(--rc-ink);font-family:ui-monospace,"Courier New",Courier,monospace;padding:20px 18px 30px;will-change:transform;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),95% 100%,90% calc(100% - 8px),85% 100%,80% calc(100% - 8px),75% 100%,70% calc(100% - 8px),65% 100%,60% calc(100% - 8px),55% 100%,50% calc(100% - 8px),45% 100%,40% calc(100% - 8px),35% 100%,30% calc(100% - 8px),25% 100%,20% calc(100% - 8px),15% 100%,10% calc(100% - 8px),5% 100%,0 calc(100% - 8px))}
+.rc-brand{text-align:center;font-weight:700;font-size:18px;letter-spacing:.3em;margin:2px 0 4px}
+.rc-sub{text-align:center;font-size:11px;letter-spacing:.18em;color:var(--rc-soft);margin:0 0 2px}
+.rc-meta{text-align:center;font-size:11px;color:var(--rc-soft);margin:0;min-height:1em}
+.rc-rule{border-top:2px dashed #a3a3a3;margin:12px 0}
+.rc-row{display:flex;justify-content:space-between;gap:12px;font-size:13px;margin:5px 0}
+.rc-row.rc-total{font-weight:700;font-size:15px}
+.rc-totals{position:relative;min-height:108px}
+.rc-stamp{position:absolute;right:4px;top:30px;width:76px;height:76px;border:3px solid var(--accent);border-radius:50%;color:var(--accent);display:grid;place-items:center;font-weight:700;letter-spacing:.2em;font-size:14px;transform:rotate(-12deg);opacity:.92;pointer-events:none;background:rgba(255,255,255,.55)}
+.rc-note{font-size:11px;color:var(--rc-soft);margin:10px 0 0}
+.rc-bars{display:flex;height:40px;margin:14px 6px 6px;overflow:hidden}
+.rc-bars i{background:#111;display:block;flex:none}
+.rc-thanks{text-align:center;font-size:12px;color:var(--rc-ink);margin:6px 0 0}
+.rc-actions{display:flex;justify-content:center;gap:12px;padding:20px 16px}
 </style>
 <script>
 (() => {

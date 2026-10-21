@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 // Runs every browser test one after another, because they share no ports but each starts its own Chrome.
 // Also what the GitHub "Tests" workflow runs. Exits non-zero if any test fails or can't start.
 const DIR = fileURLToPath(new URL(".", import.meta.url));
-const TESTS = ["headers", "security", "profile-sync", "meal-sync", "meal-upload", "controls", "glass", "cards", "widgets", "legal", "lamp", "a11y", "workouts", "privacy", "workout-sync", "account-sync", "motion", "advice", "rail"];
+const TESTS = ["headers", "security", "profile-sync", "meal-sync", "meal-upload", "controls", "glass", "cards", "widgets", "legal", "lamp", "a11y", "workouts", "privacy", "workout-sync", "account-sync", "motion", "advice", "rail", "receipt"];
 const results = [];
 for (const name of TESTS) {
   console.log(`\n===== ${name} =====`);
