@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.1, 2026-10-21. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.2, 2026-10-21. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.2 · Premium: Payment-successful receipt prints out after a Premium purchase
+
+- **Problem:** Nothing marked the moment Premium was paid for, and a buyer had no record of what they were charged.
+- **Change:** After a paid activation a small dialog says Payment successful with a green check, and a receipt prints out of a slot (about 2.4 seconds, then Print again replays it and Done closes it). The receipt lists only what the payment provider sends back: the plan and price, each tax line, the total and the order number and date. Nothing is estimated: a tax or total line the provider did not send is left out (the total is never added up here), amounts are left off if no currency came back, and the receipt says which parts were missing. Provider text is escaped. With Reduced motion (system setting or the app's Reduced motion) the paper is already printed. Colours come from the app's tokens; the paper itself is white with dark ink, as paper is. Payment is not live yet, so today nothing opens it: activateLicense() still returns the beta message and grants nothing. The dialog is wired to the one place that grants a paid entitlement, after setPremium(purchase), inside a try so a receipt problem can never undo an activation.
+- **Where:** index.html: RCPT_PRINT_MS, rcptMoney(), receiptHTML(), rcptPark(), rcptPrint(), showPurchaseReceipt() (after activateLicense), the rcpt-again click case, activateLicense() (one added line), CSS block 8.3.2 at the end of the stylesheet. tests/browser/receipt.mjs (new, 20 checks) and run-all.mjs. APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/receipt.mjs. By hand, in the browser console on a profile: showPurchaseReceipt({orderNo:'T-1',date:'21 OCT 2026',currency:'USD',items:[{label:'Premium Monthly',amount:10}],taxes:[{label:'VAT',amount:2}],total:12},'monthly') (test numbers only). Then try showPurchaseReceipt({}) to see the missing-data note, and repeat with Reduced motion on and at 375px.
+- **Known limits:** Payment is not live, so the real provider's receipt fields are not known yet: the shape above (items, taxes, total, currency, orderNo, date) is what validateLicenseKey() should return as receipt, and must be mapped from the provider when it is chosen. Plan prices are still TBA in the app, so no price is shown anywhere else. The receipt is not saved after it is closed and there is no download or email. Checked in headless Chrome only.
 
 ## 8.3.1 · Sign-in: A waiting Google sign-in is cancelled when you start an email sign-in
 

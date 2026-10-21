@@ -9,7 +9,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 | Phase | Contents | Status |
 |---|---|---|
 | 1 | Bug fixes: duplicate avatar, clipped text, menu-over-Settings layering glitch, Settings tabs | DONE (already fixed in earlier builds; checked at 375px and 820px in 8.2.21) |
-| 2 | Premium system: purchase-gated flag, badges, Telegram-style premium screen | DONE except payments (isPremium flag, dev override and premium screen exist; BETA_OPEN is on; prices and checkout are placeholders) |
+| 2 | Premium system: purchase-gated flag, badges, Telegram-style premium screen | DONE except payments (receipt dialog ready from 8.3.2; isPremium flag, dev override and premium screen exist; BETA_OPEN is on; prices and checkout are placeholders) |
 | 3 | Coach: full data access + personalized advice card (9 rules) | PARTLY DONE: advice card built; 8.2.21 adds repeat marking and the evening review. No protein advice (calories only); Task 3.1 plan adjustments not audited |
 | 4 | Font system: 8 options, Perplexity-style default | PROMPTED |
 | 5 | UI cleanup: blue outlines, compact appearance controls, clean layout, gradient sidebar icons | PROMPTED |
@@ -21,8 +21,9 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
-| 8.3.1 | A waiting Google sign-in is cancelled when an email sign-in starts | IN PROGRESS: claude/project-thread-7alpk4 |
-| 8.3 | Sign-in popup: lamp scene with fireflies and Continue with Google (email unchanged) | IN PROGRESS: claude/project-thread-7alpk4 |
+| 8.3.2 | Premium: payment-successful dialog with a receipt that prints out (plan, price, taxes, total from the provider; nothing invented). Payment still not live, so it is wired but not reachable | IN PROGRESS: claude/project-thread-he3th0 |
+| 8.3.1 | A waiting Google sign-in is cancelled when an email sign-in starts | MERGED: PR #42 |
+| 8.3 | Sign-in popup: lamp scene with fireflies and Continue with Google (email unchanged) | MERGED: PR #41 |
 | 8.2.26 | The three daily progress cards keep their colours with less visual detail | IN PROGRESS: claude/project-thread-88d00b |
 | 8.2.25 | Terms and Privacy Policy fold long sections behind Read more popups; Not medical advice in red italics | IN PROGRESS: claude/project-thread-88d00b |
 | 8.2.24 | Notification links limited to in-app routes (security audit finding) | IN PROGRESS: claude/project-thread-88d00b |
