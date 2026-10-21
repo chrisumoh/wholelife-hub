@@ -3806,6 +3806,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.2", channel: "Dev Testing", dat
       where:"index.html: RCPT_PRINT_MS, rcptMoney(), receiptHTML(), rcptPark(), rcptPrint(), showPurchaseReceipt() (after activateLicense), the rcpt-again click case, activateLicense() (one added line), CSS block 8.3.2 at the end of the stylesheet. tests/browser/receipt.mjs (new, 20 checks) and run-all.mjs. APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
       test:"Run node tests/browser/receipt.mjs. By hand, in the browser console on a profile: showPurchaseReceipt({orderNo:'T-1',date:'21 OCT 2026',currency:'USD',items:[{label:'Premium Monthly',amount:10}],taxes:[{label:'VAT',amount:2}],total:12},'monthly') (test numbers only). Then try showPurchaseReceipt({}) to see the missing-data note, and repeat with Reduced motion on and at 375px.",
       limits:"Payment is not live, so the real provider's receipt fields are not known yet: the shape above (items, taxes, total, currency, orderNo, date) is what validateLicenseKey() should return as receipt, and must be mapped from the provider when it is chosen. Plan prices are still TBA in the app, so no price is shown anywhere else. The receipt is not saved after it is closed and there is no download or email. Checked in headless Chrome only." },
+    { id:"8.3.1",
+      area:"Sign-in",
+      title:"A waiting Google sign-in is cancelled when you start an email sign-in",
+      bug:"If you pressed Continue with Google and then started an email sign-in before Google's check came back, the Google attempt could still send you to Google afterwards.",
+      fix:"Each Google attempt now carries a token. Starting an email sign-in invalidates it, and the attempt also stops if you are already signed in or its popup was closed (even if it was closed and reopened), so it never redirects late.",
+      where:"index.html: sbGoogle() and sbAuth() (SB.gtok). tests/browser/lamp.mjs (new checks: a wrong email password while Google waits cancels Google and Google works again afterwards; closing the popup, or closing and reopening it, cancels it). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/lamp.mjs (43 checks). By hand: slow your network, press Continue with Google, then submit the email form with a wrong password: you stay on the form and are not sent to Google.",
+      limits:"A successful email sign-in reloads the page, which already ended a waiting Google attempt, so this covers a failed or slow email sign-in. Checked in headless Chrome only." },
     { id:"8.3",
       area:"Sign-in",
       title:"Sign-in popup gets a lamp scene and Continue with Google",
@@ -8826,7 +8834,7 @@ const sbErrText = e => SB_ERR[e?.code] || (navigator.onLine === false ? "You're 
 async function sbAuth(kind){
   const c = sbClient(); if (!c) return;
   const email = val("sb-email").toLowerCase(), pass = document.getElementById("sb-pass")?.value || "";
-  UI.sbEmail = email; UI.sbMsg = null;
+  UI.sbEmail = email; UI.sbMsg = null; SB.gtok = (SB.gtok || 0) + 1;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { UI.sbMsg = { t:"Enter a valid email address." }; return sbRender(); }
   if (kind !== "reset" && (kind === "up" ? pass.length < 8 : !pass)) { UI.sbMsg = { t: kind === "up" ? "Use at least 8 characters for the password." : "Enter your password." }; return sbRender(); }
   if (kind === "up" && !document.getElementById("sb-agree")?.checked) { UI.sbMsg = { t:"Tick the box to agree to the Terms and the Privacy Policy." }; return sbRender(); }
@@ -8911,6 +8919,8 @@ async function sbGoogle(){
   // this waits. So the button and message are looked up again when it ends, in whichever form is showing.
   const btn = () => document.querySelector('#auth-pop-body [data-act="sb-google"]');
   const say = t => { const m = document.getElementById("auth-g-msg"); if (m) m.textContent = t; };
+  const pop = POPOVERS.auth; // closing the popup removes this entry at once (its element lingers 200 ms), and reopening makes a new one
+  const tok = SB.gtok = (SB.gtok || 0) + 1; // sbAuth() bumps it, so starting an email sign-in cancels a Google attempt still waiting
   say(""); SB.gbusy = true; if (btn()) btn().disabled = true;
   try {
     let on = false;
@@ -8919,6 +8929,7 @@ async function sbGoogle(){
       on = r.ok && (await r.json())?.external?.google === true;
       if (!on) say("Google sign-in isn't switched on yet. Use your email for now.");
     } catch { say(navigator.onLine === false ? "You're offline. Connect and try again." : "Couldn't reach sign-in. Try again in a moment."); }
+    if (on && (tok !== SB.gtok || SB.user || !pop || POPOVERS.auth !== pop)) on = false; // another sign-in started, it finished, or this popup was closed
     if (on) { const r = await c.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: sbRedirect() } }); if (r.error) throw r.error; }
   } catch (e) { say(sbErrText(e)); }
   SB.gbusy = false; if (btn()) btn().disabled = false;

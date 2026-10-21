@@ -14,6 +14,14 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 - **How to test:** Run node tests/browser/receipt.mjs. By hand, in the browser console on a profile: showPurchaseReceipt({orderNo:'T-1',date:'21 OCT 2026',currency:'USD',items:[{label:'Premium Monthly',amount:10}],taxes:[{label:'VAT',amount:2}],total:12},'monthly') (test numbers only). Then try showPurchaseReceipt({}) to see the missing-data note, and repeat with Reduced motion on and at 375px.
 - **Known limits:** Payment is not live, so the real provider's receipt fields are not known yet: the shape above (items, taxes, total, currency, orderNo, date) is what validateLicenseKey() should return as receipt, and must be mapped from the provider when it is chosen. Plan prices are still TBA in the app, so no price is shown anywhere else. The receipt is not saved after it is closed and there is no download or email. Checked in headless Chrome only.
 
+## 8.3.1 · Sign-in: A waiting Google sign-in is cancelled when you start an email sign-in
+
+- **Problem:** If you pressed Continue with Google and then started an email sign-in before Google's check came back, the Google attempt could still send you to Google afterwards.
+- **Change:** Each Google attempt now carries a token. Starting an email sign-in invalidates it, and the attempt also stops if you are already signed in or its popup was closed (even if it was closed and reopened), so it never redirects late.
+- **Where:** index.html: sbGoogle() and sbAuth() (SB.gtok). tests/browser/lamp.mjs (new checks: a wrong email password while Google waits cancels Google and Google works again afterwards; closing the popup, or closing and reopening it, cancels it). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/lamp.mjs (43 checks). By hand: slow your network, press Continue with Google, then submit the email form with a wrong password: you stay on the form and are not sent to Google.
+- **Known limits:** A successful email sign-in reloads the page, which already ended a waiting Google attempt, so this covers a failed or slow email sign-in. Checked in headless Chrome only.
+
 ## 8.3 · Sign-in: Sign-in popup gets a lamp scene and Continue with Google
 
 - **Problem:** The sign-in popup was a plain email form, with no quicker way in and nothing to make the moment feel like Whole Life.
