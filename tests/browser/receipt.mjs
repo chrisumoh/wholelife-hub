@@ -128,6 +128,14 @@ await ev(`validateLicenseKey = async () => ({ state:"valid" }); true`);
 await ev(`activateLicense(); true`); await sleep(300);
 ok("a valid key with no receipt data still activates and shows an honest receipt", await ev(`!!document.getElementById("pop-receipt") && /didn't send/.test(document.getElementById("pop-receipt").textContent)`));
 
+console.log("--- ?previewreceipt=1");
+await send("Page.navigate", { url: "http://127.0.0.1:8795/index.html" }); await sleep(500); await waitFor(READY, 15000);
+await fresh(); await sleep(900);
+ok("without the parameter no receipt appears", await ev(`!document.getElementById("pop-receipt")`));
+await send("Page.navigate", { url: "http://127.0.0.1:8795/index.html?previewreceipt=1" }); await sleep(500); await waitFor(READY, 15000); await sleep(900);
+ok("with ?previewreceipt=1 the receipt shows, marked as a sample", await ev(`!!document.getElementById("pop-receipt") && /SAMPLE/.test(document.getElementById("pop-receipt").textContent) && /12\\.00/.test(document.getElementById("pop-receipt").textContent)`));
+ok("the preview buys nothing and saves no Premium entitlement", await ev(`!(S.profiles || []).some(p => p.premium?.source === "purchase" || p.premium?.active)`));
+
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 400));
 console.log(`\n${pass} passed, ${fail} failed`);
 ws.close(); procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(fail ? 1 : 0);

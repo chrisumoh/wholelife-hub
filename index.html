@@ -3784,7 +3784,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.2", channel: "Dev Testing", date: "2026-10-21", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.3", channel: "Dev Testing", date: "2026-10-21", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3798,6 +3798,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.2", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.3",
+      area:"Premium",
+      title:"Preview the payment receipt with sample numbers",
+      bug:"The Payment successful receipt only shows after a real purchase, and payments are not live, so there was no way to look at its design.",
+      fix:"Opening the app with ?previewreceipt=1 on the address shows the receipt with clearly marked sample numbers (SAMPLE order, sample item and tax). It reads and writes nothing: no purchase happens, and Premium status is untouched. Nothing in the interface links to it.",
+      where:"index.html: boot() (the previewreceipt line before the premiumWanted check), APP_VERSION and the change log. tests/browser/receipt.mjs (new checks). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app address followed by ?previewreceipt=1 (for example https://wholelife-hub.vercel.app/?previewreceipt=1): the receipt prints out with SAMPLE labels. Without the parameter nothing appears. Run node tests/browser/receipt.mjs.",
+      limits:"The numbers are made up on purpose and marked as samples. Real receipts will still come only from the payment provider's response. Checked in headless Chrome only." },
     { id:"8.3.2",
       area:"Premium",
       title:"Payment-successful receipt prints out after a Premium purchase",
@@ -12790,6 +12798,9 @@ document.addEventListener("input", e => {
   // runs once per week, and a week with nothing logged is not written at all.
   if (typeof maybeAutoReview === "function") { try { maybeAutoReview(); } catch {} }
   render();
+  // ?previewreceipt=1 shows the receipt with made-up sample numbers so its design can be seen. It reads nothing and writes nothing:
+  // no purchase happens, and isPremium() and the saved entitlement are untouched.
+  try { if (new URLSearchParams(location.search).get("previewreceipt") === "1" && typeof showPurchaseReceipt === "function") setTimeout(() => showPurchaseReceipt({ orderNo:"SAMPLE", date:"SAMPLE PREVIEW", currency:"USD", items:[{ label:"Premium Monthly (sample)", amount:10 }], taxes:[{ label:"Tax (sample)", amount:2 }], total:12 }, "monthly"), 400); } catch {}
   if (UI.premiumWanted) { UI.premiumWanted = false; if (typeof afterPremiumBlock === "function") afterPremiumBlock(); }
   // Probe optional capabilities quietly (no prompts until used)
   window.claude?.use?.("sample").then(s => { if (!s) { UI.sampleOk = false; render(); } });

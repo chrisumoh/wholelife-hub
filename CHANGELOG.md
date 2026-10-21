@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.2, 2026-10-21. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.3, 2026-10-21. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.3 · Premium: Preview the payment receipt with sample numbers
+
+- **Problem:** The Payment successful receipt only shows after a real purchase, and payments are not live, so there was no way to look at its design.
+- **Change:** Opening the app with ?previewreceipt=1 on the address shows the receipt with clearly marked sample numbers (SAMPLE order, sample item and tax). It reads and writes nothing: no purchase happens, and Premium status is untouched. Nothing in the interface links to it.
+- **Where:** index.html: boot() (the previewreceipt line before the premiumWanted check), APP_VERSION and the change log. tests/browser/receipt.mjs (new checks). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open the app address followed by ?previewreceipt=1 (for example https://wholelife-hub.vercel.app/?previewreceipt=1): the receipt prints out with SAMPLE labels. Without the parameter nothing appears. Run node tests/browser/receipt.mjs.
+- **Known limits:** The numbers are made up on purpose and marked as samples. Real receipts will still come only from the payment provider's response. Checked in headless Chrome only.
 
 ## 8.3.2 · Premium: Payment-successful receipt prints out after a Premium purchase
 
