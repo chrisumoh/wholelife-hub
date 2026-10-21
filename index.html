@@ -3802,7 +3802,7 @@ const APP_VERSION = { update: "8.3", build: "8.3.2", channel: "Dev Testing", dat
       area:"Premium",
       title:"Payment-successful receipt prints out after a Premium purchase",
       bug:"Nothing marked the moment Premium was paid for, and a buyer had no record of what they were charged.",
-      fix:"After a paid activation a small dialog says Payment successful with a green check, and a receipt prints out of a slot (about 2.4 seconds, then Print again replays it and Done closes it). The receipt lists only what the payment provider sends back: the plan and price, each tax line, the total and the order number and date. Nothing is estimated: a tax or total line the provider did not send is left out and the receipt says which parts were missing. Provider text is escaped. With Reduced motion (system setting or the app's Reduced motion) the paper is already printed. Colours come from the app's tokens; the paper itself is white with dark ink, as paper is. Payment is not live yet, so today nothing opens it: activateLicense() still returns the beta message and grants nothing. The dialog is wired to the one place that grants a paid entitlement, after setPremium(purchase), inside a try so a receipt problem can never undo an activation.",
+      fix:"After a paid activation a small dialog says Payment successful with a green check, and a receipt prints out of a slot (about 2.4 seconds, then Print again replays it and Done closes it). The receipt lists only what the payment provider sends back: the plan and price, each tax line, the total and the order number and date. Nothing is estimated: a tax or total line the provider did not send is left out (the total is never added up here), amounts are left off if no currency came back, and the receipt says which parts were missing. Provider text is escaped. With Reduced motion (system setting or the app's Reduced motion) the paper is already printed. Colours come from the app's tokens; the paper itself is white with dark ink, as paper is. Payment is not live yet, so today nothing opens it: activateLicense() still returns the beta message and grants nothing. The dialog is wired to the one place that grants a paid entitlement, after setPremium(purchase), inside a try so a receipt problem can never undo an activation.",
       where:"index.html: RCPT_PRINT_MS, rcptMoney(), receiptHTML(), rcptPark(), rcptPrint(), showPurchaseReceipt() (after activateLicense), the rcpt-again click case, activateLicense() (one added line), CSS block 8.3.2 at the end of the stylesheet. tests/browser/receipt.mjs (new, 20 checks) and run-all.mjs. APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
       test:"Run node tests/browser/receipt.mjs. By hand, in the browser console on a profile: showPurchaseReceipt({orderNo:'T-1',date:'21 OCT 2026',currency:'USD',items:[{label:'Premium Monthly',amount:10}],taxes:[{label:'VAT',amount:2}],total:12},'monthly') (test numbers only). Then try showPurchaseReceipt({}) to see the missing-data note, and repeat with Reduced motion on and at 375px.",
       limits:"Payment is not live, so the real provider's receipt fields are not known yet: the shape above (items, taxes, total, currency, orderNo, date) is what validateLicenseKey() should return as receipt, and must be mapped from the provider when it is chosen. Plan prices are still TBA in the app, so no price is shown anywhere else. The receipt is not saved after it is closed and there is no download or email. Checked in headless Chrome only." },
@@ -17602,22 +17602,24 @@ async function activateLicense(){
 // is estimated, so a missing tax or total line is left out and says so.
 const RCPT_PRINT_MS = 2400, RCPT_STRIP = 14;
 const rcptNum = n => typeof n === "number" && isFinite(n) ? n : null;
+// No currency from the provider means no amounts: guessing one would show the buyer a wrong charge.
 function rcptMoney(n, cur){
-  try { return new Intl.NumberFormat(undefined, { style:"currency", currency:/^[A-Z]{3}$/.test(cur || "") ? cur : "USD" }).format(n); }
-  catch { return n.toFixed(2); }
+  if (!/^[A-Z]{3}$/.test(cur || "")) return null;
+  try { return new Intl.NumberFormat(undefined, { style:"currency", currency:cur }).format(n); }
+  catch { return null; }
 }
 function receiptHTML(r, plan){
   const cur = r.currency;
   const items = (Array.isArray(r.items) ? r.items : []).filter(i => i && rcptNum(i.amount) !== null);
   const taxes = Array.isArray(r.taxes) ? r.taxes.filter(t => t && rcptNum(t.amount) !== null) : null;
-  const row = (l, a, cls = "") => `<div class="rc-row ${cls}"><span>${esc(l)}</span><span>${esc(rcptMoney(a, cur))}</span></div>`;
-  let total = rcptNum(r.total);
-  if (total === null && items.length && taxes) total = items.reduce((s, i) => s + i.amount, 0) + taxes.reduce((s, t) => s + t.amount, 0);
+  const row = (l, a, cls = "") => { const m = rcptMoney(a, cur); return `<div class="rc-row ${cls}"><span>${esc(l)}</span>${m === null ? "" : `<span>${esc(m)}</span>`}</div>`; };
+  const total = rcptNum(r.total);
   const lines = items.length
     ? items.map(i => row(i.label || "Premium", i.amount)).join("")
     : `<div class="rc-row"><span>${esc(plan ? "Premium · " + plan : "Premium")}</span></div>`;
   const taxHTML = taxes === null ? "" : taxes.map(t => row(t.label || "Tax", t.amount)).join("");
   const missing = [];
+  if (rcptMoney(0, cur) === null) missing.push("currency");
   if (!items.length) missing.push("price");
   if (taxes === null) missing.push("tax");
   if (total === null) missing.push("total");
@@ -21904,16 +21906,17 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .rc-head p{margin:0}
 .rc-check{width:52px;height:52px;border-radius:50%;background:var(--good);color:#fff;display:inline-grid;place-items:center}
 .rc-stage{display:flex;flex-direction:column;align-items:center;padding:0 16px}
-.rc-slot{position:relative;z-index:3;width:100%;height:48px;border-radius:14px;background:linear-gradient(var(--line2),var(--raise) 70%,var(--line));box-shadow:0 8px 18px rgba(0,0,0,.35)}
-.rc-slot::after{content:"";position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:calc(100% - 28px);height:7px;border-radius:4px;background:#07090d;box-shadow:inset 0 2px 3px rgba(0,0,0,.9)}
+.rc-slot{position:relative;z-index:3;width:100%;height:48px;border-radius:var(--r);background:linear-gradient(var(--line2),var(--raise) 70%,var(--line));box-shadow:0 8px 18px rgba(0,0,0,.35)}
+.rc-slot::after{content:"";position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:calc(100% - 28px);height:7px;border-radius:var(--r-xs);background:#07090d;box-shadow:inset 0 2px 3px rgba(0,0,0,.9)}
 .rc-window{position:relative;z-index:1;overflow:hidden;width:calc(100% - 28px);margin-top:-8px}
 .rc-paper{--rc-paper:#fff;--rc-ink:#141414;--rc-soft:#555;background:var(--rc-paper);color:var(--rc-ink);font-family:ui-monospace,"Courier New",Courier,monospace;padding:20px 18px 30px;will-change:transform;
   clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),95% 100%,90% calc(100% - 8px),85% 100%,80% calc(100% - 8px),75% 100%,70% calc(100% - 8px),65% 100%,60% calc(100% - 8px),55% 100%,50% calc(100% - 8px),45% 100%,40% calc(100% - 8px),35% 100%,30% calc(100% - 8px),25% 100%,20% calc(100% - 8px),15% 100%,10% calc(100% - 8px),5% 100%,0 calc(100% - 8px))}
 .rc-brand{text-align:center;font-weight:700;font-size:18px;letter-spacing:.3em;margin:2px 0 4px}
 .rc-sub{text-align:center;font-size:11px;letter-spacing:.18em;color:var(--rc-soft);margin:0 0 2px}
-.rc-meta{text-align:center;font-size:11px;color:var(--rc-soft);margin:0;min-height:1em}
+.rc-meta{text-align:center;font-size:11px;color:var(--rc-soft);margin:0;min-height:1em;overflow-wrap:anywhere}
 .rc-rule{border-top:2px dashed #a3a3a3;margin:12px 0}
 .rc-row{display:flex;justify-content:space-between;gap:12px;font-size:13px;margin:5px 0}
+.rc-row>span{min-width:0;overflow-wrap:anywhere}.rc-row>span:last-child:not(:first-child){flex:none;white-space:nowrap}
 .rc-row.rc-total{font-weight:700;font-size:15px}
 .rc-totals{position:relative;min-height:108px}
 .rc-stamp{position:absolute;right:4px;top:30px;width:76px;height:76px;border:3px solid var(--accent);border-radius:50%;color:var(--accent);display:grid;place-items:center;font-weight:700;letter-spacing:.2em;font-size:14px;transform:rotate(-12deg);opacity:.92;pointer-events:none;background:rgba(255,255,255,.55)}
