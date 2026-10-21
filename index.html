@@ -8818,7 +8818,7 @@ const sbErrText = e => SB_ERR[e?.code] || (navigator.onLine === false ? "You're 
 async function sbAuth(kind){
   const c = sbClient(); if (!c) return;
   const email = val("sb-email").toLowerCase(), pass = document.getElementById("sb-pass")?.value || "";
-  UI.sbEmail = email; UI.sbMsg = null;
+  UI.sbEmail = email; UI.sbMsg = null; SB.gtok = (SB.gtok || 0) + 1;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { UI.sbMsg = { t:"Enter a valid email address." }; return sbRender(); }
   if (kind !== "reset" && (kind === "up" ? pass.length < 8 : !pass)) { UI.sbMsg = { t: kind === "up" ? "Use at least 8 characters for the password." : "Enter your password." }; return sbRender(); }
   if (kind === "up" && !document.getElementById("sb-agree")?.checked) { UI.sbMsg = { t:"Tick the box to agree to the Terms and the Privacy Policy." }; return sbRender(); }
@@ -8903,6 +8903,7 @@ async function sbGoogle(){
   // this waits. So the button and message are looked up again when it ends, in whichever form is showing.
   const btn = () => document.querySelector('#auth-pop-body [data-act="sb-google"]');
   const say = t => { const m = document.getElementById("auth-g-msg"); if (m) m.textContent = t; };
+  const tok = SB.gtok = (SB.gtok || 0) + 1; // sbAuth() bumps it, so starting an email sign-in cancels a Google attempt still waiting
   say(""); SB.gbusy = true; if (btn()) btn().disabled = true;
   try {
     let on = false;
@@ -8911,6 +8912,7 @@ async function sbGoogle(){
       on = r.ok && (await r.json())?.external?.google === true;
       if (!on) say("Google sign-in isn't switched on yet. Use your email for now.");
     } catch { say(navigator.onLine === false ? "You're offline. Connect and try again." : "Couldn't reach sign-in. Try again in a moment."); }
+    if (on && (tok !== SB.gtok || SB.user || !document.getElementById("pop-auth"))) on = false; // another sign-in started, it finished, or the popup closed
     if (on) { const r = await c.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: sbRedirect() } }); if (r.error) throw r.error; }
   } catch (e) { say(sbErrText(e)); }
   SB.gbusy = false; if (btn()) btn().disabled = false;

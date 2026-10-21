@@ -105,6 +105,18 @@ await ev(`document.querySelector('#pop-auth [data-act="sb-google"]').click(); do
 await ev(`document.querySelector('#pop-auth [data-act="sb-mode"][data-v="reset"]').click(); true`); await sleep(900);
 ok("ending while on Reset password (no Google button) throws nothing and leaves the form usable", await ev(`!document.querySelector('#pop-auth form button[type="submit"]').disabled && !SB.gbusy`));
 
+console.log("--- email sign-in while Google is still waiting");
+// A wrong password keeps the page alive (a successful sign-in reloads it, which ends the Google attempt by itself).
+await ev(`localStorage.clear(); true`); await send("Page.reload"); await sleep(500); await waitFor(READY, 15000);
+await ev(`window.fetch = () => new Promise(r => setTimeout(() => r({ ok: true, json: async () => ({ external: { google: true } }) }), 700)); true`);
+await ev(OPEN); await sleep(400);
+await ev(`document.querySelector('#pop-auth [data-act="sb-google"]').click(); true`);
+await ev(`document.getElementById("sb-email").value = "a@b.co"; document.getElementById("sb-pass").value = "wrong-one"; document.querySelector('#pop-auth form[data-form="sb-auth"]').requestSubmit(); true`);
+await sleep(1200);
+ok("starting an email sign-in cancels a Google attempt that was still waiting", await ev(`!(window.__oauth || []).length && !SB.gbusy && !SB.user`));
+await ev(`document.querySelector('#pop-auth [data-act="sb-google"]').click(); true`); await sleep(1200);
+ok("and Google works again afterwards", await ev(`(window.__oauth || []).length === 1`));
+
 console.log("--- layout");
 for (const [w, h] of [[375, 667], [375, 560], [820, 900], [1440, 900]]) {
   await view(w, h); await ev(OPEN); await sleep(500);
