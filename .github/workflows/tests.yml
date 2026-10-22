@@ -33,6 +33,7 @@ jobs:
           PERF_BASE_SHA: ${{ github.event.pull_request.base.sha }}
       # Scripts parse, the version agrees everywhere, vercel.json is valid, no secrets, food data is text only.
       - run: node --test tests/sync-recovery.cjs
+      - run: node --test tests/license-logic.test.mjs
       - run: node tests/check-repo.mjs
 
   browser-tests:

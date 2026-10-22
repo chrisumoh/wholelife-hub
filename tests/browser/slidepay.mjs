@@ -65,6 +65,8 @@ const key = k => ev(`document.querySelector(".sc-handle").dispatchEvent(new Keyb
 
 await ev(`(async () => { const p = newProfile("Ada"); Object.assign(p, { onboarded: true, coachPrompted: true, tourSeen: "dismissed" }); S.profiles = [p]; S.activeId = p.id; saveProfile(); await flush(); return true; })()`);
 await send("Page.navigate", { url: LOCKED }); await sleep(500); ok("locked premium page loads", await waitFor(READY, 15000)); await sleep(900);
+// The real checkout links are tested in their own section below; here they are blanked so the "not live" path is exercised.
+await ev(`window.__links = { ...CHECKOUT_URLS }; CHECKOUT_URLS.monthly = ""; CHECKOUT_URLS.yearly = ""; true`);
 
 console.log("--- the slider is there and accessible");
 ok("the Premium page shows the slide-to-pay control", await ev(`!!document.querySelector(".prem-cta-bar .sc .sc-handle")`));
@@ -86,6 +88,35 @@ ok("and says payments aren't live", await ev(`/aren't live/.test(document.body.t
 ok("nothing was bought: Premium is not on and no receipt shows", await ev(`!P().premium?.active && !document.getElementById("pop-receipt")`));
 await sleep(2000);
 ok("then it resets so it can be tried again", await phase() === "idle" && await val() === 0);
+
+console.log("--- with checkout links set");
+await ev(`Object.assign(CHECKOUT_URLS, window.__links); window.__opened = []; HTMLAnchorElement.prototype.click = function(){ window.__opened.push({ href: this.href, target: this.target, rel: this.rel }); }; true`);
+ok("both links are real Lemon Squeezy checkout links", await ev(`Object.values(CHECKOUT_URLS).every(u => /^https:\\/\\/[a-z0-9-]+\\.lemonsqueezy\\.com\\/checkout\\/buy\\/[0-9a-f-]{36}$/.test(u)) && CHECKOUT_URLS.monthly !== CHECKOUT_URLS.yearly`));
+await key("End"); await sleep(150);
+ok("sliding all the way opens the yearly checkout (the default plan) in a new tab", await ev(`window.__opened.length === 1 && window.__opened[0].href === CHECKOUT_URLS.yearly && window.__opened[0].target === "_blank" && /noopener/.test(window.__opened[0].rel)`));
+ok("the control says the checkout opened, not that anything was paid", await phase() === "open" && await ev(`/Checkout opened/.test(document.querySelector(".sc").textContent) && !/Paid|Payment successful/i.test(document.querySelector(".sc").textContent)`));
+ok("nothing is unlocked by opening checkout", await ev(`!P().premium?.active && !document.getElementById("pop-receipt")`));
+await sleep(2000);
+await ev(`document.querySelector('[data-act="prem-plan"][data-v="monthly"]').click(); true`); await sleep(200);
+await key("End"); await sleep(150);
+ok("choosing Monthly opens the monthly checkout", await ev(`window.__opened.length === 2 && window.__opened[1].href === CHECKOUT_URLS.monthly`));
+await sleep(2000);
+ok("the plan rows show the real prices and a saving worked out from them", await ev(`(() => { const t = document.querySelector(".prem-store-page").textContent; return /\\$7\\.99/.test(t) && /\\$59\\.99/.test(t) && planSavePct() === 37 && /Save 37%/.test(document.querySelector('[data-v="yearly"] .ps-disc').textContent); })()`));
+ok("no placeholder text is left on the plan rows or the fine print", await ev(`!/\\[PRICE\\]|\\[REAL|TBA/.test(document.querySelector(".prem-store-page").textContent)`));
+await ev(`window.__amt = PREMIUM_PLANS.map(p => p.amount); PREMIUM_PLANS.forEach(p => delete p.amount); render(); true`); await sleep(200);
+ok("without real prices it says Save yearly and invents no number", await ev(`(() => { const d = document.querySelector('[data-v="yearly"] .ps-disc').textContent; return /^Save yearly$/.test(d) && planSavePct() === null && /Price TBA/.test(document.querySelector(".prem-store-page").textContent); })()`));
+await ev(`PREMIUM_PLANS.forEach((p, i) => { p.amount = window.__amt[i]; }); render(); true`);
+
+console.log("--- licence key")
+await ev(`localStorage.removeItem("wlh.lic"); window.__calls = []; window.__reply = { state: "valid", plan: "yearly", instance: "dev-1", receipt: { orderNo: "1", currency: "USD", items: [{ label: "Test", amount: 1 }], taxes: [], total: 1 } }; window.fetch = async (u, o) => { if (!/functions\\/v1\\/license/.test(u)) return new Response("{}", { status: 404 }); window.__calls.push(JSON.parse(o.body)); return new Response(JSON.stringify(window.__reply), { status: 200 }); }; true`);
+ok("an empty key is refused without calling the server", await ev(`validateLicenseKey("  ").then(r => r.state === "invalid" && window.__calls.length === 0)`));
+ok("a valid key is passed on and returns the plan and receipt", await ev(`validateLicenseKey("abc").then(r => r.state === "valid" && r.plan === "yearly" && r.receipt.orderNo === "1" && r.lic.i === "dev-1" && window.__calls[0].key === "abc" && window.__calls[0].instance === undefined)`));
+ok("an unrecognised, expired or full key gets a plain message", await ev(`(async () => { const out = []; for (const st of ["invalid", "expired", "limit"]) { window.__reply = { state: st }; const r = await validateLicenseKey("abc"); out.push(r.state === st && !!r.message); } return out.every(Boolean); })()`));
+ok("a server error says so and grants nothing", await ev(`(async () => { window.__reply = { state: "error" }; const r = await validateLicenseKey("abc"); return r.state === "error" && !!r.message; })()`));
+ok("a network failure is an error, not an invalid key", await ev(`(async () => { window.fetch = async () => { throw new TypeError("offline"); }; const r = await validateLicenseKey("abc"); return r.state === "error"; })()`));
+ok("a re-check never ends Premium when the server can't be reached", await ev(`(async () => { setPremium("purchase", null); localStorage.setItem("wlh.lic", JSON.stringify({ k: "abc", i: "dev-1", d: "2000-01-01" })); await licRecheck(); return P().premium.active === true; })()`));
+ok("a re-check ends Premium when the key has expired or been refunded", await ev(`(async () => { window.fetch = async () => new Response(JSON.stringify({ state: "expired" }), { status: 200 }); await licRecheck(); return P().premium.active === false && localStorage.getItem("wlh.lic") === null; })()`));
+await ev(`P().premium = null; CHECKOUT_URLS.monthly = ""; CHECKOUT_URLS.yearly = ""; render(); true`); // the gesture tests below use the "not live" path
 
 console.log("--- cancelled and multi-finger gestures");
 // Synthetic pointer events: a cancelled drag must never confirm, and a second finger must not confirm twice.

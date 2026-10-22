@@ -98,3 +98,5 @@ The site sends its own security headers on every response, set in `vercel.json`.
 ## Reporting a problem
 
 Tell the project owner before writing about a vulnerability in an issue or pull request. Don't paste real keys, tokens or someone's health data into a pull request, issue or chat. If a leak is possible, rotate first.
+
+- (8.3.21) Payments: the Lemon Squeezy API key, store id and product id live only as Supabase function secrets. `index.html` holds just the public checkout links. The `license` function must refuse keys from any other store or product (`planOf`) and test-mode keys unless `LEMONSQUEEZY_ALLOW_TEST=1`. Never log a licence key. The key and device id are stored on the device only (`wlh.lic`) and never synced. The receipt carries no buyer name or email.
