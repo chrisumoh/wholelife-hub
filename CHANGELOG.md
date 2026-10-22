@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.20, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.21, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.21 · Friends: Blocking screen: block and unblock people from the Friends card
+
+- **Problem:** The database could block people, but the app had no way to do it.
+- **Change:** Every friend, request and search result on the Friends card has a Block button. Blocked people move to a Blocked people list with an Unblock button. A blocked person cannot find you in search, send you a request or message, or see you online, and blocking ends any friendship. Unblocking does not bring a friendship back.
+- **Where:** `index.html`: `FR.blocks`, `frLoad`, `frBlock`, `frUnblock`, `frBlockedRows`, `frRows`, `frPaint`, `friendsCard`, the `fr-block` and `fr-unblock` cases, `LS_USER_BASES`. `tests/browser/blocking.mjs`, `tests/browser/run-all.mjs`. `CHANGELOG.md`, `README.md`, `docs/DATABASE.md`, `docs/BUILD_PLAN.md`.
+- **How to test:** `node tests/browser/blocking.mjs`. On two friend accounts: A taps Block next to B on Settings > Household > Friends. B disappears from A's friends and search results; B cannot search A, request A or message A. Unblock from the Blocked people list.
+- **Known limits:** No new migration. Names in the Blocked people list are kept on the device that blocked them; on another device the entry reads Blocked person until a server function can return names. No two-account live test yet.
 
 ## 8.3.20 · Phone fixes: Side menu no longer goes black after scrolling, account row merged into the profile card, tips go to the bell
 
