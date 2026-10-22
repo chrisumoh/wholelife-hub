@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.18 | Friends: tidier Friends card (sections, switches, one-row search) | IN PROGRESS: claude/project-thread-e9j467 |
 | 8.3.17 | Friends: messages between accepted friends (new `friend_messages` table) | IN PROGRESS: claude/project-thread-qrbmf2 |
 | 8.3.16 | Summary and Workouts: weekly stat cards compared with last week | IN PROGRESS: claude/project-thread-wk0x38 |
 | 8.3.15 | Notifications: rich pop-up cards for friend requests, challenge invites and saved workouts | IN PROGRESS: claude/project-thread-qrbmf2 |
