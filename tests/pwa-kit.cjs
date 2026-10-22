@@ -80,6 +80,19 @@ test("with an endpoint, a report is JSON with the key headers, carries the path 
   assert.deepEqual(Object.keys(body).sort(), ["created_at", "kind", "label", "message", "page", "stack", "user_agent"], "nothing else about the person is attached");
 });
 
+test("tokens in URLs and error text never reach the report", () => {
+  const { handlers, calls } = loadReporter(true);
+  const tok = "SYNTH_TOKEN_123";
+  handlers.error({
+    message: "Failed to load https://app.test/auth/callback?access_token=" + tok + "&x=1#refresh_token=" + tok + " after code=" + tok,
+    error: { stack: "Error: bad\n    at go (https://app.test/index.html?token=" + tok + ":10:5)\n    at https://app.test/app.js#access_token=" + tok + ":2:1" },
+    filename: "https://app.test/auth/callback?access_token=" + tok + "#id_token=" + tok
+  });
+  const body = JSON.parse(calls[0][1].body)[0];
+  assert.ok(!JSON.stringify(body).includes(tok), "no token survives in label, message or stack: " + JSON.stringify(body));
+  assert.ok(body.stack.includes("https://app.test/index.html") && body.label === "https://app.test/auth/callback", "the useful part (the path) is kept");
+});
+
 test("a crash loop cannot flood the table: at most 20 reports a session", () => {
   const { handlers, calls } = loadReporter(true);
   for (let i = 0; i < 50; i++) handlers.error({ message: "e" + i, error: { stack: "Error\n at f" + i } });

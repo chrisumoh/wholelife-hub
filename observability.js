@@ -11,7 +11,8 @@
  *   like Sentry would need its domain added to vercel.json first).
  *
  * PRIVACY RULES (kept on purpose — this is a health app)
- *   - Only the error message, stack, page path and browser string are sent.
+ *   - Only the error message, stack, page path and browser string are sent, with URLs cut down to their path
+ *     and token-looking values removed.
  *   - URLs are stripped to their path: query strings can carry tokens.
  *   - No form values, no logged health data, no user id are ever attached.
  *   - The destination table is INSERT-only for the app (see the SQL in
@@ -59,10 +60,17 @@
     catch (e) { return '(unknown page)'; }
   }
 
-  // Stacks can be huge; the useful part is the top. Cap the length so one
-  // report stays small enough for sendBeacon's ~64 KB practical limit.
+  // Error text and stack frames carry full URLs, and an auth callback's URL carries its tokens in the query or hash.
+  // Keep each URL down to its path, and blank any token-looking name=value left in free text.
+  function scrub(text) {
+    return String(text || '')
+      .replace(/(https?:\/\/[^\s?#)'"]*)[?#][^\s)'"]*/g, '$1')
+      .replace(/\b(access_token|refresh_token|id_token|token|code|key|apikey|password|secret)=[^\s&)'"]+/gi, '$1=[removed]');
+  }
+
+  // Stacks can be huge; the useful part is the top. Cap the length so one report stays small.
   function trimStack(stack) {
-    return typeof stack === 'string' ? stack.slice(0, 4000) : '';
+    return typeof stack === 'string' ? scrub(stack).slice(0, 4000) : '';
   }
 
   function fingerprint(payload) {
@@ -81,8 +89,8 @@
   function buildPayload(kind, message, stack, label) {
     return {
       kind: kind,                                   // error | rejection | manual | event
-      label: label || '',
-      message: String(message || '').slice(0, 1000),
+      label: scrub(label).slice(0, 200),
+      message: scrub(message).slice(0, 1000),
       stack: trimStack(stack),
       page: safePath(location.href),
       user_agent: navigator.userAgent.slice(0, 300),
