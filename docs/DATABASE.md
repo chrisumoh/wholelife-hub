@@ -105,6 +105,7 @@ Everything a person logs syncs, signed in, through the tables above. No migratio
 | `20261005035516` | `wlh_8_1_11_meal_est` | Adds `meal_logs.est boolean not null default false`. |
 | `20261022020000` | `wlh_8_3_7_friends_presence` | Friends: `member_names`, `friendships`, `member_blocks`, functions `search_members`, `friend_list`, `member_ping`. **Not applied until the owner runs it.** |
 | `20261022030000` | `wlh_8_3_10_workout_challenges` | Challenges: `challenges`, `challenge_members` (RLS on, no direct grants), functions `create_challenge`, `respond_challenge`, `leave_challenge`, `my_challenges`, `challenge_board`. **Not applied until the owner runs it.** |
+| `20261022060000` | `wlh_8_3_17_friend_messages` | Friend messages: `friend_messages` with RLS and an accepted-friends trigger. Applied to the live project. |
 
 ## Friends and online status (8.3.7)
 
@@ -116,6 +117,12 @@ Opt-in social layer, no health data. All three tables have RLS on and no `anon` 
 - `search_members(q)`: security definer, 3+ characters, name prefix, discoverable accounts only, never yourself or anyone who blocked you, 10 results. Returns name and id only.
 - `friend_list()`: your friendships with the other person's name and, for accepted friends who allow it, `online` (seen within 2 minutes).
 - Search and presence are the only way to see another account's row; there is no select policy on another person's `member_names`.
+
+## Friend messages (8.3.17)
+
+- `friend_messages`: `sender_id`, `recipient_id`, `body` (1 to 500 characters), `created_at`, `read_at`. RLS on, no `anon` access. Either party reads; a sender inserts as themselves and deletes their own; only the recipient updates, and only `read_at` (column grant).
+- A before-insert trigger (`friend_message_check`, security definer) allows a message only between accepted friends and refuses it when either has blocked the other.
+- Applied to the live project on 2026-10-22 at the owner's request.
 
 ## Photo storage
 
