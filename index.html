@@ -9160,36 +9160,49 @@ function frNotify(){
 // Accepted friends only (the server checks). Polled with the friends list; opening a chat marks its messages read.
 const FM = { with:null, rows:[] };
 const fmName = id => FR.rows.find(r => r.member_id === id)?.app_name || "A friend";
+const fmOpen = () => !!(FM.with && document.getElementById("fm-in")); // the chat is on screen, not just selected
 async function fmLoad(){
   const db = frDb(); if (!db || !FR.me || !SB.user) return;
   const r = await db.from("friend_messages").select("id,sender_id,recipient_id,body,created_at,read_at").order("created_at", { ascending:false }).limit(100);
   if (r.error) { console.warn("Messages unavailable:", r.error.code || "error"); return; }
   FM.rows = (r.data || []).reverse();
-  const inc = FM.rows.filter(m => m.recipient_id === SB.user.id && !m.read_at);
-  for (const m of inc) if (m.sender_id !== FM.with && !frSeen("m" + m.id)) notify("friend", `${fmName(m.sender_id)}: ${m.body.slice(0, 50)}`, "Open Household to reply.", "#/settings/household");
-  const mine = inc.filter(m => m.sender_id === FM.with).map(m => m.id);
+  const inc = FM.rows.filter(m => m.recipient_id === SB.user.id && !m.read_at), open = fmOpen();
+  for (const m of inc) if (!(open && m.sender_id === FM.with) && !frSeen("m" + m.id)) notify("friend", `${fmName(m.sender_id)}: ${m.body.slice(0, 50)}`, "Open Household to reply.", "#/settings/household");
+  const mine = open ? inc.filter(m => m.sender_id === FM.with).map(m => m.id) : [];
   if (mine.length) db.from("friend_messages").update({ read_at: new Date().toISOString() }).in("id", mine).then(() => {}, () => {});
   fmPaint();
 }
+const fmMsgs = () => {
+  const w = FM.with, rows = FM.rows.filter(m => m.sender_id === w || m.recipient_id === w);
+  return rows.length ? rows.map(m => `<p class="fm-m${m.sender_id === w ? "" : " me"}">${esc(m.body)}</p>`).join("") : `<p class="small muted">No messages yet. Say hi.</p>`;
+};
 function fmView(){
   const w = FM.with; if (!w) return "";
-  const rows = FM.rows.filter(m => m.sender_id === w || m.recipient_id === w);
-  return `<div class="fm"><div class="li"><b>${esc(fmName(w))}</b><button class="btn sm" data-act="fm-close">Close</button></div>
-    <div class="fm-list">${rows.length ? rows.map(m => `<p class="fm-m${m.sender_id === w ? "" : " me"}">${esc(m.body)}</p>`).join("") : `<p class="small muted">No messages yet. Say hi.</p>`}</div>
+  return `<div class="fm" data-w="${esc(w)}"><div class="li"><b>${esc(fmName(w))}</b><button class="btn sm" data-act="fm-close">Close</button></div>
+    <div class="fm-list">${fmMsgs()}</div>
     <form class="row" data-form="fm-send" style="gap:6px"><input id="fm-in" class="grow" maxlength="500" autocomplete="off" aria-label="Message" required><button class="btn primary" type="submit">Send</button></form></div>`;
 }
+// Refresh only the message list for the open chat, so the composer keeps focus, caret and text; stay put if the reader scrolled up.
 function fmPaint(){
   const e = document.getElementById("fm"); if (!e) return;
-  const k = e.querySelector("#fm-in")?.value;
+  const box = e.firstElementChild, l = box?.querySelector(".fm-list");
+  if (FM.with && box?.dataset.w === FM.with && l) {
+    const end = l.scrollHeight - l.scrollTop - l.clientHeight < 40;
+    l.innerHTML = fmMsgs(); if (end) l.scrollTop = l.scrollHeight;
+    return;
+  }
   e.innerHTML = fmView();
-  const i = e.querySelector("#fm-in"); if (i && k) i.value = k;
-  const l = e.querySelector(".fm-list"); if (l) l.scrollTop = l.scrollHeight;
+  const n = e.querySelector(".fm-list"); if (n) n.scrollTop = n.scrollHeight;
 }
 async function fmSend(){
-  const db = frDb(), body = val("fm-in").trim().slice(0, 500); if (!db || !FM.with || !body) return;
-  const r = await db.from("friend_messages").insert({ recipient_id: FM.with, body });
+  const db = frDb(), inp = document.getElementById("fm-in"), to = FM.with, body = (inp?.value || "").trim().slice(0, 500);
+  if (!db || !to || !body || FM.busy) return;
+  FM.busy = true;
+  const r = await db.from("friend_messages").insert({ recipient_id: to, body });
+  FM.busy = false;
   if (r.error) { toast("Could not send. Try again.", "warn"); return; }
-  document.getElementById("fm-in").value = ""; fmLoad();
+  if (inp.isConnected && inp.value.trim() === body) inp.value = ""; // keep a draft typed meanwhile, or in another chat
+  fmLoad();
 }
 function frTick(){
   const db = frDb(); if (!db || document.hidden) return;

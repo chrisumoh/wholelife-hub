@@ -60,9 +60,9 @@ ok("a workout confirmation uses the success tint", await ev(`!!document.querySel
 // friend messages (8.3.17): a stubbed Supabase client
 await ev(`(async () => {
   window.__sent = []; window.__upd = [];
-  const msgs = [{ id: "m1", sender_id: "u2", recipient_id: "me", body: "<b>hi</b> there", created_at: "2026-10-22T10:00:00Z", read_at: null }];
+  const msgs = window.__msgs = [{ id: "m1", sender_id: "u2", recipient_id: "me", body: "<b>hi</b> there", created_at: "2026-10-22T10:00:00Z", read_at: null }];
   const q = { select: () => q, order: () => q, limit: () => Promise.resolve({ data: msgs, error: null }),
-    insert: row => { window.__sent.push(row); return Promise.resolve({ error: null }); },
+    insert: row => { window.__sent.push(row); if (!window.__hold) return Promise.resolve({ error: null }); window.__hold = false; return new Promise(r => { window.__release = () => r({ error: null }); }); },
     update: row => ({ in: (c, ids) => { window.__upd.push([row, ids]); return Promise.resolve({}); } }) };
   window.sbClient = () => ({ from: t => t === "friend_messages" ? q : {}, rpc: () => Promise.resolve({ data: [], error: null }) });
   SB.user = { id: "me" }; STORE_UID = "me"; CRY.lock = null;
@@ -70,13 +70,30 @@ await ev(`(async () => {
   localStorage.removeItem(ukey("wlh.frseen." + P().id));
   await fmLoad(); return true; })()`);
 ok("an unread message from a friend notifies with their name", await ev(`loadNotifs(P()).some(n => n.title.startsWith("kofi: "))`));
-await ev(`(async () => { FM.with = "u2"; await fmLoad(); return true; })()`);
+await ev(`document.body.insertAdjacentHTML("beforeend", '<div id="fm"></div>'); FM.with = "u2"; fmPaint(); true`);
+await ev(`(async () => { await fmLoad(); return true; })()`);
 const fv = await ev(`fmView()`);
 ok("the chat escapes message text", fv.includes("&lt;b&gt;hi") && !fv.includes("<b>hi"));
-ok("opening the chat marks that friend's messages read", await ev(`window.__upd.some(u => u[1][0] === "m1")`), await ev(`JSON.stringify(window.__upd)`));
-await ev(`document.body.insertAdjacentHTML("beforeend", '<div id="fm"></div><input id="fm-in" value="  hello  ">'); fmSend()`);
+ok("a chat on screen marks that friend's messages read", await ev(`window.__upd.some(u => u[1][0] === "m1")`));
+ok("a chat that is selected but not on screen neither marks read nor hides the alert", await ev(`(async () => {
+  document.getElementById("fm").remove(); window.__upd.length = 0; FM.rows = [];
+  window.__msgs.push({ id: "m2", sender_id: "u2", recipient_id: "me", body: "still there?", created_at: "2026-10-22T11:00:00Z", read_at: null });
+  await fmLoad();
+  return window.__upd.length === 0 && loadNotifs(P()).some(n => n.title === "kofi: still there?"); })()`));
+await ev(`document.body.insertAdjacentHTML("beforeend", '<div id="fm"></div>'); fmPaint(); true`);
+await ev(`(async () => { window.__hold = true; const i = document.getElementById("fm-in"); i.value = "  hello  "; fmSend(); fmSend(); return true; })()`);
+await sleep(100);
+ok("a second tap while sending does not send twice", await ev(`window.__sent.length === 1`));
+await ev(`(() => { const i = document.getElementById("fm-in"); i.value = "next draft"; window.__release(); return true; })()`);
 await sleep(200);
-ok("sending inserts a trimmed message to the open friend", await ev(`window.__sent.length === 1 && window.__sent[0].body === "hello" && window.__sent[0].recipient_id === "u2"`));
+ok("a finished send keeps a draft typed meanwhile", await ev(`document.getElementById("fm-in").value === "next draft"`));
+ok("sending trims the message and targets the open friend", await ev(`window.__sent[0].body === "hello" && window.__sent[0].recipient_id === "u2"`));
+await ev(`(() => { const i = document.getElementById("fm-in"); i.value = "x"; window.__hold = true; fmSend(); document.getElementById("fm").innerHTML = ""; window.__release(); return true; })()`);
+await sleep(200);
+ok("closing the chat before a send finishes does not throw", errors.length === 0, errors.join(" | "));
+await ev(`(() => { FM.with = "u2"; document.getElementById("fm").innerHTML = ""; fmPaint(); const i = document.getElementById("fm-in"); i.value = "abcd"; i.focus(); i.setSelectionRange(2, 2); return true; })()`);
+await ev(`(async () => { await fmLoad(); return true; })()`);
+ok("a refresh keeps focus, text and caret in the composer", await ev(`(() => { const i = document.getElementById("fm-in"); return document.activeElement === i && i.value === "abcd" && i.selectionStart === 2; })()`));
 ok("Message button shows only for accepted friends", (await ev(`frRows()`)).includes('data-act="fm-open"'));
 ok("no page errors", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
