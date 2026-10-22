@@ -3781,7 +3781,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.18", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.19", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3795,14 +3795,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.18", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
-    { id:"8.3.18",
-      area:"Friends",
-      title:"A tidier Friends card",
-      bug:"The Friends card was a stack of plain fields and checkboxes with a large red Leave friends button, and online pills sat beside the names in a cluttered row.",
-      fix:"The card is now in sections. Your app name sits in one row with its Save button, with the 3 to 20 character hint under it. Let people find me and Show when I am online are on and off switches that save as you flip them. Find a friend is one row with a Search button, results show under it, and Your friends lists each person with the Online, Offline or request pill under their name and Message, Remove, Accept or Decline on the right. Leave friends is a quiet button at the bottom with a line saying what it does. No change to what is stored or shared.",
-      where:"index.html: friendsCard (layout and switches), frRows, frSaveMe (reads the switches), the fr-sw action, .fr-sec .fr-h .fr-line .fr-opt .fr-row .fr-foot CSS. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
-      test:"Sign in, open Settings > Household > Friends. Flip each switch (it saves, and a refresh keeps it). Change the name and press Save. Search a name and press Add. Check light, dark and a narrow phone width. node tests/check-repo.mjs.",
-      limits:"Only the layout changed. The card is still hidden when signed out. Checked in headless Chrome with sample data, not with two live accounts." },
+    { id:"8.3.19",
+      area:"Motion",
+      title:"The sliding selection ring now follows the day strip, the page numbers and the snack region chips",
+      bug:"The sliding ring only worked in the segmented controls and the coach feeling chips. The Rings day strip, the recipe and meal plan page numbers and the Snacks region chips still jumped from one choice to the next.",
+      fix:"The same ring (the .focus-ring spring from CJ's snippet: translate, width and height with the bouncy curve) is added to three more single-choice groups. ringSync() now also looks at .rdays and .pager ul, and the Snacks region chips carry data-ring. The chosen day and page lose their own border so the ring is the only outline. Reduced motion already switches the move off. Not changed: the Settings tabs (they use an underline), the sidebar and the multi-select chips.",
+      where:"index.html: ringSync() selector, CSS block 8.2.20 (.rdays, .pager ul), the Snacks region chips, APP_VERSION, WLH.changelog. tests/browser/motion.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/motion.mjs. By hand: Summary > activity rings, tap another day in the strip; Recipes or Meal plans, tap a page number; Snacks, change the region. The gold ring should glide to the new choice. Turn Settings > Motion to Reduced and it should snap.",
+      limits:"The ring is gold (var(--gold)), as in 8.2.20, not a new colour. Checked in headless Chrome only. Page numbers shift when the list changes length, so the ring may glide a little further than one step." },
     { id:"8.3.17",
       area:"Friends",
       title:"Message your friends",
@@ -12344,7 +12344,7 @@ function snacksView(p){
   </div>
   <section class="card">
     <div class="setrow"><h2 class="setlabel">Snack ideas</h2><input type="search" id="s-q" aria-label="Search snacks" value="${esc(UI.snackQ)}" placeholder="Search snacks" style="max-width:240px"></div>
-    <div class="chips" role="group" aria-label="Region">${regs.map(([k,l]) => `<button class="chip" data-act="snack-region" data-v="${k}" aria-pressed="${UI.snackRegion===k}">${l}</button>`).join("")}</div>
+    <div class="chips" role="group" aria-label="Region" data-ring>${regs.map(([k,l]) => `<button class="chip" data-act="snack-region" data-v="${k}" aria-pressed="${UI.snackRegion===k}">${l}</button>`).join("")}</div>
     <div class="grid g3">${list.map(s => { const hits = allergyHits(s,p); return `<div class="dish">
       <span class="slot">${esc(s.c)}</span><h3>${esc(s.n)}</h3>
       <span class="small muted">${esc(s.sv)} · <b class="tab" style="color:var(--text)">${s.cal} cal</b></span>
@@ -16036,7 +16036,7 @@ function widgetSection(p, page){
 // One ring per single-choice group (.seg, or anything marked data-ring). It lives in the group and slides to the chosen option;
 // morphInto keeps it (_keep), so the move animates instead of being redrawn. A group seen for the first time just appears.
 function ringSync(){
-  document.querySelectorAll(".seg:not(.wseg),.seg-display,[data-ring]").forEach(box => {
+  document.querySelectorAll(".seg:not(.wseg),.seg-display,[data-ring],.rdays,.pager ul").forEach(box => {
     const on = box.querySelector('[aria-pressed="true"],[aria-checked="true"],.on');
     let ring = box.querySelector(":scope > .focus-ring");
     if (!on || !on.offsetWidth) { ring?.remove(); return; }
@@ -22329,7 +22329,8 @@ input[type=date]::-webkit-calendar-picker-indicator{opacity:.6}
 #pop-auth .pop-card{border-radius:20px;box-shadow:var(--bu-pop)}
 
 /* ===================== 8.2.20 MOTION: selection ring, external links, top-right toasts, bell pulse, flip widgets ===================== */
-.seg,.seg-display,[data-ring]{position:relative}
+.seg,.seg-display,[data-ring],.rdays,.pager ul{position:relative}
+.rdays .rday[aria-pressed="true"],.pager .pg.on{border-color:transparent}
 .focus-ring{position:absolute;left:0;top:0;width:var(--w);height:var(--h);translate:var(--x) var(--y);border:1.5px solid var(--gold);pointer-events:none;z-index:1;
   transition:translate .48s cubic-bezier(.34,1.56,.64,1),width .48s cubic-bezier(.34,1.56,.64,1),height .48s cubic-bezier(.34,1.56,.64,1)}
 .focus-ring.still{transition:none}

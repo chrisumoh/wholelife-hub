@@ -71,6 +71,16 @@ await sleep(700);
 ok("after the move it sits on the new choice", await ev(`(() => { const on = window.__box.querySelector('[aria-pressed="true"]'), g = window.__ring.getBoundingClientRect(), o = on.getBoundingClientRect(); return Math.abs(g.left - o.left) < 1.5 && Math.abs(g.width - o.width) < 1.5; })()`));
 ok("the ring is not read out or focusable", await ev(`window.__ring.getAttribute("aria-hidden") === "true" && getComputedStyle(window.__ring).pointerEvents === "none"`));
 
+ok("the day strip and the page numbers get a ring that moves with the choice", await (async () => {
+  await ev(`(() => { const d = document.createElement("div"); d.id = "rt2"; d.style.cssText = "position:fixed;top:0;left:0;z-index:9;background:#fff"; d.innerHTML = '<div class="rdays"><button class="rday" aria-pressed="true">M</button><button class="rday" aria-pressed="false">T</button></div><nav class="pager"><ul><li><button class="pg on" aria-current="page">1</button></li><li><button class="pg">2</button></li></ul></nav>'; document.body.append(d); ringSync(); return true; })()`);
+  const n = await ev(`document.querySelectorAll("#rt2 .rdays > .focus-ring, #rt2 .pager ul > .focus-ring").length`);
+  const x0 = await ev(`document.querySelector("#rt2 .rdays .focus-ring").style.getPropertyValue("--x")`);
+  await ev(`(() => { const [a, b] = document.querySelectorAll("#rt2 .rday"); a.setAttribute("aria-pressed", "false"); b.setAttribute("aria-pressed", "true"); ringSync(); return true; })()`); await sleep(100);
+  const x1 = await ev(`document.querySelector("#rt2 .rdays .focus-ring").style.getPropertyValue("--x")`);
+  await ev(`document.getElementById("rt2").remove(); true`);
+  return n === 2 && x0 !== x1;
+})());
+
 console.log("--- 2. external links");
 await ev(`document.querySelector("#app").insertAdjacentHTML("beforeend", '<p id="xl" style="position:fixed;left:40px;top:300px;z-index:9999;background:#fff;color:#111;padding:8px">Read <a id="xa" href="https://example.com/x">the source</a> or <a id="ia" href="#/home">go home</a> or <span class="links"><a id="la" href="https://example.com/y">a recipe search</a></span></p>'); true`);
 const lnk = await ev(`(() => { const a = document.getElementById("xa"), cs = getComputedStyle(a), af = getComputedStyle(a, "::after"); const i = getComputedStyle(document.getElementById("ia"), "::after"); const l = getComputedStyle(document.getElementById("la"), "::after"); return { deco: cs.textDecorationLine, pos: cs.position, content: af.content, tf: af.transform, h: af.height, internal: i.content, list: l.content, tr: af.transitionDuration, ease: af.transitionTimingFunction }; })()`);
