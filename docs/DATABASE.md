@@ -104,7 +104,7 @@ Everything a person logs syncs, signed in, through the tables above. No migratio
 | `20261004142625` | `wlh_8_1_9_full_unique_sync_keys` | Replaces the partial `(owner_id, app_id)` unique indexes with plain ones, and adds `updated_at` indexes. The repo file was added in 8.1.11 as an exact copy of the remote record. |
 | `20261005035516` | `wlh_8_1_11_meal_est` | Adds `meal_logs.est boolean not null default false`. |
 | `20261022020000` | `wlh_8_3_7_friends_presence` | Friends: `member_names`, `friendships`, `member_blocks`, functions `search_members`, `friend_list`, `member_ping`. **Not applied until the owner runs it.** |
-| `20261022030000` | `wlh_8_3_9_workout_challenges` | Challenges: `challenges`, `challenge_members` (RLS on, no direct grants), functions `create_challenge`, `respond_challenge`, `leave_challenge`, `my_challenges`, `challenge_board`. **Not applied until the owner runs it.** |
+| `20261022030000` | `wlh_8_3_10_workout_challenges` | Challenges: `challenges`, `challenge_members` (RLS on, no direct grants), functions `create_challenge`, `respond_challenge`, `leave_challenge`, `my_challenges`, `challenge_board`. **Not applied until the owner runs it.** |
 
 ## Friends and online status (8.3.7)
 
@@ -133,7 +133,7 @@ Done in 8.2.16: every log type, all profile fields and photos (above). Left:
 2. Form-check videos (never uploaded today).
 3. End-to-end encryption of the account's copy, if a passcode should protect it too.
 
-## Challenges (8.3.9)
+## Challenges (8.3.10)
 
 - `challenges` (owner, title, metric `minutes`/`workouts`/`calories`, `starts_on`, `ends_on` up to 30 days) and `challenge_members` (`invited` or `joined`). Both have RLS and no direct grants for signed-in users; the app uses the functions only.
 - `create_challenge` invites accepted friends only (not anyone either side blocked), 1 to 9 friends, 3 open challenges per owner.

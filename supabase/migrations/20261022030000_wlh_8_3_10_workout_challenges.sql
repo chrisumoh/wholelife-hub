@@ -1,4 +1,4 @@
--- 8.3.9: friends workout challenges. Members see each other's totals only, never workout rows.
+-- 8.3.10: friends workout challenges. Members see each other's totals only, never workout rows.
 -- All access goes through the functions below; the tables have RLS on and no direct grants.
 
 create table public.challenges (

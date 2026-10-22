@@ -1454,29 +1454,36 @@ input,select,textarea{font-size:calc((var(--t-base)) * var(--text-scale,1));font
 @keyframes badgePop{0%{transform:scale(0)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
 .bell-btn:active svg{animation:bellRing var(--dur-page) var(--ease-spring)}
 @keyframes bellRing{0%,100%{transform:rotate(0)}20%{transform:rotate(15deg)}45%{transform:rotate(-12deg)}70%{transform:rotate(6deg)}}
-.notif-pop{position:fixed;top:72px;right:16px;z-index:60;width:min(360px,calc(100vw - 32px));
-  border-radius:var(--r);border:1px solid var(--glass-brd);box-shadow:var(--glass-rim),var(--glass-shadow);
+.notif-pop{position:fixed;top:72px;right:16px;z-index:60;width:min(430px,calc(100vw - 32px));
+  border-radius:24px;border:1px solid var(--glass-brd);box-shadow:var(--glass-rim),var(--glass-shadow);
   background:var(--glass-strong);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
   overflow:hidden;transform-origin:top right;animation:npIn var(--dur-page) var(--ease-spring)}
 @keyframes npIn{from{opacity:0;transform:translateY(-10px) scale(.94)}to{opacity:1;transform:none}}
 :root[data-motion="reduced"] .notif-pop{animation:none}
-.np-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
-.np-list{max-height:min(60vh,420px);overflow-y:auto}
-.np-row{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;text-decoration:none;color:var(--text);border-bottom:1px solid var(--line);transition:background-color var(--dur-tap)}
-.np-row:last-child{border-bottom:0}
+.np-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:16px 16px 0}
+.np-head p{margin:2px 0 0}
+.np-tabs{display:flex;width:calc(100% - 32px);margin:12px 16px 6px}
+.np-tabs button{flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.np-tabs b{min-width:20px;text-align:center;font-weight:600;padding:0 5px;border-radius:6px;background:var(--line);font-size:calc((11px) * var(--text-scale,1))}
+.np-list{display:flex;flex-direction:column;gap:8px;margin:6px;padding:8px;border-radius:18px;background:var(--raise);max-height:min(60vh,516px);overflow-y:auto;overscroll-behavior:contain}
+.np-row{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:16px;background:var(--surface);text-decoration:none;color:var(--text);transition:background-color var(--dur-tap)}
+.np-vis{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--raise);color:var(--muted)}
+.np-vis.info{background:var(--accent-soft);color:var(--accent)}
+.np-vis.ok{background:var(--good-soft);color:var(--good)}
+.np-vis.bad{background:var(--bad-soft);color:var(--bad)}
+.np-top{display:flex;align-items:center;gap:8px;justify-content:space-between}
 @media (hover:hover) and (pointer:fine){.np-row:hover{background:var(--raise)}}
-.np-empty{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:26px 20px}
 .np-empty svg{color:var(--muted);opacity:.7;animation:npBell 2.6s var(--spring) .3s infinite}
 .np-empty b{font-family:var(--display);font-size:calc((var(--t-md)) * var(--text-scale,1));letter-spacing:-.014em}
 .np-empty p{margin:0;max-width:26ch}
 @keyframes npBell{0%,88%,100%{transform:rotate(0)}91%{transform:rotate(-11deg)}94%{transform:rotate(9deg)}97%{transform:rotate(-4deg)}}
 :root[data-motion="reduced"] .np-empty svg{animation:none}
-.np-dot{width:7px;height:7px;border-radius:50%;background:transparent;flex:none;margin-top:7px}
+.np-dot{width:8px;height:8px;border-radius:50%;background:transparent;flex:none}
 .np-row.unread .np-dot{background:var(--accent);box-shadow:0 0 6px var(--accent)}
 .np-row.unread b{font-weight:800}
-.np-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.np-body{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
 .np-body b{font-size:calc((14px) * var(--text-scale,1))}
-.np-empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:28px 18px;text-align:center;color:var(--muted)}
+.np-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:220px;padding:28px 18px;border-radius:16px;background:var(--surface);text-align:center;color:var(--muted)}
 .wrap{position:relative}
 
 /* ===================== v7.5 COMPACT PROFILE STRIP (section 8) ===================== */
@@ -3803,7 +3810,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.9", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.10", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3817,14 +3824,22 @@ const APP_VERSION = { update: "8.3", build: "8.3.9", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
-    { id:"8.3.9",
+    { id:"8.3.10",
       area:"Workouts",
       title:"Challenges: compete with friends",
       bug:"Workouts had no way to compete with anyone.",
       fix:"The Workouts page has a Challenges card (signed in, Friends on). Start a 3, 7, 14 or 30 day challenge, pick the winner measure (workout minutes, workouts or calories burned) and invite up to 9 accepted friends. They join or decline. A leaderboard shows each joined member's total only, never their workouts. The owner can end it; others can leave. New tables challenges and challenge_members with RLS, plus five functions.",
-      where:"index.html: CH, chLoad, chRows, challengesCard, chNew, chAct, the ch-* click cases and the ch-new form, workoutsView. supabase/migrations/20261022030000_wlh_8_3_9_workout_challenges.sql. tests/perf/budget.json (size limits raised). docs/DATABASE.md, docs/BUILD_PLAN.md, CHANGELOG.md, README.md.",
+      where:"index.html: CH, chLoad, chRows, challengesCard, chNew, chAct, the ch-* click cases and the ch-new form, workoutsView. supabase/migrations/20261022030000_wlh_8_3_10_workout_challenges.sql. tests/perf/budget.json (size limits raised). docs/DATABASE.md, docs/BUILD_PLAN.md, CHANGELOG.md, README.md.",
       test:"Apply the migration first. On two friend accounts: A starts a challenge and invites B; B sees the invite on Workouts and joins. Log a workout on each and check both totals and the order. A ends it and it disappears for B.",
       limits:"Totals come from synced workouts of each person's main profile only, so unsynced devices lag. Counts up to 3 open challenges per owner. Block has no screen yet. No live two-account test has been done." },
+    { id:"8.3.9",
+      area:"Notifications",
+      title:"Notification centre: tabs, unread count, mark all read",
+      bug:"The bell menu was a plain list with no tabs, no unread count and no way to mark everything read.",
+      fix:"The bell menu is now a notification centre up to 430px wide: unread count, Mark all read, tabs for All, Mentions and System with counts, and a card per notification (icon, title, time, text, unread dot). Kinds friend and mention show under Mentions, reminder and system under System, the rest only under All.",
+      where:"index.html: notifPanel(), notifCat(), notifTone(), NOTIF_TABS, the notif-tab and notif-read cases, the bellOff icon, CSS .np-*. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run notify('friend','Ana','Hi') in the console, tap the bell, switch tabs, tap Mark all read.",
+      limits:"No card action buttons yet." },
     { id:"8.3.8",
       area:"Summary",
       title:"Activity rings card: pick a day, rings draw in one by one",
@@ -9158,7 +9173,7 @@ async function frLeave(){
   if (a.error || b.error) { toast("Could not leave. Try again.", "warn"); return; }
   FR.me = false; FR.rows = []; FR.res = null; CH.on = false; CH.rows = []; render(); toast("You left friends. Your name is gone.");
 }
-// ---- workout challenges (8.3.9) ----
+// ---- workout challenges (8.3.10) ----
 // Friends only. The server returns each joined member's total, never their workouts (see DATABASE.md).
 const CH_UNIT = { minutes:"min", workouts:"workouts", calories:"kcal" };
 const CH = { rows:[], boards:{}, on:false, err:false, open:false };
@@ -10776,6 +10791,7 @@ const I = {
  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
  camera:'<path d="M3 8a2 2 0 0 1 2-2h2.5l1.5-2h6l1.5 2H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/>',
  bell:'<path d="M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6"/><path d="M10.5 20a1.8 1.8 0 0 0 3 0"/>',
+ bellOff:'<path d="M18 9a6 6 0 0 0-9.7-4.7M6 9c0 5-2 6-2 6h12"/><path d="M10.5 20a1.8 1.8 0 0 0 3 0M3 3l18 18"/>',
  dumbbell:'<path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/>',
  check:'<path d="M4 12.5l5 5L20 6.5"/>',
  spark:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18 16l.8 2.2L21 19l-2.2.8L18 22l-.8-2.2L15 19l2.2-.8z"/>',
@@ -10901,7 +10917,7 @@ const NAV = [
 ];
 
 // =================== ROUTER ===================
-const UI = { route:"home", param:null, menu:false, rail:false, bell:false, obStep:0, obDraft:null, obChoice:null, loading:false, pendingExtras:null, navDate:null, recipeServ:4, drinkOpen:false, recFilter:{q:"",r:"",s:"",d:""}, snackRegion:"west", snackQ:"", confirmDel:null, planDays:7, premPlan:"yearly", actOpen:false, impOpen:false, planOpen:false, recAll:false, dpv:null };
+const UI = { route:"home", param:null, menu:false, rail:false, bell:false, nTab:"all", obStep:0, obDraft:null, obChoice:null, loading:false, pendingExtras:null, navDate:null, recipeServ:4, drinkOpen:false, recFilter:{q:"",r:"",s:"",d:""}, snackRegion:"west", snackQ:"", confirmDel:null, planDays:7, premPlan:"yearly", actOpen:false, impOpen:false, planOpen:false, recAll:false, dpv:null };
 function readRoute(){
   const h = location.hash.replace(/^#\/?/,""); const [r, p, extra] = h.split("/");
   const known = NAV.flatMap(g=>g[1]).some(n=>n[0]===r);
@@ -15559,18 +15575,25 @@ function paintBell(){
   if (old) { old.textContent = n > 9 ? "9+" : n; return; }
   const b = document.createElement("span"); b.className = "bell-badge pop"; b.textContent = n > 9 ? "9+" : n; btn.append(b);
 }
+// Map a stored kind onto the centre's tab and tint; unknown kinds count as activity.
+const NOTIF_TABS = [["all","All"],["mentions","Mentions"],["system","System"]];
+const notifCat = n => n.kind === "friend" || n.kind === "mention" ? "mentions" : n.kind === "reminder" || n.kind === "system" ? "system" : "activity";
+const notifTone = n => ({ friend:"info", mention:"info", badge:"ok", streak:"ok", warn:"bad", error:"bad" })[n.kind] || "";
+const NOTIF_ICON = { info:"info", ok:"check", bad:"alert" };
 function notifPanel(p){
   if (!UI.bell) return "";
-  const list = loadNotifs(p);
+  const list = loadNotifs(p), tab = UI.nTab || "all", unread = list.filter(n => !n.read).length;
+  const shown = tab === "all" ? list : list.filter(n => notifCat(n) === tab);
   return `<div class="notif-pop glass" role="dialog" aria-label="Notifications">
-    <div class="np-head"><b>Notifications</b>${list.length ? `<button class="btn sm ghost" data-act="notif-clear">Clear all</button>` : ""}</div>
-    ${list.length ? `<div class="np-list">${list.map(n => `<a class="np-row${n.read ? "" : " unread"}" href="${esc(n.href || "#")}" data-act="notif-open" data-id="${esc(n.id)}">
-      <span class="np-dot" aria-hidden="true"></span>
-      <span class="np-body"><b>${esc(n.title)}</b><span class="tiny muted">${esc(n.body)}</span>
-        <span class="tiny faint">${whenAgo(n.at)}</span></span></a>`).join("")}</div>`
-      : `<div class="np-empty">${icon("bell","",30)}<b>You have no new notifications</b>
-        <p class="small muted">Workout and food reminders, badges you earn and nudges from your coach all land here.</p>
-        <a class="btn sm" href="#/coach">Set up reminders</a></div>`}
+    <div class="np-head"><div><b>Notifications</b><p class="small muted">${unread ? `${unread} unread` : "No unread notifications"}</p></div>
+      <span><button class="btn sm ghost" data-act="notif-read"${unread ? "" : " disabled"}>Mark all read</button>${list.length ? `<button class="btn sm ghost" data-act="notif-clear">Clear all</button>` : ""}</span></div>
+    <div class="seg np-tabs" role="group" aria-label="Notification category">${NOTIF_TABS.map(([k, l]) => `<button type="button" data-act="notif-tab" data-v="${k}" aria-pressed="${tab === k}">${l}<b>${k === "all" ? list.length : list.filter(n => notifCat(n) === k).length}</b></button>`).join("")}</div>
+    <div class="np-list">${shown.length ? shown.map(n => { const tone = notifTone(n); return `<a class="np-row${n.read ? "" : " unread"}" href="${esc(n.href || "#")}" data-act="notif-open" data-id="${esc(n.id)}">
+      <span class="np-vis ${tone}" aria-hidden="true">${icon(NOTIF_ICON[tone] || "bell", "", 20)}</span>
+      <span class="np-body"><span class="np-top"><b>${esc(n.title)}</b><span class="tiny faint">${whenAgo(n.at)}</span></span><span class="small muted">${esc(n.body)}</span></span>
+      <span class="np-dot" aria-hidden="true"></span></a>`; }).join("")
+      : `<div class="np-empty">${icon("bellOff","",30)}<b>You're all caught up.</b>
+        <p class="small muted">New activity will appear here when it arrives.</p></div>`}</div>
   </div>`;
 }
 function whenAgo(t){
@@ -15596,6 +15619,8 @@ document.addEventListener("click", e => {
     if (!n?.href) { e.preventDefault(); render(); } else render();
     return;
   }
+  if (a === "notif-tab") { UI.nTab = t.dataset.v; render(); return; }
+  if (a === "notif-read") { const list = loadNotifs(p); list.forEach(n => { n.read = true; }); saveNotifs(p, list); render(); return; }
   if (a === "notif-clear") { e.preventDefault(); saveNotifs(p, []); UI.bell = false; render(); return; }
   if (UI.bell && !t.closest(".notif-pop") && a !== "bell") { UI.bell = false; }
 });
