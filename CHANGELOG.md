@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.10, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.11, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.11 · Sign-in: Sign-in card with Google and email, offered during setup
+
+- **Problem:** Sign-in was only reachable from Settings, in a plain form with the Google button above the email fields, and a new person was never offered an account while setting up their hub.
+- **Change:** The sign-in form is now a card: a title and one line of text, the email form first (Full name optional, email, password, the Terms tick on sign-up, a full-width button, Forgot password? on sign-in), then an 'or continue with' divider and Continue with Google, then a link that switches between 'New here? Create an account' and 'Already have an account? Sign in'. After the age question in 'Set up my hub' the same card is shown as 'Create your account', with Skip for now (first profile on a device, not signed in, account sign-in available). Under-13 answers never reach it. Settings > Account now has one Sign in button that opens the same card (with the lamp) in place of the old Sign in and Create account pair. A name typed on sign-up is saved with the account as full_name. Only Google and email are offered. The card has no Remember me tick (the browser always keeps the session) and no code step (the app confirms by link). Signing in reloads the page, so a person who signs in during setup lands on the welcome screen already signed in, and the stop is skipped. To make room under the size budget, 24 long CSS comments moved to docs/CSS_NOTES.md (notes 63 to 86); no rule changed.
+- **Where:** index.html: AUTH_TITLE, AUTH_DESC, authFormHTML(), obAuthView(), onboardingView() (step 0), ageGateSubmit(), the ob-auth-go case, accountCard(), sbAuth() (name), CSS block 8.3.11, 24 CSS comments shortened to notes. tests/browser/authcard.mjs (new, 23 checks), legal.mjs, a11y.mjs, meal-sync.mjs, run-all.mjs. docs/CSS_NOTES.md, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open the app in a private window, press Set up my hub, answer the age question: the Create your account card shows; Skip for now goes on to Choose your coach. Settings > Account > Sign in opens the same card with the lamp; switch to Create an account and back. Run node tests/browser/authcard.mjs.
+- **Known limits:** Google still needs the owner's Google and Supabase setup. Email sign-up still needs the confirmation link. Because sign-in reloads the page, a person who signs in during setup must press Set up my hub again. Checked in headless Chrome with a faked Supabase.
 
 ## 8.3.10 · Workouts: Challenges: compete with friends
 
@@ -13,6 +21,7 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 - **Where:** `index.html`: `CH`, `chLoad`, `chRows`, `challengesCard`, `chNew`, `chAct`, the `ch-*` click cases and the `ch-new` form, `workoutsView`. `supabase/migrations/20261022030000_wlh_8_3_10_workout_challenges.sql`. `tests/perf/budget.json` (size limits raised). `docs/DATABASE.md`, `docs/BUILD_PLAN.md`, `CHANGELOG.md`, `README.md`.
 - **How to test:** Apply the migration first. On two friend accounts: A starts a challenge and invites B; B sees the invite on Workouts and joins. Log a workout on each and check both totals and the order. A ends it and it disappears for B.
 - **Known limits:** Totals come from synced workouts of each person's main profile only, so unsynced devices lag. Counts up to 3 open challenges per owner. Block has no screen yet. No live two-account test has been done.
+
 ## 8.3.9 · Notifications: Notification centre: tabs, unread count, mark all read
 
 - **Problem:** The bell menu was a plain list with no tabs, no unread count and no way to mark everything read.

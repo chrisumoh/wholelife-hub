@@ -59,7 +59,7 @@ const ROUTES = ["home", "health", "nutrition", "workouts", "snacks", "alcohol", 
 // Each state: how to get there, whether it is shown with nobody signed in, and something that must be on screen before axe runs (so axe cannot pass on the wrong page).
 const STATES = {
   "Summary in edit mode with Large cards": { js: `(() => { const p = P(); p.wv = 2; p.widgets = [{ k: "calories", size: "l" }, { k: "meals", size: "l" }, { k: "coach", size: "l" }, { k: "weight", size: "l" }, { k: "water", size: "l" }]; UI.editPage = "home"; location.hash = "#/home"; render(); return true; })()`, see: `.wgrid.editing .dcard.editing .wminus` },
-  "Create account popup": { js: `(() => { UI.editPage = null; location.hash = "#/settings/profile"; render(); setTimeout(() => document.querySelector('[data-act="sb-open"][data-v="up"]')?.click(), 150); return true; })()`, see: `#pop-auth #sb-agree` },
+  "Create account popup": { js: `(() => { UI.editPage = null; location.hash = "#/settings/profile"; render(); setTimeout(() => { document.querySelector('[data-act="sb-open"]')?.click(); setTimeout(() => document.querySelector('#pop-auth [data-act="sb-mode"][data-v="up"]')?.click(), 400); }, 150); return true; })()`, see: `#pop-auth #sb-agree` },
   "quick jump palette": { js: `(() => { location.hash = "#/home"; render(); openPalette(); return true; })()`, see: `#palette:not([hidden]) #palette-input` },
   "welcome screen": { js: `(() => { UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; render(); return true; })()`, out: true, see: `.wl-cta` },
   "age screen": { js: `(() => { UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = "next"; UI.obGateOk = false; render(); return true; })()`, out: true, see: `form[data-form="age-gate"] #ag-y` },

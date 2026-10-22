@@ -101,7 +101,7 @@ ok("a block that starts after the question was answered still stops the profile 
 await ev(`localStorage.removeItem("wlh.ageblock"); true`);
 
 console.log("--- 3. the line itself, and what is kept for an adult");
-const edge = async (m, y) => { await pick(m, y); await submitGate(); return ev(`({ blocked: document.querySelector(".agate h1")?.textContent === "We can't set up a profile on this device", step: UI.obStep, age: UI.obDraft?.age ?? null })`); };
+const edge = async (m, y) => { await pick(m, y); await submitGate(); return ev(`({ blocked: document.querySelector(".agate h1")?.textContent === "We can't set up a profile on this device", step: UI.obStep, auth: !!UI.obAuth, age: UI.obDraft?.age ?? null })`); };
 await fresh(); await click('[data-act="ob-next"]'); await sleep(250);
 const cm = await ev(`new Date().getMonth() + 1`);
 const e13 = await ev(`(() => ({ month: ${cm}, y: ${CY - 13}, age: ageFromMonthYear(${cm}, ${CY - 13}), prev: ageFromMonthYear(${cm === 1 ? 12 : cm - 1}, ${cm === 1 ? CY - 14 : CY - 13}) }))()`);
@@ -109,10 +109,10 @@ ok("birth month the same as this month, 13 years ago, is treated as not yet 13 (
 ok("a month earlier it is 13", e13.prev === 13, JSON.stringify(e13));
 let r = await edge(cm, CY - 13); ok("exactly this month 13 years ago: blocked", r.blocked, JSON.stringify(r));
 await ev(`localStorage.removeItem("wlh.ageblock"); true`); await send("Page.reload"); await sleep(500); await waitFor(READY, 15000); await click('[data-act="ob-next"]'); await sleep(250);
-r = await edge(cm === 1 ? 12 : cm - 1, cm === 1 ? CY - 14 : CY - 13); ok("the month before: let through to 'Choose your coach' with age 13", !r.blocked && r.step === 1 && r.age === 13, JSON.stringify(r));
+r = await edge(cm === 1 ? 12 : cm - 1, cm === 1 ? CY - 14 : CY - 13); ok("the month before: let through past the age question with age 13", !r.blocked && (r.step === 1 || r.auth) && r.age === 13, JSON.stringify(r));
 await fresh(); await click('[data-act="ob-next"]'); await sleep(250);
 r = await edge(1, CY - 30); const exp = await ev(`ageFromMonthYear(1, ${CY - 30})`);
-ok("an adult goes on to 'Choose your coach' with only the age as a number", !r.blocked && r.step === 1 && r.age === exp, JSON.stringify(r));
+ok("an adult goes on past the age question with only the age as a number", !r.blocked && (r.step === 1 || r.auth) && r.age === exp, JSON.stringify(r));
 ok("the draft holds an age and no birth month or year", await ev(`!/birth|born|dob/i.test(Object.keys(UI.obDraft).join(","))`));
 await ev(`(() => { UI.obDraft.name = "Ada"; UI.obStep = 3; render(); return true; })()`); await sleep(300);
 ok("step 3 no longer has an Age box", await ev(`!document.getElementById("ob-age")`));
@@ -136,7 +136,7 @@ ok("adding another profile asks the age question again", await ev(`!!document.ge
 console.log("--- 4. agreeing to the Terms and Privacy Policy at sign-up");
 await fresh();
 await ev(`(async () => { const p = newProfile("Ada"); Object.assign(p, { onboarded: true, coachPrompted: true, tourSeen: "dismissed", age: 30 }); S.profiles = [p]; S.activeId = p.id; saveProfile(); await flush(); location.hash = "#/settings/profile"; render(); return true; })()`); await sleep(500);
-await click('[data-act="sb-open"][data-v="up"]'); await sleep(400);
+await click('[data-act="sb-open"][data-v="in"]'); await sleep(400); await click('#pop-auth [data-act="sb-mode"][data-v="up"]'); await sleep(250);
 const ag = await ev(`(() => { const c = document.getElementById("sb-agree"), l = c?.closest("label"); const links = [...(l?.querySelectorAll("a") || [])]; const cs = links.map(a => getComputedStyle(a)); const acc = (() => { const t = document.createElement("i"); t.style.color = "var(--accent)"; document.body.append(t); const v = getComputedStyle(t).color; t.remove(); return v; })();
   return { has: !!c, checked: c?.checked, text: l?.textContent.trim(), hrefs: links.map(a => a.getAttribute("href")), blank: links.every(a => a.target === "_blank" && /noopener/.test(a.rel)), underlined: cs.every(x => x.textDecorationLine === "underline"), accent: cs.every(x => x.color === acc), h: l ? l.getBoundingClientRect().height : 0, box: c ? c.getBoundingClientRect().width : 0 }; })()`);
 ok("Create account has an agree box that starts unticked", ag.has && ag.checked === false, JSON.stringify(ag));
@@ -164,7 +164,7 @@ await ev(`document.querySelector('#pop-auth [data-act="sb-mode"][data-v="in"]')?
 await ev(`document.querySelector('#pop-auth [data-act="sb-mode"][data-v="up"]')?.click(); true`); await sleep(250);
 ok("ticking, switching to Sign in and back to Create account asks again (unticked)", await ev(`document.getElementById("sb-agree")?.checked === false`));
 await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = true; c.dispatchEvent(new Event("change", { bubbles: true })); document.querySelector('#pop-auth [data-pop="close"]').click(); return true; })()`); await sleep(400);
-await click('[data-act="sb-open"][data-v="up"]'); await sleep(400);
+await click('[data-act="sb-open"][data-v="in"]'); await sleep(400); await click('#pop-auth [data-act="sb-mode"][data-v="up"]'); await sleep(250);
 ok("ticking, closing the popup and opening Create account again asks again (unticked)", await ev(`document.getElementById("sb-agree")?.checked === false`));
 ok("a failed submit keeps the tick for a retry in the same form", await (async () => { await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = true; c.dispatchEvent(new Event("change", { bubbles: true })); document.getElementById("sb-email").value = "bad"; document.getElementById("sb-pass").value = "x"; document.querySelector('form[data-form="sb-auth"]').requestSubmit(); return true; })()`); await sleep(400); return ev(`document.getElementById("sb-agree")?.checked === true && !!document.querySelector("#pop-auth .note")`); })());
 console.log("--- 4b. long legal sections fold behind Read more");

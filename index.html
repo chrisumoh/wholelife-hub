@@ -54,9 +54,7 @@
   --body:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",system-ui,sans-serif;
   --r:16px; --r-lg:20px; --r-sm:12px; --r-xs:8px;
   --page-margin:16px; --card-gap:12px; --card-padding:16px;
-  /* v9.1 UI CLEANUP (Sep 2026): an 8px spacing grid, used going forward in place of ad-hoc
-     paddings/margins (existing hand-tuned spacing is left as-is per "targeted edits only" —
-     new and touched rules use these). */
+  /* v9.1 UI CLEANUP (Sep 2026): an 8px spacing grid, used going forward in place of ad-hoc [CSS_NOTES 63] */
   --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px; --space-8:32px;
   /* v9.1 TASK 1: the one "selected" language for every picker card/row/chip in the app -- [CSS_NOTES 3] */
   --sel-line:color-mix(in srgb,var(--accent) 35%,var(--line2));
@@ -154,9 +152,7 @@ a{color:var(--accent)}
 button,input,select,textarea{font:inherit;color:inherit}
 /* v9.1 TASK 1: keyboard-only focus ring. :focus-visible already excludes mouse/touch taps in [CSS_NOTES 7] */
 :focus-visible{outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:2px;border-radius:6px}
-/* Shared selected-state check badge (Task 1 rule 2): 16px filled circle, white check, sits in
-   a card/row/chip's top-right corner. Markup adds one <span class="sel-tick"> child; visibility
-   is driven by whichever state class/attribute that component already uses to mark "selected". */
+/* Shared selected-state check badge (Task 1 rule 2): 16px filled circle, white check, sits i [CSS_NOTES 64] */
 .sel-tick{position:absolute;top:8px;right:8px;width:var(--sel-tick-size);height:var(--sel-tick-size);border-radius:50%;
   display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);opacity:0;transform:scale(.6);
   pointer-events:none;box-shadow:0 0 0 2px var(--surface);transition:opacity var(--dur-tap) var(--ease-smooth),transform var(--dur-tap) var(--ease-spring)}
@@ -314,9 +310,7 @@ button.st-dot:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
 /* surfaces */
 .card{background:var(--surface);border:0;border-radius:var(--r);padding:var(--card-padding);box-shadow:none;display:flex;flex-direction:column;gap:var(--card-gap);min-width:0}
-/* v9.1 TASK 3: light mode gets a 1px near-black hairline at low opacity (cards otherwise read
-   as one flat plane against the barely-different --ground); dark and OLED stay borderless,
-   since --surface already separates clearly from --ground:#000 there. */
+/* v9.1 TASK 3: light mode gets a 1px near-black hairline at low opacity (cards otherwise rea [CSS_NOTES 65] */
 :root[data-scheme="light"] .card,:root[data-scheme="light"] .mcard{border:1px solid rgba(0,0,0,.06)}
 .card.hero,.card.lg,.card.featured{border-radius:var(--r-lg)}
 .card.hero{background:linear-gradient(180deg,var(--accent-soft),var(--surface) 70%)}
@@ -327,9 +321,7 @@ button.st-dot:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .li:first-child{border-top:0}
 .li .grow{flex:1;min-width:0}
 .empty{border:1px dashed var(--line2);border-radius:var(--r-sm);padding:18px;text-align:center;color:var(--muted)}
-/* v9.0: card header pattern (category label left, timestamp right) and the universal
-   trailing chevron for every tappable row — used across Summary, meals, workouts, coach,
-   recipes, achievements, settings. */
+/* v9.0: card header pattern (category label left, timestamp right) and the universal [CSS_NOTES 66] */
 .card-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .card-cat{font-size:calc((15px) * var(--text-scale,1));font-weight:600}
 .card-time{font-size:calc((13px) * var(--text-scale,1));font-weight:400;color:var(--faint);white-space:nowrap}
@@ -368,9 +360,7 @@ a.card:active,a.li:active,a.mcard:active,.tap-row:active{transform:scale(.98)}
 /* Master final check fix: a nested .tiny.muted count (e.g. "25 dishes") was falling back to [CSS_NOTES 15] */
 .tag .tiny.muted{color:inherit}
 label.f{display:flex;flex-direction:column;gap:6px;font-size:calc((13px) * var(--text-scale,1));font-weight:600;color:var(--muted);min-width:0}
-/* v9.1 TASK 3: inputs -- 44px tall, radius 10px, no resting border (a --raise fill separates
-   them from a same-color --surface card instead, same reasoning as the .btn secondary change
-   above), a hairline appears only on focus-visible. */
+/* v9.1 TASK 3: inputs -- 44px tall, radius 10px, no resting border (a --raise fill separates [CSS_NOTES 67] */
 input[type=text],input[type=number],input[type=date],input[type=time],input[type=search],select,textarea{width:100%;background:var(--raise);border:1px solid transparent;border-radius:10px;padding:0 12px;min-height:44px;font-size:calc((15px) * var(--text-scale,1));color:var(--text);font-weight:400;min-width:0}
 input[type=text]:focus-visible,input[type=number]:focus-visible,input[type=date]:focus-visible,input[type=time]:focus-visible,input[type=search]:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var(--sel-line)}
 textarea{resize:vertical;min-height:84px;padding-block:10px}
@@ -470,9 +460,7 @@ table.tbl-storage code{font-size:calc((12px) * var(--text-scale,1));background:v
 #appearance .setlabel{font-size:calc((12px) * var(--text-scale,1));text-transform:uppercase;letter-spacing:.04em;font-weight:600}
 #appearance{gap:var(--space-6)}
 #appearance .setgroup{gap:var(--space-2)}
-/* Master prompt STRICT RULE 10 also names this cap directly ("Appearance screen max content
-   width 640px") as one of the two to remove; the section now uses the page's own (960px) wrap
-   width instead of narrowing itself further. */
+/* Master prompt STRICT RULE 10 also names this cap directly ("Appearance screen max content [CSS_NOTES 68] */
 .lockcard{width:min(420px,100%)}
 .shield{width:56px;height:56px;border-radius:var(--r-sm);background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
 .shield svg{width:28px;height:28px}
@@ -1227,9 +1215,7 @@ svg:not(.logo-svg):not(.scene-svg):not(.chart){max-width:100%}
 .cel-ring.cr2{width:44px;height:44px;border-color:var(--c-water);animation-delay:.36s}
 @keyframes celPulse{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.07);opacity:1}}
 :root[data-motion="reduced"] .cel-ring{animation:none}
-/* Seasonal themes: a reskin of the same glass, plus one drifting motif. The picker itself moved
-   to the 148x40 .season-chip rule further down this file (v11.0 TASK 6) -- .season-layer below
-   is the drifting-motif background effect, unrelated to the picker UI, and stays as-is. */
+/* Seasonal themes: a reskin of the same glass, plus one drifting motif. The picker itself mo [CSS_NOTES 69] */
 .season-layer{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
 .season-layer span{position:absolute;top:-6%;display:block;line-height:0;color:var(--sea-col,#cfe8ff);animation-name:seaFall;animation-timing-function:linear;animation-iteration-count:infinite}
 .season-layer span svg{display:block;width:100%;height:100%}
@@ -1348,18 +1334,7 @@ svg:not(.logo-svg):not(.scene-svg):not(.chart){max-width:100%}
 
 html,body{margin:0;padding:0}
 
-/* ===================== v7.5 TYPOGRAPHY =====================
-   Anthropic Sans is Anthropic's own brand face with no public licence, so per the brief this
-   uses the closest free equivalent: Plus Jakarta Sans, a warm humanist sans with the same
-   slightly geometric feel. One family, one scale, everywhere.
-   v8.6 update: "Plus Jakarta Sans" was never actually loaded anywhere (no @font-face, no
-   network fetch), so it silently no-op'd to the browser default the whole time. Introducing
-   --font-app as the single source of truth for the active typeface, defaulting to the
-   Perplexity-style system stack per the font-picker spec, with --font/--display deriving
-   from it so every existing rule that already reads var(--font)/var(--display) picks up
-   font-switching for free. Six additional families are self-hosted below (no network
-   requests, ever - see /fonts/LICENSES.txt) and swapped in via [data-font="x"] on <html>,
-   mirroring the existing data-theme/data-scheme attribute pattern. */
+/* v7.5 TYPOGRAPHY [CSS_NOTES 70] */
 :root{
   --font-app:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",system-ui,sans-serif;
   --font:var(--font-app);
@@ -1371,11 +1346,7 @@ html,body{margin:0;padding:0}
 html,body,button,input,select,textarea,optgroup{font-family:var(--font);font-feature-settings:"cv05" 1,"ss01" 1}
 body{font-size:calc((var(--t-base)) * var(--text-scale,1));letter-spacing:-.005em;line-height:1.5}
 
-/* ---- v8.6 self-hosted font faces (all SIL OFL 1.1, see fonts/LICENSES.txt) ----
-   font-display:swap avoids invisible-text FOUC: system stack shows instantly, swaps in
-   once the woff2 loads. Only the 6 downloadable options get @font-face; "System" and
-   "OpenDyslexic" (assumed already installed by users who need it, with a system fallback
-   chain) never trigger a network-equivalent load path beyond the local file. */
+/* v8.6 self-hosted font faces (all SIL OFL 1.1, see fonts/LICENSES.txt) [CSS_NOTES 71] */
 @font-face{font-family:"Inter";font-style:normal;font-weight:400;font-display:swap;src:url("fonts/inter-latin-400-normal.woff2") format("woff2")}
 @font-face{font-family:"Inter";font-style:normal;font-weight:700;font-display:swap;src:url("fonts/inter-latin-700-normal.woff2") format("woff2")}
 @font-face{font-family:"Familjen Grotesk";font-style:normal;font-weight:400;font-display:swap;src:url("fonts/familjen-grotesk-latin-400-normal.woff2") format("woff2")}
@@ -1432,9 +1403,7 @@ input,select,textarea{font-size:calc((var(--t-base)) * var(--text-scale,1));font
 .app.rail .who-row{padding:0;border-radius:50%}
 @media (hover:hover) and (pointer:fine){.app.rail .who-row:hover{background:none;transform:scale(1.06)}}
 .app.rail .who-row .avatar{width:40px!important;height:40px!important;font-size:calc((15px!important) * var(--text-scale,1))}
-/* 8.2.22: collapsed rows share one 44px box on one centre line and one 6px gap, inside a group
-   as well as between groups (items were 2px apart, group joins 6px, and the Premium button
-   was 40px tall and 2px off centre). */
+/* 8.2.22: collapsed rows share one 44px box on one centre line and one 6px gap, inside a gro [CSS_NOTES 72] */
 .app.rail .navgrp-items{gap:6px}
 .app.rail .nav a.upsell{margin-top:0}
 .app.rail .nav button.prem-trigger span:not(.si-tile){display:none}
@@ -1529,9 +1498,7 @@ input,select,textarea{font-size:calc((var(--t-base)) * var(--text-scale,1));font
 .ts-ax-label{display:flex;align-items:center;gap:6px;cursor:pointer}
 .ts-ax-label input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
 
-/* ===================== v7.5 PASTEL LOCK SCENE (section 1) =====================
-   Warm solid background, flat characters, spring entrances with a squash landing, and a
-   gentle idle bounce on its own rhythm per character. Transform and opacity only. */
+/* v7.5 PASTEL LOCK SCENE (section 1) [CSS_NOTES 73] */
 .ob.pastel{background:linear-gradient(170deg,#FFF1E2 0%,#FDE8D6 48%,#FFE2CE 100%)}
 :root:is([data-scheme="dark"],[data-scheme="oled"]) .ob.pastel{background:linear-gradient(170deg,#2A2119 0%,#231B15 55%,#1C1611 100%)}
 .pastel-bg{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
@@ -1992,9 +1959,7 @@ svg[data-icon="trophy"],svg[data-icon="pumpkin"]{stroke-width:1.75}
 
 /* =================== v8.1: THE MENU BUGS =================== */
 
-/* Task 2: the "lingering shadow" was the browser's own tap highlight, a dark rounded box
-   the platform paints over the element for a few hundred milliseconds after a touch. It was
-   never in our CSS, which is why it had no obvious source. */
+/* Task 2: the "lingering shadow" was the browser's own tap highlight, a dark rounded box [CSS_NOTES 74] */
 html{-webkit-tap-highlight-color:transparent}
 *{-webkit-tap-highlight-color:transparent}
 button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-color:transparent}
@@ -2028,9 +1993,7 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
 /* =================== v8.5: DAILY COACH ADVICE CARD (bug docs: Coach personalization) ======= */
 .advice-row{padding:12px 14px;border-radius:var(--r-sm);background:var(--raise);border:1px solid var(--line)}
 .advice-row .small{line-height:1.5}
-/* Master final check fix: .faint.tiny inside this card measured 4.40:1 in light scheme against
-   --raise, just under 4.5:1 (dark/OLED --faint is much lighter against a dark card and passes).
-   Scoped to light scheme only, same reasoning as the .ci-col .eyebrow fix above. */
+/* Master final check fix: .faint.tiny inside this card measured 4.40:1 in light scheme again [CSS_NOTES 75] */
 :root[data-scheme="light"] .advice-row .faint.tiny{color:color-mix(in srgb,var(--faint) 92%,#000)}
 
 /* =================== v8.1: COACH MECHANICS AND CHECK-INS =================== */
@@ -2104,13 +2067,9 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
 /* --- midnight: dark in every scheme, by design --- */
 :root[data-theme="midnight"]:is([data-scheme="dark"],[data-scheme="oled"]){--ground:#0E1420;--surface:#161E2C;--raise:#1F293A;--text:#E7EFF7;--muted:#9AA4B2;--faint:#9AA4B2;--accent:#6FA8C9;--accent-ink:#0B0F14;--accent2:#8FC4DE;}
 :root[data-theme="midnight"][data-scheme="oled"]{--ground:#000000;--surface:#0A0F17}
-/* v11.0 TASK 6: themes moved from the v9.1 vertical tile (.themecard/.th-sw, now retired) to
-   the 148x40 horizontal chip in the shared .theme-chip rule further down this file -- same
-   per-theme preview colors, just two side-by-side dots instead of a stacked two-tone bar. */
+/* v11.0 TASK 6: themes moved from the v9.1 vertical tile (.themecard/.th-sw, now retired) to [CSS_NOTES 76] */
 
-/* v11.0 TASK 5: the font picker's 2-column card grid (.fonts/.fontcard, retired -- it's what
-   clipped the sample pangram mid-card) moved to a single .font-trigger button opening the
-   .pop-row list defined earlier in this file, with the sample line truncating cleanly there. */
+/* v11.0 TASK 5: the font picker's 2-column card grid (.fonts/.fontcard, retired -- it's what [CSS_NOTES 77] */
 
 
 /* =================== v8.1: TASK 8 POLISH =================== */
@@ -2431,9 +2390,7 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
 
 /* Micronutrient gaps */
 .microlist{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column}
-/* The row is a container, not a layout. It used to be a 3-column grid, which turned the
-   drill-down panel into a fourth cell 84px wide jammed against the row's right edge. The
-   columns live on .mi-head now, and the panel is a full-width sibling beneath it. */
+/* The row is a container, not a layout. It used to be a 3-column grid, which turned the [CSS_NOTES 78] */
 .mi-row{display:block;border-top:1px solid var(--line)}
 .mi-row:first-child{border-top:0}
 .mi-name{min-width:0;display:flex;flex-direction:column;gap:1px}
@@ -2469,9 +2426,7 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
 
 
 /* =================== V8.0.1: SIDEBAR LAYOUT =================== */
-/* The whole sidebar used to be one scroller, so the brand scrolled away and a row could be
-   sliced in half at the top edge — the "stray fragment". Now only the nav scrolls, between a
-   fixed brand and a fixed footer. */
+/* The whole sidebar used to be one scroller, so the brand scrolled away and a row could be [CSS_NOTES 79] */
 .side{height:100vh;height:100dvh;overflow:hidden!important;gap:0;
   padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
 .side .brand{flex:0 0 auto;margin-bottom:14px}
@@ -2490,9 +2445,7 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
   -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 20px),transparent 100%);
   mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 20px),transparent 100%)}
 
-/* Rail mode: icons only, never a truncated word. .si-tile is a <span> too (it carries no
-   other class of its own), so it needs the same :not() exclusion as the label-span rules
-   above it, or the collapsed rail loses its icons entirely along with the labels. */
+/* Rail mode: icons only, never a truncated word. .si-tile is a <span> too (it carries no [CSS_NOTES 80] */
 .app.rail .nav a{justify-content:center;padding:0;min-width:44px;min-height:44px;align-items:center}
 .app.rail .nav a span:not(.si-tile),.app.rail .nav .grp,.app.rail .nav .betatag,.app.rail .nav .prem-badge-sm{display:none!important}
 .app.rail .nav a svg{width:22px;height:22px}
@@ -2520,9 +2473,7 @@ button,a,[data-act],summary,label,input,select,textarea{-webkit-tap-highlight-co
   --pm-ease-in:cubic-bezier(.34,1.56,.64,1);
   --pm-stagger:70ms;
 }
-/* Arrival motion is keyed on .arrive, which app2.js puts on the one link whose route just
-   became active. Keying it on [aria-current="page"] meant every render restarted the animation,
-   because render() rebuilds the whole nav from innerHTML. */
+/* Arrival motion is keyed on .arrive, which app2.js puts on the one link whose route just [CSS_NOTES 81] */
 .nav a svg.pi{color:var(--muted)}
 @media (hover:hover) and (pointer:fine){.nav a:hover svg.pi{color:var(--gold)}}
 .nav a[aria-current="page"] svg.pi{color:var(--accent)}
@@ -2750,9 +2701,7 @@ html .side .nav a .si-tile svg{color:#fff}
 /* Coloured text on a plain card sits just under AA at these sizes, so the change reads as a
    tinted chip instead — the same colour-on-soft pairing the app's tags already use. */
 .num-cell .chg{display:inline-block;padding:2px 7px;border-radius:999px;font-weight:700;font-size:calc((12px) * var(--text-scale,1))}
-/* On a dark scheme the plain token pair is comfortably AA. On a light one it sits at 3.75:1, so
-   the text is darkened there. This keys off data-scheme rather than --text, because the midnight
-   theme keeps a light --text even in its light scheme and mixing toward it made things worse. */
+/* On a dark scheme the plain token pair is comfortably AA. On a light one it sits at 3.75:1, [CSS_NOTES 82] */
 .num-cell .chg.up{background:var(--good-soft);color:var(--good)}
 .num-cell .chg.down{background:var(--warn-soft);color:var(--warn)}
 :root[data-scheme="light"] .num-cell .chg.up{color:color-mix(in srgb,var(--good) 76%,#000)}
@@ -3001,10 +2950,7 @@ html .side .nav a .si-tile svg{color:#fff}
   --brand-teal:#0E8397; --brand-green:#1FA36B; --brand-lime:#63C832;
   --brand-grad:linear-gradient(135deg,var(--brand-teal) 0%,var(--brand-green) 48%,var(--brand-lime) 100%);
   --terracotta:#B5541F; --terracotta-grad:linear-gradient(135deg,var(--terracotta) 0%,var(--gold) 100%);
-  /* Fine, static film-grain: a 120x120 feTurbulence tile at very low final opacity (the
-     opacity lives on the <rect>, not the layer, so it composites once -- no blend-mode
-     surprises in dark mode). Decorative only, so no prefers-reduced-motion gate is needed:
-     nothing here moves. */
+  /* Fine, static film-grain: a 120x120 feTurbulence tile at very low final opacity (the [CSS_NOTES 83] */
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
 }
 :root[data-scheme="dark"],:root[data-scheme="oled"]{
@@ -3023,10 +2969,7 @@ html .side .nav a .si-tile svg{color:#fff}
 .dish{position:relative;overflow:hidden}
 .dish::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--terracotta-grad);opacity:.85}
 @media (hover:hover) and (pointer:fine){.dish:hover{box-shadow:0 10px 24px -14px color-mix(in srgb,var(--terracotta) 55%,transparent)}}
-/* Workouts & Coach: the coach picker cards and chat bubble pick up the brand green instead
-   of the generic accent hover, and the picker tiles get the same quiet grain as the home
-   hero so the two "calm, premium" screens the HIG health/fitness bias asks for feel like one
-   family. */
+/* Workouts & Coach: the coach picker cards and chat bubble pick up the brand green instead [CSS_NOTES 84] */
 .coachcard{background-image:var(--grain);background-repeat:repeat}
 @media (hover:hover) and (pointer:fine){.coachcard:hover{border-color:color-mix(in srgb,var(--brand-green) 45%,var(--line2));box-shadow:0 10px 26px -16px color-mix(in srgb,var(--brand-green) 50%,transparent)}}
 .coachcard.on{border-color:color-mix(in srgb,var(--brand-green) 55%,var(--sel-line))}
@@ -3078,9 +3021,7 @@ html .side .nav a .si-tile svg{color:#fff}
 .pill-progress{font-size:calc((10px) * var(--text-scale,1));font-weight:600;padding:2px 8px;border-radius:999px;
   background:rgba(92,107,99,.18);color:var(--muted);white-space:nowrap;flex:none;line-height:1.6}
 
-/* Premium tab -> popup trigger in the sidebar (TASK 1): a plain "Premium" row, no "What's new"
-   framing and no Beta pill, styled identically to every other nav row but a <button> instead of
-   an <a> since it opens the popup rather than navigating. */
+/* Premium tab -> popup trigger in the sidebar (TASK 1): a plain "Premium" row, no "What's ne [CSS_NOTES 85] */
 .nav button.prem-trigger{all:unset;display:flex;gap:10px;align-items:center;min-height:40px;padding:0 12px;
   border-radius:8px;color:var(--muted);font-weight:500;font-size:calc((15px) * var(--text-scale,1));cursor:pointer;width:100%;box-sizing:border-box;
   font-family:inherit;transition:transform var(--dur-menu) var(--ease-spring),background-color var(--dur-popup) var(--ease-smooth),color var(--dur-tap) var(--ease-smooth)}
@@ -3519,9 +3460,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 .diag-list{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto;overflow-wrap:anywhere}
 .diag-list .dk-error b,.diag-list .dk-warn b{color:var(--bad,#ef4444)}
 /* =================== BorderGlow (React Bits), ported to plain CSS/JS =================== */
-/* A mesh-gradient border and glow that follows the pointer's direction and grows as it nears
-   the card's edge. Same layers and maths as the React version; the card's own ::before/::after
-   are already used by the app (the sheen), so the three layers are real child elements here. */
+/* A mesh-gradient border and glow that follows the pointer's direction and grows as it nears [CSS_NOTES 86] */
 .border-glow-card{--edge-proximity:0;--cursor-angle:45deg;--edge-sensitivity:30;--color-sensitivity:calc(var(--edge-sensitivity) + 20);
   --border-radius:28px;--glow-padding:40px;--cone-spread:25;position:relative;isolation:isolate;overflow:visible!important}
 .border-glow-card::after{display:none!important} /* the app's hover sheen would fight the glow */
@@ -3810,7 +3749,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.10", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.11", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3824,6 +3763,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.10", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.11",
+      area:"Sign-in",
+      title:"Sign-in card with Google and email, offered during setup",
+      bug:"Sign-in was only reachable from Settings, in a plain form with the Google button above the email fields, and a new person was never offered an account while setting up their hub.",
+      fix:"The sign-in form is now a card: a title and one line of text, the email form first (Full name optional, email, password, the Terms tick on sign-up, a full-width button, Forgot password? on sign-in), then an 'or continue with' divider and Continue with Google, then a link that switches between 'New here? Create an account' and 'Already have an account? Sign in'. After the age question in 'Set up my hub' the same card is shown as 'Create your account', with Skip for now (first profile on a device, not signed in, account sign-in available). Under-13 answers never reach it. Settings > Account now has one Sign in button that opens the same card (with the lamp) in place of the old Sign in and Create account pair. A name typed on sign-up is saved with the account as full_name. Only Google and email are offered. The card has no Remember me tick (the browser always keeps the session) and no code step (the app confirms by link). Signing in reloads the page, so a person who signs in during setup lands on the welcome screen already signed in, and the stop is skipped. To make room under the size budget, 24 long CSS comments moved to docs/CSS_NOTES.md (notes 63 to 86); no rule changed.",
+      where:"index.html: AUTH_TITLE, AUTH_DESC, authFormHTML(), obAuthView(), onboardingView() (step 0), ageGateSubmit(), the ob-auth-go case, accountCard(), sbAuth() (name), CSS block 8.3.11, 24 CSS comments shortened to notes. tests/browser/authcard.mjs (new, 23 checks), legal.mjs, a11y.mjs, meal-sync.mjs, run-all.mjs. docs/CSS_NOTES.md, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app in a private window, press Set up my hub, answer the age question: the Create your account card shows; Skip for now goes on to Choose your coach. Settings > Account > Sign in opens the same card with the lamp; switch to Create an account and back. Run node tests/browser/authcard.mjs.",
+      limits:"Google still needs the owner's Google and Supabase setup. Email sign-up still needs the confirmation link. Because sign-in reloads the page, a person who signs in during setup must press Set up my hub again. Checked in headless Chrome with a faked Supabase." },
     { id:"8.3.10",
       area:"Workouts",
       title:"Challenges: compete with friends",
@@ -8923,7 +8870,7 @@ const SB_ERR = { invalid_credentials:"That email and password don't match.", ema
 const sbErrText = e => SB_ERR[e?.code] || (navigator.onLine === false ? "You're offline. Connect and try again." : "Something went wrong. Try again in a moment.");
 async function sbAuth(kind){
   const c = sbClient(); if (!c) return;
-  const email = val("sb-email").toLowerCase(), pass = document.getElementById("sb-pass")?.value || "";
+  const email = val("sb-email").toLowerCase(), pass = document.getElementById("sb-pass")?.value || "", nm = val("sb-name").trim().slice(0, 80); // read before the re-render below empties the fields
   UI.sbEmail = email; UI.sbMsg = null; SB.gtok = (SB.gtok || 0) + 1;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { UI.sbMsg = { t:"Enter a valid email address." }; return sbRender(); }
   if (kind !== "reset" && (kind === "up" ? pass.length < 8 : !pass)) { UI.sbMsg = { t: kind === "up" ? "Use at least 8 characters for the password." : "Enter your password." }; return sbRender(); }
@@ -8934,7 +8881,7 @@ async function sbAuth(kind){
     else if (kind === "up") {
       // The agreement is recorded with the account (user metadata, no schema change) and on this device: which version, and when.
       const consent = { terms_version: TERMS_VERSION, terms_accepted_at: new Date().toISOString() };
-      const r = await c.auth.signUp({ email, password: pass, options: { emailRedirectTo: sbRedirect(), data: consent } }); if (r.error) throw r.error;
+      const r = await c.auth.signUp({ email, password: pass, options: { emailRedirectTo: sbRedirect(), data: nm ? { ...consent, full_name: nm } : consent } }); if (r.error) throw r.error;
       try { localStorage.setItem(CONSENT_KEY, JSON.stringify({ v: consent.terms_version, at: consent.terms_accepted_at })); } catch {}
       historyAdd("terms");
       UI.sbAgree = false;
@@ -9052,24 +8999,39 @@ function lampSet(el, on){
 }
 document.addEventListener("visibilitychange", () => document.querySelector("#pop-auth .lamp")?.classList.toggle("lamp-paused", document.hidden));
 
-const AUTH_TITLE = { in:"Sign in", up:"Create account", reset:"Reset your password" };
+const AUTH_TITLE = { in:"Welcome back", up:"Create your account", reset:"Reset your password" };
+const AUTH_DESC = { in:"Sign in to pick up where you left off.", up:"Save your hub to an account so it follows you to every device.", reset:"We'll email you a link to choose a new password." };
+// The sign-in card: the email form first, then Google below it, then a link to the other mode. Used in the popup and in onboarding.
 function authFormHTML(){
   const mode = UI.acct || "in", em = esc(UI.sbEmail || "");
   const link = (v, l) => `<button type="button" class="auth-link" data-act="sb-mode" data-v="${v}">${l}</button>`;
   const google = mode === "reset" ? "" : `<div class="auth-alt stack">
+      <div class="auth-or" aria-hidden="true"><span>or continue with</span></div>
       <button type="button" class="btn auth-google" data-act="sb-google"${SB.busy || SB.gbusy ? " disabled" : ""}>${GOOGLE_G}<span>Continue with Google</span></button>
       <p class="auth-gmsg" id="auth-g-msg" role="alert"></p>
-      <p class="tiny muted auth-terms">By continuing with Google you agree to the <a href="#/terms" target="_blank" rel="noopener">Terms</a> and the <a href="#/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
-      <div class="auth-or" aria-hidden="true"><span>or use your email</span></div></div>`;
-  return `${google}<form class="stack" data-form="sb-auth" data-kind="${mode}" novalidate>
+      <p class="tiny muted auth-terms">By continuing with Google you agree to the <a href="#/terms" target="_blank" rel="noopener">Terms</a> and the <a href="#/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>.</p></div>`;
+  const sw = mode === "in" ? `New here? ${link("up", "Create an account")}` : mode === "up" ? `Already have an account? ${link("in", "Sign in")}` : link("in", "Back to sign in");
+  return `<p class="muted small auth-desc">${AUTH_DESC[mode]}</p><form class="stack" data-form="sb-auth" data-kind="${mode}" novalidate>
+      ${mode === "up" ? `<label class="f">Full name <span class="tiny muted">(optional)</span><input type="text" id="sb-name" autocomplete="name" maxlength="80"></label>` : ""}
       <label class="f">Email<input type="email" id="sb-email" autocomplete="email" inputmode="email" value="${em}" required></label>
       ${mode === "reset" ? "" : `<label class="f">Password<input type="password" id="sb-pass" autocomplete="${mode === "up" ? "new-password" : "current-password"}" ${mode === "up" ? 'minlength="8" ' : ""}required></label>`}
       ${mode === "up" ? `<p class="tiny muted">At least 8 characters. We'll email you a link to confirm your address.</p>
       <label class="agree"><input type="checkbox" id="sb-agree"${UI.sbAgree ? " checked" : ""}><span>I agree to the <a href="#/terms" target="_blank" rel="noopener">Terms</a> and the <a href="#/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>` : ""}
       ${UI.sbMsg ? `<div class="note ${UI.sbMsg.ok ? "info" : ""}" role="${UI.sbMsg.ok ? "status" : "alert"}">${esc(UI.sbMsg.t)}</div>` : ""}
       <button class="btn primary" type="submit"${SB.busy ? " disabled" : ""}>${SB.busy ? "Working…" : mode === "in" ? "Sign in" : mode === "up" ? "Create account" : "Email me a reset link"}</button>
-      <div class="auth-links">${mode === "in" ? link("reset", "Forgot password?") + link("up", "Create an account") : mode === "up" ? link("in", "I already have an account") : link("in", "Back to sign in")}</div>
-    </form>`;
+      ${mode === "in" ? link("reset", "Forgot password?") : ""}
+    </form>${google}<div class="auth-links">${sw}</div>`;
+}
+// Onboarding stop after the age question and before the coach: Google or email, or skip. Signing in reloads the page (sbReload), so a person
+// who signs in here lands on the welcome screen signed in, and this stop is skipped the next time.
+function obAuthView(){
+  return `<main class="ob obg">${obGround()}<div class="panel st-panel auth-ob">
+    <div class="row">${logoSVG(46)}<div class="eyebrow">Your account</div></div>
+    <h1 class="ob-h1" tabindex="-1" data-st-focus>${AUTH_TITLE[UI.acct || "up"]}</h1>
+    <div class="auth-pop"><div class="pop-body">${authFormHTML()}</div></div>
+    <div class="st-foot modal-foot"><div class="foot-left"><span class="tiny muted">You can sign in later in Settings.</span></div>
+      <div class="foot-right"><button class="btn ghost" data-act="ob-auth-go">Skip for now</button></div></div>
+  </div></main>`;
 }
 function openAuthPopup(mode, triggerEl){
   UI.acct = mode; UI.sbMsg = null; UI.sbAgree = false; // each new form asks again
@@ -9254,7 +9216,7 @@ function accountCard(){
       <div class="row"><button class="btn sm" data-act="sb-out-no">Cancel</button><button class="btn sm danger" data-act="sb-out-force">Sign out anyway</button></div>` : ""}
   </section>`;
   return `<section class="card" id="sb-account">${row("Account", `<div class="acct-s">Optional. Sign in to save your meals, workouts and weigh-ins to your account.</div>`,
-    `<button type="button" class="btn sm primary" data-act="sb-open" data-v="in" aria-haspopup="dialog">Sign in</button><button type="button" class="btn sm" data-act="sb-open" data-v="up" aria-haspopup="dialog">Create account</button>`)}</section>`;
+    `<button type="button" class="btn sm primary" data-act="sb-open" data-v="in" aria-haspopup="dialog">Sign in</button>`)}</section>`;
 }
 // Shown instead of the app when a password-reset link is opened.
 function recoveryView(){
@@ -11586,7 +11548,9 @@ function ageGateSubmit(){
   UI.obDraft = UI.obDraft || newProfile(""); UI.obDraft.age = Math.min(110, age); UI.obGateOk = true; UI.agErr = null;
   const then = UI.obGate; UI.obGate = null;
   if (then === "skip") return finishOnboarding("fresh");
-  UI.obStep = 1; render(); window.scrollTo(0, 0);
+  // First profile on this device, account sign-in available and not signed in yet: offer it before the coach step.
+  if (!S.profiles.length && sbClient() && !SB.user) { UI.obAuth = true; UI.acct = "up"; UI.sbMsg = null; UI.sbAgree = false; } else UI.obStep = 1;
+  render(); window.scrollTo(0, 0);
 }
 function welcomeView(){
   const adding = S.profiles.length > 0;
@@ -11681,7 +11645,7 @@ function obStepFrame(step, content, foot){
 function onboardingView(){
   const d = UI.obDraft || (UI.obDraft = newProfile(""));
   const step = UI.obStep;
-  if (step === 0) return UI.obGate ? ageGateView() : welcomeView();
+  if (step === 0) return UI.obGate ? ageGateView() : UI.obAuth ? obAuthView() : welcomeView();
   const units = d.units;
   // Step zero: pick a coach. Nothing is personalised and no coaching text is generated
   // until this is answered, so the voice is set before there is anything to say.
@@ -11760,7 +11724,7 @@ function finishOnboarding(choice){
   S.profiles.push(d); S.activeId = d.id;
   if (d.weightKg) { S.activeId = d.id; addEntry("weights", { id: uid(), date: today(), kg: d.weightKg }); }
   saveProfile();
-  UI.obDraft = null; UI.obStep = 0; UI.obChoice = null; UI.obGate = null; UI.obGateOk = false;
+  UI.obDraft = null; UI.obStep = 0; UI.obChoice = null; UI.obGate = null; UI.obGateOk = false; UI.obAuth = false;
   UI.loading = choice === "plan" ? "Building your plan…" : "Setting up your hub…";
   render();
   setTimeout(() => { UI.loading = false; location.hash = "#/home"; readRoute(); render(); }, 1100);
@@ -12751,8 +12715,9 @@ document.addEventListener("click", async e => {
     // 8.1.9 stepper: tapping a finished step's circle goes back to it (never forward, so no
     // step's checks -- coach chosen, the under-13 gate -- can be jumped over)
     case "ob-goto": { const to = +t.dataset.v; if (to >= 1 && to < UI.obStep) { readOnboardingStep(); UI.obStep = to; render(); window.scrollTo(0,0); } break; }
-    case "ob-cancel": UI.obDraft = null; UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; UI.agErr = null; S.activeId = UI.lastActive && S.profiles.some(x=>x.id===UI.lastActive) ? UI.lastActive : S.profiles[0]?.id; render(); break;
+    case "ob-cancel": UI.obAuth = false; UI.obDraft = null; UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; UI.agErr = null; S.activeId = UI.lastActive && S.profiles.some(x=>x.id===UI.lastActive) ? UI.lastActive : S.profiles[0]?.id; render(); break;
     case "ob-skip": UI.obDraft = UI.obDraft || newProfile(""); if (!UI.obGateOk || ageBlocked()) { UI.obGateOk = false; UI.obGate = "skip"; UI.agErr = null; render(); window.scrollTo(0,0); break; } finishOnboarding("fresh"); break;
+    case "ob-auth-go": UI.obAuth = false; UI.obStep = 1; render(); window.scrollTo(0,0); break;
     case "ag-back": UI.obGate = null; UI.agErr = null; render(); break;
     case "ob-units": readOnboardingStep(); UI.obDraft.units = t.dataset.v; render(); break;
     case "ob-choice": UI.obChoice = t.dataset.v; render(); break;
@@ -12907,7 +12872,7 @@ document.addEventListener("click", async e => {
     case "fr-leave": frLeave(); break;
     case "ch-open": CH.open = !CH.open; render(); break;
     case "ch-join": case "ch-decline": case "ch-leave": chAct(a, t.dataset.id); break;
-    case "new-profile": UI.lastActive = p?.id; UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; S.activeId = null; render(); break;
+    case "new-profile": UI.obAuth = false; UI.lastActive = p?.id; UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; S.activeId = null; render(); break;
     case "switch": S.activeId = t.dataset.id; saveProfile(); resetUI(); render(); toast(`Switched to ${P().name || "profile"}`); break;
     case "del-profile": UI.confirmDel = t.dataset.id; render(); break;
     case "del-profile-no": UI.confirmDel = null; render(); break;
@@ -22256,6 +22221,12 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .sc-handle:focus-visible{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent)}
 @keyframes scShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
 .sc-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* ===================== 8.3.11 sign-in card ===================== */
+.auth-desc{margin:0 0 12px}
+.auth-pop .auth-alt{margin:16px 0 0}
+.auth-links{align-items:center;gap:0 6px;color:var(--muted);font-size:calc((13px) * var(--text-scale,1))}
+.auth-pop .auth-links{margin-top:12px}
+.auth-ob{width:min(400px,calc(100vw - 32px));margin-inline:auto}
 </style>
 <script>
 (() => {

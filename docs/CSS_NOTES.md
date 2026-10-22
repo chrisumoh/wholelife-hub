@@ -664,3 +664,208 @@ Historical explanations moved from inline styles in build 8.2.23 to reduce the a
    One block, last in the sheet. Colors come from the existing tokens, so every scheme, accent and
    theme follows. Radii stay in the allowed set; the only shadows are the soft control shadows below. */
 ```
+
+## 63
+
+```css
+/* v9.1 UI CLEANUP (Sep 2026): an 8px spacing grid, used going forward in place of ad-hoc
+     paddings/margins (existing hand-tuned spacing is left as-is per "targeted edits only" —
+     new and touched rules use these). */
+```
+
+## 64
+
+```css
+/* Shared selected-state check badge (Task 1 rule 2): 16px filled circle, white check, sits in
+   a card/row/chip's top-right corner. Markup adds one <span class="sel-tick"> child; visibility
+   is driven by whichever state class/attribute that component already uses to mark "selected". */
+```
+
+## 65
+
+```css
+/* v9.1 TASK 3: light mode gets a 1px near-black hairline at low opacity (cards otherwise read
+   as one flat plane against the barely-different --ground); dark and OLED stay borderless,
+   since --surface already separates clearly from --ground:#000 there. */
+```
+
+## 66
+
+```css
+/* v9.0: card header pattern (category label left, timestamp right) and the universal
+   trailing chevron for every tappable row — used across Summary, meals, workouts, coach,
+   recipes, achievements, settings. */
+```
+
+## 67
+
+```css
+/* v9.1 TASK 3: inputs -- 44px tall, radius 10px, no resting border (a --raise fill separates
+   them from a same-color --surface card instead, same reasoning as the .btn secondary change
+   above), a hairline appears only on focus-visible. */
+```
+
+## 68
+
+```css
+/* Master prompt STRICT RULE 10 also names this cap directly ("Appearance screen max content
+   width 640px") as one of the two to remove; the section now uses the page's own (960px) wrap
+   width instead of narrowing itself further. */
+```
+
+## 69
+
+```css
+/* Seasonal themes: a reskin of the same glass, plus one drifting motif. The picker itself moved
+   to the 148x40 .season-chip rule further down this file (v11.0 TASK 6) -- .season-layer below
+   is the drifting-motif background effect, unrelated to the picker UI, and stays as-is. */
+```
+
+## 70
+
+```css
+/* ===================== v7.5 TYPOGRAPHY =====================
+   Anthropic Sans is Anthropic's own brand face with no public licence, so per the brief this
+   uses the closest free equivalent: Plus Jakarta Sans, a warm humanist sans with the same
+   slightly geometric feel. One family, one scale, everywhere.
+   v8.6 update: "Plus Jakarta Sans" was never actually loaded anywhere (no @font-face, no
+   network fetch), so it silently no-op'd to the browser default the whole time. Introducing
+   --font-app as the single source of truth for the active typeface, defaulting to the
+   Perplexity-style system stack per the font-picker spec, with --font/--display deriving
+   from it so every existing rule that already reads var(--font)/var(--display) picks up
+   font-switching for free. Six additional families are self-hosted below (no network
+   requests, ever - see /fonts/LICENSES.txt) and swapped in via [data-font="x"] on <html>,
+   mirroring the existing data-theme/data-scheme attribute pattern. */
+```
+
+## 71
+
+```css
+/* ---- v8.6 self-hosted font faces (all SIL OFL 1.1, see fonts/LICENSES.txt) ----
+   font-display:swap avoids invisible-text FOUC: system stack shows instantly, swaps in
+   once the woff2 loads. Only the 6 downloadable options get @font-face; "System" and
+   "OpenDyslexic" (assumed already installed by users who need it, with a system fallback
+   chain) never trigger a network-equivalent load path beyond the local file. */
+```
+
+## 72
+
+```css
+/* 8.2.22: collapsed rows share one 44px box on one centre line and one 6px gap, inside a group
+   as well as between groups (items were 2px apart, group joins 6px, and the Premium button
+   was 40px tall and 2px off centre). */
+```
+
+## 73
+
+```css
+/* ===================== v7.5 PASTEL LOCK SCENE (section 1) =====================
+   Warm solid background, flat characters, spring entrances with a squash landing, and a
+   gentle idle bounce on its own rhythm per character. Transform and opacity only. */
+```
+
+## 74
+
+```css
+/* Task 2: the "lingering shadow" was the browser's own tap highlight, a dark rounded box
+   the platform paints over the element for a few hundred milliseconds after a touch. It was
+   never in our CSS, which is why it had no obvious source. */
+```
+
+## 75
+
+```css
+/* Master final check fix: .faint.tiny inside this card measured 4.40:1 in light scheme against
+   --raise, just under 4.5:1 (dark/OLED --faint is much lighter against a dark card and passes).
+   Scoped to light scheme only, same reasoning as the .ci-col .eyebrow fix above. */
+```
+
+## 76
+
+```css
+/* v11.0 TASK 6: themes moved from the v9.1 vertical tile (.themecard/.th-sw, now retired) to
+   the 148x40 horizontal chip in the shared .theme-chip rule further down this file -- same
+   per-theme preview colors, just two side-by-side dots instead of a stacked two-tone bar. */
+```
+
+## 77
+
+```css
+/* v11.0 TASK 5: the font picker's 2-column card grid (.fonts/.fontcard, retired -- it's what
+   clipped the sample pangram mid-card) moved to a single .font-trigger button opening the
+   .pop-row list defined earlier in this file, with the sample line truncating cleanly there. */
+```
+
+## 78
+
+```css
+/* The row is a container, not a layout. It used to be a 3-column grid, which turned the
+   drill-down panel into a fourth cell 84px wide jammed against the row's right edge. The
+   columns live on .mi-head now, and the panel is a full-width sibling beneath it. */
+```
+
+## 79
+
+```css
+/* The whole sidebar used to be one scroller, so the brand scrolled away and a row could be
+   sliced in half at the top edge — the "stray fragment". Now only the nav scrolls, between a
+   fixed brand and a fixed footer. */
+```
+
+## 80
+
+```css
+/* Rail mode: icons only, never a truncated word. .si-tile is a <span> too (it carries no
+   other class of its own), so it needs the same :not() exclusion as the label-span rules
+   above it, or the collapsed rail loses its icons entirely along with the labels. */
+```
+
+## 81
+
+```css
+/* Arrival motion is keyed on .arrive, which app2.js puts on the one link whose route just
+   became active. Keying it on [aria-current="page"] meant every render restarted the animation,
+   because render() rebuilds the whole nav from innerHTML. */
+```
+
+## 82
+
+```css
+/* On a dark scheme the plain token pair is comfortably AA. On a light one it sits at 3.75:1, so
+   the text is darkened there. This keys off data-scheme rather than --text, because the midnight
+   theme keeps a light --text even in its light scheme and mixing toward it made things worse. */
+```
+
+## 83
+
+```css
+/* Fine, static film-grain: a 120x120 feTurbulence tile at very low final opacity (the
+     opacity lives on the <rect>, not the layer, so it composites once -- no blend-mode
+     surprises in dark mode). Decorative only, so no prefers-reduced-motion gate is needed:
+     nothing here moves. */
+```
+
+## 84
+
+```css
+/* Workouts & Coach: the coach picker cards and chat bubble pick up the brand green instead
+   of the generic accent hover, and the picker tiles get the same quiet grain as the home
+   hero so the two "calm, premium" screens the HIG health/fitness bias asks for feel like one
+   family. */
+```
+
+## 85
+
+```css
+/* Premium tab -> popup trigger in the sidebar (TASK 1): a plain "Premium" row, no "What's new"
+   framing and no Beta pill, styled identically to every other nav row but a <button> instead of
+   an <a> since it opens the popup rather than navigating. */
+```
+
+## 86
+
+```css
+/* A mesh-gradient border and glow that follows the pointer's direction and grows as it nears
+   the card's edge. Same layers and maths as the React version; the card's own ::before/::after
+   are already used by the app (the sheen), so the three layers are real child elements here. */
+```
