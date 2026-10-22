@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.9 | Workouts: friends challenges (new `challenges`, `challenge_members` tables) | IN PROGRESS: claude/project-thread-oz3ex2 |
 | 8.3.8 | Summary: activity rings card with a seven-day picker and staggered ring draw-in | IN PROGRESS: claude/project-thread-e4yqki |
 | 8.3.7 | Household: friends card, search by app name, online and offline status (new `member_names`, `friendships`, `member_blocks` tables) | IN PROGRESS: claude/project-thread-e9j467 |
 | 8.3.6 | Workouts and Recipes: compact pages with an open-the-full-menu control and a food row preview | IN PROGRESS: claude/project-thread-h02qn5 |

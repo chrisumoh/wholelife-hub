@@ -3803,7 +3803,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.8", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.9", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3817,6 +3817,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.8", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.9",
+      area:"Workouts",
+      title:"Challenges: compete with friends",
+      bug:"Workouts had no way to compete with anyone.",
+      fix:"The Workouts page has a Challenges card (signed in, Friends on). Start a 3, 7, 14 or 30 day challenge, pick the winner measure (workout minutes, workouts or calories burned) and invite up to 9 accepted friends. They join or decline. A leaderboard shows each joined member's total only, never their workouts. The owner can end it; others can leave. New tables challenges and challenge_members with RLS, plus five functions.",
+      where:"index.html: CH, chLoad, chRows, challengesCard, chNew, chAct, the ch-* click cases and the ch-new form, workoutsView. supabase/migrations/20261022030000_wlh_8_3_9_workout_challenges.sql. tests/perf/budget.json (size limits raised). docs/DATABASE.md, docs/BUILD_PLAN.md, CHANGELOG.md, README.md.",
+      test:"Apply the migration first. On two friend accounts: A starts a challenge and invites B; B sees the invite on Workouts and joins. Log a workout on each and check both totals and the order. A ends it and it disappears for B.",
+      limits:"Totals come from synced workouts of each person's main profile only, so unsynced devices lag. Counts up to 3 open challenges per owner. Block has no screen yet. No live two-account test has been done." },
     { id:"8.3.8",
       area:"Summary",
       title:"Activity rings card: pick a day, rings draw in one by one",
@@ -9148,7 +9156,72 @@ async function frLeave(){
   const db = frDb(); if (!db) return;
   const a = await db.from("friendships").delete().neq("id", "00000000-0000-0000-0000-000000000000"), b = await db.from("member_names").delete().eq("owner_id", SB.user.id);
   if (a.error || b.error) { toast("Could not leave. Try again.", "warn"); return; }
-  FR.me = false; FR.rows = []; FR.res = null; render(); toast("You left friends. Your name is gone.");
+  FR.me = false; FR.rows = []; FR.res = null; CH.on = false; CH.rows = []; render(); toast("You left friends. Your name is gone.");
+}
+// ---- workout challenges (8.3.9) ----
+// Friends only. The server returns each joined member's total, never their workouts (see DATABASE.md).
+const CH_UNIT = { minutes:"min", workouts:"workouts", calories:"kcal" };
+const CH = { rows:[], boards:{}, on:false, err:false, open:false };
+async function chLoad(){
+  const db = frDb(); if (!db) return;
+  try {
+    const r = await db.rpc("my_challenges"); if (r.error) throw r.error;
+    CH.rows = r.data || [];
+    const live = CH.rows.filter(c => c.status === "joined");
+    const bs = await Promise.all(live.map(c => db.rpc("challenge_board", { p_id: c.id })));
+    CH.boards = {}; live.forEach((c, i) => { CH.boards[c.id] = bs[i].data || []; });
+    CH.on = true; CH.err = false;
+  } catch (e) { CH.err = true; console.warn("Challenges unavailable:", e?.code || e?.name || "error"); }
+  chPaint();
+}
+function chRows(){
+  if (CH.err) return `<p class="small muted">Challenges could not load. Check your connection and reload.</p>`;
+  if (!CH.on) return `<p class="small muted" role="status">Loading...</p>`;
+  if (!CH.rows.length) return `<p class="small muted">No challenges yet. Start one and pick friends to invite.</p>`;
+  return CH.rows.map(c => {
+    const over = c.ends_on < today(), unit = CH_UNIT[c.metric] || "";
+    const head = `<b>${esc(c.title)}</b> <span class="tag">${over ? "Finished" : c.starts_on > today() ? "Starts " + esc(c.starts_on) : "Ends " + esc(c.ends_on)}</span>`;
+    if (c.status === "invited") return `<div class="li"><div class="grow">${head}<div class="small muted">${esc(c.owner_name || "A friend")} invited you. Most ${esc(unit)} wins.</div></div><div class="row" style="gap:6px"><button class="btn sm primary" data-act="ch-join" data-id="${esc(c.id)}">Join</button><button class="btn sm" data-act="ch-decline" data-id="${esc(c.id)}">Decline</button></div></div>`;
+    const b = CH.boards[c.id] || [];
+    return `<div class="li" style="align-items:flex-start"><div class="grow">${head}<div class="small muted">Most ${esc(unit)} wins</div>
+      <ol class="small" style="margin:6px 0 0;padding-left:20px">${b.map(m => `<li${m.is_you ? ` style="font-weight:600"` : ""}>${esc(m.app_name)}${m.is_you ? " (you)" : ""}: ${esc(m.total)} ${esc(unit)}</li>`).join("")}</ol></div>
+      <button class="btn sm" data-act="ch-leave" data-id="${esc(c.id)}">${c.is_owner ? "End" : "Leave"}</button></div>`;
+  }).join("");
+}
+function chPaint(){ const l = document.getElementById("ch-list"); if (l) l.innerHTML = chRows(); }
+function challengesCard(){
+  const head = `<div class="eyebrow">Challenges</div><h2 style="margin-top:4px">Compete with friends</h2>`;
+  if (!SB.user) return `<section class="card" id="challenges">${head}<p class="small muted">Sign in to start a challenge with friends.</p></section>`;
+  if (!FR.on) { if (!FR.err) setTimeout(frTick, 0); return `<section class="card" id="challenges">${head}<p class="small muted" role="status">Loading...</p></section>`; }
+  if (!FR.me) return `<section class="card" id="challenges">${head}<p class="small muted">Turn on Friends in Settings, then Household, to compete with friends.</p></section>`;
+  if (!CH.on && !CH.err) setTimeout(chLoad, 0);
+  const fr = FR.rows.filter(r => r.status === "accepted");
+  const form = !CH.open ? "" : !fr.length ? `<p class="small muted">Add a friend first. Challenges are for accepted friends.</p>` : `<form class="form" data-form="ch-new">
+      <label class="f">Name<input id="ch-title" maxlength="40" required value="Weekly challenge"></label>
+      <label class="f">Most<select id="ch-metric"><option value="minutes">Workout minutes</option><option value="workouts">Workouts</option><option value="calories">Calories burned</option></select></label>
+      <label class="f">Length<select id="ch-days"><option value="3">3 days</option><option value="7" selected>7 days</option><option value="14">14 days</option><option value="30">30 days</option></select></label>
+      <fieldset class="full" style="border:0;padding:0;margin:0"><legend class="small">Invite friends (up to 9)</legend>${fr.slice(0, 40).map(r => `<label class="small" style="display:flex;gap:8px;margin:4px 0"><input type="checkbox" name="ch-f" value="${esc(r.member_id)}"> ${esc(r.app_name)}</label>`).join("")}</fieldset>
+      <div class="full"><button class="btn primary" type="submit">Start challenge</button></div>
+      <p class="tiny muted full">Friends only see your total for the challenge, not your workouts. It counts the main profile on each account.</p>
+    </form>`;
+  return `<section class="card" id="challenges">${head}
+    <div><button type="button" class="btn sm" data-act="ch-open" aria-expanded="${CH.open}">${CH.open ? "Close" : "Start a challenge"}</button></div>${form}
+    <div id="ch-list" aria-live="polite">${chRows()}</div></section>`;
+}
+async function chNew(){
+  const db = frDb(); if (!db) return;
+  const ids = [...document.querySelectorAll('input[name="ch-f"]:checked')].map(i => i.value);
+  if (!ids.length || ids.length > 9) { toast("Pick 1 to 9 friends.", "warn"); return; }
+  const days = +val("ch-days");
+  const r = await db.rpc("create_challenge", { p_title: val("ch-title").slice(0, 40), p_metric: val("ch-metric"), p_starts: today(), p_ends: addDays(today(), days - 1), p_friends: ids });
+  if (r.error) { toast(/too many/.test(r.error.message || "") ? "You have 3 open challenges. End one first." : "Could not start it. Try again.", "warn"); return; }
+  CH.open = false; await chLoad(); render(); toast("Challenge started.", "success");
+}
+async function chAct(act, id){
+  const db = frDb(); if (!db) return;
+  const r = act === "ch-leave" ? await db.rpc("leave_challenge", { p_id: id }) : await db.rpc("respond_challenge", { p_id: id, p_accept: act === "ch-join" });
+  if (r.error) { toast("That did not work. Try again.", "warn"); return; }
+  await chLoad(); toast("Done.");
 }
 
 function accountCard(){
@@ -11937,6 +12010,7 @@ function workoutsView(p){
     ${p.workoutGoal ? ringHTML(weekWorkouts(p).length / p.workoutGoal, `<span class="rc-main">${weekWorkouts(p).length}</span><span class="rc-sub">of ${p.workoutGoal}</span>`, `${weekWorkouts(p).length} of ${p.workoutGoal} workouts this week`, "var(--c-activity)", 104) : ""}
     <p class="small muted">${esc(motivation(p))}</p>
   </section>
+  ${challengesCard()}
   <section class="card">
     <div class="row between"><h2>Workout history</h2><span class="small muted">${all.length} total</span></div>
     ${all.length ? `<div class="list">${all.slice(0, UI.wShow || 10).map(w => `<div class="li wrow">${wicon(w.type, 38)}<div class="grow"><b>${esc(ACT[w.type]?.n || "Workout")}</b> <span class="muted small">· ${w.minutes ?? "—"} min · ≈${workoutKcal(w,kg) || 0} cal${w.src ? ` · ${esc(w.src)}` : ""}</span>${w.note ? `<div class="small muted">${esc(w.note)}</div>` : ""}</div><span class="small muted tab">${fmtDay(w.date)}</span><button class="btn sm ghost" data-act="del-workout" data-id="${w.id}" aria-label="Delete workout">${icon("x")}</button></div>`).join("")}</div>
@@ -12815,6 +12889,8 @@ document.addEventListener("click", async e => {
       toast(p.targetKg ? `Targets saved. Goal weight ${fmtWeight(p.targetKg, p)}.` : "Targets saved", "success"); break; }
     case "fr-add": case "fr-accept": case "fr-remove": frAct(a, t.dataset.id); break;
     case "fr-leave": frLeave(); break;
+    case "ch-open": CH.open = !CH.open; render(); break;
+    case "ch-join": case "ch-decline": case "ch-leave": chAct(a, t.dataset.id); break;
     case "new-profile": UI.lastActive = p?.id; UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; S.activeId = null; render(); break;
     case "switch": S.activeId = t.dataset.id; saveProfile(); resetUI(); render(); toast(`Switched to ${P().name || "profile"}`); break;
     case "del-profile": UI.confirmDel = t.dataset.id; render(); break;
@@ -12866,6 +12942,7 @@ document.addEventListener("submit", async e => {
   if (kind === "age-gate") { ageGateSubmit(); return; }
   if (kind === "fr-me") { frSaveMe(); return; }
   if (kind === "fr-search") { frSearch(); return; }
+  if (kind === "ch-new") { chNew(); return; }
   if (kind === "ci-mo") {
     setDaily(P(), { win: val("mo-win").slice(0,90), next: val("mo-next").slice(0,90), done: true, skipped: false });
     render(); toast("Saved. That's the habit forming."); return;
