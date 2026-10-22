@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.11, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.13, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.13 · Summary: Pinned cards no longer flicker or go black when you move the mouse over them after a flip
+
+- **Problem:** On the Summary page, after turning a pinned card over with its refresh icon, moving the mouse across it made the cards flicker and sometimes turn completely black.
+- **Change:** Both faces of a turning card were frosted glass, lifted on hover and given a hover sheen. Browsers flatten a 3D turn when a face has backdrop blur, and a hover lift replaced the back face's half-turn, so the card redrew on every mouse move. The two faces of a turning card now have a solid surface, no blur, no hover lift and no sheen.
+- **Where:** index.html: CSS block 8.2.20 (.flipin>.face rules), APP_VERSION, WLH.changelog. CHANGELOG.md, README.md.
+- **How to test:** Open the Summary page with pinned cards, press the refresh icon on a card, then move the mouse slowly over it and the cards around it, in Chrome and Edge on a desktop: no flicker, no black. Turn it back with the icon or Escape. node tests/browser/motion.mjs.
+- **Known limits:** (1) Turning cards no longer show the frosted blur or a lift on hover; plain cards keep both. (2) Checked by reading the CSS and the headless tests, not on the reported Windows machine.
 
 ## 8.3.11 · Sign-in: Sign-in card with Google and email, offered during setup
 

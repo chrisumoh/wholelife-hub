@@ -3749,7 +3749,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.11", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.13", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3763,6 +3763,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.11", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.13",
+      area:"Summary",
+      title:"Pinned cards no longer flicker or go black when you move the mouse over them after a flip",
+      bug:"On the Summary page, after turning a pinned card over with its refresh icon, moving the mouse across it made the cards flicker and sometimes turn completely black.",
+      fix:"Both faces of a turning card were frosted glass, lifted on hover and given a hover sheen. Browsers flatten a 3D turn when a face has backdrop blur, and a hover lift replaced the back face's half-turn, so the card redrew on every mouse move. The two faces of a turning card now have a solid surface, no blur, no hover lift and no sheen.",
+      where:"index.html: CSS block 8.2.20 (.flipin>.face rules), APP_VERSION, WLH.changelog. CHANGELOG.md, README.md.",
+      test:"Open the Summary page with pinned cards, press the refresh icon on a card, then move the mouse slowly over it and the cards around it, in Chrome and Edge on a desktop: no flicker, no black. Turn it back with the icon or Escape. node tests/browser/motion.mjs.",
+      limits:"(1) Turning cards no longer show the frosted blur or a lift on hover; plain cards keep both. (2) Checked by reading the CSS and the headless tests, not on the reported Windows machine." },
     { id:"8.3.11",
       area:"Sign-in",
       title:"Sign-in card with Google and email, offered during setup",
@@ -22135,6 +22143,10 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .flipin>.face{grid-area:1/1;min-width:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .flipin>.face.back{position:absolute;inset:0;transform:rotateY(180deg);overflow:auto;display:flex;flex-direction:column;gap:10px;padding:16px}
 .flipin>.face.front .mhead{padding-right:34px}
+.flipin>.face{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background-color:var(--surface)!important;will-change:auto}
+.flipin>.face::after{display:none!important}
+.flipin>.face.front:is(:hover,:active){transform:none}
+.flipin>.face.back:is(:hover,:active){transform:rotateY(180deg)}
 .fb-head{display:flex;align-items:center;gap:8px;padding-right:34px;font-size:calc((16px) * var(--text-scale,1));line-height:1.25}
 .flipwrap.ws-s .flipin>.face.back{padding:14px;gap:8px;scrollbar-width:thin}
 .flipwrap.ws-s .fb-body .lstats{grid-template-columns:minmax(0,1fr);gap:8px}
