@@ -3767,8 +3767,8 @@ const APP_VERSION = { update: "8.3", build: "8.3.13", channel: "Dev Testing", da
       area:"Summary",
       title:"Pinned cards no longer flicker or go black when you move the mouse over them after a flip",
       bug:"On the Summary page, after turning a pinned card over with its refresh icon, moving the mouse across it made the cards flicker and sometimes turn completely black.",
-      fix:"Both faces of a turning card were frosted glass, lifted on hover and given a hover sheen. Browsers flatten a 3D turn when a face has backdrop blur, and a hover lift replaced the back face's half-turn, so the card redrew on every mouse move. The two faces of a turning card now have a solid surface, no blur, no hover lift and no sheen.",
-      where:"index.html: CSS block 8.2.20 (.flipin>.face rules), APP_VERSION, WLH.changelog. CHANGELOG.md, README.md.",
+      fix:"The first fix (solid faces, no blur, hover or sheen) was not enough. The card turned as one nested 3D layer (preserve-3d) with a hidden back face, which the browser can drop and redraw when the mouse moves over it. Each face now turns on its own with a plain perspective turn and no shared 3D layer, with a solid surface, no blur, no hover lift and no sheen.",
+      where:"index.html: CSS block 8.2.20 (.flipin>.face rules: each face turns on its own, no preserve-3d), APP_VERSION, WLH.changelog. CHANGELOG.md, README.md.",
       test:"Open the Summary page with pinned cards, press the refresh icon on a card, then move the mouse slowly over it and the cards around it, in Chrome and Edge on a desktop: no flicker, no black. Turn it back with the icon or Escape. node tests/browser/motion.mjs.",
       limits:"(1) Turning cards no longer show the frosted blur or a lift on hover; plain cards keep both. (2) Checked by reading the CSS and the headless tests, not on the reported Windows machine." },
     { id:"8.3.12",
@@ -22145,11 +22145,14 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .bell-badge{isolation:isolate}
 .bell-badge::after{content:"";position:absolute;inset:0;z-index:-1;border-radius:50%;background:var(--warn);animation:bellPulse 1.8s ease-out infinite;pointer-events:none}
 @keyframes bellPulse{0%{transform:scale(1);opacity:.55}70%,100%{transform:scale(2.6);opacity:0}}
-.flipwrap{position:relative;display:grid;perspective:1100px;min-width:0}
-.flipin{display:grid;position:relative;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.34,1.56,.64,1)}
-.flipwrap.flipped .flipin{transform:rotateY(180deg)}
-.flipin>.face{grid-area:1/1;min-width:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-.flipin>.face.back{position:absolute;inset:0;transform:rotateY(180deg);overflow:auto;display:flex;flex-direction:column;gap:10px;padding:16px}
+.flipwrap{position:relative;display:grid;min-width:0}
+.flipin{display:grid;position:relative}
+.flipin>.face{grid-area:1/1;min-width:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;transition:transform .6s cubic-bezier(.34,1.56,.64,1);-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background-color:var(--surface)!important;will-change:auto}
+.flipin>.face::after{display:none!important}
+.flipin>.face.front{transform:perspective(1100px) rotateY(0)!important}
+.flipwrap.flipped .flipin>.face.front{transform:perspective(1100px) rotateY(180deg)!important}
+.flipin>.face.back{position:absolute;inset:0;transform:perspective(1100px) rotateY(-180deg)!important;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:16px}
+.flipwrap.flipped .flipin>.face.back{transform:perspective(1100px) rotateY(0)!important}
 .flipin>.face.front .mhead{padding-right:34px}
 .flipin>.face{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background-color:var(--surface)!important;will-change:auto}
 .flipin>.face::after{display:none!important}
@@ -22166,8 +22169,8 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .flipbtn::before{content:"";position:absolute;inset:-4px}
 .flipbtn:hover{color:var(--text);background:var(--raise)}
 .flipbtn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-:root[data-motion="reduced"] .focus-ring,:root[data-motion="reduced"] .flipin,:root[data-motion="reduced"] .bell-badge::after{transition:none;animation:none}
-@media (prefers-reduced-motion:reduce){.focus-ring,.flipin{transition:none}.bell-badge::after{animation:none}}
+:root[data-motion="reduced"] .focus-ring,:root[data-motion="reduced"] .flipin>.face,:root[data-motion="reduced"] .bell-badge::after{transition:none;animation:none}
+@media (prefers-reduced-motion:reduce){.focus-ring,.flipin>.face{transition:none}.bell-badge::after{animation:none}}
 /* ===================== 8.2.27 sign-in: lamp scene and Google button ===================== */
 .lamp{position:relative;height:150px;margin:8px 24px 0;border-radius:12px;background:var(--raise);overflow:hidden}
 .lamp-art{position:absolute;left:50%;top:0;width:120px;height:150px;margin-left:-60px}
