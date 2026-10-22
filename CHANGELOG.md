@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.5, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.6, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.6 · Household: Find friends by app name and see who is online
+
+- **Problem:** Household only covered the profiles on your own account. There was no way to find another person or see whether they were using the app.
+- **Change:** Settings > Household has a Friends card (signed in only). Pick an app name (3 to 20 letters, numbers, dots, dashes or underscores), choose whether people can find you by it (off until you tick it) and whether friends see you online. Search takes the first 3 or more characters of a name and shows names only. Add sends a request; the other person accepts or declines; either side can remove a friend. Accepted friends show an orange pulsing Online pill or a plain Offline pill. The app pings about once a minute while it is open and visible, the list refreshes every 30 seconds, and a friend counts as online if seen in the last 2 minutes. Reduced motion stops the pulse. Leave friends deletes your name and requests. New tables `member_names`, `friendships` and `member_blocks` (blocking has no screen yet), with RLS; search and the friend list go through two functions so nobody can read another person's rows directly. The privacy policy has a Friends paragraph.
+- **Where:** `index.html`: `FR` and the friends block (`frLoad`, `frTick`, `frRows`, `frPaint`, `friendsCard`, `frSaveMe`, `frSearch`, `frAct`, `frLeave`), `settingsView` household tab, the submit and click handlers, `.neon` and `.fr-off` CSS, privacy policy, `LEGAL_UPDATED`, `TERMS_VERSION`. `supabase/migrations/20261022020000_wlh_8_3_6_friends_presence.sql`. `docs/DATABASE.md`, `docs/SECURITY.md`, `docs/BUILD_PLAN.md`, `CHANGELOG.md`, `README.md`.
+- **How to test:** Needs the migration applied to Supabase. Sign in on two accounts (two browsers). On A: Settings > Household > Friends, pick a name, tick Let people find me, Turn on friends. On B: set a name, search A's name, Add. On A: Accept. Both should show Online (orange pulse) within about 30 seconds; close A's tab and B shows Offline after about 2 minutes. Untick Show friends when I am online on A: B shows Offline. Turn on Reduce motion in Appearance: no pulse. `node tests/check-repo.mjs`.
+- **Known limits:** Block and unblock have tables but no screen yet. Presence is a one-minute ping, so it can lag up to about 2.5 minutes, and a closed tab only goes offline once the 2 minutes pass. Search is not rate limited beyond 3 characters and 10 results. Friends do not load while offline. No tests were added for the friends screens.
 
 ## 8.3.5 · Workouts: All 44 workout icons redrawn
 

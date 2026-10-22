@@ -848,6 +848,9 @@ html,body{overflow-x:clip}
   .modal-foot .btn{width:100%;justify-content:center}
 }
 /* A5 + A6. One rhythm for every settings row and header pill. */
+.neon{color:#FF8A00;border:1px solid #FF8A00;border-radius:100px;padding:1px 10px;font-size:calc(12px * var(--text-scale,1));font-weight:600;box-shadow:0 0 6px -1px #FF8A00,inset 0 0 6px -2px #FF8A00;animation:neon-pulse 2s ease-in-out infinite}
+@keyframes neon-pulse{0%,100%{text-shadow:0 0 4px #FF8A00;box-shadow:0 0 6px -1px #FF8A00,inset 0 0 6px -2px #FF8A00}50%{text-shadow:0 0 12px #FF8A00,0 0 22px #FF8A00;box-shadow:0 0 18px 0 #FF8A00,inset 0 0 12px -2px #FF8A00}}
+.fr-off{color:var(--muted);border:1px solid var(--line);border-radius:100px;padding:1px 10px;font-size:calc(12px * var(--text-scale,1))}
 .setrow{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;min-height:40px}
 .setrow>.setlabel{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 200px}
 .setrow>.setctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:0 1 auto;max-width:100%;min-width:0}
@@ -3784,7 +3787,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.5", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.6", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3798,6 +3801,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.5", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.6",
+      area:"Household",
+      title:"Find friends by app name and see who is online",
+      bug:"Household only covered the profiles on your own account. There was no way to find another person or see whether they were using the app.",
+      fix:"Settings > Household has a Friends card (signed in only). Pick an app name (3 to 20 letters, numbers, dots, dashes or underscores), choose whether people can find you by it (off until you tick it) and whether friends see you online. Search takes the first 3 or more characters of a name and shows names only. Add sends a request; the other person accepts or declines; either side can remove a friend. Accepted friends show an orange pulsing Online pill or a plain Offline pill. The app pings about once a minute while it is open and visible, the list refreshes every 30 seconds, and a friend counts as online if seen in the last 2 minutes. Reduced motion stops the pulse. Leave friends deletes your name and requests. New tables member_names, friendships and member_blocks (blocking has no screen yet), with RLS; people can search and list through two functions so nobody can read another person's rows directly. The privacy policy has a Friends paragraph.",
+      where:"index.html: FR and the friends block (frLoad, frTick, frRows, frPaint, friendsCard, frSaveMe, frSearch, frAct, frLeave), settingsView household tab, the submit and click handlers, .neon and .fr-off CSS, privacy policy, LEGAL_UPDATED, TERMS_VERSION, tests/browser/legal.mjs. supabase/migrations/20261022020000_wlh_8_3_6_friends_presence.sql. docs/DATABASE.md, docs/SECURITY.md, docs/BUILD_PLAN.md, CHANGELOG.md, README.md.",
+      test:"Needs the migration applied to Supabase. Sign in on two accounts (two browsers). On A: Settings > Household > Friends, pick a name, tick Let people find me, Turn on friends. On B: set a name, search A's name, Add. On A: Accept. Both should show Online (orange pulse) within about 30 seconds; close A's tab and B shows Offline after about 2 minutes. Untick Show friends when I am online on A: B shows Offline. Turn on Reduce motion in Appearance: no pulse. node tests/check-repo.mjs.",
+      limits:"Block and unblock have tables but no screen yet. Presence is a one-minute ping, so it can lag up to about 2.5 minutes, and a closed tab only goes offline once the 2 minutes pass. Search is not rate limited beyond 3 characters and 10 results. Offline play: friends do not load while offline. No tests were added for the friends screens." },
     { id:"8.3.5",
       area:"Workouts",
       title:"All 44 workout icons redrawn",
@@ -9025,6 +9036,89 @@ function openAcctInfo(triggerEl){
       <div class="pop-body"><p class="small">Everything you log is saved to your account, so it is the same on every device you sign in on: meals, snacks, drinks, workouts, weigh-ins, vitals (including imported Apple Health data), photos, and each profile's details and choices (goals, plans, coach, reminders, appearance and home layout). Only form-check videos stay on this device. Photos can be switched off in Privacy &amp; security.</p>
       ${CRY.lock ? `<div class="note info">A passcode locks and encrypts the copy on this device only. Your account's copy is not encrypted with it, and syncing continues while the app is unlocked.</div>` : ""}</div></div>` });
 }
+// ---- friends and online status (8.3.6) ----
+// Opt-in: only the chosen app name is searchable. Presence is shown to accepted friends only (see DATABASE.md).
+const FR_NAME = /^[A-Za-z0-9_.-]{3,20}$/;
+const FR = { me:null, rows:[], res:null, q:"", on:false, err:false, ping:0 };
+const frDb = () => sbActive() ? sbClient() : null;
+const frHas = id => FR.rows.some(r => r.member_id === id);
+async function frLoad(){
+  const db = frDb(); if (!db) return;
+  try {
+    const m = await db.from("member_names").select("app_name,discoverable,show_presence").maybeSingle();
+    if (m.error) throw m.error;
+    FR.me = m.data || false;
+    if (FR.me) { const r = await db.rpc("friend_list"); if (r.error) throw r.error; FR.rows = r.data || []; }
+    FR.on = true; FR.err = false;
+  } catch (e) { FR.err = true; console.warn("Friends unavailable:", e?.code || e?.name || "error"); }
+  frPaint();
+}
+function frTick(){
+  const db = frDb(); if (!db || document.hidden) return;
+  if (!FR.on || FR.me) frLoad();
+  if (FR.me && Date.now() - FR.ping > 55000) { FR.ping = Date.now(); db.rpc("member_ping").then(() => {}, () => {}); }
+}
+setInterval(frTick, 30000);
+setTimeout(frTick, 4000);
+function frRows(){
+  const pill = r => r.status !== "accepted" ? `<span class="tag">${r.incoming ? "Wants to be friends" : "Requested"}</span>` : r.online ? `<span class="neon">Online</span>` : `<span class="fr-off">Offline</span>`;
+  const btns = r => r.status === "pending" && r.incoming ? `<button class="btn sm primary" data-act="fr-accept" data-id="${esc(r.friendship_id)}">Accept</button><button class="btn sm" data-act="fr-remove" data-id="${esc(r.friendship_id)}">Decline</button>`
+    : `<button class="btn sm" data-act="fr-remove" data-id="${esc(r.friendship_id)}">${r.status === "pending" ? "Cancel" : "Remove"}</button>`;
+  return FR.rows.length ? FR.rows.map(r => `<div class="li"><div class="grow"><b>${esc(r.app_name)}</b> ${pill(r)}</div><div class="row" style="gap:6px">${btns(r)}</div></div>`).join("")
+    : `<p class="small muted">No friends yet. Search for a friend's app name above.</p>`;
+}
+function frPaint(){
+  const l = document.getElementById("fr-list"); if (l) l.innerHTML = frRows();
+  const s = document.getElementById("fr-res");
+  if (s && FR.res) s.innerHTML = FR.res.length ? FR.res.map(m => `<div class="li"><b>${esc(m.app_name)}</b>${frHas(m.member_id) ? `<span class="tag">Added</span>` : `<button class="btn sm primary" data-act="fr-add" data-id="${esc(m.member_id)}">Add</button>`}</div>`).join("") : `<p class="small muted">No one found. People only show up if they chose to be searchable.</p>`;
+}
+function friendsCard(){
+  const head = `<div class="eyebrow">Friends</div><h2 style="margin-top:4px">Friends and online status</h2>`;
+  if (!SB.user) return `<section class="card" id="friends">${head}<p class="small muted">Sign in to find friends by their app name and see when they are online. Your account is the only thing this needs.</p></section>`;
+  if (!FR.on) { if (!FR.err) setTimeout(frTick, 0); return `<section class="card" id="friends">${head}<p class="small muted" role="status">${FR.err ? "Friends could not load. Check your connection and reload." : "Loading..."}</p></section>`; }
+  const m = FR.me || {};
+  return `<section class="card" id="friends">${head}
+    <form class="form" data-form="fr-me">
+      <label class="f">Your app name<input id="fr-name" maxlength="20" minlength="3" pattern="[A-Za-z0-9_.\\-]{3,20}" autocomplete="off" required value="${esc(m.app_name || "")}"></label>
+      <label class="full small" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="fr-disc"${m.discoverable ? " checked" : ""} style="margin-top:3px"> Let people find me by this name. Off by default. Only the name can be searched.</label>
+      <label class="full small" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="fr-pres"${m.show_presence === false ? "" : " checked"} style="margin-top:3px"> Show friends when I am online.</label>
+      <div class="full row" style="gap:8px"><button class="btn primary" type="submit">${FR.me ? "Save" : "Turn on friends"}</button>${FR.me ? `<button class="btn danger" type="button" data-act="fr-leave">Leave friends</button>` : ""}</div>
+      <p class="tiny muted full">3 to 20 letters, numbers, dots, dashes or underscores. 13 or older only.</p>
+    </form>
+    ${FR.me ? `<form class="form" data-form="fr-search"><label class="f">Find a friend<input id="fr-q" minlength="3" maxlength="20" autocomplete="off" placeholder="Their app name" value="${esc(FR.q)}"></label><div class="full"><button class="btn" type="submit">Search</button></div></form>
+    <div id="fr-res" aria-live="polite"></div><div id="fr-list" aria-live="polite">${frRows()}</div>` : ""}
+  </section>`;
+}
+async function frSaveMe(){
+  const db = frDb(); if (!db) return;
+  const row = { app_name: val("fr-name"), discoverable: !!document.getElementById("fr-disc")?.checked, show_presence: !!document.getElementById("fr-pres")?.checked };
+  if (!FR_NAME.test(row.app_name)) { toast("Use 3 to 20 letters, numbers, dots, dashes or underscores.", "warn"); return; }
+  const r = FR.me ? await db.from("member_names").update(row).eq("owner_id", SB.user.id) : await db.from("member_names").insert(row);
+  if (r.error) { toast(r.error.code === "23505" ? "That name is taken. Try another." : "Could not save. Try again.", "warn"); return; }
+  const fresh = !FR.me; FR.me = row; FR.res = null; FR.ping = 0;
+  await frLoad(); render(); frTick(); toast(fresh ? "Friends are on." : "Saved.", "success");
+}
+async function frSearch(){
+  const db = frDb(), q = val("fr-q"); FR.q = q;
+  if (!db || q.length < 3) { toast("Type at least 3 characters.", "warn"); return; }
+  const r = await db.rpc("search_members", { q });
+  FR.res = r.error ? [] : r.data || []; frPaint();
+}
+async function frAct(act, id){
+  const db = frDb(); if (!db) return;
+  const r = act === "fr-add" ? await db.from("friendships").insert({ addressee_id: id })
+    : act === "fr-accept" ? await db.from("friendships").update({ status: "accepted" }).eq("id", id)
+    : await db.from("friendships").delete().eq("id", id);
+  if (r.error) { toast(r.error.code === "23505" ? "Already added." : "That did not work. Try again.", "warn"); return; }
+  await frLoad(); toast(act === "fr-add" ? "Request sent." : act === "fr-accept" ? "Friend added." : "Done.");
+}
+async function frLeave(){
+  const db = frDb(); if (!db) return;
+  const a = await db.from("friendships").delete().neq("id", "00000000-0000-0000-0000-000000000000"), b = await db.from("member_names").delete().eq("owner_id", SB.user.id);
+  if (a.error || b.error) { toast("Could not leave. Try again.", "warn"); return; }
+  FR.me = false; FR.rows = []; FR.res = null; render(); toast("You left friends. Your name is gone.");
+}
+
 function accountCard(){
   const row = (title, sub, act) => `<div class="acct-row"><span class="acct-ic">${icon("user","",18)}</span>
       <div class="acct-txt"><div class="acct-t">${title}</div>${sub}</div><div class="acct-act">${act}</div></div>`;
@@ -11336,7 +11430,7 @@ function obGround(){ return `<div class="obg-bg" aria-hidden="true"><i></i><i></
 // is kept, never the birth date. Someone under 13 gets a plain "can't set up" screen, and the device refuses another try for 24 hours
 // (a flag in this browser; clearing site data removes it, so it deters a retry rather than guaranteeing one).
 const AGE_BLOCK_KEY = "wlh.ageblock", AGE_BLOCK_MS = 24 * 3600 * 1000, CONSENT_KEY = "wlh.consent";
-const TERMS_VERSION = "2026-10-12"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
+const TERMS_VERSION = "2026-10-22"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
 const ageBlocked = () => { try { return +localStorage.getItem(AGE_BLOCK_KEY) > Date.now(); } catch { return false; } };
 const blockAge = () => { try { localStorage.setItem(AGE_BLOCK_KEY, String(Date.now() + AGE_BLOCK_MS)); } catch {} };
 // Whole years old. The birth day is not asked, so a birthday this month counts as not reached yet.
@@ -12401,7 +12495,7 @@ function settingsView(p){
     <div class="list">${S.profiles.map(x => `<div class="li"><div class="grow"><b>${esc(x.name || "Unnamed")}</b>${x.id === p.id ? ` <span class="tag good">Active</span>` : ""}<div class="small muted">${esc(GOALS.find(g=>g[0]===x.goal)?.[1] || "No goal")} · since ${fmtDay(x.created)}</div></div>
       <div class="row" style="gap:6px">${x.id !== p.id ? `<button class="btn sm" data-act="switch" data-id="${x.id}">Switch</button>` : ""}
       ${UI.confirmDel === x.id ? `<span class="small">Delete ${esc(x.name || "this profile")} and all its logs?</span><button class="btn sm danger" data-act="del-profile-yes" data-id="${x.id}">Delete</button><button class="btn sm" data-act="del-profile-no">Keep</button>` : S.profiles.length > 1 ? `<button class="btn sm ghost" data-act="del-profile" data-id="${x.id}">Delete</button>` : ""}</div></div>`).join("")}</div>
-  </section>`,
+  </section>${friendsCard()}`,
     privacy: `${privacyGlance(p)}${photoSyncCard()}${mediaCard()}<section class="card" id="security">
     <div class="row" style="gap:12px"><div class="shield">${icon("lock")}</div><h2>Privacy and security</h2></div>
     <ul class="checklist">
@@ -12674,6 +12768,8 @@ document.addEventListener("click", async e => {
       p.targetKg = tw.kg ?? null;
       saveProfile(); render();
       toast(p.targetKg ? `Targets saved. Goal weight ${fmtWeight(p.targetKg, p)}.` : "Targets saved", "success"); break; }
+    case "fr-add": case "fr-accept": case "fr-remove": frAct(a, t.dataset.id); break;
+    case "fr-leave": frLeave(); break;
     case "new-profile": UI.lastActive = p?.id; UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; S.activeId = null; render(); break;
     case "switch": S.activeId = t.dataset.id; saveProfile(); resetUI(); render(); toast(`Switched to ${P().name || "profile"}`); break;
     case "del-profile": UI.confirmDel = t.dataset.id; render(); break;
@@ -12723,6 +12819,8 @@ document.addEventListener("submit", async e => {
   const f = e.target.closest("form[data-form]"); if (!f) return; e.preventDefault();
   const kind = f.dataset.form;
   if (kind === "age-gate") { ageGateSubmit(); return; }
+  if (kind === "fr-me") { frSaveMe(); return; }
+  if (kind === "fr-search") { frSearch(); return; }
   if (kind === "ci-mo") {
     setDaily(P(), { win: val("mo-win").slice(0,90), next: val("mo-next").slice(0,90), done: true, skipped: false });
     render(); toast("Saved. That's the habit forming."); return;
@@ -16033,7 +16131,7 @@ const CONTACT_EMAIL = "[YOUR CONTACT EMAIL]";                // TODO: set your c
 const LEGAL_BUSINESS_NAME = "[YOUR LEGAL BUSINESS NAME]";    // TODO: fill in before publishing
 const MAILING_ADDRESS = "[YOUR MAILING ADDRESS]";            // TODO: fill in before publishing
 const REFUND_POLICY_TEXT = "[REFUND POLICY: fill in — how many days, which plans, and whether a partial period is refunded]"; // TODO
-const LEGAL_UPDATED = "12 October 2026";
+const LEGAL_UPDATED = "22 October 2026";
 
 function applyCanonical(){
   if (/\[YOUR-DOMAIN\]/.test(SITE_URL)) return;              // nothing to point at yet
@@ -16136,6 +16234,7 @@ function privacyPolicyView(){
       <li><b>Each profile:</b> its name and basics (age, sex, height, weight, target weight, goal), your food culture, diet and allergies, calorie and workout goals, activity level and sport, your coach choice and name, your workout and meal plans, your coach questions, answers and check-ins, awards, reminders, appearance choices (theme, accent, font and text size), the layout and sizes of your home-screen cards, units, menu choices, grocery and pantry lists, weekly reviews, experiments, recovery check-ins, body measurements, your sharing choices, and the location of your profile picture and progress photos.</li>
       <li><b>Photos</b> (meals, workouts, progress photos and your profile picture), unless you turn off Sync photos in Settings › Privacy &amp; security: each is stored as one file in a private area of your account, at a path made of your account id, the profile id, the kind of photo and the item id. Before it leaves your device it is re-saved as a JPEG of about 200 KB or less, which removes metadata such as where it was taken. Only your signed-in account can open it. Deleting the item (or its profile) deletes the file.</li>
     </ul>
+    <p><b>Friends (optional).</b> If you turn on Friends in Settings › Household, your app name, whether people may find you by it (off until you choose), whether friends may see when you are online, the time you were last active, and your friend requests are saved in the same database. No health data is part of it. Only your app name can be searched, and only if you allow it; only accepted friends can see your online status. Leaving friends deletes the name and the requests.</p>
     <p><b>Never uploaded:</b> form-check videos, whether you have Premium, which camera and photo-AI permissions you switched on, the list of consent choices in Privacy &amp; security, and the file you pick when you import health data. Photos are not uploaded while Sync photos is off. Everything above is removed from this device when you sign out and comes back from your account when you sign in again.</p>
     <p><b>Which copy wins.</b> If the same item is changed on two devices, the change made last wins, judged by the time each was saved to your account. A change made while a device is offline is kept on that device and uploaded when it is back online. A deletion is recorded in your account (the record is marked deleted) so your other devices remove the item too.</p>
     <p>If you set a passcode, what this browser stores is encrypted in your browser before it is saved, using AES-256-GCM with a key derived from your passcode by PBKDF2-SHA-256 at 600,000 iterations. The passcode itself is never stored or transmitted, which also means it cannot be recovered if you forget it. A passcode locks and encrypts the copy on this device only: while the app is unlocked it keeps syncing, and the copies in our database and your private photo storage are not encrypted with your passcode. While the app is locked it sends and receives nothing.</p>

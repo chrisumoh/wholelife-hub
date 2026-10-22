@@ -103,6 +103,18 @@ Everything a person logs syncs, signed in, through the tables above. No migratio
 | `20261004134137` | `wlh_8_1_1_drop_duplicate_indexes` | Removes duplicate indexes. |
 | `20261004142625` | `wlh_8_1_9_full_unique_sync_keys` | Replaces the partial `(owner_id, app_id)` unique indexes with plain ones, and adds `updated_at` indexes. The repo file was added in 8.1.11 as an exact copy of the remote record. |
 | `20261005035516` | `wlh_8_1_11_meal_est` | Adds `meal_logs.est boolean not null default false`. |
+| `20261022020000` | `wlh_8_3_6_friends_presence` | Friends: `member_names`, `friendships`, `member_blocks`, functions `search_members`, `friend_list`, `member_ping`. **Not applied until the owner runs it.** |
+
+## Friends and online status (8.3.6)
+
+Opt-in social layer, no health data. All three tables have RLS on and no `anon` access.
+
+- `member_names` (one row per account): `app_name` (3 to 20 of `A-Za-z0-9_.-`, unique ignoring case), `discoverable` (default false), `show_presence` (default true), `last_seen_at`. Owner-only policy. The app can write only the first three columns; `last_seen_at` is set by `member_ping()`.
+- `friendships`: `requester_id`, `addressee_id`, `status` (`pending` or `accepted`), one row per pair. Either party reads or deletes it; only the requester inserts (pending) and only the addressee accepts.
+- `member_blocks`: owner and blocked account. A blocked account cannot send a request, and blocking removes an existing friendship. No screen uses it yet.
+- `search_members(q)`: security definer, 3+ characters, name prefix, discoverable accounts only, never yourself or anyone who blocked you, 10 results. Returns name and id only.
+- `friend_list()`: your friendships with the other person's name and, for accepted friends who allow it, `online` (seen within 2 minutes).
+- Search and presence are the only way to see another account's row; there is no select policy on another person's `member_names`.
 
 ## Photo storage
 

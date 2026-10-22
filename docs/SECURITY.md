@@ -15,6 +15,7 @@ There is no backend to check permissions. The publishable key is public, so anyo
 - No policy for `anon`. Signed-out users have no database access.
 - Check isolation with `tests/meal_rls_isolation.sql` after any schema change (it rolls back).
 - Schema changes are migrations only. See [DATABASE.md](DATABASE.md).
+- **Friends (8.3.6) are the one place accounts see each other.** Not through table policies: `member_names` has an owner-only policy, and other accounts are reached only through `search_members()` and `friend_list()`, which return names and an online flag and nothing else. Discoverability is off until the person turns it on, and the privacy policy says what is shared. Under-13 profiles cannot be created, so they never reach it.
 
 ## 2. Keys
 
