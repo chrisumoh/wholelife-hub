@@ -81,20 +81,23 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 2) Page navigations: network-first, cache fallback when offline.
-  //    A fresh copy is stored on every successful visit so the fallback
-  //    is never more than one visit old.
+  //    A fresh copy of the app page is stored on every good visit so the
+  //    fallback is never more than one visit old. Only the app document
+  //    ever becomes the offline copy: not an error page, and not an image
+  //    or other file someone opened directly.
   if (request.mode === 'navigate') {
+    const isAppPage = url.pathname === '/' || url.pathname === '/index.html';
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Only a good page is kept as the offline copy, never an error page.
-          if (response.ok) {
+          const type = (response.headers && response.headers.get('content-type')) || '';
+          if (isAppPage && response.ok && type.includes('text/html')) {
             const copy = response.clone();
-            caches.open(SHELL_CACHE).then((cache) => cache.put('/', copy)).catch(() => {});
+            event.waitUntil(caches.open(SHELL_CACHE).then((cache) => cache.put('/', copy)).catch(() => {}));
           }
           return response;
         })
-        .catch(() => caches.match('/'))
+        .catch(() => (isAppPage ? caches.match('/') : Response.error()))
     );
     return;
   }

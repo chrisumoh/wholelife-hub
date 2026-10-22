@@ -99,13 +99,25 @@
   }
 
   // ---------------------------------------------------------------- DELIVERY
-  function deliver(payload) {
+  // A report is retried only when the failure can pass: no connection, 429 or a 5xx. Any other answer (a 4xx
+  // such as a wrong key or a missing table) will not change on a retry, so the report is dropped.
+  const MAX_TRIES = 3;
+  const RETRY_BASE_MS = 2000;
+
+  function retry(item) {
+    item.tries += 1;
+    if (item.tries >= MAX_TRIES) return;               // give up: reporting must never become the problem
+    enqueue(item);
+    setTimeout(flushQueue, RETRY_BASE_MS * Math.pow(2, item.tries - 1));
+  }
+
+  function deliver(item) {
+    const payload = item.payload;
     if (!enabled) {
       // Console-only mode: still useful while developing.
       console.warn('[WLHLog]', payload.kind, payload.message);
       return;
     }
-    const body = JSON.stringify([payload]);
     // fetch with keepalive survives the page closing, and (unlike sendBeacon, which can only send text/plain and
     // which the REST API rejects) it can send the JSON content type and the key headers.
     fetch(CONFIG.ENDPOINT, {
@@ -117,13 +129,17 @@
         'Authorization': 'Bearer ' + CONFIG.ANON_KEY,
         'Prefer': 'return=minimal'
       },
-      body: body
-    }).catch(function () { enqueue(payload); }); // offline: retry when the browser comes back online
+      body: JSON.stringify([payload])
+    }).then(function (res) {
+      if (res.ok) return;
+      if (res.status === 429 || res.status >= 500) retry(item);
+      else console.warn('[WLHLog] report rejected', res.status);   // status only, never the report
+    }).catch(function () { retry(item); });             // offline: try again when the connection is back
   }
 
-  function enqueue(payload) {
+  function enqueue(item) {
     if (queue.length >= CONFIG.QUEUE_LIMIT) queue.shift();
-    queue.push(payload);
+    queue.push(item);
   }
 
   function flushQueue() {
@@ -135,8 +151,9 @@
     const payload = buildPayload(kind, message, stack, label);
     if (!shouldSend(payload)) return;
     sentThisSession += 1;
-    if (navigator.onLine === false) { enqueue(payload); return; }
-    deliver(payload);
+    const item = { payload: payload, tries: 0 };
+    if (navigator.onLine === false) { enqueue(item); return; }
+    deliver(item);
   }
 
   // ------------------------------------------------------------- AUTO-CAPTURE

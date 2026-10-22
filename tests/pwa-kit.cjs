@@ -36,29 +36,45 @@ test("the worker installs even when one pre-cached file is missing", async () =>
   assert.ok(added.length >= 3 && self.skipped, "all were tried, and the worker still took over");
 });
 
-test("the worker ignores writes and other sites, and keeps only good pages", async () => {
+test("the worker ignores writes and other sites", () => {
   const { handlers } = loadWorker({});
-  const run = req => { let handled = false, res; handlers.fetch({ request: req, respondWith: p => { handled = true; res = p; } }); return { handled, res }; };
-  assert.equal(run({ method: "POST", url: "https://app.test/x", mode: "cors" }).handled, false, "writes pass straight through");
-  assert.equal(run({ method: "GET", url: "https://zemxqbinpehkrkyvzlue.supabase.co/rest/v1/meal_logs", mode: "cors" }).handled, false, "other sites are never intercepted");
-  const ctx = (ok) => { const h = {}, self = { location: { origin: "https://app.test" }, addEventListener: (t, f) => { h[t] = f; } }; const kept = [];
-    vm.runInNewContext(read("sw.js"), { self, caches: { open: async () => ({ put: async k => { kept.push(k); } }), match: async () => "OFFLINE" }, URL, Promise, fetch: async () => ({ ok, clone() { return this; } }) });
-    return { h, kept }; };
-  for (const ok of [true, false]) {
-    const { h, kept } = ctx(ok); let res; h.fetch({ request: { method: "GET", url: "https://app.test/", mode: "navigate" }, respondWith: p => { res = p; } });
-    await res; await new Promise(r => setTimeout(r, 10));
-    assert.equal(kept.length, ok ? 1 : 0, ok ? "a good page is kept for offline" : "an error page is not kept");
-  }
+  const run = req => { let handled = false; handlers.fetch({ request: req, respondWith: () => { handled = true; } }); return handled; };
+  assert.equal(run({ method: "POST", url: "https://app.test/x", mode: "cors" }), false, "writes pass straight through");
+  assert.equal(run({ method: "GET", url: "https://zemxqbinpehkrkyvzlue.supabase.co/rest/v1/meal_logs", mode: "cors" }), false, "other sites are never intercepted");
 });
 
-function loadReporter(configured) {
-  const handlers = {}, calls = [], beacons = [];
+// One navigation through the worker; reports what it answered and what it stored as the offline home page.
+async function navigate(path, response) {
+  const h = {}, self = { location: { origin: "https://app.test" }, addEventListener: (t, f) => { h[t] = f; } }, kept = [], waits = [];
+  const net = response ? async () => ({ ...response, headers: { get: k => (response.headers || {})[k.toLowerCase()] || null }, clone() { return this; } }) : async () => { throw new Error("offline"); };
+  vm.runInNewContext(read("sw.js"), { self, caches: { open: async () => ({ put: async (k, v) => { kept.push(v); } }), match: async () => "OFFLINE HOME" }, URL, Promise, Response: { error: () => "NO PAGE" }, fetch: net });
+  let res; h.fetch({ request: { method: "GET", url: "https://app.test" + path, mode: "navigate" }, respondWith: p => { res = p; }, waitUntil: p => waits.push(p) });
+  const out = await res; await Promise.all(waits);
+  return { out, kept };
+}
+const html = { ok: true, status: 200, headers: { "content-type": "text/html; charset=utf-8" } };
+
+test("only a good app page becomes the offline copy", async () => {
+  assert.equal((await navigate("/", html)).kept.length, 1, "a good app page is kept");
+  assert.equal((await navigate("/", { ...html, ok: false, status: 503 })).kept.length, 0, "an error page is not kept");
+  assert.equal((await navigate("/img/icon-512.png", { ok: true, status: 200, headers: { "content-type": "image/png" } })).kept.length, 0, "a file opened directly is not kept as the home page");
+  assert.equal((await navigate("/other.html", html)).kept.length, 0, "nor is any other page");
+});
+
+test("offline, the app page comes from the copy and other addresses do not get it", async () => {
+  assert.equal((await navigate("/")).out, "OFFLINE HOME");
+  assert.equal((await navigate("/#/coach")).out, "OFFLINE HOME");
+  assert.equal((await navigate("/img/icon-512.png")).out, "NO PAGE", "an image address is not answered with the app page");
+});
+
+function loadReporter(configured, status = 200) {
+  const handlers = {}, calls = [], beacons = [], timers = [];
   let src = read("observability.js");
   if (configured) src = src.replace("ENDPOINT: ''", "ENDPOINT: 'https://x.supabase.co/rest/v1/error_reports'").replace("ANON_KEY: ''", "ANON_KEY: 'anon-key'");
   const win = { addEventListener: (t, f) => { handlers[t] = f; } };
   const ctx = { window: win, navigator: { onLine: true, userAgent: "UA", sendBeacon: (...a) => { beacons.push(a); return true; } }, location: { href: "https://app.test/#/coach?token=SECRET", origin: "https://app.test" },
-    console: { warn: () => {} }, URL, Date, Map, String, JSON, fetch: (u, o) => { calls.push([u, o]); return Promise.resolve({ ok: true }); }, setTimeout };
-  vm.runInNewContext(src, ctx); return { handlers, calls, beacons, win };
+    console: { warn: () => {} }, URL, Date, Map, String, JSON, fetch: (u, o) => { calls.push([u, o]); return Promise.resolve({ ok: status < 400, status }); }, setTimeout: (f, ms) => { timers.push(ms); } };
+  vm.runInNewContext(src, ctx); return { handlers, calls, beacons, win, timers };
 }
 
 test("with no endpoint set, reports stay on the device", () => {
@@ -68,7 +84,7 @@ test("with no endpoint set, reports stay on the device", () => {
 });
 
 test("with an endpoint, a report is JSON with the key headers, carries the path only, and is sent once", () => {
-  const { handlers, calls, beacons } = loadReporter(true);
+  const { handlers, calls, beacons } = loadReporter(true, 201);
   const ev = { message: "boom", error: { stack: "Error: boom\n at a (x.js:1:1)" }, filename: "https://app.test/index.html?q=1" };
   handlers.error(ev); handlers.error(ev);
   assert.equal(beacons.length, 0, "sendBeacon sends text/plain, which the REST API rejects");
@@ -91,6 +107,29 @@ test("tokens in URLs and error text never reach the report", () => {
   const body = JSON.parse(calls[0][1].body)[0];
   assert.ok(!JSON.stringify(body).includes(tok), "no token survives in label, message or stack: " + JSON.stringify(body));
   assert.ok(body.stack.includes("https://app.test/index.html") && body.label === "https://app.test/auth/callback", "the useful part (the path) is kept");
+});
+
+const settle = () => new Promise(r => setImmediate(r));
+
+test("a busy or unavailable server is retried a few times, with growing waits, then dropped", async () => {
+  for (const status of [503, 429]) {
+    const { handlers, calls, timers } = loadReporter(true, status);
+    handlers.error({ message: "boom", error: { stack: "Error: boom\n at a" } });
+    for (let i = 0; i < 6; i++) { await settle(); handlers.online(); }
+    await settle();
+    assert.equal(calls.length, 3, status + ": three tries in all, then it stops asking");
+    assert.deepEqual(timers, [2000, 4000], "each wait is twice the last");
+  }
+});
+
+test("a refusal that a retry cannot fix is dropped, and a good answer is not repeated", async () => {
+  for (const [status, why] of [[401, "wrong key"], [404, "missing table"], [201, "accepted"]]) {
+    const { handlers, calls, timers } = loadReporter(true, status);
+    handlers.error({ message: "boom", error: { stack: "Error: boom\n at a" } });
+    await settle(); handlers.online(); await settle();
+    assert.equal(calls.length, 1, why + ": sent once");
+    assert.equal(timers.length, 0, why + ": no retry scheduled");
+  }
 });
 
 test("a crash loop cannot flood the table: at most 20 reports a session", () => {
