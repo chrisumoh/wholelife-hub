@@ -62,7 +62,9 @@ ok("footer cards are 4-up when wide", await ev(`getComputedStyle(document.queryS
 await ev(`location.hash = "#/workouts"`);
 ok("Workouts shows workouts, minutes, streak", await waitFor(`[...document.querySelectorAll(".scgrid.plain .sc-l")].map(e => e.textContent).join() === "Workouts,Minutes,Streak"`), errors.join(" | "));
 ok("plain row values match the logged workout", await ev(`(() => { const v = [...document.querySelectorAll(".scgrid.plain .sc-v")].map(e => e.textContent); return v[0] === "1" && v[1] === "60"; })()`));
+ok("plain row is 4-up when wide", await ev(`getComputedStyle(document.querySelector(".scgrid.plain")).gridTemplateColumns.split(" ").length === 4`));
 await view(375);
+ok("zero baseline reads New, not a percentage", await ev(`deltaPill(60, 0).includes("New") && !deltaPill(60, 0).includes("%") && deltaPill(60, null).includes("No data") && deltaPill(0, 0).includes("0%")`));
 ok("plain row is 2-up on a phone", await ev(`getComputedStyle(document.querySelector(".scgrid.plain")).gridTemplateColumns.split(" ").length === 2`));
 ok("no console errors", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -1472,9 +1472,9 @@ input,select,textarea{font-size:calc((var(--t-base)) * var(--text-scale,1));font
 .ps-name{font-size:calc((var(--t-lg)) * var(--text-scale,1));font-weight:800;letter-spacing:-.018em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ps-actions{display:flex;align-items:center;gap:8px;flex:none}
 .scgrid{display:grid;gap:12px;grid-template-columns:1fr}
+.scgrid.plain{grid-template-columns:repeat(2,1fr)}
 @media (min-width:600px){.scgrid{grid-template-columns:repeat(2,1fr)}}
 @media (min-width:1000px){.scgrid,.scgrid.plain{grid-template-columns:repeat(4,1fr)}}
-.scgrid.plain{grid-template-columns:repeat(2,1fr)}
 .sc{position:relative;background:var(--surface);border-radius:var(--r);display:flex;flex-direction:column;min-width:0}
 .sc-top{display:flex;align-items:center;gap:12px;padding:14px}
 .sc-ic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--a),var(--b))}
@@ -10503,7 +10503,8 @@ const sumN = a => a.reduce((t, x) => t + (x || 0), 0);
 const avgN = a => { const v = a.filter(x => x != null); return v.length ? sumN(v) / v.length : null; };
 function deltaPill(cur, prev){
   if (cur == null || prev == null) return `<span class="sc-d">No data</span>`;
-  const pc = prev ? Math.round((cur - prev) / prev * 100) : cur ? 100 : 0;
+  if (!prev && cur) return `<span class="sc-d up">&uarr; New</span>`;
+  const pc = prev ? Math.round((cur - prev) / prev * 100) : 0;
   return `<span class="sc-d ${pc > 0 ? "up" : pc < 0 ? "down" : ""}">${pc > 0 ? "&uarr;" : pc < 0 ? "&darr;" : "&rarr;"} ${Math.abs(pc)}%</span>`;
 }
 function statCard(l, v, cur, prev, i, g, tip){
