@@ -11,7 +11,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 | 1 | Bug fixes: duplicate avatar, clipped text, menu-over-Settings layering glitch, Settings tabs | DONE (already fixed in earlier builds; checked at 375px and 820px in 8.2.21) |
 | 2 | Premium system: purchase-gated flag, badges, Telegram-style premium screen | DONE except payments (receipt dialog ready from 8.3.2; isPremium flag, dev override and premium screen exist; BETA_OPEN is on; prices and checkout are placeholders) |
 | 3 | Coach: full data access + personalized advice card (9 rules) | PARTLY DONE: advice card built; 8.2.21 adds repeat marking and the evening review. No protein advice (calories only); Task 3.1 plan adjustments not audited |
-| 4 | Font system: 8 options, Perplexity-style default | PROMPTED |
+| 4 | Font system: 8 options, Perplexity-style default | DONE (already built; audited in 8.3.21: 8 self-hosted fonts apply and load, tabular numbers, no overflow at 375px) |
 | 5 | UI cleanup: blue outlines, compact appearance controls, clean layout, gradient sidebar icons | PROMPTED |
 | 6 | Space + arrow: centered arrow morph (tested code in prompt), 12-col grid, one-row headers, two-pane Settings, sidebar grouping | PROMPTED |
 | 7 | Legal/compliance: privacy+terms updates, refunds/contact/credits, consent flows, age gate, delete/export, accessibility pass, dark-pattern sweep | PARTLY DONE: neutral age screen and sign-up agreement in 8.2.9; axe-core accessibility pass in 8.2.10 (screen-reader and zoom checks and a lawyer's review still to do) |
@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.21 | Housekeeping: CLAUDE.md names Codex as the PR reviewer; Phase 4 marked done | IN PROGRESS: claude/project-thread-whr4aa |
 | 8.3.20 | Phone fixes: menu black screen after scrolling, account row inside the profile card, tips go to the bell | IN PROGRESS: claude/project-thread-3qyz9x |
 | 8.3.19 | Motion: sliding selection ring on the day strip, page numbers and snack region chips | IN PROGRESS: claude/project-thread-3qyz9x |
 | 8.3.18 | Friends: tidier Friends card (sections, switches, one-row search) | IN PROGRESS: claude/project-thread-e9j467 |

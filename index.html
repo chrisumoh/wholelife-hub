@@ -3781,7 +3781,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.20", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.21", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3795,6 +3795,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.20", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.21",
+      area:"Docs",
+      title:"Review rule names Codex, not Greptile; build plan marks Phase 4 (fonts) done",
+      bug:"CLAUDE.md section 6 still said Greptile reviews pull requests, but Codex is the automatic reviewer now. The build plan also still listed Phase 4 (font system) as PROMPTED although the picker already shipped.",
+      fix:"CLAUDE.md section 6 now says Codex: after every push, read Codex's comments on the pull request, say whether each is valid, fix the valid ones on the same branch with a test, and reply only when a finding is wrong or won't be fixed. The rest of the rule is unchanged. Phase 4 was audited against the running app and needed no code: all eight typefaces are self-hosted, each applies through [data-font] on the root and loads, numbers use tabular figures, and nothing scrolls sideways at 375px in any of them. The build plan marks Phase 4 done. No app behavior changed.",
+      where:"CLAUDE.md (section 6). docs/BUILD_PLAN.md (Phase 4 row, build row). APP_VERSION and the change log in index.html. CHANGELOG.md, README.md.",
+      test:"node tests/check-repo.mjs. Audit by hand or in a browser: Settings > Appearance, choose each font and check the preview line, the page text and the numbers change with no sideways scroll at 375px; reload and the choice stays.",
+      limits:"The audit checked that each font loads and applies and that nothing overflows at 375px; it did not measure colour contrast per font or check Safari and a real phone." },
     { id:"8.3.20",
       area:"Phone fixes",
       title:"Side menu no longer goes black after scrolling, account row merged into the profile card, tips go to the bell",
