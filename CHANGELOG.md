@@ -14,6 +14,14 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 - **How to test:** node tests/check-repo.mjs. Audit by hand or in a browser: Settings > Appearance, choose each font and check the preview line, the page text and the numbers change with no sideways scroll at 375px; reload and the choice stays.
 - **Known limits:** The audit checked that each font loads and applies and that nothing overflows at 375px; it did not measure colour contrast per font or check Safari and a real phone.
 
+## 8.3.21 · Friends: Blocking screen: block and unblock people from the Friends card
+
+- **Problem:** The database could block people, but the app had no way to do it.
+- **Change:** Every friend, request and search result on the Friends card has a Block button. Blocked people move to a Blocked people list with an Unblock button. A blocked person cannot find you in search, send you a request or message, or see you online, and blocking ends any friendship. Unblocking does not bring a friendship back.
+- **Where:** `index.html`: `FR.blocks`, `frLoad`, `frBlock`, `frUnblock`, `frBlockedRows`, `frRows`, `frPaint`, `friendsCard`, the `fr-block` and `fr-unblock` cases, `LS_USER_BASES`. `tests/browser/blocking.mjs`, `tests/browser/run-all.mjs`. `CHANGELOG.md`, `README.md`, `docs/DATABASE.md`, `docs/BUILD_PLAN.md`.
+- **How to test:** `node tests/browser/blocking.mjs`. On two friend accounts: A taps Block next to B on Settings > Household > Friends. B disappears from A's friends and search results; B cannot search A, request A or message A. Unblock from the Blocked people list.
+- **Known limits:** No new migration. Names in the Blocked people list are kept on the device that blocked them; on another device the entry reads Blocked person until a server function can return names. No two-account live test yet.
+
 ## 8.3.20 · Phone fixes: Side menu no longer goes black after scrolling, account row merged into the profile card, tips go to the bell
 
 - **Problem:** On a phone, scrolling down and then opening the side menu showed a black screen. While the menu was open the page was fixed in place with overflow hidden, but its box stayed one screen tall, so after scrolling the whole page sat above the screen and nothing was painted behind or under the menu. When signed in, Settings > Profile showed a separate card with the email above the profile. Tips such as the tour note popped up as a card over the page title.
