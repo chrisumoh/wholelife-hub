@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.11, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.12, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.12 · Sign-in: Tour offer asks about saving to an account
+
+- **Problem:** The first-run tour offer said nothing about signing in, so new people only met the sign-in card if they went looking in Settings.
+- **Change:** The New to Whole Life Hub? pop-up now also asks, when signed out and sign-in is available, whether to save the hub to an account so it follows you to every device, with Google or email. A new Sign in button closes the pop-up and opens the sign-in card. It does not mark the tour as answered, so the tour is offered again after signing in. Show me and Not now work as before.
+- **Where:** index.html: tourOffer(), the tour-offer-auth case in the tour click handler, APP_VERSION and the change log. tests/browser/authcard.mjs (4 new checks, 27 in all). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** In a private window, finish setup (or skip it) and open the Summary page: the pop-up shows a line about saving to an account and a Sign in button. Press it: the sign-in card opens. Run node tests/browser/authcard.mjs.
+- **Known limits:** Only shown signed out, on the Summary page, until the tour is answered. After signing in the page reloads and the offer comes back once. Checked in headless Chrome with a faked Supabase.
 
 ## 8.3.11 · Sign-in: Sign-in card with Google and email, offered during setup
 
