@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.15 | Notifications: rich pop-up cards for friend requests, challenge invites and saved workouts | IN PROGRESS: claude/project-thread-qrbmf2 |
 | 8.3.14 | Recipes: recipe and meal plan cards match Food culture; pager (12 dishes / 1 plan day a page) | IN PROGRESS: claude/project-thread-5uw7hi |
 | 8.3.12 | Sign-in: the first-run tour offer asks about saving to an account and opens the sign-in card | IN PROGRESS: claude/project-thread-7alpk4 |
 | 8.3.11 | Sign-in: card with Google and email in setup (after the age question) and in Settings > Account; old Account pair removed | IN PROGRESS: claude/project-thread-7alpk4 |

@@ -3237,6 +3237,12 @@ html .side .nav a .si-tile svg{color:#fff}
 .swipe-toast__action:active{transform:scale(.97)}
 .swipe-toast__action:focus-visible{outline:2px solid var(--st-fuse);outline-offset:2px}
 @media (hover:hover) and (pointer:fine){.swipe-toast__action:hover{opacity:.88}}
+.swipe-toast[data-rich] .swipe-toast__card{gap:12px;padding-right:44px;align-items:flex-start}
+.swipe-toast[data-rich] .swipe-toast__icon{width:40px;height:40px;padding:10px;border-radius:50%;background:color-mix(in srgb,var(--st-t,var(--accent)) 16%,transparent)}
+.swipe-toast[data-rich="success"]{--st-t:var(--good)}.swipe-toast[data-rich="warn"]{--st-t:var(--warn)}.swipe-toast[data-rich="error"]{--st-t:var(--bad)}
+.swipe-toast__time{font-weight:400;font-size:.85em;color:color-mix(in srgb,var(--st-ink) 55%,transparent)}
+.swipe-toast__x{position:absolute;top:10px;right:10px;display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:50%;background:none;color:inherit;opacity:.6;cursor:pointer}
+.swipe-toast__x:hover,.swipe-toast__x:focus-visible{opacity:1;background:color-mix(in srgb,var(--st-ink) 10%,transparent)}
 .swipe-toast__fuse{position:absolute;right:0;bottom:0;left:0;height:var(--st-fuse-h);
   background:linear-gradient(90deg,transparent 0%,color-mix(in srgb,var(--st-fuse) 18%,transparent) 9%,color-mix(in srgb,var(--st-fuse) 50%,transparent) 18%,color-mix(in srgb,var(--st-fuse) 84%,transparent) 28%,var(--st-fuse) 38%,var(--st-fuse) 62%,color-mix(in srgb,var(--st-fuse) 84%,transparent) 72%,color-mix(in srgb,var(--st-fuse) 50%,transparent) 82%,color-mix(in srgb,var(--st-fuse) 18%,transparent) 91%,transparent 100%);
   transform-origin:left center;pointer-events:none}
@@ -3747,7 +3753,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.14", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.15", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3761,6 +3767,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.14", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.15",
+      area:"Notifications",
+      title:"Pop-up cards for friend requests, challenge invites and saved workouts",
+      bug:"Toasts were one plain line, and friend requests and challenge invites only showed if you opened Settings or Workouts.",
+      fix:"Toasts get a card look: a 40px tinted icon, a time, an X and the countdown bar. A new friend request or challenge invite pops one up and lands in the notification centre once. Saving a workout shows a green card.",
+      where:"index.html: swipeToast() (rich), frSeen(), frNotify(), notify(), log-workout case, CSS .swipe-toast[data-rich]. tests/browser/toasts.mjs.",
+      test:"Run node tests/browser/toasts.mjs. Log a workout: a green card shows.",
+      limits:"No messaging yet, so only requests and invites notify, on the 30 second friends refresh while the app is open." },
     { id:"8.3.14",
       area:"Recipes",
       title:"Recipe and meal plan cards match Food culture, with page numbers",
@@ -9090,7 +9104,20 @@ async function frLoad(){
     if (FR.me) { const r = await db.rpc("friend_list"); if (r.error) throw r.error; FR.rows = r.data || []; }
     FR.on = true; FR.err = false;
   } catch (e) { FR.err = true; console.warn("Friends unavailable:", e?.code || e?.name || "error"); }
-  frPaint();
+  frPaint(); frNotify();
+}
+// Tell the person about a new request or invite once; the seen ids survive reloads so old ones never repeat.
+function frSeen(id){
+  const p = P(); if (!p) return true;
+  const k = ukey("wlh.frseen." + p.id); let a = [];
+  try { a = JSON.parse(localStorage.getItem(k) || "[]"); } catch {}
+  if (a.includes(id)) return true;
+  try { localStorage.setItem(k, JSON.stringify([...a, id].slice(-60))); } catch {}
+  return false;
+}
+function frNotify(){
+  for (const r of FR.rows) if (r.status === "pending" && r.incoming && !frSeen("f" + r.friendship_id)) notify("friend", `${r.app_name} wants to be friends`, "Open Household to accept or decline.", "#/settings/household");
+  for (const c of CH.rows) if (c.status === "invited" && !frSeen("c" + c.id)) notify("friend", `${c.owner_name || "A friend"} invited you to a challenge`, c.title, "#/workouts");
 }
 function frTick(){
   const db = frDb(); if (!db || document.hidden) return;
@@ -9171,7 +9198,7 @@ async function chLoad(){
     CH.boards = {}; live.forEach((c, i) => { CH.boards[c.id] = bs[i].data || []; });
     CH.on = true; CH.err = false;
   } catch (e) { CH.err = true; console.warn("Challenges unavailable:", e?.code || e?.name || "error"); }
-  chPaint();
+  chPaint(); frNotify();
 }
 function chRows(){
   if (CH.err) return `<p class="small muted">Challenges could not load. Check your connection and reload.</p>`;
@@ -12791,7 +12818,9 @@ document.addEventListener("click", async e => {
     case "del-weight": removeEntry("weights", t.dataset.id); render(); break;
     // workouts
     case "log-workout": { const mins = numv("w-min"); if (!mins) { toast("Add how many minutes."); return; }
-      addEntry("workouts", { id: uid(), date: val("w-d") || today(), type: val("w-type"), minutes: Math.round(mins), cal: numv("w-cal"), note: val("w-note") || null }); UI.prefillW = null; UI.wDraft = null; render(); toast("Workout saved", "success"); checkCelebrations(); checkAwards(); break; }
+      const wt = val("w-type"), wn = ACTIVITIES.find(a => a.k === wt)?.n || "Workout";
+      addEntry("workouts", { id: uid(), date: val("w-d") || today(), type: wt, minutes: Math.round(mins), cal: numv("w-cal"), note: val("w-note") || null }); UI.prefillW = null; UI.wDraft = null; render();
+      swipeToast({ title: "Workout saved", description: `${wn}, ${Math.round(mins)} min`, type: "success", rich: true, key: "wk-saved" }); checkCelebrations(); checkAwards(); break; }
     case "del-workout": removeEntry("workouts", t.dataset.id); render(); break;
     case "ring-day": UI.ringDay = t.dataset.v; render(); document.querySelector(`.rday[data-v="${t.dataset.v}"]`)?.focus(); break;
     case "act-toggle": wSaveDraft(); UI.actOpen = !UI.actOpen; render(); document.querySelector('[data-act="act-toggle"]')?.focus(); break;
@@ -13116,6 +13145,7 @@ const ST_ICONS = {
   success:`<svg viewBox="0 0 24 24" fill="none" stroke="var(--good,#22c55e)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/></svg>`,
   warn:`<svg viewBox="0 0 24 24" fill="none" stroke="var(--warn,#f5a04f)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2.8 19.5h18.4z"/><path d="M12 10v4M12 17h.01"/></svg>`,
   error:`<svg viewBox="0 0 24 24" fill="none" stroke="var(--bad,#ef4444)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>`,
+  info:`<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>`,
   bell:`<svg viewBox="0 0 24 24" fill="none" stroke="var(--st-fuse)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>`
 };
 const ST_STARTING = typeof window !== "undefined" && "CSSStartingStyleRule" in window;
@@ -13125,7 +13155,8 @@ function stStack(){
   if (!s) { s = document.createElement("div"); s.id = "st-stack"; s.setAttribute("aria-label", "Notifications"); document.body.append(s); }
   return s;
 }
-// opts: { title, description, type: info|success|warn|error|bell, actionLabel, onAction, duration, key, onClose }
+// opts: { title, description, type: info|success|warn|error|bell, rich, time, actionLabel, onAction, duration, key, onClose }
+// rich = the notification-card look: 40px tinted icon circle, a time beside the title and an X (8.3.14)
 function swipeToast(opts = {}){
   const o = { duration: ST.duration, type: "info", ...opts };
   const stack = stStack();
@@ -13135,13 +13166,15 @@ function swipeToast(opts = {}){
   root.dataset.inline = "true"; root.dataset.phase = "open"; root.dataset.mounted = ST_STARTING ? "true" : "false";
   root.dataset.fuse = o.duration > 0 ? "bottom" : "none"; root.dataset.dismissible = "true";
   if (o.key) root.dataset.key = o.key;
+  if (o.rich) { root.dataset.rich = o.type; root.dataset.dismissible = "true"; }
   root.style.cssText = `--st-w:${ST.width}px;--st-slide:${ST.slide}ms;--st-gap:10px`; // colors and radius come from the active theme (see #st-stack CSS)
   const ic = ST_ICONS[o.type];
   root.innerHTML = `<div class="swipe-toast__gate"><div class="swipe-toast__lift">
     <div class="swipe-toast__card" role="status" aria-live="polite" aria-atomic="true" tabindex="0">
       ${ic ? `<span class="swipe-toast__icon" aria-hidden="true">${ic}</span>` : ""}
-      <span class="swipe-toast__body"><span class="swipe-toast__title">${esc(o.title || "")}</span>${o.description ? `<span class="swipe-toast__desc">${esc(o.description)}</span>` : ""}</span>
+      <span class="swipe-toast__body"><span class="swipe-toast__title">${esc(o.title || "")}${o.rich && o.time ? ` <small class="swipe-toast__time">${esc(o.time)}</small>` : ""}</span>${o.description ? `<span class="swipe-toast__desc">${esc(o.description)}</span>` : ""}</span>
       ${o.actionLabel ? `<button type="button" class="swipe-toast__action">${esc(o.actionLabel)}</button>` : ""}
+      ${o.rich ? `<button type="button" class="swipe-toast__x" aria-label="Dismiss">${icon("x", "", 16)}</button>` : ""}
       <i class="swipe-toast__fuse" aria-hidden="true"></i></div></div></div>`;
   // the stack is at the top right (8.2.20): the newest toast sits first
   stack.prepend(root);
@@ -13251,6 +13284,7 @@ function swipeToast(opts = {}){
     if (e.key === "Enter" || e.key === " ") lastInput = "keyboard";
     if (e.key === "Escape") { e.stopPropagation(); close("escape"); }
   });
+  root.querySelector(".swipe-toast__x")?.addEventListener("click", () => close("x"));
   root.querySelector(".swipe-toast__action")?.addEventListener("click", () => { try { o.onAction && o.onAction(); } finally { close("action"); } });
   const onVis = () => { flags.hidden = document.hidden; syncFuse(); };
   document.addEventListener("visibilitychange", onVis);
@@ -15541,7 +15575,7 @@ function notify(kind, title, body, href){
   if (list.some(n => n.id === id)) return;                 // one of each kind per day
   list.unshift({ id, kind, title: String(title).slice(0, 90), body: String(body || "").slice(0, 160), href: href || null, at: Date.now(), read: false });
   saveNotifs(p, list);
-  if (!UI.bell) swipeToast({ title: String(title).slice(0, 90), description: String(body || "").slice(0, 160), type: "bell", key: "notif-" + id,
+  if (!UI.bell) swipeToast({ title: String(title).slice(0, 90), description: String(body || "").slice(0, 160), type: kind === "friend" ? "info" : "bell", rich: true, time: "now", key: "notif-" + id,
     actionLabel: "View", onAction: () => { if (href) location.hash = href.replace(/^#?/, "#"); else { UI.bell = true; render(); } } });
   const badge = document.querySelector(".bell-badge");
   if (badge) { badge.classList.remove("pop"); void badge.offsetWidth; badge.classList.add("pop"); }
