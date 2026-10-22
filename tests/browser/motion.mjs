@@ -174,6 +174,19 @@ const ci = await ev(`(() => { const f = document.querySelector("#checkin .timeli
 ok("the weekly bar's fill shows what was done (nothing), not how far into the week it is", ci === "0%" || ci === "0px" || ci === "", JSON.stringify(ci));
 await shot("checkin-clean");
 
+console.log("--- 7. phone menu after scrolling, tips go to the bell (8.3.20)");
+await view(390, 664); await goto("#/home");
+await ev(`window.scrollTo(0, 1200); true`); await sleep(300);
+const y0 = await ev(`scrollY`);
+await ev(`lockPageScroll(true); true`); await sleep(200);
+ok("opening the menu after scrolling keeps the page painted behind it (not a blank screen)", await ev(`(() => { const a = document.querySelector(".app").getBoundingClientRect(), b = document.body.getBoundingClientRect(); return b.bottom > innerHeight && a.bottom > innerHeight && a.top < 0; })()`), JSON.stringify(await ev(`document.body.getBoundingClientRect().toJSON()`)));
+await ev(`lockPageScroll(false); true`); await sleep(100);
+ok("closing it puts the page back where it was", Math.abs(await ev(`scrollY`) - y0) < 2);
+await view(1280);
+const nb = await ev(`(() => { const p = P(); saveNotifs(p, []); const before = document.querySelectorAll(".swipe-toast").length; bellNote("You can take the tour any time from Settings › Data & about.", "#/settings/about"); const l = loadNotifs(p); return { n: l.length, kind: l[0]?.kind, href: l[0]?.href, cards: document.querySelectorAll(".swipe-toast").length - before }; })()`);
+ok("a tip lands in the bell's System tab with a link, and no card pops over the page", nb.n === 1 && nb.kind === "system" && nb.href === "#/settings/about" && nb.cards <= 0, JSON.stringify(nb));
+await ev(`saveNotifs(P(), []); paintBell(); true`);
+
 ok("no script errors", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);
 procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(fail ? 1 : 0);

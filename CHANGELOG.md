@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.19, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.20, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.20 · Phone fixes: Side menu no longer goes black after scrolling, account row merged into the profile card, tips go to the bell
+
+- **Problem:** On a phone, scrolling down and then opening the side menu showed a black screen. While the menu was open the page was fixed in place with overflow hidden, but its box stayed one screen tall, so after scrolling the whole page sat above the screen and nothing was painted behind or under the menu. When signed in, Settings > Profile showed a separate card with the email above the profile. Tips such as the tour note popped up as a card over the page title.
+- **Change:** While the menu is open the page box now keeps its full height (height:auto), so the part you were looking at stays painted behind the dimmed layer, and closing the menu returns you to the same spot. Signed in, the account row moves inside the profile card as a line under it: Saved to your account, the sync status, the info button and Sign out. The email no longer heads the page; it is in the info pop-up. Signed out, the Sign in card is unchanged. Tips and reminders of where to find something (the tour, the photo passcode tip, skipping the coach questions) now go into the notification bell's System tab with a link, and the bell's badge pulses instead of a card covering the page. Action confirmations (saved, removed) still show as short cards.
+- **Where:** index.html: CSS :root.menu-open body; accountCard(inline), openAcctInfo(), the profile settings tab and profileTab(); notify() (quiet), bellNote(), the tour-offer-no case and tourEnd, bodyPhotoLockNudge(), the baseline-skip case. tests/browser/motion.mjs (3 new checks), tests/browser/meal-sync.mjs (account row check). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/motion.mjs and meal-sync.mjs. On a phone: scroll Summary down, open the menu, the page should show dimmed behind it. Signed in, Settings > Profile: no email card on top; the account line is at the bottom of the profile card. Dismiss the tour offer: no card appears; the bell gets a badge and the note is under System.
+- **Known limits:** The menu fix was checked in headless Chrome at phone size, not on a real iPhone, so please re-test on yours. Older notes already shown are not moved into the bell.
 
 ## 8.3.19 · Motion: The sliding selection ring now follows the day strip, the page numbers and the snack region chips
 

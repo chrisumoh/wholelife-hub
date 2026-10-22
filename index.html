@@ -1647,7 +1647,7 @@ input,select,textarea{font-size:calc((var(--t-base)) * var(--text-scale,1));font
 /* --- 1. Scroll containment ------------------------------------------------------------ */
 :root.menu-open{overflow:hidden}
 /* Bug (8.1.4, reverted in 8.1.5): a fix attempt here added transform:translateZ(0) to this rule [CSS_NOTES 32] */
-:root.menu-open body{position:fixed;left:0;right:0;width:100%;overflow:hidden;overscroll-behavior:none}
+:root.menu-open body{position:fixed;left:0;right:0;width:100%;height:auto;overflow:hidden;overscroll-behavior:none}
 .side{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 @media (max-width:1024px){
   .side{overflow-y:auto;max-height:100svh;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
@@ -3781,7 +3781,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.19", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.20", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3795,6 +3795,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.19", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.20",
+      area:"Phone fixes",
+      title:"Side menu no longer goes black after scrolling, account row merged into the profile card, tips go to the bell",
+      bug:"On a phone, scrolling down and then opening the side menu showed a black screen. While the menu was open the page was fixed in place with overflow hidden, but its box stayed one screen tall, so after scrolling the whole page sat above the screen and nothing was painted behind or under the menu. When signed in, Settings > Profile showed a separate card with the email above the profile. Tips such as the tour note popped up as a card over the page title.",
+      fix:"While the menu is open the page box now keeps its full height (height:auto), so the part you were looking at stays painted behind the dimmed layer, and closing the menu returns you to the same spot. Signed in, the account row moves inside the profile card as a line under it: Saved to your account, the sync status, the info button and Sign out. The email no longer heads the page; it is in the info pop-up. Signed out, the Sign in card is unchanged. Tips and reminders of where to find something (the tour, the photo passcode tip, skipping the coach questions) now go into the notification bell's System tab with a link, and the bell's badge pulses instead of a card covering the page. Action confirmations (saved, removed) still show as short cards.",
+      where:"index.html: CSS :root.menu-open body; accountCard(inline), openAcctInfo(), the profile settings tab and profileTab(); notify() (quiet), bellNote(), the tour-offer-no case and tourEnd, bodyPhotoLockNudge(), the baseline-skip case. tests/browser/motion.mjs (3 new checks), tests/browser/meal-sync.mjs (account row check). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/motion.mjs and meal-sync.mjs. On a phone: scroll Summary down, open the menu, the page should show dimmed behind it. Signed in, Settings > Profile: no email card on top; the account line is at the bottom of the profile card. Dismiss the tour offer: no card appears; the bell gets a badge and the note is under System.",
+      limits:"The menu fix was checked in headless Chrome at phone size, not on a real iPhone, so please re-test on yours. Older notes already shown are not moved into the bell." },
     { id:"8.3.19",
       area:"Motion",
       title:"The sliding selection ring now follows the day strip, the page numbers and the snack region chips",
@@ -9138,7 +9146,7 @@ function sbRender(){
 function openAcctInfo(triggerEl){
   openPopover("acct-info", { label:"What is saved to my account", width:"min(400px, calc(100vw - 32px))", triggerEl,
     bodyHTML: `<div class="auth-pop"><div class="pop-head"><h2>What is saved to my account</h2><button type="button" class="pop-x" data-pop="close" aria-label="Close">${icon("x","",24)}</button></div>
-      <div class="pop-body"><p class="small">Everything you log is saved to your account, so it is the same on every device you sign in on: meals, snacks, drinks, workouts, weigh-ins, vitals (including imported Apple Health data), photos, and each profile's details and choices (goals, plans, coach, reminders, appearance and home layout). Only form-check videos stay on this device. Photos can be switched off in Privacy &amp; security.</p>
+      <div class="pop-body">${SB.user?.email ? `<p class="small">Signed in as <b>${esc(SB.user.email)}</b>.</p>` : ""}<p class="small">Everything you log is saved to your account, so it is the same on every device you sign in on: meals, snacks, drinks, workouts, weigh-ins, vitals (including imported Apple Health data), photos, and each profile's details and choices (goals, plans, coach, reminders, appearance and home layout). Only form-check videos stay on this device. Photos can be switched off in Privacy &amp; security.</p>
       ${CRY.lock ? `<div class="note info">A passcode locks and encrypts the copy on this device only. Your account's copy is not encrypted with it, and syncing continues while the app is unlocked.</div>` : ""}</div></div>` });
 }
 // ---- friends and online status (8.3.7) ----
@@ -9353,11 +9361,12 @@ async function chAct(act, id){
   await chLoad(); toast("Done.");
 }
 
-function accountCard(){
+// inline: signed in, shown as a strip inside the profile card instead of its own card above it (8.3.20)
+function accountCard(inline){
   const row = (title, sub, act) => `<div class="acct-row"><span class="acct-ic">${icon("user","",18)}</span>
       <div class="acct-txt"><div class="acct-t">${title}</div>${sub}</div><div class="acct-act">${act}</div></div>`;
   if (!sbClient()) return `<section class="card" id="sb-account">${row("Account", `<div class="acct-s">${location.protocol === "file:" ? "Sign-in needs the app served over http (python3 -m http.server 8080)." : "Sign-in couldn't load. Check your connection and reload."}</div>`, "")}</section>`;
-  if (SB.user) return `<section class="card" id="sb-account">${row(esc(SB.user.email || "your account"),
+  if (SB.user) return `<${inline ? 'div class="acct-in"' : 'section class="card"'} id="sb-account">${row(inline ? "Saved to your account" : esc(SB.user.email || "your account"),
       `<div class="acct-s" id="sb-status" role="status">${esc(sbStatusText())}</div>`,
       `<button type="button" class="pop-x" data-act="sb-info" aria-label="What is saved to my account">${icon("info","",18)}</button>${UI.sbConfirmOut ? "" : `<button class="btn sm" data-act="sb-out"${SB.busy ? " disabled" : ""}>${SB.busy ? "Signing out…" : "Sign out"}</button>`}`)}
     ${UI.sbMsg ? `<div class="note ${UI.sbMsg.ok ? "info" : ""}" role="status">${esc(UI.sbMsg.t)}</div>` : ""}
@@ -9366,7 +9375,7 @@ function accountCard(){
       ${[UI.sbConfirmOut.failed ? "You're offline or the upload failed." : "", UI.sbConfirmOut.n ? `${UI.sbConfirmOut.n} change${UI.sbConfirmOut.n === 1 ? " is" : "s are"} (meals, workouts, weigh-ins or profile) waiting to upload and will be deleted too.` : "", UI.sbConfirmOut.unconfirmed ? "Your data could not be checked against your account, so it may not be saved there yet." : ""].filter(Boolean).map(x => `<p class="small" style="margin:2px 0">${esc(x)}</p>`).join("")}
       <p class="small" style="margin:2px 0">This can't be undone.</p></div>
       <div class="row"><button class="btn sm" data-act="sb-out-no">Cancel</button><button class="btn sm danger" data-act="sb-out-force">Sign out anyway</button></div>` : ""}
-  </section>`;
+  </${inline ? "div" : "section"}>`;
   return `<section class="card" id="sb-account">${row("Account", `<div class="acct-s">Optional. Sign in to save your meals, workouts and weigh-ins to your account.</div>`,
     `<button type="button" class="btn sm primary" data-act="sb-open" data-v="in" aria-haspopup="dialog">Sign in</button>`)}</section>`;
 }
@@ -10153,6 +10162,7 @@ function profileTab(p){
       <div class="seg setctl" role="group" aria-label="Units"><button data-act="units" data-v="us" aria-pressed="${us}">lb · ft</button><button data-act="units" data-v="metric" aria-pressed="${!us}">kg · cm</button></div>
     </div>
     <div class="stack" style="gap:6px"><div class="setrow small"><span class="setlabel">Profile ${done} of 10 filled in</span>${need.length ? `<span class="muted">Add ${need.join(", ")} to turn on the weight estimate</span>` : `<span class="tag good">Weight estimate on</span>`}</div><div class="bar"><i style="width:${done*10}%"></i></div></div>
+    ${SB.user && sbClient() ? accountCard(true) : ""}
     ${typeof ownerMark === "function" ? ownerMark() : ""}
   </section>
   <div class="grid g2">
@@ -12729,7 +12739,7 @@ function settingsView(p){
   const tabs = `<div class="tabwrap"><nav class="tabs" role="tablist" aria-label="Settings sections">${SET_TABS.map(([k,l]) =>
     `<a role="tab" href="#/settings${k === "profile" ? "" : "/" + k}" data-label="${esc(l)}" aria-selected="${k === tab}"${k === tab ? ' aria-current="page"' : ' tabindex="-1"'}><span>${esc(l)}</span></a>`).join("")}</nav></div>`;
   const sections = {
-    profile: accountCard() + profileTab(p),
+    profile: (SB.user && sbClient() ? "" : accountCard()) + profileTab(p),
     premium: typeof subscriptionPanel === "function" ? premiumTab(p) : "",
     coach: typeof coachSettingsView === "function" ? coachSettingsView(p) : "",
     appearance: `<section class="card" id="appearance">
@@ -14607,7 +14617,7 @@ document.addEventListener("click", async e => {
       const cur = UI.baselineStep || 1, n = COACH_Q.length;
       const to = a === "st-next" ? cur + 1 : a === "st-prev" ? cur - 1 : +t.dataset.v;
       UI.baselineStep = Math.min(n, Math.max(1, to)); render(); break; }
-    case "baseline-skip": { p.coach = p.coach || {}; p.coach.skipped = true; UI.editBaseline = false; UI.baselineDraft = null; UI.baselineStep = null; saveProfile(); render(); toast("Skipped. You can answer these any time.", "info"); break; }
+    case "baseline-skip": { p.coach = p.coach || {}; p.coach.skipped = true; UI.editBaseline = false; UI.baselineDraft = null; UI.baselineStep = null; saveProfile(); render(); bellNote("Skipped. You can answer the coach's questions any time.", "#/coach"); break; }
     // ---- B6 plans ----
     case "plan-len": UI.planUI = { ...(UI.planUI || {}), len: +t.dataset.v, text: document.getElementById("goal-text")?.value ?? UI.planUI?.text }; render(); break;
     case "plan-make": {
@@ -15727,7 +15737,7 @@ const NOTIF_HREF = /^#\/[A-Za-z0-9\/_\-?=&.%]*$/; // in-app routes only: a store
 const safeNotifHref = h => typeof h === "string" && NOTIF_HREF.test(h) ? h : null;
 function loadNotifs(p){ try { const v = JSON.parse(localStorage.getItem(NOTIF_KEY(p)) || "[]"); return Array.isArray(v) ? v.slice(0, 40).map(n => n && typeof n === "object" ? { ...n, href: safeNotifHref(n.href) } : n) : []; } catch { return []; } }
 function saveNotifs(p, list){ if (LEAVING) return; try { localStorage.setItem(NOTIF_KEY(p), JSON.stringify(list.slice(0, 40))); } catch {} }
-function notify(kind, title, body, href){
+function notify(kind, title, body, href, quiet){
   const p = P(); if (!p) return;
   href = safeNotifHref(href);
   const list = loadNotifs(p);
@@ -15735,7 +15745,7 @@ function notify(kind, title, body, href){
   if (list.some(n => n.id === id)) return;                 // one of each kind per day
   list.unshift({ id, kind, title: String(title).slice(0, 90), body: String(body || "").slice(0, 160), href: href || null, at: Date.now(), read: false });
   saveNotifs(p, list);
-  if (!UI.bell) swipeToast({ title: String(title).slice(0, 90), description: String(body || "").slice(0, 160), type: kind === "friend" ? "info" : "bell", rich: true, time: "now", key: "notif-" + id,
+  if (!UI.bell && !quiet) swipeToast({ title: String(title).slice(0, 90), description: String(body || "").slice(0, 160), type: kind === "friend" ? "info" : "bell", rich: true, time: "now", key: "notif-" + id,
     actionLabel: "View", onAction: () => { if (href) location.hash = href.replace(/^#?/, "#"); else { UI.bell = true; render(); } } });
   const badge = document.querySelector(".bell-badge");
   if (badge) { badge.classList.remove("pop"); void badge.offsetWidth; badge.classList.add("pop"); }
@@ -15743,6 +15753,8 @@ function notify(kind, title, body, href){
   // If the panel happens to be open, the new one should appear in it, not wait for a reopen.
   if (UI.bell) render();
 }
+// Tips and "you can find it later" notes go to the bell's System tab, not a card over the page (8.3.20).
+const bellNote = (title, href) => notify("system", title, "", href, true);
 const unreadCount = p => loadNotifs(p).filter(n => !n.read).length;
 function bellButton(p){
   const n = unreadCount(p);
@@ -20052,7 +20064,7 @@ function bodyState(p = P()){ p.prem = p.prem || {}; p.prem.body = p.prem.body ||
 // the one moment that data type becomes relevant, so it is the one moment to mention the passcode
 // exists; a one-line toast rather than a blocking step, since nothing about the feature actually
 // requires it. Shown once per opt-in tap, not nagged on every visit.
-function bodyPhotoLockNudge(){ if (!CRY.lock) toast("Tip: add a passcode in Settings → Privacy & security to encrypt these photos on this device.", "info"); }
+function bodyPhotoLockNudge(){ if (!CRY.lock) bellNote("Tip: add a passcode in Settings → Privacy & security to encrypt these photos on this device.", "#/settings/privacy"); }
 
 function bodyView(p){
   if (UI.locked) return `<section class="card"><p class="small muted">Unlock the profile to see this.</p></section>`;
@@ -22197,6 +22209,7 @@ PREMIUM_VIEWS.share = p => UI.sharePreview
 .rs-thumb>.rs-copy>*{opacity:1}
 /* ---- Account row and auth popup (8.1.18) ---- */
 #sb-account{padding:12px 16px}
+.acct-in#sb-account{padding:12px 0 0;border-top:1px solid var(--line)}
 .acct-row{display:flex;align-items:center;gap:12px;min-width:0}
 .acct-ic{flex:none;width:32px;height:32px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
 .acct-txt{flex:1;min-width:0}
@@ -22935,7 +22948,7 @@ function tourEnd(completed){
   const back = TOUR.prevFocus; TOUR.prevFocus = null;
   if (back && back.isConnected) back.focus({ preventScroll:true });
   window.WLH?.log("tour", `${completed ? "finished" : "ended early"}: ${id}`);
-  if (!completed && id === "quick") toast("You can take the tour any time from Settings › Data & about.");
+  if (!completed && id === "quick") bellNote("You can take the tour any time from Settings › Data & about.", "#/settings/about");
 }
 
 // ---------- input ----------
@@ -22949,7 +22962,7 @@ document.addEventListener("click", e => {
   if (a === "tour-offer-auth") { e.preventDefault(); tourOfferClose(); openAuthPopup("in", t); return; } // the offer stays unanswered, so the tour is offered again after signing in
   if (a === "tour-offer-no") {
     e.preventDefault(); tourMarkSeen("dismissed"); tourOfferClose();
-    toast("No problem. The tour is in Settings › Data & about whenever you want it.");
+    bellNote("No problem. The tour is in Settings › Data & about whenever you want it.", "#/settings/about");
     window.WLH?.log("tour", "first-run tour dismissed"); return;
   }
   if (!TOUR.on) return;
