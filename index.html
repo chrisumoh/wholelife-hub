@@ -835,6 +835,13 @@ html,body{overflow-x:clip}
 /* A5 + A6. One rhythm for every settings row and header pill. */
 .neon{color:#FF8A00;border:1px solid #FF8A00;border-radius:100px;padding:1px 10px;font-size:calc(12px * var(--text-scale,1));font-weight:600;box-shadow:0 0 6px -1px #FF8A00,inset 0 0 6px -2px #FF8A00;animation:neon-pulse 2s ease-in-out infinite}
 @keyframes neon-pulse{0%,100%{text-shadow:0 0 4px #FF8A00;box-shadow:0 0 6px -1px #FF8A00,inset 0 0 6px -2px #FF8A00}50%{text-shadow:0 0 12px #FF8A00,0 0 22px #FF8A00;box-shadow:0 0 18px 0 #FF8A00,inset 0 0 12px -2px #FF8A00}}
+.fr-sec{display:grid;gap:8px;margin-top:16px}
+.fr-h{font-weight:600;font-size:calc(14px * var(--text-scale,1))}
+.fr-line{display:flex;gap:8px}.fr-line input{flex:1 1 auto;min-width:0}
+.fr-opt{padding:10px 0;border-top:1px solid var(--line)}
+.fr-row{align-items:center}.fr-row .tag,.fr-row .neon,.fr-row .fr-off{display:inline-block;margin-top:4px}
+.fr-foot .btn{background:transparent;color:var(--bad)}
+.fr-foot{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
 .fr-off{color:var(--muted);border:1px solid var(--line);border-radius:100px;padding:1px 10px;font-size:calc(12px * var(--text-scale,1))}
 .setrow{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;min-height:40px}
 .setrow>.setlabel{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 200px}
@@ -3774,7 +3781,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.17", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.18", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3788,6 +3795,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.17", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.18",
+      area:"Friends",
+      title:"A tidier Friends card",
+      bug:"The Friends card was a stack of plain fields and checkboxes with a large red Leave friends button, and online pills sat beside the names in a cluttered row.",
+      fix:"The card is now in sections. Your app name sits in one row with its Save button, with the 3 to 20 character hint under it. Let people find me and Show when I am online are on and off switches that save as you flip them. Find a friend is one row with a Search button, results show under it, and Your friends lists each person with the Online, Offline or request pill under their name and Message, Remove, Accept or Decline on the right. Leave friends is a quiet button at the bottom with a line saying what it does. No change to what is stored or shared.",
+      where:"index.html: friendsCard (layout and switches), frRows, frSaveMe (reads the switches), the fr-sw action, .fr-sec .fr-h .fr-line .fr-opt .fr-row .fr-foot CSS. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Sign in, open Settings > Household > Friends. Flip each switch (it saves, and a refresh keeps it). Change the name and press Save. Search a name and press Add. Check light, dark and a narrow phone width. node tests/check-repo.mjs.",
+      limits:"Only the layout changed. The card is still hidden when signed out. Checked in headless Chrome with sample data, not with two live accounts." },
     { id:"8.3.17",
       area:"Friends",
       title:"Message your friends",
@@ -9215,7 +9230,7 @@ function frRows(){
   const pill = r => r.status !== "accepted" ? `<span class="tag">${r.incoming ? "Wants to be friends" : "Requested"}</span>` : r.online ? `<span class="neon">Online</span>` : `<span class="fr-off">Offline</span>`;
   const btns = r => r.status === "pending" && r.incoming ? `<button class="btn sm primary" data-act="fr-accept" data-id="${esc(r.friendship_id)}">Accept</button><button class="btn sm" data-act="fr-remove" data-id="${esc(r.friendship_id)}">Decline</button>`
     : `${r.status === "accepted" ? `<button class="btn sm primary" data-act="fm-open" data-id="${esc(r.member_id)}">Message</button>` : ""}<button class="btn sm" data-act="fr-remove" data-id="${esc(r.friendship_id)}">${r.status === "pending" ? "Cancel" : "Remove"}</button>`;
-  return FR.rows.length ? FR.rows.map(r => `<div class="li"><div class="grow"><b>${esc(r.app_name)}</b> ${pill(r)}</div><div class="row" style="gap:6px">${btns(r)}</div></div>`).join("")
+  return FR.rows.length ? FR.rows.map(r => `<div class="li fr-row"><div class="grow"><b>${esc(r.app_name)}</b><div>${pill(r)}</div></div><div class="row" style="gap:6px">${btns(r)}</div></div>`).join("")
     : `<p class="small muted">No friends yet. Search for a friend's app name above.</p>`;
 }
 function frPaint(){
@@ -9227,22 +9242,25 @@ function friendsCard(){
   const head = `<div class="eyebrow">Friends</div><h2 style="margin-top:4px">Friends and online status</h2>`;
   if (!SB.user) return `<section class="card" id="friends">${head}<p class="small muted">Sign in to find friends by their app name and see when they are online. Your account is the only thing this needs.</p></section>`;
   if (!FR.on) { if (!FR.err) setTimeout(frTick, 0); return `<section class="card" id="friends">${head}<p class="small muted" role="status">${FR.err ? "Friends could not load. Check your connection and reload." : "Loading..."}</p></section>`; }
-  const m = FR.me || {};
+  const m = FR.me || {}, sw = (id, on, title, sub) => `<div class="setrow fr-opt"><div class="setlabel"><b id="${id}-l">${title}</b><span class="small muted">${sub}</span></div><button type="button" class="sw setctl" id="${id}" role="switch" aria-checked="${on}" aria-labelledby="${id}-l" data-act="fr-sw"></button></div>`;
   return `<section class="card" id="friends">${head}
-    <form class="form" data-form="fr-me">
-      <label class="f">Your app name<input id="fr-name" maxlength="20" minlength="3" pattern="[A-Za-z0-9_.\\-]{3,20}" autocomplete="off" required value="${esc(m.app_name || "")}"></label>
-      <label class="full small" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="fr-disc"${m.discoverable ? " checked" : ""} style="margin-top:3px"> Let people find me by this name. Off by default. Only the name can be searched.</label>
-      <label class="full small" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="fr-pres"${m.show_presence === false ? "" : " checked"} style="margin-top:3px"> Show friends when I am online.</label>
-      <div class="full row" style="gap:8px"><button class="btn primary" type="submit">${FR.me ? "Save" : "Turn on friends"}</button>${FR.me ? `<button class="btn danger" type="button" data-act="fr-leave">Leave friends</button>` : ""}</div>
-      <p class="tiny muted full">3 to 20 letters, numbers, dots, dashes or underscores. 13 or older only.</p>
+    <form data-form="fr-me" class="fr-sec">
+      <label class="fr-h" for="fr-name">Your app name</label>
+      <div class="fr-line"><input id="fr-name" maxlength="20" minlength="3" pattern="[A-Za-z0-9_.\\-]{3,20}" autocomplete="off" required placeholder="e.g. cj_fit" value="${esc(m.app_name || "")}"><button class="btn primary" type="submit">${FR.me ? "Save" : "Turn on"}</button></div>
+      <p class="tiny muted">3 to 20 letters, numbers, dots, dashes or underscores. 13 or older only.</p>
+      ${sw("fr-disc", !!m.discoverable, "Let people find me", "Off by default. Only your name can be searched.")}
+      ${sw("fr-pres", m.show_presence !== false, "Show when I am online", "Friends see an Online or Offline pill next to your name.")}
     </form>
-    ${FR.me ? `<form class="form" data-form="fr-search"><label class="f">Find a friend<input id="fr-q" minlength="3" maxlength="20" autocomplete="off" placeholder="Their app name" value="${esc(FR.q)}"></label><div class="full"><button class="btn" type="submit">Search</button></div></form>
-    <div id="fr-res" aria-live="polite"></div><div id="fr-list" aria-live="polite">${frRows()}</div><div id="fm">${fmView()}</div>` : ""}
+    ${FR.me ? `<form data-form="fr-search" class="fr-sec"><label class="fr-h" for="fr-q">Find a friend</label>
+      <div class="fr-line"><input id="fr-q" minlength="3" maxlength="20" autocomplete="off" placeholder="Their app name" value="${esc(FR.q)}"><button class="btn" type="submit">Search</button></div></form>
+    <div id="fr-res" aria-live="polite"></div>
+    <div class="fr-sec"><div class="fr-h">Your friends</div><div id="fr-list" aria-live="polite">${frRows()}</div></div><div id="fm">${fmView()}</div>
+    <div class="fr-foot"><button class="btn sm ghost" type="button" data-act="fr-leave">Leave friends</button><span class="tiny muted">Deletes your name and requests.</span></div>` : ""}
   </section>`;
 }
 async function frSaveMe(){
   const db = frDb(); if (!db) return;
-  const row = { app_name: val("fr-name"), discoverable: !!document.getElementById("fr-disc")?.checked, show_presence: !!document.getElementById("fr-pres")?.checked };
+  const row = { app_name: val("fr-name"), discoverable: document.getElementById("fr-disc")?.getAttribute("aria-checked") === "true", show_presence: document.getElementById("fr-pres")?.getAttribute("aria-checked") === "true" };
   if (!FR_NAME.test(row.app_name)) { toast("Use 3 to 20 letters, numbers, dots, dashes or underscores.", "warn"); return; }
   const r = FR.me ? await db.from("member_names").update(row).eq("owner_id", SB.user.id) : await db.from("member_names").insert(row);
   if (r.error) { toast(r.error.code === "23505" ? "That name is taken. Try another." : "Could not save. Try again.", "warn"); return; }
@@ -13061,6 +13079,7 @@ document.addEventListener("click", async e => {
       toast(p.targetKg ? `Targets saved. Goal weight ${fmtWeight(p.targetKg, p)}.` : "Targets saved", "success"); break; }
     case "fr-add": case "fr-accept": case "fr-remove": frAct(a, t.dataset.id); break;
     case "fr-leave": frLeave(); break;
+    case "fr-sw": t.setAttribute("aria-checked", t.getAttribute("aria-checked") !== "true"); if (FR.me) frSaveMe(); break;
     case "fm-open": FM.with = t.dataset.id; fmPaint(); fmLoad(); document.getElementById("fm-in")?.focus(); break;
     case "fm-close": FM.with = null; fmPaint(); break;
     case "ch-open": CH.open = !CH.open; render(); break;
