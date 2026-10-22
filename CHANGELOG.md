@@ -13,6 +13,15 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 - **Where:** index.html: FM, fmLoad(), fmView(), fmPaint(), fmSend(), frRows(), friendsCard(), CSS .fm-*. supabase/migrations/20261022060000_wlh_8_3_17_friend_messages.sql. tests/browser/toasts.mjs. docs/DATABASE.md.
 - **How to test:** Run node tests/browser/toasts.mjs. On two friend accounts: A taps Message on B, sends a line; within 30 seconds B gets a card and sees it in the chat.
 - **Known limits:** New messages arrive on the 30 second refresh, not instantly. No typing signal, no delete button yet, and blocking has no screen yet. No two-account live test has been done.
+Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.16 · Summary: Weekly stat cards on Summary and Workouts
+
+- **Problem:** The Summary page had no quick view of this week against last, and Workouts opened straight into forms.
+- **Change:** Summary starts with up to four cards (workout minutes, workout calories, water, sleep), each with an info tip and a green, red or grey change pill against the same days last week. Cards with no data are left out. Workouts starts with a compact row: workouts, minutes, streak and your challenge standing.
+- **Where:** index.html: weeklyStatsRow(), workoutStatsRow(), statCard(), deltaPill(), the sc-tip action, .sc CSS, APP_VERSION. tests/browser/statcards.mjs, tests/perf/budget.json. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Log workouts this week and last, open Summary and Workouts, tap an i button. node tests/browser/statcards.mjs.
+- **Known limits:** Week so far (Monday on) against the same days last week. Water and sleep average logged days only.
 
 ## 8.3.15 · Notifications: Pop-up notification cards for friend requests, challenge invites and saved workouts
 
@@ -21,7 +30,6 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 - **Where:** index.html: swipeToast() (rich option, X button), ST_ICONS.info, CSS .swipe-toast[data-rich] and .swipe-toast__x, frSeen(), frNotify(), frLoad(), chLoad(), notify(), the log-workout case. tests/browser/toasts.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
 - **How to test:** Run node tests/browser/toasts.mjs. By hand: log a workout on Workouts, a green card appears. With two friend accounts, send a request and wait up to 30 seconds: the other account gets a card and a bell entry.
 - **Known limits:** There is no friend-to-friend messaging yet, so only requests and invites notify. Friends starting a workout is not announced. Alerts arrive on the 30 second friends refresh while the app is open, not when it is closed. No avatar or online dot on the card yet. Checked in headless Chrome with a faked Supabase.
-Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
 
 ## 8.3.14 · Recipes: Recipe and meal plan cards match Food culture, with page numbers
 
