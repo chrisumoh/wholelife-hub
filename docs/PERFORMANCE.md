@@ -76,7 +76,7 @@ Re-run `node tests/perf/measure.mjs` after any of the changes above and update t
 
 | What | Measured on 8.2.12 | Limit |
 | --- | --- | --- |
-| `index.html` raw / brotli / gzip | 1,854 / 470 / 555 KB | 2,000 / 510 / 600 KB |
+| `index.html` raw / brotli / gzip | 1,854 / 470 / 555 KB | 2,010 / 510 / 600 KB (raw raised from 2,000 in 8.3.7) |
 | First contentful paint (boot screen) | 260 ms | 1,000 ms |
 | App ready | 3,054 ms | 4,600 ms |
 | Largest contentful paint | 3,336 ms | 5,000 ms |
