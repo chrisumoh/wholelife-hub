@@ -3799,9 +3799,9 @@ const APP_VERSION = { update: "8.3", build: "8.3.23", channel: "Dev Testing", da
       area:"Premium",
       title:"Lemon Squeezy checkout, licence key check and a Save yearly option",
       bug:"Premium could not be bought: the slide-to-pay only said Not available yet, licence keys were never checked, and the plan rows showed placeholder text such as [PRICE] and Save [REAL %]. There was no yearly saving on the Premium screens.",
-      fix:"Sliding to pay (or Settings > Premium > Choose Monthly or Yearly) opens that plan's Lemon Squeezy checkout in a new tab; the slide then says Checkout opened, never Paid. After paying, the buyer pastes the key from the order email into Settings > Premium. A new Supabase edge function called license (supabase/functions/license, not yet deployed) activates the key with Lemon Squeezy, checks it belongs to our store and product, reads the order and returns the plan and the real receipt (items, tax, total, currency, order number, date) for the 8.3.2 receipt animation. The key and device id stay on the device; once a day the app asks again and ends Premium only on a clear expired, refunded or invalid answer, never when offline. The yearly row now says Save yearly, and shows Save 37% worked out from the two real prices ($7.99 monthly, $59.99 yearly); if prices are ever missing, no price or percentage is shown. The ?previewreceipt=1 link is unchanged.",
-      where:"index.html: CHECKOUT_URLS, planPrice(), planSavePct(), premiumHub() plan rows and fine print, premiumCtaTap(), scCommit() and the Checkout opened label, the plan-pick case, the Settings > Premium plan cards, validateLicenseKey(), licCall(), licRecheck(), activateLicense(), CSS .sc-t-open. supabase/functions/license/index.ts and logic.ts (new). tests/browser/slidepay.mjs (15 new checks), tests/license-logic.test.mjs (new, 6 checks). docs/DATABASE.md, docs/SECURITY.md, APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
-      test:"Run node tests/browser/slidepay.mjs and node --test tests/license-logic.test.mjs. By hand, once the function is deployed in test mode: open /?premium=0#/premium, slide to pay, the Lemon Squeezy test checkout opens; pay with their test card, copy the key from the email, paste it in Settings > Premium and press Activate. Premium turns on and the receipt prints. Try a wrong key and see a plain message.",
+      fix:"Sliding to pay (or Settings > Premium > Choose Monthly or Yearly) opens that plan's Lemon Squeezy checkout in a new tab; the slide then says Checkout opened, never Paid. After paying, the buyer pastes the key from the order email into Settings > Premium. A new Supabase edge function called license (supabase/functions/license, not yet deployed) activates the key with Lemon Squeezy, checks it belongs to our store and product, reads the order and returns the plan and the real receipt (items, tax, total, currency, order number, date) for the 8.3.2 receipt animation. Each profile's key and device id stay on the device under its account, never shared between profiles; once a day the app asks again and ends Premium only on a clear expired, refunded or invalid answer, never when offline, rate limited or when Lemon Squeezy has an outage (the function answers error for those). A slow answer that arrives after the profile changed is dropped. The Premium panel, Terms and Refunds no longer say payments are not live, and Settings > Premium has a Manage subscription link to Lemon Squeezy's My Orders page for cancelling. The yearly row now says Save yearly, and shows Save 37% worked out from the two real prices ($7.99 monthly, $59.99 yearly); if prices are ever missing, no price or percentage is shown. The ?previewreceipt=1 link is unchanged.",
+      where:"index.html: CHECKOUT_URLS, planPrice(), planSavePct(), premiumHub() plan rows and fine print, premiumCtaTap(), scCommit() and the Checkout opened label, the plan-pick case, the Settings > Premium plan cards, validateLicenseKey(), licCall(), licRecheck(), activateLicense(), CSS .sc-t-open. supabase/functions/license/index.ts, handler.ts and logic.ts (new), LS_USER_BASES, dropProfile(), subscriptionPanel(), termsView() and the Refunds page copy. tests/browser/slidepay.mjs (22 new checks), tests/license-logic.test.mjs (new, 6 checks), tests/license-handler.test.mjs (new, 13 checks). docs/DATABASE.md, docs/SECURITY.md, APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/slidepay.mjs and node --test tests/license-logic.test.mjs tests/license-handler.test.mjs. By hand, once the function is deployed in test mode: open /?premium=0#/premium, slide to pay, the Lemon Squeezy test checkout opens; pay with their test card, copy the key from the email, paste it in Settings > Premium and press Activate. Premium turns on and the receipt prints. Try a wrong key and see a plain message.",
       limits:"The license function is deployed with CJ's go and its secrets are set in Supabase, and a test-mode purchase worked on the preview. It still uses test-mode keys and links (LEMONSQUEEZY_ALLOW_TEST=1); before real sales switch the API key, both product ids and the two checkout links to live mode and drop that switch. The prices on screen ($7.99 a month, $59.99 a year, giving Save 37%) are set in PREMIUM_PLANS and must be kept equal to the prices on the Lemon Squeezy variants. The receipt reads the order with the API key, which must be a test-mode key while testing. Renewals and cancellations are only noticed by the daily re-check, so a refund can take up to a day to end Premium. The licence call is not rate limited by us. Beta stays open (BETA_OPEN), so testers still see everything unlocked." },
     { id:"8.3.22",
       area:"Docs",
@@ -7775,7 +7775,7 @@ const S = { profiles:[], activeId:null, logs:{}, mode:"memory" };
 const LS_KEY = "wlh.v62", LS_OLD = "wlh.v61";
 let STORE_UID = null, LEAVING = false; // account whose store is loaded (null = guest); LEAVING blocks every write while that store is being removed
 const ukey = base => STORE_UID ? `${base}@${STORE_UID}` : base;
-const LS_USER_BASES = ["wlh.v62", "wlh.v61", "wlh.notif.", "wlh.rem.", "wlh.advice.", "wlh.frblocks"]; // every key that holds a person's data
+const LS_USER_BASES = ["wlh.v62", "wlh.v61", "wlh.notif.", "wlh.rem.", "wlh.advice.", "wlh.frblocks", "wlh.lic"]; // every key that holds a person's data
 // Remove one account's keys (uid), the guest keys (uid === null), or all of them (uid === undefined).
 function lsRemoveUserData(uid){
   try {
@@ -7997,7 +7997,7 @@ function sbProfFromRow(r){
 function dropProfile(id){
   S.profiles = S.profiles.filter(x => x.id !== id);
   for (const m in (S.logs[id] || {})) { delete S.logs[id][m]; markLog(id, m); }
-  delete S.logs[id]; if (S.activeId === id) S.activeId = S.profiles[0]?.id || null;
+  licSave(id, null); delete S.logs[id]; if (S.activeId === id) S.activeId = S.profiles[0]?.id || null;
 }
 // Change tracking for profiles: markRoot() calls this, like markLog() calls sbTrack() for meals. Waits for the first sync
 // (SB.started): that one decides, per profile, whether this device or the account has the newer copy.
@@ -16733,7 +16733,7 @@ function termsView(){
     <p>Coach sharing is the one feature here where another person can see something about you, once you choose what and it has somewhere to go (see the Privacy Policy, section 3, for why that link isn't live yet). When it is: no harassment, no illegal or sexually explicit content, and no giving medical advice to another person through it. We can remove content that breaks these rules and suspend a profile's access to shared features; nothing else you've logged is touched by that. Family challenges and Community recipes are not built yet, so these rules will apply to them too once they are.</p>
 
     <h3>Subscription terms</h3>
-    <p>Premium is billed on the plan and price shown on the Premium screen at the time you subscribe, renews automatically until you cancel, and can be cancelled from Settings &gt; Premium at any time — cancelling stops the next renewal but does not retroactively refund the current period except as described on the <a href="#/refunds">Refunds page</a>. Payments are not live yet in this build; the Premium screen says so plainly rather than pretending otherwise, and nothing can be charged until they are.</p>
+    <p>Premium is billed on the plan and price shown on the Premium screen at the time you subscribe, renews automatically until you cancel, and can be cancelled from Settings &gt; Premium at any time — cancelling stops the next renewal but does not retroactively refund the current period except as described on the <a href="#/refunds">Refunds page</a>. Payments are taken by Lemon Squeezy, our payment provider, on its own checkout page; the app never sees your card details, and nothing is charged until you confirm there.</p>
 
     <h3>Your responsibilities</h3>
     <p>You are responsible for what you log, for keeping your own passcode safe, and for deciding what to do with what the app shows you. Because a passcode encrypts the copy of your data on your own device and is never stored anywhere, nobody can reset it for you. If you lose it, the copy on that device is gone. A passcode is not a backup and does not protect your account's copy: signing in on a device again brings the data back from your account.</p>
@@ -16753,10 +16753,10 @@ function refundsView(){
     <div class="eyebrow">Legal</div>
     <h2>Refunds &amp; cancellation</h2>
     <p class="small muted">Last updated: ${esc(LEGAL_UPDATED)}</p>
-    <p>Payments are not live in this build yet (see the Premium screen and the Terms). Nothing can be charged today, so nothing needs refunding today — this page is the policy that will apply once subscriptions go live, written now so it's in place before they do.</p>
+    <p>Payments are taken by Lemon Squeezy, our payment provider, on its own checkout page, and nothing is charged until you confirm there. This page is the refund policy for those payments.</p>
 
     <h3>How to cancel</h3>
-    <p>Cancel any time from <a href="#/settings/premium">Settings &gt; Premium</a>. Cancelling stops the next renewal; you keep Premium access for the rest of the period you already paid for.</p>
+    <p>Cancel any time from <a href="#/settings/premium">Settings &gt; Premium</a> &gt; Manage subscription, which opens Lemon Squeezy's My Orders page (sign in with the email you bought with). Cancelling stops the next renewal; you keep Premium access for the rest of the period you already paid for.</p>
 
     <h3>What happens after cancelling</h3>
     <p>Premium features stop working at the end of the period you already paid for. Everything you logged stays exactly where it is — cancelling never deletes or hides your meals, workouts, weigh-ins or history, only the Premium features themselves.</p>
@@ -17896,7 +17896,7 @@ function premiumHub(p){
     </div>
   </section>
   ${on ? "" : `<div class="prem-cta-bar">${slidePayHTML(plan === "yearly" ? "Annual" : "Monthly")}
-    <p class="tiny muted prem-cta-fine">${esc(planPrice(plan) || "Price to be announced,")} billed ${plan === "yearly" ? "once a year" : "every month"}, renews automatically until you cancel. Cancel any time in Settings &gt; Premium — see <a href="#/refunds">Refunds</a>.</p></div>`}
+    <p class="tiny muted prem-cta-fine">${esc(planPrice(plan) || "Price to be announced,")} billed ${plan === "yearly" ? "once a year" : "every month"}, renews automatically until you cancel. Cancel any time in Settings &gt; Premium &gt; Manage subscription — see <a href="#/refunds">Refunds</a>.</p></div>`}
   </div>
   ${subscriptionPanel(p)}`;
 }
@@ -17974,8 +17974,8 @@ function subscriptionPanel(p){
       ${factRow("Renews or expires", p.premium?.expires ? fmtDay(p.premium.expires) : on ? "No end date" : "—")}
     </dl>
     <p class="small muted" style="margin-top:10px">${BETA_OPEN
-      ? "Open beta: every feature is unlocked for everyone who opens the app, so testers never meet a paywall. Payments are not live and nothing in here can charge you."
-      : "Payments are not live yet. While the app is in beta every premium feature is free, and nothing in here can charge you."}</p>
+      ? "Open beta: every feature is unlocked for everyone who opens the app, so testers never meet a paywall. Choosing a plan below opens Lemon Squeezy's secure checkout in a new tab; you are charged only there, after you confirm."
+      : "Choosing a plan opens Lemon Squeezy's secure checkout in a new tab. You are charged only there, after you confirm, and the app unlocks Premium when you paste the key from your email."}</p>
 
     <div class="setgroup"><div class="setlabel">Plans</div>
       <div class="grid g2 plangrid">${PREMIUM_PLANS.map(pl => `
@@ -17992,11 +17992,16 @@ function subscriptionPanel(p){
     <div class="setgroup"><div class="setlabel">Have a license key?</div>
       <form class="row" data-form="license" style="gap:8px;flex-wrap:wrap">
         <label class="f grow" style="flex:1;min-width:200px"><span class="tiny muted">License key</span>
-          <input type="text" id="lic-key" maxlength="64" autocomplete="off" spellcheck="false" placeholder="WLH-XXXX-XXXX-XXXX"></label>
+          <input type="text" id="lic-key" maxlength="64" autocomplete="off" spellcheck="false" placeholder="Paste your key"></label>
         <button class="btn" type="submit"${UI.licBusy ? " disabled" : ""}>${UI.licBusy ? "Checking…" : "Activate"}</button>
       </form>
       ${lic ? `<div class="note${lic.ok ? " good" : ""}">${esc(lic.msg)}</div>` : ""}
       <span class="tiny muted">Lemon Squeezy emails your key after checkout. Paste it here to turn Premium on.</span>
+    </div>
+
+    <div class="setgroup"><div class="setlabel">Manage subscription</div>
+      <span class="tiny muted">To cancel, change your card or find a receipt, open My Orders at Lemon Squeezy and sign in with the email you bought with. Cancelling stops the next renewal; Premium stays on until the period you paid for ends.</span>
+      <a class="btn sm" href="https://app.lemonsqueezy.com/my-orders" target="_blank" rel="noopener noreferrer" style="margin-top:8px">Manage subscription</a>
     </dl>
 
     <div class="setgroup"><div class="setlabel">Debugging</div>
@@ -18148,11 +18153,15 @@ function ownerMark(){
 
 // ---------- License activation ----------
 // The key is checked by the `license` edge function (supabase/functions/license), which holds the Lemon Squeezy API key
-// and reads the order for the receipt. This file never sees a secret. The key and device id are kept on this device only
-// (wlh.lic) so a later re-check can end Premium after a refund or a cancelled subscription.
-const LIC_KEY = "wlh.lic";
-const licLoad = () => { try { return JSON.parse(localStorage.getItem(LIC_KEY) || "null"); } catch { return null; } };
-const licSave = v => { try { v ? localStorage.setItem(LIC_KEY, JSON.stringify(v)) : localStorage.removeItem(LIC_KEY); } catch {} };
+// and reads the order for the receipt. This file never sees a secret. Each profile's key and device id are kept on this
+// device only, under its account (wlh.lic@<account>, a map by profile id), so one profile's key can never decide another's
+// Premium; a later re-check can then end Premium after a refund or a cancelled subscription.
+function licMap(){ try { return JSON.parse(localStorage.getItem(ukey("wlh.lic")) || "{}") || {}; } catch { return {}; } }
+const licLoad = pid => licMap()[pid] || null;
+function licSave(pid, v){ // a declaration, so dropProfile() can call it whenever it runs
+  if (LEAVING || !pid) return;
+  try { const m = licMap(); if (v) m[pid] = v; else delete m[pid]; Object.keys(m).length ? localStorage.setItem(ukey("wlh.lic"), JSON.stringify(m)) : localStorage.removeItem(ukey("wlh.lic")); } catch {}
+}
 async function licCall(body){
   const r = await fetch(`${SB_URL}/functions/v1/license`, { method:"POST", headers:{ "content-type":"application/json", apikey:SB_KEY }, body: JSON.stringify(body) });
   if (!r.ok) throw new Error("license " + r.status);
@@ -18161,7 +18170,7 @@ async function licCall(body){
 async function validateLicenseKey(key){
   const k = String(key || "").trim();
   if (!k) return { state:"invalid", message:"Enter a license key first." };
-  const saved = licLoad();
+  const saved = licLoad(P()?.id);
   let d;
   try { d = await licCall({ key:k, instance: saved?.k === k ? saved.i : undefined }); }
   catch { return { state:"error", message:"Couldn't reach the licence server. Try again in a minute." }; }
@@ -18169,29 +18178,32 @@ async function validateLicenseKey(key){
   const msg = { invalid:"That key isn't recognised.", expired:"That key has expired or was refunded.", limit:"That key is already on its limit of devices." }[d.state];
   return { state: msg ? d.state : "error", message: msg || "Something went wrong checking that key." };
 }
-// Once a day, ask again whether a purchased key still stands. Only a clear "expired" or "invalid" ends Premium;
-// an offline or failed check never does.
+// Once a day, ask again whether this profile's purchased key still stands. Only a clear "expired" or "invalid" ends
+// Premium; an offline, rate-limited or failed check ("error") never does. The answer is applied only if the same profile
+// is still open when it arrives.
 async function licRecheck(){
-  const lic = licLoad(), p = P();
-  if (!lic?.k || p?.premium?.source !== "purchase" || lic.d === today()) return;
+  const p = P(), pid = p?.id, lic = licLoad(pid);
+  if (!lic?.k || p.premium?.source !== "purchase" || lic.d === today()) return;
   let d;
   try { d = await licCall({ key:lic.k, instance:lic.i || undefined, check:true }); } catch { return; }
-  if (d.state === "valid") { licSave({ ...lic, d:today() }); if (d.expires) setPremium("purchase", d.expires); return; }
+  if (P()?.id !== pid) return;
+  if (d.state === "valid") { licSave(pid, { ...lic, d:today() }); if (d.expires) setPremium("purchase", d.expires); return; }
   if (d.state === "expired" || d.state === "invalid") {
-    p.premium = { ...p.premium, active:false }; saveProfile(); licSave(null); render();
+    p.premium = { ...p.premium, active:false }; saveProfile(); licSave(pid, null); render();
     toast("Your Premium key is no longer active.");
   }
 }
 async function activateLicense(){
-  const key = val("lic-key");
+  const key = val("lic-key"), pid = P()?.id;
   UI.licBusy = true; UI.licState = null; render();
   let res;
   try { res = await validateLicenseKey(key); }
   catch { res = { state:"error", message:"Something went wrong checking that key." }; }
   UI.licBusy = false;
+  if (P()?.id !== pid) { render(); toast("The profile changed while the key was being checked. Open the right profile and try again."); return; }
   if (res.state === "valid") {
     setPremium("purchase", res.expires || null);
-    if (res.lic) licSave({ ...res.lic, d:today() });
+    if (res.lic) licSave(pid, { ...res.lic, d:today() });
     UI.licState = { ok:true, msg:"Activated. Premium is on." };
     render(); toast("Premium activated.", "success");
     try { showPurchaseReceipt(res.receipt, res.plan); } catch {}
