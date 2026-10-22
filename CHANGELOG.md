@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.17, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.19, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.19 · Motion: The sliding selection ring now follows the day strip, the page numbers and the snack region chips
+
+- **Problem:** The sliding ring only worked in the segmented controls and the coach feeling chips. The Rings day strip, the recipe and meal plan page numbers and the Snacks region chips still jumped from one choice to the next.
+- **Change:** The same ring (the .focus-ring spring from CJ's snippet: translate, width and height with the bouncy curve) is added to three more single-choice groups. ringSync() now also looks at .rdays and .pager ul, and the Snacks region chips carry data-ring. The chosen day and page lose their own border so the ring is the only outline. Reduced motion already switches the move off. Not changed: the Settings tabs (they use an underline), the sidebar and the multi-select chips.
+- **Where:** index.html: ringSync() selector, CSS block 8.2.20 (.rdays, .pager ul), the Snacks region chips, APP_VERSION, WLH.changelog. tests/browser/motion.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/motion.mjs. By hand: Summary > activity rings, tap another day in the strip; Recipes or Meal plans, tap a page number; Snacks, change the region. The gold ring should glide to the new choice. Turn Settings > Motion to Reduced and it should snap.
+- **Known limits:** The ring is gold (var(--gold)), as in 8.2.20, not a new colour. Checked in headless Chrome only. Page numbers shift when the list changes length, so the ring may glide a little further than one step.
 
 ## 8.3.17 · Friends: Message your friends
 
