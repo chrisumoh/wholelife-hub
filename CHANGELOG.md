@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.6, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.7, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.7 · Household: Find friends by app name and see who is online
+
+- **Problem:** Household only covered the profiles on your own account. There was no way to find another person or see if they were using the app.
+- **Change:** Settings > Household has a Friends card (signed in only). Pick an app name and choose whether people can find you by it (off until you tick it) and whether friends see you online. Search shows names only. Add sends a request, the other person accepts or declines, and either side can remove a friend. Friends show a pulsing orange Online pill or a plain Offline pill (seen within 2 minutes; the app pings once a minute and the list refreshes every 30 seconds). Reduced motion stops the pulse. New tables `member_names`, `friendships` and `member_blocks` with RLS; search and the friend list go through functions. The privacy policy has a Friends paragraph.
+- **Where:** `index.html`: `FR` and the `fr*` functions, `friendsCard`, `settingsView` household tab, `.neon` and `.fr-off` CSS, privacy policy, `LEGAL_UPDATED`, `TERMS_VERSION`. `supabase/migrations/20261022020000_wlh_8_3_7_friends_presence.sql`. `docs/DATABASE.md`, `docs/SECURITY.md`.
+- **How to test:** Apply the migration first. On two accounts: set a name and tick Let people find me, search, Add, Accept. Both show Online within about 30 seconds. Closing a tab shows Offline after about 2 minutes. `node tests/check-repo.mjs`.
+- **Known limits:** Block has tables but no screen yet. Presence can lag up to about 2.5 minutes. No tests for the friends screens.
 
 ## 8.3.6 · Workouts and Recipes: Compact Workouts and Recipes pages
 
