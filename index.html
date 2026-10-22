@@ -3813,7 +3813,7 @@ const APP_VERSION = { update: "8.3", build: "8.3.6", channel: "Dev Testing", dat
       area:"Workouts and Recipes",
       title:"Compact Workouts and Recipes pages",
       bug:"The Workouts page opened with every import card and all 44 activity tiles, and the Recipes page listed the whole dish catalog and every day of the meal plan. Both pages were very long for little use.",
-      fix:"Workouts: the activity picker shows only the chosen activity with a Change button that opens the seven groups (picking one folds it back); the Apple Health and file imports sit behind one Import button; history shows 10 workouts first, then 25 more at a time. Recipes: the meal plan shows its first day with a Show all days button; the recipe library shows 6 dishes (12 when searching or filtering) as 64px text-only rows with a Browse all dishes button. A dish row grows to 120px (CJ's height-expand animation) on hover, keyboard focus, or the small arrow button for touch, to preview its cook time, meal types and description. Reduced motion turns the animation off. Nothing is removed from the app, and food rows stay text only.",
+      fix:"Workouts: the activity picker shows only the chosen activity with a Change button that opens the seven groups (picking one folds it back); the Apple Health and file imports sit behind one Import button; history shows 10 workouts first, then 25 more at a time. Recipes: the meal plan shows its first day with a Show all days button; the recipe library shows 6 dishes (12 when searching or filtering) as 64px text-only rows with a Browse all dishes button. A dish row grows to 120px (CJ's height-expand animation) on hover, keyboard focus, or the small arrow button for touch, to preview its cook time, meal types and description. Reduced motion turns the animation off. A half-filled workout form keeps its minutes, date, calories and notes when the picker or imports open. Nothing is removed from the app, and food rows stay text only.",
       where:"index.html: workoutsView(), planView(), recipesView(), the pick-act, act-toggle, imp-toggle, plan-toggle, rec-all and dpv actions, UI state (actOpen, impOpen, planOpen, recAll, dpv), CSS .actcur and .dpv next to the .actbtn rules, APP_VERSION and the change log. tests/browser/compact.mjs (new), tests/browser/workouts.mjs (opens the picker first), tests/browser/run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
       test:"node tests/browser/compact.mjs and node tests/browser/workouts.mjs. By hand: Workouts (Change activity, Import button, Show more), Recipes (Show all days, Browse all dishes, hover a dish, then tap the arrow at phone width and use Tab).",
       limits:"The hover expand follows CJ's CSS but is scoped to the new .dpv rows, not every .card. The Culture, Snacks and meal-log pages are unchanged. Checked in headless Chrome only." },
@@ -11790,6 +11790,8 @@ document.addEventListener("focusin", e => {
 document.addEventListener("focusout", () => railTipHide());
 window.addEventListener("scroll", () => railTipHide(), { passive: true, capture: true });
 // =================== WORKOUTS ===================
+// Keep a half-filled workout form across re-renders (picker and import toggles).
+function wSaveDraft(){ if (!document.getElementById("w-min")) return; UI.wDraft = { minutes: val("w-min"), date: val("w-d"), cal: val("w-cal"), note: val("w-note") }; }
 function workoutsView(p){
   const all = entries("workouts").sort((a,b) => a.date < b.date ? 1 : -1);
   const kg = latestWeightKg(p);
@@ -11814,10 +11816,10 @@ function workoutsView(p){
           ${(() => { const cur = UI.prefillW?.type || UI.pickAct || "strength"; const ca = ACT[cur] || ACTIVITIES[0];
             return UI.actOpen ? `${ACT_GROUPS.map(([g, gn]) => `<div class="actgroup" role="group" aria-label="${esc(gn)}"><div class="actgh">${esc(gn)}</div><span class="actpick">${ACTIVITIES.filter(a => a.g === g).map(a => `<button type="button" class="actbtn" data-act="pick-act" data-v="${a.k}" aria-pressed="${(UI.prefillW?.type || UI.pickAct || "strength") === a.k}" title="${esc(a.n)}">${wicon(a.k, 40)}<span class="tiny">${esc(a.n)}</span></button>`).join("")}</span></div>`).join("")}<button type="button" class="btn sm" data-act="act-toggle" aria-expanded="true">Done</button>` : `<div class="actcur">${wicon(ca.k, 40)}<b class="grow">${esc(ca.n)}</b><button type="button" class="btn sm" data-act="act-toggle" aria-expanded="false">Change</button></div>`; })()}
           <select id="w-type" class="visually-tight" aria-label="Activity">${opt(ACTIVITIES.map(a=>[a.k,a.n]), UI.prefillW?.type || UI.pickAct || "strength")}</select></div>
-        <label class="f">Minutes<input type="number" id="w-min" min="1" max="600" value="${UI.prefillW?.minutes ?? ""}" placeholder="45"></label>
-        <label class="f">Date<input type="date" id="w-d" value="${today()}" max="${today()}"></label>
-        <label class="f">Calories (optional)<input type="number" id="w-cal" min="0" max="5000" placeholder="Estimated if blank"></label>
-        <label class="f full">Notes<input type="text" id="w-note" value="${esc(UI.prefillW?.note || "")}" placeholder="e.g. legs, 5K, pickup soccer"></label>
+        <label class="f">Minutes<input type="number" id="w-min" min="1" max="600" value="${UI.wDraft?.minutes ?? UI.prefillW?.minutes ?? ""}" placeholder="45"></label>
+        <label class="f">Date<input type="date" id="w-d" value="${esc(UI.wDraft?.date || today())}" max="${today()}"></label>
+        <label class="f">Calories (optional)<input type="number" id="w-cal" min="0" max="5000" value="${UI.wDraft?.cal ?? ""}" placeholder="Estimated if blank"></label>
+        <label class="f full">Notes<input type="text" id="w-note" value="${esc(UI.wDraft?.note ?? UI.prefillW?.note ?? "")}" placeholder="e.g. legs, 5K, pickup soccer"></label>
       </div>
       <button class="btn primary" data-act="log-workout">Save workout</button>
     </section>
@@ -12602,10 +12604,10 @@ document.addEventListener("click", async e => {
     case "del-weight": removeEntry("weights", t.dataset.id); render(); break;
     // workouts
     case "log-workout": { const mins = numv("w-min"); if (!mins) { toast("Add how many minutes."); return; }
-      addEntry("workouts", { id: uid(), date: val("w-d") || today(), type: val("w-type"), minutes: Math.round(mins), cal: numv("w-cal"), note: val("w-note") || null }); UI.prefillW = null; render(); toast("Workout saved", "success"); checkCelebrations(); checkAwards(); break; }
+      addEntry("workouts", { id: uid(), date: val("w-d") || today(), type: val("w-type"), minutes: Math.round(mins), cal: numv("w-cal"), note: val("w-note") || null }); UI.prefillW = null; UI.wDraft = null; render(); toast("Workout saved", "success"); checkCelebrations(); checkAwards(); break; }
     case "del-workout": removeEntry("workouts", t.dataset.id); render(); break;
-    case "act-toggle": UI.actOpen = !UI.actOpen; render(); break;
-    case "imp-toggle": UI.impOpen = !UI.impOpen; render(); break;
+    case "act-toggle": wSaveDraft(); UI.actOpen = !UI.actOpen; render(); document.querySelector('[data-act="act-toggle"]')?.focus(); break;
+    case "imp-toggle": wSaveDraft(); UI.impOpen = !UI.impOpen; render(); break;
     case "plan-toggle": UI.planOpen = !UI.planOpen; render(); break;
     case "rec-all": UI.recAll = !UI.recAll; render(); break;
     case "dpv": UI.dpv = UI.dpv === t.dataset.id ? null : t.dataset.id; render(); break;
@@ -12667,7 +12669,7 @@ document.addEventListener("click", async e => {
       applyTextScale(p); saveProfile(); render();
       break;
     }
-    case "pick-act": { UI.pickAct = t.dataset.v; UI.actOpen = false; const sel = document.getElementById("w-type"); if (sel) sel.value = t.dataset.v; render(); break; }
+    case "pick-act": { wSaveDraft(); UI.pickAct = t.dataset.v; UI.actOpen = false; const sel = document.getElementById("w-type"); if (sel) sel.value = t.dataset.v; render(); break; }
     case "focus": p.focus = t.dataset.v; saveProfile(); render(); toast(`Food focus: ${FOCUS[p.focus].label}`); break;
     case "lock-now": lockNow(); break;
     case "erase-ask": UI.confirmErase = true; render(); break;

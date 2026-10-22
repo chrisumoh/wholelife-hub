@@ -58,6 +58,9 @@ await click('[data-act="act-toggle"]'); await sleep(200);
 ok("Change opens all activities and Done folds them", await ev(`document.querySelectorAll(".actbtn").length === ACTIVITIES.length`));
 await click('[data-act="act-toggle"]'); await sleep(200);
 ok("Done folds the picker again", await ev(`document.querySelectorAll(".actbtn").length === 0`));
+await ev(`(() => { document.getElementById("w-min").value = "42"; document.getElementById("w-d").value = "2026-10-01"; document.getElementById("w-cal").value = "300"; document.getElementById("w-note").value = "legs"; return true; })()`);
+await click('[data-act="act-toggle"]'); await sleep(200); await click('[data-act="pick-act"][data-v="pilates"]'); await sleep(200); await click('[data-act="imp-toggle"]'); await sleep(200);
+ok("a filled workout form keeps minutes, date, calories and notes through Change, pick and Import", await ev(`["w-min","w-d","w-cal","w-note"].map(i => document.getElementById(i).value).join("|") === "42|2026-10-01|300|legs"`));
 const n = await ev(`(() => { for (let i = 0; i < 14; i++) addEntry("workouts", { id: uid(), date: today(), type: "run", minutes: 20 + i }); render(); return document.querySelectorAll(".wrow").length; })()`);
 ok("history shows 10 first, with Show more", n === 10 && await ev(`!!document.querySelector('[data-act="more-w"]')`), String(n));
 
