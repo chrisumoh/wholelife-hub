@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.14, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.16, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.16 · Summary: Weekly stat cards on Summary and Workouts
+
+- **Problem:** The Summary page had no quick view of how this week compares with last, and the Workouts page opened straight into forms.
+- **Change:** Summary now starts with up to four cards (workout minutes, workout calories, water a day, sleep a night), each with an info tip and a green, red or grey change pill against the same days last week. Cards with no data are left out. Workouts starts with a compact row: workouts, minutes, streak and your challenge standing when one is running.
+- **Where:** index.html: weekPair(), deltaPill(), statCard(), weeklyStatsRow(), workoutStatsRow(), homeView(), workoutsView(), the sc-tip action, .sc CSS, APP_VERSION, WLH.changelog. tests/browser/statcards.mjs. tests/perf/budget.json (raw limit, same change as 8.3.15). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Log a workout this week and last week, open Summary and Workouts. Hover, focus or tap the i button on a card. node tests/browser/statcards.mjs.
+- **Known limits:** Compares the week so far (Monday on) with the same days last week. Water and sleep average only the days you logged. Checked in headless Chrome only.
 
 ## 8.3.14 · Recipes: Recipe and meal plan cards match Food culture, with page numbers
 
