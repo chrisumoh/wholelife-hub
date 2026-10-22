@@ -2,9 +2,25 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.20, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.22, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.22 · Docs: Review rule names Codex, not Greptile; build plan marks Phase 4 (fonts) done
+
+- **Problem:** CLAUDE.md section 6 still said Greptile reviews pull requests, but Codex is the automatic reviewer now. The build plan also still listed Phase 4 (font system) as PROMPTED although the picker already shipped.
+- **Change:** CLAUDE.md section 6 now says Codex: after every push, read Codex's comments on the pull request, say whether each is valid, fix the valid ones on the same branch with a test, and reply only when a finding is wrong or won't be fixed. The rest of the rule is unchanged. Phase 4 was audited against the running app and needed no code: all eight typefaces are self-hosted, each applies through [data-font] on the root and loads, numbers use tabular figures, and nothing scrolls sideways at 375px in any of them. The build plan marks Phase 4 done. No app behavior changed.
+- **Where:** CLAUDE.md (section 6). docs/BUILD_PLAN.md (Phase 4 row, build row). APP_VERSION and the change log in index.html. CHANGELOG.md, README.md.
+- **How to test:** node tests/check-repo.mjs. Audit by hand or in a browser: Settings > Appearance, choose each font and check the preview line, the page text and the numbers change with no sideways scroll at 375px; reload and the choice stays.
+- **Known limits:** The audit checked that each font loads and applies and that nothing overflows at 375px; it did not measure colour contrast per font or check Safari and a real phone.
+
+## 8.3.21 · Friends: Blocking screen: block and unblock people from the Friends card
+
+- **Problem:** The database could block people, but the app had no way to do it.
+- **Change:** Every friend, request and search result on the Friends card has a Block button. Blocked people move to a Blocked people list with an Unblock button. A blocked person cannot find you in search, send you a request or message, or see you online, and blocking ends any friendship. Unblocking does not bring a friendship back.
+- **Where:** `index.html`: `FR.blocks`, `frLoad`, `frBlock`, `frUnblock`, `frBlockedRows`, `frRows`, `frPaint`, `friendsCard`, the `fr-block` and `fr-unblock` cases, `LS_USER_BASES`. `tests/browser/blocking.mjs`, `tests/browser/run-all.mjs`. `CHANGELOG.md`, `README.md`, `docs/DATABASE.md`, `docs/BUILD_PLAN.md`.
+- **How to test:** `node tests/browser/blocking.mjs`. On two friend accounts: A taps Block next to B on Settings > Household > Friends. B disappears from A's friends and search results; B cannot search A, request A or message A. Unblock from the Blocked people list.
+- **Known limits:** No new migration. Names in the Blocked people list are kept on the device that blocked them; on another device the entry reads Blocked person until a server function can return names. No two-account live test yet.
 
 ## 8.3.20 · Phone fixes: Side menu no longer goes black after scrolling, account row merged into the profile card, tips go to the bell
 
