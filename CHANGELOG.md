@@ -2,10 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.9, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.10, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
 
+## 8.3.10 · Workouts: Challenges: compete with friends
+
+- **Problem:** Workouts had no way to compete with anyone.
+- **Change:** The Workouts page has a Challenges card (signed in, Friends on). Start a 3, 7, 14 or 30 day challenge, pick the winner measure (workout minutes, workouts or calories burned) and invite up to 9 accepted friends. They join or decline. A leaderboard shows each joined member's total only, never their workouts. The owner can end it; others can leave. New tables `challenges` and `challenge_members` with RLS, plus five functions.
+- **Where:** `index.html`: `CH`, `chLoad`, `chRows`, `challengesCard`, `chNew`, `chAct`, the `ch-*` click cases and the `ch-new` form, `workoutsView`. `supabase/migrations/20261022030000_wlh_8_3_10_workout_challenges.sql`. `tests/perf/budget.json` (size limits raised). `docs/DATABASE.md`, `docs/BUILD_PLAN.md`, `CHANGELOG.md`, `README.md`.
+- **How to test:** Apply the migration first. On two friend accounts: A starts a challenge and invites B; B sees the invite on Workouts and joins. Log a workout on each and check both totals and the order. A ends it and it disappears for B.
+- **Known limits:** Totals come from synced workouts of each person's main profile only, so unsynced devices lag. Counts up to 3 open challenges per owner. Block has no screen yet. No live two-account test has been done.
 ## 8.3.9 · Notifications: Notification centre: tabs, unread count, mark all read
 
 - **Problem:** The bell menu was a plain list with no tabs, no unread count and no way to mark everything read.
