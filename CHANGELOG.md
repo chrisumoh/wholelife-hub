@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.3, 2026-10-21. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.5, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.5 · Workouts: All 44 workout icons redrawn
+
+- **Problem:** The workout icons were due a full redraw. The old set mixed hand-drawn figures with ten Boxicons glyphs, so the picker looked uneven.
+- **Change:** All 44 workout icons are replaced with the new designer set: same 48 by 48 box, same keys, drawn in one style. They are still painted with each workout's own colour gradient on the app's glass tile, and the parts that move on hover keep their w-* class names. The ten Boxicons glyphs are gone, so their credit is removed from the Credits page and the Boxicons helper code (BX_ART, wBx, wH, wF) is deleted. Colours are unchanged.
+- **Where:** index.html: WI_ART (all 44 entries), the removed BX_ART, wBx, wH and wF, the Credits page Icons list, APP_VERSION and the change log. tests/browser/workouts.mjs (icon minimum size 12 units, Boxicons special case removed). CHANGELOG.md, README.md, docs/BUILD_PLAN.md, docs/CONTEXT.md
+- **How to test:** node tests/browser/workouts.mjs (27 checks pass) and node tests/check-repo.mjs. By hand: Workouts, Log a workout, look through the seven groups in light and dark; open Awards and check the medals; open the Coach weekly plan.
+- **Known limits:** The designer's licence for the new icons has not been confirmed in the repo; add a Credits line if any third-party licence applies. Stretching is 13 units tall (a lying figure), so the size check now allows 12. Hover animations were not re-checked frame by frame.
 
 ## 8.3.3 · Premium: Preview the payment receipt with sample numbers
 

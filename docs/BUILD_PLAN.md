@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.5 | Workouts: all 44 icons replaced with the designer set; Boxicons removed | IN PROGRESS: claude/project-thread-hay4cp |
 | 8.3.3 | Premium: ?previewreceipt=1 shows the receipt with marked sample numbers (no purchase, nothing saved) | IN PROGRESS: claude/project-thread-7alpk4 |
 | 8.3.2 | Premium: payment-successful dialog with a receipt that prints out (plan, price, taxes, total from the provider; nothing invented). Payment still not live, so it is wired but not reachable | IN PROGRESS: claude/project-thread-he3th0 |
 | 8.3.1 | A waiting Google sign-in is cancelled when an email sign-in starts | MERGED: PR #42 |
