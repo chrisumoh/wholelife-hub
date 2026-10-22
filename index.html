@@ -1473,24 +1473,22 @@ input,select,textarea{font-size:calc((var(--t-base)) * var(--text-scale,1));font
 .ps-actions{display:flex;align-items:center;gap:8px;flex:none}
 .scgrid{display:grid;gap:12px;grid-template-columns:1fr}
 @media (min-width:600px){.scgrid{grid-template-columns:repeat(2,1fr)}}
-@media (min-width:1000px){.scgrid{grid-template-columns:repeat(4,1fr)}}
+@media (min-width:1000px){.scgrid,.scgrid.plain{grid-template-columns:repeat(4,1fr)}}
 .scgrid.plain{grid-template-columns:repeat(2,1fr)}
-@media (min-width:1000px){.scgrid.plain{grid-template-columns:repeat(4,1fr)}}
 .sc{position:relative;background:var(--surface);border-radius:var(--r);display:flex;flex-direction:column;min-width:0}
 .sc-top{display:flex;align-items:center;gap:12px;padding:14px}
 .sc-ic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--a),var(--b))}
 .sc-t{display:flex;flex-direction:column;min-width:0;flex:1}
-.sc-l{font-size:calc(var(--t-sm) * var(--text-scale,1));color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-l{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-l,.sc-tip,.sc-bot,.sc-d{font-size:calc(var(--t-sm) * var(--text-scale,1))}
 .sc-v{font-size:1.4rem;line-height:1.2}
-.sc-i{flex:none;border:0;background:none;color:var(--muted);padding:6px;cursor:pointer;border-radius:999px}
-.sc-tip{position:absolute;right:10px;top:54px;z-index:3;max-width:240px;padding:8px 10px;border-radius:10px;background:var(--text);color:var(--surface);font-size:calc(var(--t-sm) * var(--text-scale,1));display:none}
+.sc-i{border:0;background:none;color:var(--muted);padding:6px;cursor:pointer}
+.sc-tip{position:absolute;right:10px;top:54px;z-index:3;max-width:240px;padding:8px 10px;border-radius:10px;background:var(--text);color:var(--surface);display:none}
 .sc-i:hover+.sc-tip,.sc-i:focus-visible+.sc-tip,.sc.tipon .sc-tip{display:block}
-.sc-bot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line);font-size:calc(var(--t-sm) * var(--text-scale,1));color:var(--muted)}
-.sc-d{display:inline-flex;gap:4px;padding:2px 8px;border-radius:999px;font-size:calc(var(--t-sm) * var(--text-scale,1));font-weight:700;background:var(--raise);color:var(--muted);white-space:nowrap}
+.sc-bot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line);color:var(--muted)}
+.sc-d{display:inline-flex;gap:4px;padding:2px 8px;border-radius:999px;font-weight:700;background:var(--raise);color:var(--muted);white-space:nowrap}
 .sc-d.up{background:var(--good-soft);color:var(--good)}.sc-d.down{background:var(--bad-soft);color:var(--bad)}
 .scgrid.plain .sc{flex-direction:row;align-items:center;gap:10px;padding:10px 12px}
-.scgrid.plain .sc-ic{width:34px;height:34px;border-radius:10px}
-.scgrid.plain .sc-v{font-size:1.1rem}
 .ps-streak{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;font-size:calc((var(--t-sm)) * var(--text-scale,1));font-weight:700;
   background:color-mix(in srgb,var(--gold) 16%,transparent);color:var(--gold);white-space:nowrap}
 @media (max-width:600px){.profstrip{padding:8px 10px;gap:10px}.ps-actions .btn{display:none}}
@@ -3257,6 +3255,12 @@ html .side .nav a .si-tile svg{color:#fff}
 .swipe-toast__action:active{transform:scale(.97)}
 .swipe-toast__action:focus-visible{outline:2px solid var(--st-fuse);outline-offset:2px}
 @media (hover:hover) and (pointer:fine){.swipe-toast__action:hover{opacity:.88}}
+.swipe-toast[data-rich] .swipe-toast__card{gap:12px;padding-right:44px;align-items:flex-start}
+.swipe-toast[data-rich] .swipe-toast__icon{width:40px;height:40px;padding:10px;border-radius:50%;background:color-mix(in srgb,var(--st-t,var(--accent)) 16%,transparent)}
+.swipe-toast[data-rich="success"]{--st-t:var(--good)}.swipe-toast[data-rich="warn"]{--st-t:var(--warn)}.swipe-toast[data-rich="error"]{--st-t:var(--bad)}
+.swipe-toast__time{font-weight:400;font-size:.85em;color:color-mix(in srgb,var(--st-ink) 55%,transparent)}
+.swipe-toast__x{position:absolute;top:10px;right:10px;display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:50%;background:none;color:inherit;opacity:.6;cursor:pointer}
+.swipe-toast__x:hover,.swipe-toast__x:focus-visible{opacity:1;background:color-mix(in srgb,var(--st-ink) 10%,transparent)}
 .swipe-toast__fuse{position:absolute;right:0;bottom:0;left:0;height:var(--st-fuse-h);
   background:linear-gradient(90deg,transparent 0%,color-mix(in srgb,var(--st-fuse) 18%,transparent) 9%,color-mix(in srgb,var(--st-fuse) 50%,transparent) 18%,color-mix(in srgb,var(--st-fuse) 84%,transparent) 28%,var(--st-fuse) 38%,var(--st-fuse) 62%,color-mix(in srgb,var(--st-fuse) 84%,transparent) 72%,color-mix(in srgb,var(--st-fuse) 50%,transparent) 82%,color-mix(in srgb,var(--st-fuse) 18%,transparent) 91%,transparent 100%);
   transform-origin:left center;pointer-events:none}
@@ -3784,11 +3788,19 @@ const APP_VERSION = { update: "8.3", build: "8.3.16", channel: "Dev Testing", da
     { id:"8.3.16",
       area:"Summary",
       title:"Weekly stat cards on Summary and Workouts",
-      bug:"The Summary page had no quick view of how this week compares with last, and the Workouts page opened straight into forms.",
-      fix:"Summary now starts with up to four cards (workout minutes, workout calories, water a day, sleep a night), each with an info tip and a green, red or grey change pill against the same days last week. Cards with no data are left out. Workouts starts with a compact row: workouts, minutes, streak and your challenge standing when one is running.",
-      where:"index.html: weekPair(), deltaPill(), statCard(), weeklyStatsRow(), workoutStatsRow(), homeView(), workoutsView(), the sc-tip action, .sc CSS, APP_VERSION, WLH.changelog. tests/browser/statcards.mjs. tests/perf/budget.json (raw limit, same change as 8.3.15). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
-      test:"Log a workout this week and last week, open Summary and Workouts. Hover, focus or tap the i button on a card. node tests/browser/statcards.mjs.",
-      limits:"Compares the week so far (Monday on) with the same days last week. Water and sleep average only the days you logged. Checked in headless Chrome only." },
+      bug:"The Summary page had no quick view of this week against last, and Workouts opened straight into forms.",
+      fix:"Summary starts with up to four cards (workout minutes, workout calories, water, sleep), each with an info tip and a green, red or grey change pill against the same days last week. Cards with no data are left out. Workouts starts with a compact row: workouts, minutes, streak and your challenge standing.",
+      where:"index.html: weeklyStatsRow(), workoutStatsRow(), .sc CSS. tests/browser/statcards.mjs.",
+      test:"Open Summary and Workouts. node tests/browser/statcards.mjs.",
+      limits:"Week so far against the same days last week." },
+    { id:"8.3.15",
+      area:"Notifications",
+      title:"Pop-up cards for friend requests, challenge invites and saved workouts",
+      bug:"Toasts were one plain line, and friend requests and challenge invites only showed if you opened Settings or Workouts.",
+      fix:"Toasts get a card look: a 40px tinted icon, a time, an X and the countdown bar. A new friend request or challenge invite pops one up and lands in the notification centre once. Saving a workout shows a green card.",
+      where:"index.html: swipeToast() (rich), frSeen(), frNotify(), notify(), log-workout case, CSS .swipe-toast[data-rich]. tests/browser/toasts.mjs.",
+      test:"Run node tests/browser/toasts.mjs. Log a workout: a green card shows.",
+      limits:"No messaging yet, so only requests and invites notify, on the 30 second friends refresh while the app is open." },
     { id:"8.3.14",
       area:"Recipes",
       title:"Recipe and meal plan cards match Food culture, with page numbers",
@@ -9118,7 +9130,20 @@ async function frLoad(){
     if (FR.me) { const r = await db.rpc("friend_list"); if (r.error) throw r.error; FR.rows = r.data || []; }
     FR.on = true; FR.err = false;
   } catch (e) { FR.err = true; console.warn("Friends unavailable:", e?.code || e?.name || "error"); }
-  frPaint();
+  frPaint(); frNotify();
+}
+// Tell the person about a new request or invite once; the seen ids survive reloads so old ones never repeat.
+function frSeen(id){
+  const p = P(); if (!p) return true;
+  const k = ukey("wlh.frseen." + p.id); let a = [];
+  try { a = JSON.parse(localStorage.getItem(k) || "[]"); } catch {}
+  if (a.includes(id)) return true;
+  try { localStorage.setItem(k, JSON.stringify([...a, id].slice(-60))); } catch {}
+  return false;
+}
+function frNotify(){
+  for (const r of FR.rows) if (r.status === "pending" && r.incoming && !frSeen("f" + r.friendship_id)) notify("friend", `${r.app_name} wants to be friends`, "Open Household to accept or decline.", "#/settings/household");
+  for (const c of CH.rows) if (c.status === "invited" && !frSeen("c" + c.id)) notify("friend", `${c.owner_name || "A friend"} invited you to a challenge`, c.title, "#/workouts");
 }
 function frTick(){
   const db = frDb(); if (!db || document.hidden) return;
@@ -9199,7 +9224,7 @@ async function chLoad(){
     CH.boards = {}; live.forEach((c, i) => { CH.boards[c.id] = bs[i].data || []; });
     CH.on = true; CH.err = false;
   } catch (e) { CH.err = true; console.warn("Challenges unavailable:", e?.code || e?.name || "error"); }
-  chPaint();
+  chPaint(); frNotify();
 }
 function chRows(){
   if (CH.err) return `<p class="small muted">Challenges could not load. Check your connection and reload.</p>`;
@@ -10478,44 +10503,41 @@ const sumN = a => a.reduce((t, x) => t + (x || 0), 0);
 const avgN = a => { const v = a.filter(x => x != null); return v.length ? sumN(v) / v.length : null; };
 function deltaPill(cur, prev){
   if (cur == null || prev == null) return `<span class="sc-d">No data</span>`;
-  if (!prev) return cur ? `<span class="sc-d up">&uarr; New</span>` : `<span class="sc-d">&rarr; 0%</span>`;
-  const pc = Math.round((cur - prev) / prev * 100);
-  return pc ? `<span class="sc-d ${pc > 0 ? "up" : "down"}">${pc > 0 ? "&uarr;" : "&darr;"} ${Math.abs(pc)}%</span>` : `<span class="sc-d">&rarr; 0%</span>`;
+  const pc = prev ? Math.round((cur - prev) / prev * 100) : cur ? 100 : 0;
+  return `<span class="sc-d ${pc > 0 ? "up" : pc < 0 ? "down" : ""}">${pc > 0 ? "&uarr;" : pc < 0 ? "&darr;" : "&rarr;"} ${Math.abs(pc)}%</span>`;
 }
-function statCard(c){
-  return `<div class="sc"><div class="sc-top"><span class="sc-ic" style="--a:var(${c.g[0]});--b:var(${c.g[1]})">${icon(c.i, "", 20)}</span>
-    <div class="sc-t"><span class="sc-l">${esc(c.l)}</span><b class="sc-v">${esc(c.v)}</b></div>
-    <button type="button" class="sc-i" data-act="sc-tip" aria-label="About ${esc(c.l)}">${icon("info", "", 15)}</button><span class="sc-tip" role="tooltip">${esc(c.tip)}</span></div>
-    <div class="sc-bot"><span>From last week</span>${deltaPill(c.cur, c.prev)}</div></div>`;
+function statCard(l, v, cur, prev, i, g, tip){
+  return `<div class="sc"><div class="sc-top"><span class="sc-ic" style="--a:var(--si-${g}-a);--b:var(--si-${g}-b)">${icon(i, "", 20)}</span>
+    <div class="sc-t"><span class="sc-l">${l}</span><b class="sc-v">${v}</b></div>
+    <button type="button" class="sc-i" data-act="sc-tip" aria-label="Info">${icon("info", "", 15)}</button><span class="sc-tip" role="tooltip">${tip}</span></div>
+    <div class="sc-bot"><span>From last week</span>${deltaPill(cur, prev)}</div></div>`;
 }
 function weeklyStatsRow(p){
   const kg = latestWeightKg(p), wk = d => onDate("workouts", d);
   const [m1, m0] = weekPair(d => sumN(wk(d).map(w => w.minutes)));
   const [k1, k0] = weekPair(d => Math.round(sumN(wk(d).map(x => workoutExtraKcal(x, kg)))));
-  const [w1, w0] = weekPair(d => vitalsOf(d)?.water ?? null);
-  const [s1, s0] = weekPair(d => vitalsOf(d)?.sleep ?? null);
+  const v = k => weekPair(d => vitalsOf(d)?.[k] ?? null), [w1, w0] = v("water"), [s1, s0] = v("sleep");
   const mt = sumN(m1), mp = sumN(m0), kt = sumN(k1), kp = sumN(k0), wa = avgN(w1), wp = avgN(w0), sa = avgN(s1), sp = avgN(s0);
   const cards = [
-    mt || mp ? { l:"Workout minutes", v:mt + " min", cur:mt, prev:mp, i:"run", g:["--si-workouts-a","--si-workouts-b"], tip:"Minutes of logged workouts this week so far, against the same days last week." } : null,
-    kt || kp ? { l:"Workout calories", v:kt + " kcal", cur:kt, prev:kp, i:"spark", g:["--si-summary-a","--si-summary-b"], tip:"Extra calories from logged workouts this week so far, against the same days last week. Resting burn is not counted." } : null,
-    wa == null && wp == null ? null : { l:"Water a day", v:wa == null ? "-" : (wa / 1000).toFixed(1) + " L", cur:wa, prev:wp, i:"glass", g:["--si-health-a","--si-health-b"], tip:"Average water on the days you logged it this week, against last week." },
-    sa == null && sp == null ? null : { l:"Sleep a night", v:sa == null ? "-" : (sa / 60).toFixed(1) + " h", cur:sa, prev:sp, i:"moon", g:["--si-coach-a","--si-coach-b"], tip:"Average sleep on the nights you logged it this week, against last week." }
-  ].filter(Boolean);
-  return cards.length ? `<h2 class="sec-title">This week</h2><div class="scgrid">${cards.map(statCard).join("")}</div>` : "";
+    mt || mp ? statCard("Workout minutes", mt + " min", mt, mp, "run", "workouts", "Logged workout minutes, week so far.") : "",
+    kt || kp ? statCard("Workout calories", kt + " kcal", kt, kp, "spark", "summary", "Extra calories from logged workouts, week so far.") : "",
+    wa == null && wp == null ? "" : statCard("Water a day", wa == null ? "-" : (wa / 1000).toFixed(1) + " L", wa, wp, "glass", "health", "Average on days you logged water."),
+    sa == null && sp == null ? "" : statCard("Sleep a night", sa == null ? "-" : (sa / 60).toFixed(1) + " h", sa, sp, "moon", "coach", "Average on nights you logged sleep.")
+  ].join("");
+  return cards ? `<h2 class="sec-title">This week</h2><div class="scgrid">${cards}</div>` : "";
 }
 function workoutStatsRow(p){
   const [m1, m0] = weekPair(d => onDate("workouts", d).length);
   const [t1, t0] = weekPair(d => sumN(onDate("workouts", d).map(w => w.minutes)));
-  const ch = CH.on ? CH.rows.find(c => c.status !== "invited" && c.starts_on <= today() && c.ends_on >= today() && (CH.boards[c.id] || []).some(m => m.is_you)) : null;
-  let rank = "";
-  if (ch) { const b = CH.boards[ch.id], me = b.find(m => m.is_you); rank = `${1 + b.filter(m => +m.total > +me.total).length} of ${b.length}`; }
+  const ch = CH.on && CH.rows.find(c => c.status !== "invited" && c.starts_on <= today() && c.ends_on >= today() && (CH.boards[c.id] || []).some(m => m.is_you));
+  const b = ch && CH.boards[ch.id], me = ch && b.find(m => m.is_you);
   const cards = [
-    { l:"Workouts", v:String(sumN(m1)), cur:sumN(m1), prev:sumN(m0), i:"dumbbell", g:["--si-workouts-a","--si-workouts-b"] },
-    { l:"Minutes", v:String(sumN(t1)), cur:sumN(t1), prev:sumN(t0), i:"run", g:["--si-meals-a","--si-meals-b"] },
-    { l:"Streak", v:currentStreak(p) + "d", i:"spark", g:["--si-summary-a","--si-summary-b"] },
-    ch ? { l:ch.title, v:rank, i:"trophy", g:["--si-awards-a","--si-awards-b"] } : null
+    { l:"Workouts", v:String(sumN(m1)), cur:sumN(m1), prev:sumN(m0), i:"dumbbell", g:"workouts" },
+    { l:"Minutes", v:String(sumN(t1)), cur:sumN(t1), prev:sumN(t0), i:"run", g:"meals" },
+    { l:"Streak", v:currentStreak(p) + "d", i:"spark", g:"summary" },
+    ch ? { l:ch.title, v:`${1 + b.filter(m => +m.total > +me.total).length} of ${b.length}`, i:"trophy", g:"awards" } : null
   ].filter(Boolean);
-  return `<div class="scgrid plain">${cards.map(c => `<div class="sc"><span class="sc-ic" style="--a:var(${c.g[0]});--b:var(${c.g[1]})">${icon(c.i, "", 18)}</span>
+  return `<div class="scgrid plain">${cards.map(c => `<div class="sc"><span class="sc-ic" style="--a:var(--si-${c.g}-a);--b:var(--si-${c.g}-b)">${icon(c.i, "", 18)}</span>
     <div class="sc-t"><span class="sc-l">${esc(c.l)}</span><b class="sc-v">${esc(c.v)}</b></div>${c.cur === undefined ? "" : deltaPill(c.cur, c.prev)}</div>`).join("")}</div>`;
 }
 function homeView(p){
@@ -12873,7 +12895,9 @@ document.addEventListener("click", async e => {
     case "del-weight": removeEntry("weights", t.dataset.id); render(); break;
     // workouts
     case "log-workout": { const mins = numv("w-min"); if (!mins) { toast("Add how many minutes."); return; }
-      addEntry("workouts", { id: uid(), date: val("w-d") || today(), type: val("w-type"), minutes: Math.round(mins), cal: numv("w-cal"), note: val("w-note") || null }); UI.prefillW = null; UI.wDraft = null; render(); toast("Workout saved", "success"); checkCelebrations(); checkAwards(); break; }
+      const wt = val("w-type"), wn = ACTIVITIES.find(a => a.k === wt)?.n || "Workout";
+      addEntry("workouts", { id: uid(), date: val("w-d") || today(), type: wt, minutes: Math.round(mins), cal: numv("w-cal"), note: val("w-note") || null }); UI.prefillW = null; UI.wDraft = null; render();
+      swipeToast({ title: "Workout saved", description: `${wn}, ${Math.round(mins)} min`, type: "success", rich: true, key: "wk-saved" }); checkCelebrations(); checkAwards(); break; }
     case "del-workout": removeEntry("workouts", t.dataset.id); render(); break;
     case "ring-day": UI.ringDay = t.dataset.v; render(); document.querySelector(`.rday[data-v="${t.dataset.v}"]`)?.focus(); break;
     case "act-toggle": wSaveDraft(); UI.actOpen = !UI.actOpen; render(); document.querySelector('[data-act="act-toggle"]')?.focus(); break;
@@ -13199,6 +13223,7 @@ const ST_ICONS = {
   success:`<svg viewBox="0 0 24 24" fill="none" stroke="var(--good,#22c55e)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/></svg>`,
   warn:`<svg viewBox="0 0 24 24" fill="none" stroke="var(--warn,#f5a04f)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2.8 19.5h18.4z"/><path d="M12 10v4M12 17h.01"/></svg>`,
   error:`<svg viewBox="0 0 24 24" fill="none" stroke="var(--bad,#ef4444)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>`,
+  info:`<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>`,
   bell:`<svg viewBox="0 0 24 24" fill="none" stroke="var(--st-fuse)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>`
 };
 const ST_STARTING = typeof window !== "undefined" && "CSSStartingStyleRule" in window;
@@ -13208,7 +13233,8 @@ function stStack(){
   if (!s) { s = document.createElement("div"); s.id = "st-stack"; s.setAttribute("aria-label", "Notifications"); document.body.append(s); }
   return s;
 }
-// opts: { title, description, type: info|success|warn|error|bell, actionLabel, onAction, duration, key, onClose }
+// opts: { title, description, type: info|success|warn|error|bell, rich, time, actionLabel, onAction, duration, key, onClose }
+// rich = the notification-card look: 40px tinted icon circle, a time beside the title and an X (8.3.14)
 function swipeToast(opts = {}){
   const o = { duration: ST.duration, type: "info", ...opts };
   const stack = stStack();
@@ -13218,13 +13244,15 @@ function swipeToast(opts = {}){
   root.dataset.inline = "true"; root.dataset.phase = "open"; root.dataset.mounted = ST_STARTING ? "true" : "false";
   root.dataset.fuse = o.duration > 0 ? "bottom" : "none"; root.dataset.dismissible = "true";
   if (o.key) root.dataset.key = o.key;
+  if (o.rich) { root.dataset.rich = o.type; root.dataset.dismissible = "true"; }
   root.style.cssText = `--st-w:${ST.width}px;--st-slide:${ST.slide}ms;--st-gap:10px`; // colors and radius come from the active theme (see #st-stack CSS)
   const ic = ST_ICONS[o.type];
   root.innerHTML = `<div class="swipe-toast__gate"><div class="swipe-toast__lift">
     <div class="swipe-toast__card" role="status" aria-live="polite" aria-atomic="true" tabindex="0">
       ${ic ? `<span class="swipe-toast__icon" aria-hidden="true">${ic}</span>` : ""}
-      <span class="swipe-toast__body"><span class="swipe-toast__title">${esc(o.title || "")}</span>${o.description ? `<span class="swipe-toast__desc">${esc(o.description)}</span>` : ""}</span>
+      <span class="swipe-toast__body"><span class="swipe-toast__title">${esc(o.title || "")}${o.rich && o.time ? ` <small class="swipe-toast__time">${esc(o.time)}</small>` : ""}</span>${o.description ? `<span class="swipe-toast__desc">${esc(o.description)}</span>` : ""}</span>
       ${o.actionLabel ? `<button type="button" class="swipe-toast__action">${esc(o.actionLabel)}</button>` : ""}
+      ${o.rich ? `<button type="button" class="swipe-toast__x" aria-label="Dismiss">${icon("x", "", 16)}</button>` : ""}
       <i class="swipe-toast__fuse" aria-hidden="true"></i></div></div></div>`;
   // the stack is at the top right (8.2.20): the newest toast sits first
   stack.prepend(root);
@@ -13334,6 +13362,7 @@ function swipeToast(opts = {}){
     if (e.key === "Enter" || e.key === " ") lastInput = "keyboard";
     if (e.key === "Escape") { e.stopPropagation(); close("escape"); }
   });
+  root.querySelector(".swipe-toast__x")?.addEventListener("click", () => close("x"));
   root.querySelector(".swipe-toast__action")?.addEventListener("click", () => { try { o.onAction && o.onAction(); } finally { close("action"); } });
   const onVis = () => { flags.hidden = document.hidden; syncFuse(); };
   document.addEventListener("visibilitychange", onVis);
@@ -15624,7 +15653,7 @@ function notify(kind, title, body, href){
   if (list.some(n => n.id === id)) return;                 // one of each kind per day
   list.unshift({ id, kind, title: String(title).slice(0, 90), body: String(body || "").slice(0, 160), href: href || null, at: Date.now(), read: false });
   saveNotifs(p, list);
-  if (!UI.bell) swipeToast({ title: String(title).slice(0, 90), description: String(body || "").slice(0, 160), type: "bell", key: "notif-" + id,
+  if (!UI.bell) swipeToast({ title: String(title).slice(0, 90), description: String(body || "").slice(0, 160), type: kind === "friend" ? "info" : "bell", rich: true, time: "now", key: "notif-" + id,
     actionLabel: "View", onAction: () => { if (href) location.hash = href.replace(/^#?/, "#"); else { UI.bell = true; render(); } } });
   const badge = document.querySelector(".bell-badge");
   if (badge) { badge.classList.remove("pop"); void badge.offsetWidth; badge.classList.add("pop"); }

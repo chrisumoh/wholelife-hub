@@ -8,11 +8,19 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 
 ## 8.3.16 · Summary: Weekly stat cards on Summary and Workouts
 
-- **Problem:** The Summary page had no quick view of how this week compares with last, and the Workouts page opened straight into forms.
-- **Change:** Summary now starts with up to four cards (workout minutes, workout calories, water a day, sleep a night), each with an info tip and a green, red or grey change pill against the same days last week. Cards with no data are left out. Workouts starts with a compact row: workouts, minutes, streak and your challenge standing when one is running.
-- **Where:** index.html: weekPair(), deltaPill(), statCard(), weeklyStatsRow(), workoutStatsRow(), homeView(), workoutsView(), the sc-tip action, .sc CSS, APP_VERSION, WLH.changelog. tests/browser/statcards.mjs. tests/perf/budget.json (raw limit, same change as 8.3.15). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
-- **How to test:** Log a workout this week and last week, open Summary and Workouts. Hover, focus or tap the i button on a card. node tests/browser/statcards.mjs.
-- **Known limits:** Compares the week so far (Monday on) with the same days last week. Water and sleep average only the days you logged. Checked in headless Chrome only.
+- **Problem:** The Summary page had no quick view of this week against last, and Workouts opened straight into forms.
+- **Change:** Summary starts with up to four cards (workout minutes, workout calories, water, sleep), each with an info tip and a green, red or grey change pill against the same days last week. Cards with no data are left out. Workouts starts with a compact row: workouts, minutes, streak and your challenge standing.
+- **Where:** index.html: weeklyStatsRow(), workoutStatsRow(), statCard(), deltaPill(), the sc-tip action, .sc CSS, APP_VERSION. tests/browser/statcards.mjs, tests/perf/budget.json. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Log workouts this week and last, open Summary and Workouts, tap an i button. node tests/browser/statcards.mjs.
+- **Known limits:** Week so far (Monday on) against the same days last week. Water and sleep average logged days only.
+
+## 8.3.15 · Notifications: Pop-up notification cards for friend requests, challenge invites and saved workouts
+
+- **Problem:** Toasts were a single plain line, friend requests and challenge invites only showed up if you opened Settings or Workouts, and the notification centre had nothing feeding it.
+- **Change:** The pop-up toasts get a notification-card look: a 40px tinted icon circle (info, success, warning, error or bell), a time beside the title, an optional description and button, an X to close, and the thin countdown bar along the bottom. A new friend request or challenge invite now shows one of these pop-ups and is added to the notification centre once (the ids already told about are remembered). Saving a workout shows a green card with the activity and minutes. The existing stack, swipe-to-dismiss, pause on hover and reduced-motion handling are reused.
+- **Where:** index.html: swipeToast() (rich option, X button), ST_ICONS.info, CSS .swipe-toast[data-rich] and .swipe-toast__x, frSeen(), frNotify(), frLoad(), chLoad(), notify(), the log-workout case. tests/browser/toasts.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/toasts.mjs. By hand: log a workout on Workouts, a green card appears. With two friend accounts, send a request and wait up to 30 seconds: the other account gets a card and a bell entry.
+- **Known limits:** There is no friend-to-friend messaging yet, so only requests and invites notify. Friends starting a workout is not announced. Alerts arrive on the 30 second friends refresh while the app is open, not when it is closed. No avatar or online dot on the card yet. Checked in headless Chrome with a faked Supabase.
 
 ## 8.3.14 · Recipes: Recipe and meal plan cards match Food culture, with page numbers
 
