@@ -57,5 +57,26 @@ await ev(`document.querySelector('.swipe-toast__x').click()`);
 ok("the X closes it", await waitFor(`document.querySelectorAll('.swipe-toast[data-rich]').length < 2`, 3000));
 await ev(`swipeToast({ title: "Workout saved", description: "Running, 30 min", type: "success", rich: true, key: "wk-saved" })`);
 ok("a workout confirmation uses the success tint", await ev(`!!document.querySelector('.swipe-toast[data-rich="success"]')`));
+// friend messages (8.3.17): a stubbed Supabase client
+await ev(`(async () => {
+  window.__sent = []; window.__upd = [];
+  const msgs = [{ id: "m1", sender_id: "u2", recipient_id: "me", body: "<b>hi</b> there", created_at: "2026-10-22T10:00:00Z", read_at: null }];
+  const q = { select: () => q, order: () => q, limit: () => Promise.resolve({ data: msgs, error: null }),
+    insert: row => { window.__sent.push(row); return Promise.resolve({ error: null }); },
+    update: row => ({ in: (c, ids) => { window.__upd.push([row, ids]); return Promise.resolve({}); } }) };
+  window.sbClient = () => ({ from: t => t === "friend_messages" ? q : {}, rpc: () => Promise.resolve({ data: [], error: null }) });
+  SB.user = { id: "me" }; STORE_UID = "me"; CRY.lock = null;
+  FR.on = true; FR.me = { app_name: "ada" }; FR.rows = [{ status: "accepted", member_id: "u2", app_name: "kofi", friendship_id: "f2" }];
+  localStorage.removeItem(ukey("wlh.frseen." + P().id));
+  await fmLoad(); return true; })()`);
+ok("an unread message from a friend notifies with their name", await ev(`loadNotifs(P()).some(n => n.title.startsWith("kofi: "))`));
+await ev(`(async () => { FM.with = "u2"; await fmLoad(); return true; })()`);
+const fv = await ev(`fmView()`);
+ok("the chat escapes message text", fv.includes("&lt;b&gt;hi") && !fv.includes("<b>hi"));
+ok("opening the chat marks that friend's messages read", await ev(`window.__upd.some(u => u[1][0] === "m1")`), await ev(`JSON.stringify(window.__upd)`));
+await ev(`document.body.insertAdjacentHTML("beforeend", '<div id="fm"></div><input id="fm-in" value="  hello  ">'); fmSend()`);
+await sleep(200);
+ok("sending inserts a trimmed message to the open friend", await ev(`window.__sent.length === 1 && window.__sent[0].body === "hello" && window.__sent[0].recipient_id === "u2"`));
+ok("Message button shows only for accepted friends", (await ev(`frRows()`)).includes('data-act="fm-open"'));
 ok("no page errors", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

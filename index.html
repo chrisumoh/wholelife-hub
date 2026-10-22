@@ -3237,6 +3237,9 @@ html .side .nav a .si-tile svg{color:#fff}
 .swipe-toast__action:active{transform:scale(.97)}
 .swipe-toast__action:focus-visible{outline:2px solid var(--st-fuse);outline-offset:2px}
 @media (hover:hover) and (pointer:fine){.swipe-toast__action:hover{opacity:.88}}
+.fm-list{display:flex;flex-direction:column;gap:4px;max-height:240px;overflow:auto;padding:8px 0}
+.fm-m{margin:0;padding:6px 10px;border-radius:12px;background:var(--raise);max-width:80%;align-self:flex-start;overflow-wrap:anywhere}
+.fm-m.me{align-self:flex-end;background:var(--accent);color:var(--accent-ink)}
 .swipe-toast[data-rich] .swipe-toast__card{gap:12px;padding-right:44px;align-items:flex-start}
 .swipe-toast[data-rich] .swipe-toast__icon{width:40px;height:40px;padding:10px;border-radius:50%;background:color-mix(in srgb,var(--st-t,var(--accent)) 16%,transparent)}
 .swipe-toast[data-rich="success"]{--st-t:var(--good)}.swipe-toast[data-rich="warn"]{--st-t:var(--warn)}.swipe-toast[data-rich="error"]{--st-t:var(--bad)}
@@ -3753,7 +3756,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.15", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.17", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3767,6 +3770,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.15", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.17",
+      area:"Friends",
+      title:"Message your friends",
+      bug:"Friends could see each other online, but there was no way to talk to them.",
+      fix:"Each accepted friend has a Message button on the Friends card. It opens a small chat, text only, 500 characters a message. A new message pops up a card and lands in the notification centre. New table friend_messages (applied to Supabase).",
+      where:"index.html: FM, fmLoad(), fmView(), fmPaint(), fmSend(), frRows(), friendsCard(), CSS .fm-*. supabase/migrations/20261022060000_wlh_8_3_17_friend_messages.sql. tests/browser/toasts.mjs. docs/DATABASE.md.",
+      test:"Run node tests/browser/toasts.mjs. On two friend accounts: A taps Message on B, sends a line; within 30 seconds B gets a card and sees it in the chat.",
+      limits:"New messages arrive on the 30 second refresh, not instantly. No typing signal, no delete button yet, and blocking has no screen yet. No two-account live test has been done." },
     { id:"8.3.15",
       area:"Notifications",
       title:"Pop-up cards for friend requests, challenge invites and saved workouts",
@@ -9119,9 +9130,44 @@ function frNotify(){
   for (const r of FR.rows) if (r.status === "pending" && r.incoming && !frSeen("f" + r.friendship_id)) notify("friend", `${r.app_name} wants to be friends`, "Open Household to accept or decline.", "#/settings/household");
   for (const c of CH.rows) if (c.status === "invited" && !frSeen("c" + c.id)) notify("friend", `${c.owner_name || "A friend"} invited you to a challenge`, c.title, "#/workouts");
 }
+// ---- friend messages (8.3.17) ----
+// Accepted friends only (the server checks). Polled with the friends list; opening a chat marks its messages read.
+const FM = { with:null, rows:[] };
+const fmName = id => FR.rows.find(r => r.member_id === id)?.app_name || "A friend";
+async function fmLoad(){
+  const db = frDb(); if (!db || !FR.me || !SB.user) return;
+  const r = await db.from("friend_messages").select("id,sender_id,recipient_id,body,created_at,read_at").order("created_at", { ascending:false }).limit(100);
+  if (r.error) { console.warn("Messages unavailable:", r.error.code || "error"); return; }
+  FM.rows = (r.data || []).reverse();
+  const inc = FM.rows.filter(m => m.recipient_id === SB.user.id && !m.read_at);
+  for (const m of inc) if (m.sender_id !== FM.with && !frSeen("m" + m.id)) notify("friend", `${fmName(m.sender_id)}: ${m.body.slice(0, 50)}`, "Open Household to reply.", "#/settings/household");
+  const mine = inc.filter(m => m.sender_id === FM.with).map(m => m.id);
+  if (mine.length) db.from("friend_messages").update({ read_at: new Date().toISOString() }).in("id", mine).then(() => {}, () => {});
+  fmPaint();
+}
+function fmView(){
+  const w = FM.with; if (!w) return "";
+  const rows = FM.rows.filter(m => m.sender_id === w || m.recipient_id === w);
+  return `<div class="fm"><div class="li"><b>${esc(fmName(w))}</b><button class="btn sm" data-act="fm-close">Close</button></div>
+    <div class="fm-list">${rows.length ? rows.map(m => `<p class="fm-m${m.sender_id === w ? "" : " me"}">${esc(m.body)}</p>`).join("") : `<p class="small muted">No messages yet. Say hi.</p>`}</div>
+    <form class="row" data-form="fm-send" style="gap:6px"><input id="fm-in" class="grow" maxlength="500" autocomplete="off" aria-label="Message" required><button class="btn primary" type="submit">Send</button></form></div>`;
+}
+function fmPaint(){
+  const e = document.getElementById("fm"); if (!e) return;
+  const k = e.querySelector("#fm-in")?.value;
+  e.innerHTML = fmView();
+  const i = e.querySelector("#fm-in"); if (i && k) i.value = k;
+  const l = e.querySelector(".fm-list"); if (l) l.scrollTop = l.scrollHeight;
+}
+async function fmSend(){
+  const db = frDb(), body = val("fm-in").trim().slice(0, 500); if (!db || !FM.with || !body) return;
+  const r = await db.from("friend_messages").insert({ recipient_id: FM.with, body });
+  if (r.error) { toast("Could not send. Try again.", "warn"); return; }
+  document.getElementById("fm-in").value = ""; fmLoad();
+}
 function frTick(){
   const db = frDb(); if (!db || document.hidden) return;
-  if (!FR.on || FR.me) frLoad();
+  if (!FR.on || FR.me) frLoad().then(fmLoad);
   if (FR.me && Date.now() - FR.ping > 55000) { FR.ping = Date.now(); db.rpc("member_ping").then(() => {}, () => {}); }
 }
 setInterval(frTick, 30000);
@@ -9129,7 +9175,7 @@ setTimeout(frTick, 4000);
 function frRows(){
   const pill = r => r.status !== "accepted" ? `<span class="tag">${r.incoming ? "Wants to be friends" : "Requested"}</span>` : r.online ? `<span class="neon">Online</span>` : `<span class="fr-off">Offline</span>`;
   const btns = r => r.status === "pending" && r.incoming ? `<button class="btn sm primary" data-act="fr-accept" data-id="${esc(r.friendship_id)}">Accept</button><button class="btn sm" data-act="fr-remove" data-id="${esc(r.friendship_id)}">Decline</button>`
-    : `<button class="btn sm" data-act="fr-remove" data-id="${esc(r.friendship_id)}">${r.status === "pending" ? "Cancel" : "Remove"}</button>`;
+    : `${r.status === "accepted" ? `<button class="btn sm primary" data-act="fm-open" data-id="${esc(r.member_id)}">Message</button>` : ""}<button class="btn sm" data-act="fr-remove" data-id="${esc(r.friendship_id)}">${r.status === "pending" ? "Cancel" : "Remove"}</button>`;
   return FR.rows.length ? FR.rows.map(r => `<div class="li"><div class="grow"><b>${esc(r.app_name)}</b> ${pill(r)}</div><div class="row" style="gap:6px">${btns(r)}</div></div>`).join("")
     : `<p class="small muted">No friends yet. Search for a friend's app name above.</p>`;
 }
@@ -9152,7 +9198,7 @@ function friendsCard(){
       <p class="tiny muted full">3 to 20 letters, numbers, dots, dashes or underscores. 13 or older only.</p>
     </form>
     ${FR.me ? `<form class="form" data-form="fr-search"><label class="f">Find a friend<input id="fr-q" minlength="3" maxlength="20" autocomplete="off" placeholder="Their app name" value="${esc(FR.q)}"></label><div class="full"><button class="btn" type="submit">Search</button></div></form>
-    <div id="fr-res" aria-live="polite"></div><div id="fr-list" aria-live="polite">${frRows()}</div>` : ""}
+    <div id="fr-res" aria-live="polite"></div><div id="fr-list" aria-live="polite">${frRows()}</div><div id="fm">${fmView()}</div>` : ""}
   </section>`;
 }
 async function frSaveMe(){
@@ -12923,6 +12969,8 @@ document.addEventListener("click", async e => {
       toast(p.targetKg ? `Targets saved. Goal weight ${fmtWeight(p.targetKg, p)}.` : "Targets saved", "success"); break; }
     case "fr-add": case "fr-accept": case "fr-remove": frAct(a, t.dataset.id); break;
     case "fr-leave": frLeave(); break;
+    case "fm-open": FM.with = t.dataset.id; fmPaint(); fmLoad(); document.getElementById("fm-in")?.focus(); break;
+    case "fm-close": FM.with = null; fmPaint(); break;
     case "ch-open": CH.open = !CH.open; render(); break;
     case "ch-join": case "ch-decline": case "ch-leave": chAct(a, t.dataset.id); break;
     case "new-profile": UI.obAuth = false; UI.lastActive = p?.id; UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; S.activeId = null; render(); break;
@@ -12976,6 +13024,7 @@ document.addEventListener("submit", async e => {
   if (kind === "age-gate") { ageGateSubmit(); return; }
   if (kind === "fr-me") { frSaveMe(); return; }
   if (kind === "fr-search") { frSearch(); return; }
+  if (kind === "fm-send") { fmSend(); return; }
   if (kind === "ch-new") { chNew(); return; }
   if (kind === "ci-mo") {
     setDaily(P(), { win: val("mo-win").slice(0,90), next: val("mo-next").slice(0,90), done: true, skipped: false });

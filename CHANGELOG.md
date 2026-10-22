@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.15, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.17, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.17 · Friends: Message your friends
+
+- **Problem:** Friends could see each other online, but there was no way to talk to them.
+- **Change:** Each accepted friend has a Message button on the Friends card. It opens a small chat, text only, 500 characters a message. A new message pops up a card and lands in the notification centre. New table friend_messages (applied to Supabase).
+- **Where:** index.html: FM, fmLoad(), fmView(), fmPaint(), fmSend(), frRows(), friendsCard(), CSS .fm-*. supabase/migrations/20261022060000_wlh_8_3_17_friend_messages.sql. tests/browser/toasts.mjs. docs/DATABASE.md.
+- **How to test:** Run node tests/browser/toasts.mjs. On two friend accounts: A taps Message on B, sends a line; within 30 seconds B gets a card and sees it in the chat.
+- **Known limits:** New messages arrive on the 30 second refresh, not instantly. No typing signal, no delete button yet, and blocking has no screen yet. No two-account live test has been done.
 
 ## 8.3.15 · Notifications: Pop-up notification cards for friend requests, challenge invites and saved workouts
 
