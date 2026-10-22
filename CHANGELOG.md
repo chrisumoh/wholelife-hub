@@ -14,6 +14,14 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 - **How to test:** Open the Summary page with pinned cards, press the refresh icon on a card, then move the mouse slowly over it and the cards around it, in Chrome and Edge on a desktop: no flicker, no black. Turn it back with the icon or Escape. node tests/browser/motion.mjs.
 - **Known limits:** (1) Turning cards no longer show the frosted blur or a lift on hover; plain cards keep both. (2) Checked by reading the CSS and the headless tests, not on the reported Windows machine.
 
+## 8.3.12 · Sign-in: Tour offer asks about saving to an account
+
+- **Problem:** The first-run tour offer said nothing about signing in, so new people only met the sign-in card if they went looking in Settings.
+- **Change:** The New to Whole Life Hub? pop-up now also asks, when signed out and sign-in is available, whether to save the hub to an account so it follows you to every device, with Google or email. A new Sign in button closes the pop-up and opens the sign-in card. It does not mark the tour as answered, so the tour is offered again after signing in. Show me and Not now work as before.
+- **Where:** index.html: tourOffer(), the tour-offer-auth case in the tour click handler, APP_VERSION and the change log. tests/browser/authcard.mjs (4 new checks, 27 in all). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** In a private window, finish setup (or skip it) and open the Summary page: the pop-up shows a line about saving to an account and a Sign in button. Press it: the sign-in card opens. Run node tests/browser/authcard.mjs.
+- **Known limits:** Only shown signed out, on the Summary page, until the tour is answered. After signing in the page reloads and the offer comes back once. Checked in headless Chrome with a faked Supabase.
+
 ## 8.3.11 · Sign-in: Sign-in card with Google and email, offered during setup
 
 - **Problem:** Sign-in was only reachable from Settings, in a plain form with the Google button above the email fields, and a new person was never offered an account while setting up their hub.

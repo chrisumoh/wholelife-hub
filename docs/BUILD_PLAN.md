@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.12 | Sign-in: the first-run tour offer asks about saving to an account and opens the sign-in card | IN PROGRESS: claude/project-thread-7alpk4 |
 | 8.3.11 | Sign-in: card with Google and email in setup (after the age question) and in Settings > Account; old Account pair removed | IN PROGRESS: claude/project-thread-7alpk4 |
 | 8.3.10 | Workouts: friends challenges (new `challenges`, `challenge_members` tables) | IN PROGRESS: claude/project-thread-oz3ex2 |
 | 8.3.9 | Notifications: notification centre with All, Mentions and System tabs, unread count and Mark all read | IN PROGRESS: claude/project-thread-nzyu0w |
