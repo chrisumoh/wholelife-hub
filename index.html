@@ -1111,6 +1111,11 @@ svg:not(.logo-svg):not(.scene-svg):not(.chart){max-width:100%}
   font-family:var(--display);font-weight:800;font-size:calc((26px) * var(--text-scale,1));line-height:1;color:var(--text);pointer-events:none}
 .rings-mid span{font-family:var(--font);font-size:calc((10px) * var(--text-scale,1));font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-top:3px}
 .rings-legend{display:flex;flex-direction:column;gap:10px;flex:1 1 220px;min-width:0}
+.rdays{display:flex;gap:6px;margin:14px 0 4px}
+.rday{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 0;border:1px solid var(--line);border-radius:var(--r-sm);background:transparent;color:var(--muted);font:inherit;font-size:calc((11px) * var(--text-scale,1));font-weight:600;cursor:pointer;transition:background-color var(--dur-tap) var(--ease-smooth),transform var(--dur-tap) var(--ease-spring)}
+.rday i{width:16px;height:16px;border-radius:50%;background:conic-gradient(var(--accent) calc(var(--rp) * 360deg),color-mix(in srgb,var(--text) 12%,transparent) 0);-webkit-mask:radial-gradient(circle,transparent 4px,#000 5px);mask:radial-gradient(circle,transparent 4px,#000 5px)}
+.rday[aria-pressed="true"]{background:var(--surface);color:var(--text);border-color:var(--accent);box-shadow:var(--shadow)}
+.rday:active{transform:scale(.95)}
 .rleg{display:flex;gap:10px;align-items:flex-start;text-decoration:none;color:var(--text);padding:6px 10px;border-radius:var(--r-xs);
   background:color-mix(in srgb,var(--rc) 5%,transparent);border:1px solid color-mix(in srgb,var(--rc) 16%,transparent);min-width:0;
   transition:transform var(--dur-menu) var(--ease-spring),background-color var(--dur-popup)}
@@ -3798,7 +3803,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.7", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.8", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3812,6 +3817,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.7", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.8",
+      area:"Summary",
+      title:"Activity rings card: pick a day, rings draw in one by one",
+      bug:"The rings card only showed today, and all three rings filled in at once.",
+      fix:"The rings card has a strip of the last seven days under the title, each with a tiny ring showing how many of the three closed. Tap a day to see that day's rings, numbers and legend (Exercise counts that week up to the chosen day). The dial shows how many are closed in the middle, and the rings now draw in one after another, outer ring first. Reduced motion skips the animation. No data changes.",
+      where:"index.html: RING_DEFS (get takes the date), ringData(), ringsDial(), ringsCard(), the ring-day click case, CSS .rdays and .rday next to the rings CSS, APP_VERSION and the change log. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open Summary: tap each day in the strip and check the numbers match that day's meals, workouts and water. Reload and watch the rings draw outer to inner. Tab to the day buttons and press Enter.",
+      limits:"The day strip covers the last seven days only. Built to match the style of an Untitled UI activity rings card from the pasted import line; the component source was not available, so it is not an exact copy." },
     { id:"8.3.7",
       area:"Household",
       title:"Find friends by app name and see who is online",
@@ -12700,6 +12713,7 @@ document.addEventListener("click", async e => {
     case "log-workout": { const mins = numv("w-min"); if (!mins) { toast("Add how many minutes."); return; }
       addEntry("workouts", { id: uid(), date: val("w-d") || today(), type: val("w-type"), minutes: Math.round(mins), cal: numv("w-cal"), note: val("w-note") || null }); UI.prefillW = null; UI.wDraft = null; render(); toast("Workout saved", "success"); checkCelebrations(); checkAwards(); break; }
     case "del-workout": removeEntry("workouts", t.dataset.id); render(); break;
+    case "ring-day": UI.ringDay = t.dataset.v; render(); document.querySelector(`.rday[data-v="${t.dataset.v}"]`)?.focus(); break;
     case "act-toggle": wSaveDraft(); UI.actOpen = !UI.actOpen; render(); document.querySelector('[data-act="act-toggle"]')?.focus(); break;
     case "imp-toggle": wSaveDraft(); UI.impOpen = !UI.impOpen; render(); break;
     case "plan-toggle": UI.planOpen = !UI.planOpen; render(); break;
@@ -14741,22 +14755,22 @@ document.addEventListener("input", e => {
 // travelling end cap, and the legend beside the dial rather than inside it.
 const RING_DEFS = [
   { k:"move",  n:"Move",      unit:"cal",  color:"var(--c-nutrition)", c1:"#0E7A3C", c2:"#4CD964", icon:"apple",    href:"#/nutrition",
-    get:p => ({ v: Math.round(intakeOn(today())), goal: p.calorieGoal || suggestedGoal(p) || 0, sub:"eaten today" }) },
+    get:(p, d) => ({ v: Math.round(intakeOn(d)), goal: p.calorieGoal || suggestedGoal(p) || 0, sub:"eaten" }) },
   { k:"exercise", n:"Exercise", unit:"min", color:"var(--c-activity)", c1:"#B03A00", c2:"#FF9A4D", icon:"dumbbell", href:"#/workouts",
-    get:p => ({ v: weekWorkouts(p).reduce((a,w) => a + (w.minutes||0), 0), goal: (p.workoutGoal || 0) * 40, sub:"this week" }) },
+    get:(p, d) => ({ v: entries("workouts", p.id).filter(w => w.date >= weekStart(d) && w.date <= d).reduce((a,w) => a + (w.minutes||0), 0), goal: (p.workoutGoal || 0) * 40, sub:"that week so far" }) },
   { k:"hydration", n:"Hydration", unit:"", color:"var(--c-water)",   c1:"#0A6E7C", c2:"#3FD0E0", icon:"glass",    href:"#/metric/water",
-    get:p => { const w = vitalsOf(today())?.water || 0; return { v: w, goal: 2700, sub:"today", fmt: x => `${METRICS.water.fmt(x, p)}${METRICS.water.unit(p)}` }; } }
+    get:(p, d) => { const w = vitalsOf(d)?.water || 0; return { v: w, goal: 2700, sub:"drunk", fmt: x => `${METRICS.water.fmt(x, p)}${METRICS.water.unit(p)}` }; } }
 ];
-function ringData(p){
+// The card shows one day at a time (UI.ringDay, default today); the day strip picks it.
+function ringData(p, date = today()){
   return RING_DEFS.map(d => {
-    const r = d.get(p);
+    const r = d.get(p, date);
     const pct = r.goal > 0 ? Math.min(1.5, r.v / r.goal) : 0;
     return { ...d, ...r, pct, closed: r.goal > 0 && r.v >= r.goal };
   });
 }
 // One dial, three arcs. R is the outer radius; each arc steps inward by the stroke plus a gap.
-function ringsDial(p, size = 190){
-  const rows = ringData(p);
+function ringsDial(p, size = 190, rows = ringData(p)){
   const SW = 15, GAP = 5, VB = 200, CX = 100;
   return `<div class="rings" style="width:${size}px;height:${size}px">
     <svg viewBox="0 0 ${VB} ${VB}" width="${size}" height="${size}" role="img" aria-label="${esc(rows.map(r => `${r.n}: ${Math.round(r.v)} of ${Math.round(r.goal)}`).join(". "))}">
@@ -14775,12 +14789,13 @@ function ringsDial(p, size = 190){
           <circle class="rg-track" cx="${CX}" cy="${CX}" r="${rad}" fill="none" stroke-width="${SW}" stroke-linecap="round"/>
           <circle class="rg-arc" cx="${CX}" cy="${CX}" r="${rad}" fill="none" stroke="url(#rg-${r.k})" stroke-width="${SW}" stroke-linecap="round"
             filter="url(#ring-glow)" data-circ="${circ.toFixed(2)}" data-pct="${shown.toFixed(4)}"
-            style="stroke-dasharray:${circ.toFixed(2)};stroke-dashoffset:${circ.toFixed(2)}"/>
+            style="stroke-dasharray:${circ.toFixed(2)};stroke-dashoffset:${circ.toFixed(2)};transition-delay:${i * 140}ms"/>
           ${r.pct > 1 ? `<circle class="rg-over" cx="${CX}" cy="${CX}" r="${rad}" fill="none" stroke="${r.c2}" stroke-width="3" stroke-linecap="round"
             style="stroke-dasharray:${circ.toFixed(2)};stroke-dashoffset:${(circ * (1 - Math.min(0.5, r.pct - 1))).toFixed(2)}"/>` : ""}
         </g>`; }).join("")}
       </g>
     </svg>
+    <div class="rings-mid">${rows.filter(r => r.closed).length}/3<span>closed</span></div>
   </div>`;
 }
 // ---------- BorderGlow (React Bits), ported to plain JS ----------
@@ -14809,16 +14824,23 @@ const BG_LAYERS = `<i class="bg-border" aria-hidden="true"></i><i class="bg-fill
 })();
 
 function ringsCard(p){
-  const rows = ringData(p);
+  const day = DATE_RE.test(UI.ringDay || "") && UI.ringDay <= today() ? UI.ringDay : today();
+  const rows = ringData(p, day);
   const closed = rows.filter(r => r.closed).length;
+  const isToday = day === today();
+  const strip = Array.from({ length: 7 }, (_, i) => addDays(today(), i - 6));
   return `<section class="card rings-card beam" id="rings">
-    <div class="setrow"><div class="setlabel"><div class="eyebrow">Today at a glance</div>
+    <div class="setrow"><div class="setlabel"><div class="eyebrow">${isToday ? "Today at a glance" : esc(DOW[parseYmd(day).getDay()] + " " + day.slice(5))}</div>
       <h2 style="margin-top:4px">${closed === 3 ? "All three closed" : closed ? `${closed} of 3 closed` : "Your rings"}</h2></div>
       <a class="btn sm setctl" href="#/awards">${icon(trophyIcon(),"",24)} Achievements</a></div>
+    <div class="rdays" role="group" aria-label="Pick a day">${strip.map(d => {
+      const rd = ringData(p, d), c = rd.filter(r => r.closed).length;
+      return `<button type="button" class="rday" data-act="ring-day" data-v="${d}" aria-pressed="${d === day}" aria-label="${esc(DOW[parseYmd(d).getDay()] + " " + d)}, ${c} of 3 closed">
+        <span>${DOW[parseYmd(d).getDay()].slice(0, 1)}</span><i style="--rp:${c / 3}"></i></button>`; }).join("")}</div>
     <div class="rings-row">
-      ${ringsDial(p)}
+      ${ringsDial(p, 190, rows)}
       <div class="rings-legend">
-        <div class="rleg-head"><b>${rows.filter(r => r.closed).length} of 3 closed</b><span class="tiny muted">today</span></div>
+        <div class="rleg-head"><b>${closed} of 3 closed</b><span class="tiny muted">${isToday ? "today" : esc(day)}</span></div>
         ${rows.map(r => {
         const fmt = r.fmt || (x => Math.round(x).toLocaleString());
         const pctTxt = r.goal > 0 ? Math.round(r.pct * 100) : 0;
