@@ -1250,6 +1250,17 @@ svg:not(.logo-svg):not(.scene-svg):not(.chart){max-width:100%}
 .actbtn[aria-pressed="true"] .tiny{color:var(--text);font-weight:700}
 @media (hover:hover) and (pointer:fine){.actbtn:hover{transform:translateY(-2px)}}
 .actbtn:active{transform:scale(.95)}
+.actcur{display:flex;align-items:center;gap:10px;padding:6px 0}
+.dpv{position:relative;height:calc(64px * var(--text-scale,1));overflow:hidden;padding:10px 44px 10px 14px;gap:2px;transition:height .5s cubic-bezier(.34,1.56,.64,1)}
+.dpv.expanded,.dpv:focus-within{height:calc(120px * var(--text-scale,1))}
+@media (hover:hover) and (pointer:fine){.dpv:hover{height:calc(120px * var(--text-scale,1))}}
+.dpv-main{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:inherit;min-width:0}
+.dpv-main:focus-visible{outline-offset:-2px}
+.dpv-btn{position:absolute;top:8px;right:8px;width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:var(--muted);cursor:pointer}
+.dpv-btn svg{transition:transform .3s var(--ease-smooth)}
+.dpv.expanded .dpv-btn svg{transform:rotate(180deg)}
+.dpv-more{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.dpv-more span:last-child{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
 .wrow-tag{margin:-2px 0 2px}
 .culture-tag{text-decoration:none;display:inline-flex;align-items:center;gap:6px;max-width:100%}
@@ -3784,7 +3795,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.5", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.6", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3798,6 +3809,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.5", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.6",
+      area:"Workouts and Recipes",
+      title:"Compact Workouts and Recipes pages",
+      bug:"The Workouts page opened with every import card and all 44 activity tiles, and the Recipes page listed the whole dish catalog and every day of the meal plan. Both pages were very long for little use.",
+      fix:"Workouts: the activity picker shows only the chosen activity with a Change button that opens the seven groups (picking one folds it back); the Apple Health and file imports sit behind one Import button; history shows 10 workouts first, then 25 more at a time. Recipes: the meal plan shows its first day with a Show all days button; the recipe library shows 6 dishes (12 when searching or filtering) as 64px text-only rows with a Browse all dishes button. A dish row grows to 120px (CJ's height-expand animation) on hover, keyboard focus, or the small arrow button for touch, to preview its cook time, meal types and description. Reduced motion turns the animation off. A half-filled workout form keeps its minutes, date, calories and notes when the picker or imports open. Nothing is removed from the app, and food rows stay text only.",
+      where:"index.html: workoutsView(), planView(), recipesView(), the pick-act, act-toggle, imp-toggle, plan-toggle, rec-all and dpv actions, UI state (actOpen, impOpen, planOpen, recAll, dpv), CSS .actcur and .dpv next to the .actbtn rules, APP_VERSION and the change log. tests/browser/compact.mjs (new), tests/browser/workouts.mjs (opens the picker first), tests/browser/run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"node tests/browser/compact.mjs and node tests/browser/workouts.mjs. By hand: Workouts (Change activity, Import button, Show more), Recipes (Show all days, Browse all dishes, hover a dish, then tap the arrow at phone width and use Tab).",
+      limits:"The hover expand follows CJ's CSS but is scoped to the new .dpv rows, not every .card. The Culture, Snacks and meal-log pages are unchanged. Checked in headless Chrome only." },
     { id:"8.3.5",
       area:"Workouts",
       title:"All 44 workout icons redrawn",
@@ -10702,7 +10721,7 @@ const NAV = [
 ];
 
 // =================== ROUTER ===================
-const UI = { route:"home", param:null, menu:false, rail:false, bell:false, obStep:0, obDraft:null, obChoice:null, loading:false, pendingExtras:null, navDate:null, recipeServ:4, drinkOpen:false, recFilter:{q:"",r:"",s:"",d:""}, snackRegion:"west", snackQ:"", confirmDel:null, planDays:7, premPlan:"yearly" };
+const UI = { route:"home", param:null, menu:false, rail:false, bell:false, obStep:0, obDraft:null, obChoice:null, loading:false, pendingExtras:null, navDate:null, recipeServ:4, drinkOpen:false, recFilter:{q:"",r:"",s:"",d:""}, snackRegion:"west", snackQ:"", confirmDel:null, planDays:7, premPlan:"yearly", actOpen:false, impOpen:false, planOpen:false, recAll:false, dpv:null };
 function readRoute(){
   const h = location.hash.replace(/^#\/?/,""); const [r, p, extra] = h.split("/");
   const known = NAV.flatMap(g=>g[1]).some(n=>n[0]===r);
@@ -11771,6 +11790,8 @@ document.addEventListener("focusin", e => {
 document.addEventListener("focusout", () => railTipHide());
 window.addEventListener("scroll", () => railTipHide(), { passive: true, capture: true });
 // =================== WORKOUTS ===================
+// Keep a half-filled workout form across re-renders (picker and import toggles).
+function wSaveDraft(){ if (!document.getElementById("w-min")) return; UI.wDraft = { minutes: val("w-min"), date: val("w-d"), cal: val("w-cal"), note: val("w-note") }; }
 function workoutsView(p){
   const all = entries("workouts").sort((a,b) => a.date < b.date ? 1 : -1);
   const kg = latestWeightKg(p);
@@ -11778,8 +11799,9 @@ function workoutsView(p){
   return `
   ${typeof restBox === "function" ? restBox(p) : ""}
   ${equipPhotoCard(p)}
+  <section class="card"><button type="button" class="btn sm" style="align-self:flex-start" data-act="imp-toggle" aria-expanded="${UI.impOpen}">${UI.impOpen ? "Hide imports" : "Import from Apple Health or another app"}</button></section>
   <div class="grid g3">
-    <section class="card"><div class="eyebrow">Apple Health</div><h3>Import your iPhone export</h3>
+    ${UI.impOpen ? `<section class="card"><div class="eyebrow">Apple Health</div><h3>Import your iPhone export</h3>
       <p class="small muted">On iPhone: Health app, then your photo, then Export All Health Data. Unzip it and choose <b>export.xml</b>. Large files are fine; it's read in pieces on this device. Brings in workouts and weigh-ins (last 12 months) plus steps, resting heart rate, blood pressure, blood oxygen, sleep and water (last 90 days).</p>
       <label class="btn" style="align-self:flex-start">Choose export.xml<input type="file" id="f-apple" accept=".xml,text/xml" hidden></label>
     </section>
@@ -11787,16 +11809,17 @@ function workoutsView(p){
       <p class="small muted">Get your data from <a href="https://takeout.google.com" target="_blank" rel="noopener">Google Takeout</a> (choose Fit or Fitbit), or export from Strava, Garmin and most apps. CSV, JSON or TCX files with a date, activity and duration work.</p>
       <details class="how"><summary>Why not automatic sync?</summary><p class="small">Google is shutting down the Google Fit APIs at the end of 2026. The replacement, the Google Health API, needs a server that signs in with Google and passes Google's security review for health data. This app has no server of its own that can sign in with Google (its only back end is the Supabase database, which holds meals and profile names), so it can't hold a Google connection. File import works today and keeps your data out of third-party servers.</p></details>
       <label class="btn" style="align-self:flex-start">Choose file<input type="file" id="f-google" accept=".csv,.json,.tcx,text/csv,application/json" hidden multiple></label>
-    </section>
+    </section>` : ""}
     <section class="card"><div class="eyebrow">Manual entry</div><h3>Log a workout</h3>
       <div class="form">
         <div class="f full" role="group" aria-label="Activity"><span>Activity</span>
-          ${ACT_GROUPS.map(([g, gn]) => `<div class="actgroup" role="group" aria-label="${esc(gn)}"><div class="actgh">${esc(gn)}</div><span class="actpick">${ACTIVITIES.filter(a => a.g === g).map(a => `<button type="button" class="actbtn" data-act="pick-act" data-v="${a.k}" aria-pressed="${(UI.prefillW?.type || UI.pickAct || "strength") === a.k}" title="${esc(a.n)}">${wicon(a.k, 40)}<span class="tiny">${esc(a.n)}</span></button>`).join("")}</span></div>`).join("")}
+          ${(() => { const cur = UI.prefillW?.type || UI.pickAct || "strength"; const ca = ACT[cur] || ACTIVITIES[0];
+            return UI.actOpen ? `${ACT_GROUPS.map(([g, gn]) => `<div class="actgroup" role="group" aria-label="${esc(gn)}"><div class="actgh">${esc(gn)}</div><span class="actpick">${ACTIVITIES.filter(a => a.g === g).map(a => `<button type="button" class="actbtn" data-act="pick-act" data-v="${a.k}" aria-pressed="${(UI.prefillW?.type || UI.pickAct || "strength") === a.k}" title="${esc(a.n)}">${wicon(a.k, 40)}<span class="tiny">${esc(a.n)}</span></button>`).join("")}</span></div>`).join("")}<button type="button" class="btn sm" data-act="act-toggle" aria-expanded="true">Done</button>` : `<div class="actcur">${wicon(ca.k, 40)}<b class="grow">${esc(ca.n)}</b><button type="button" class="btn sm" data-act="act-toggle" aria-expanded="false">Change</button></div>`; })()}
           <select id="w-type" class="visually-tight" aria-label="Activity">${opt(ACTIVITIES.map(a=>[a.k,a.n]), UI.prefillW?.type || UI.pickAct || "strength")}</select></div>
-        <label class="f">Minutes<input type="number" id="w-min" min="1" max="600" value="${UI.prefillW?.minutes ?? ""}" placeholder="45"></label>
-        <label class="f">Date<input type="date" id="w-d" value="${today()}" max="${today()}"></label>
-        <label class="f">Calories (optional)<input type="number" id="w-cal" min="0" max="5000" placeholder="Estimated if blank"></label>
-        <label class="f full">Notes<input type="text" id="w-note" value="${esc(UI.prefillW?.note || "")}" placeholder="e.g. legs, 5K, pickup soccer"></label>
+        <label class="f">Minutes<input type="number" id="w-min" min="1" max="600" value="${UI.wDraft?.minutes ?? UI.prefillW?.minutes ?? ""}" placeholder="45"></label>
+        <label class="f">Date<input type="date" id="w-d" value="${esc(UI.wDraft?.date || today())}" max="${today()}"></label>
+        <label class="f">Calories (optional)<input type="number" id="w-cal" min="0" max="5000" value="${UI.wDraft?.cal ?? ""}" placeholder="Estimated if blank"></label>
+        <label class="f full">Notes<input type="text" id="w-note" value="${esc(UI.wDraft?.note ?? UI.prefillW?.note ?? "")}" placeholder="e.g. legs, 5K, pickup soccer"></label>
       </div>
       <button class="btn primary" data-act="log-workout">Save workout</button>
     </section>
@@ -11809,8 +11832,8 @@ function workoutsView(p){
   </section>
   <section class="card">
     <div class="row between"><h2>Workout history</h2><span class="small muted">${all.length} total</span></div>
-    ${all.length ? `<div class="list">${all.slice(0, UI.wShow || 25).map(w => `<div class="li wrow">${wicon(w.type, 38)}<div class="grow"><b>${esc(ACT[w.type]?.n || "Workout")}</b> <span class="muted small">· ${w.minutes ?? "—"} min · ≈${workoutKcal(w,kg) || 0} cal${w.src ? ` · ${esc(w.src)}` : ""}</span>${w.note ? `<div class="small muted">${esc(w.note)}</div>` : ""}</div><span class="small muted tab">${fmtDay(w.date)}</span><button class="btn sm ghost" data-act="del-workout" data-id="${w.id}" aria-label="Delete workout">${icon("x")}</button></div>`).join("")}</div>
-      ${all.length > (UI.wShow || 25) ? `<button class="btn sm" data-act="more-w">Show more</button>` : ""}`
+    ${all.length ? `<div class="list">${all.slice(0, UI.wShow || 10).map(w => `<div class="li wrow">${wicon(w.type, 38)}<div class="grow"><b>${esc(ACT[w.type]?.n || "Workout")}</b> <span class="muted small">· ${w.minutes ?? "—"} min · ≈${workoutKcal(w,kg) || 0} cal${w.src ? ` · ${esc(w.src)}` : ""}</span>${w.note ? `<div class="small muted">${esc(w.note)}</div>` : ""}</div><span class="small muted tab">${fmtDay(w.date)}</span><button class="btn sm ghost" data-act="del-workout" data-id="${w.id}" aria-label="Delete workout">${icon("x")}</button></div>`).join("")}</div>
+      ${all.length > (UI.wShow || 10) ? `<button class="btn sm" data-act="more-w">Show more</button>` : ""}`
       : `${emptyState("workouts", "No workouts yet. Log one above, import a file from your phone, or mark a session done with your coach.", ["Open your coach","#/coach"])}`}
   </section>
   ${typeof medicalNote === "function" ? medicalNote() : ""}`;
@@ -11999,7 +12022,8 @@ function planView(p){
     <div class="setrow"><div class="setlabel"><div class="eyebrow">Meal plan</div><h2 style="margin-top:4px">${plan ? `Your plan from ${fmtDay(plan.created)}` : "Build a meal plan"}</h2></div>
       <div class="row" style="gap:8px"><div class="seg" role="group" aria-label="Plan length"><button data-act="plan-days" data-v="3" aria-pressed="${UI.planDays===3}">3 days</button><button data-act="plan-days" data-v="7" aria-pressed="${UI.planDays===7}">7 days</button></div>${plan && typeof isPremium === "function" && isPremium() ? `<a class="btn" href="#/premium/grocery">${icon("cart","",16)} Grocery list</a>` : ""}<button class="btn primary" data-act="build-plan">${plan ? "Rebuild plan" : "Build my plan"}</button></div></div>
     <p class="small muted">Food focus: <b>${mixOf(p).label}</b>. About ${Math.round(mixOf(p).west*100)}% West African, ${Math.round(mixOf(p).africa*100)}% the rest of Africa and ${Math.round(mixOf(p).world*100)}% the rest of the world (<a href="#/settings">change</a>). No dish repeats within a plan. ${p.diet || p.allergies ? "Your food preference and allergies are applied." : ""}</p>
-    ${plan && plan.days.length ? `<div class="plan">${plan.days.map(r => `<div class="planday"><div class="d">${fmtDay(r.date)}</div>${SLOTS.map(([k,l]) => { const d = DISHES.find(x => x.id === r[k]); return d ? `<a class="dish" href="${dishLink(d)}"><span class="slot">${l}</span><b>${esc(d.n)}</b><span class="tiny muted">${esc(d.c)} · ≈${d.cal} cal</span></a>` : `<div class="dish muted small">No match</div>`; }).join("")}</div>`).join("")}</div>
+    ${plan && plan.days.length ? `<div class="plan">${plan.days.slice(0, UI.planOpen ? plan.days.length : 1).map(r => `<div class="planday"><div class="d">${fmtDay(r.date)}</div>${SLOTS.map(([k,l]) => { const d = DISHES.find(x => x.id === r[k]); return d ? `<a class="dish" href="${dishLink(d)}"><span class="slot">${l}</span><b>${esc(d.n)}</b><span class="tiny muted">${esc(d.c)} · ≈${d.cal} cal</span></a>` : `<div class="dish muted small">No match</div>`; }).join("")}</div>`).join("")}</div>
+      ${plan.days.length > 1 ? `<button type="button" class="btn sm" style="align-self:flex-start" data-act="plan-toggle" aria-expanded="${UI.planOpen}">${UI.planOpen ? "Show less" : `Show all ${plan.days.length} days`}</button>` : ""}
       <p class="small muted">Daily total ≈ ${Math.round(plan.days.reduce((a,r) => a + SLOTS.reduce((b,[k]) => b + (DISHES.find(x=>x.id===r[k])?.cal||0), 0), 0) / plan.days.length).toLocaleString()} cal before snacks.</p>`
       /* BUG-104 fix: a plan whose every day failed cleanProfile's date check (e.g. a hand-edited
          or corrupted export) used to come back as a non-null plan with days.length === 0, which
@@ -12028,6 +12052,7 @@ function recipesView(p){
   const f = UI.recFilter; const q = f.q.toLowerCase();
   const list = DISHES.filter(d => (!f.r || d.r === f.r) && (!f.s || d.s.includes(f.s)) && (!f.d || d.diet.includes(f.d) || (f.d==="veg" && d.diet.includes("vegan"))) && (!q || (d.n+" "+d.c+" "+d.ing.map(i=>i[2]).join(" ")).toLowerCase().includes(q)))
     .sort((a,b) => ({west:0,africa:1,world:2})[bucket(a)] - ({west:0,africa:1,world:2})[bucket(b)]);
+  const cap = UI.recAll ? list.length : (f.q || f.r || f.s || f.d) ? 12 : 6;
   return `
   <section class="card cathead" style="--cc:var(--c-food)">${cicon("book","var(--c-food)",44)}<div><h2>Recipes &amp; meal plans</h2><p class="small muted">${DISHES.length.toLocaleString()} dishes across ${REGIONS.length} regions and cuisines</p></div></section>
   ${planView(p)}
@@ -12039,7 +12064,8 @@ function recipesView(p){
       <label class="f">Meal<select id="rf-s">${opt([["","Any meal"],...SLOTS], f.s)}</select></label>
       <label class="f">Diet<select id="rf-d">${opt([["","Any"],["vegan","Vegan"],["veg","Vegetarian"],["gf","Gluten-free"],["hp","High protein"],["lc","Lower carb"]], f.d)}</select></label>
     </div>
-    <div class="grid g3">${list.map(d => { const hits = allergyHits(d,p); return `<a class="dish" href="${dishLink(d)}"><span class="slot">${esc(d.c)}</span><h3>${esc(d.n)}</h3><span class="small muted">≈${d.cal} cal · ${d.t[1]} min cook · ${d.s.join(", ")}</span><span class="tiny muted">${esc(d.d)}</span>${hits.length ? `<span class="tag bad" style="align-self:flex-start">Contains ${esc(hits.join(", "))}</span>` : ""}</a>`; }).join("") || `<div class="empty">Nothing matches. Clear a filter.</div>`}</div>
+    <div class="grid g3 dpvgrid">${list.slice(0, cap).map(d => { const hits = allergyHits(d,p), on = UI.dpv === d.id; return `<div class="dish dpv${on ? " expanded" : ""}"><a class="dpv-main" href="${dishLink(d)}"><h3>${esc(d.n)}</h3><span class="small muted">${esc(d.c)} · ≈${d.cal} cal${hits.length ? ` · <b style="color:var(--bad)">Contains ${esc(hits.join(", "))}</b>` : ""}</span></a><button type="button" class="dpv-btn" data-act="dpv" data-id="${d.id}" aria-expanded="${on}" aria-label="Preview ${esc(d.n)}">${icon("chevD","",14)}</button><div class="dpv-more small muted"><span>${d.t[1]} min cook · ${esc(d.s.join(", "))}</span><span>${esc(d.d)}</span></div></div>`; }).join("") || `<div class="empty">Nothing matches. Clear a filter.</div>`}</div>
+    ${list.length > cap ? `<button type="button" class="btn sm" style="align-self:flex-start" data-act="rec-all">Browse all ${list.length.toLocaleString()} dishes</button>` : UI.recAll && list.length > 6 ? `<button type="button" class="btn sm" style="align-self:flex-start" data-act="rec-all">Show fewer</button>` : ""}
   </section>
   ${askMealsCard()}`;
 }
@@ -12578,9 +12604,14 @@ document.addEventListener("click", async e => {
     case "del-weight": removeEntry("weights", t.dataset.id); render(); break;
     // workouts
     case "log-workout": { const mins = numv("w-min"); if (!mins) { toast("Add how many minutes."); return; }
-      addEntry("workouts", { id: uid(), date: val("w-d") || today(), type: val("w-type"), minutes: Math.round(mins), cal: numv("w-cal"), note: val("w-note") || null }); UI.prefillW = null; render(); toast("Workout saved", "success"); checkCelebrations(); checkAwards(); break; }
+      addEntry("workouts", { id: uid(), date: val("w-d") || today(), type: val("w-type"), minutes: Math.round(mins), cal: numv("w-cal"), note: val("w-note") || null }); UI.prefillW = null; UI.wDraft = null; render(); toast("Workout saved", "success"); checkCelebrations(); checkAwards(); break; }
     case "del-workout": removeEntry("workouts", t.dataset.id); render(); break;
-    case "more-w": UI.wShow = (UI.wShow || 25) + 50; render(); break;
+    case "act-toggle": wSaveDraft(); UI.actOpen = !UI.actOpen; render(); document.querySelector('[data-act="act-toggle"]')?.focus(); break;
+    case "imp-toggle": wSaveDraft(); UI.impOpen = !UI.impOpen; render(); break;
+    case "plan-toggle": UI.planOpen = !UI.planOpen; render(); break;
+    case "rec-all": UI.recAll = !UI.recAll; render(); break;
+    case "dpv": UI.dpv = UI.dpv === t.dataset.id ? null : t.dataset.id; render(); break;
+    case "more-w": UI.wShow = (UI.wShow || 10) + 25; render(); break;
     case "imp-close": UI.import = null; render(); break;
     // snacks
     case "snack-region": UI.snackRegion = t.dataset.v; render(); break;
@@ -12638,7 +12669,7 @@ document.addEventListener("click", async e => {
       applyTextScale(p); saveProfile(); render();
       break;
     }
-    case "pick-act": { UI.pickAct = t.dataset.v; const sel = document.getElementById("w-type"); if (sel) sel.value = t.dataset.v; render(); break; }
+    case "pick-act": { wSaveDraft(); UI.pickAct = t.dataset.v; UI.actOpen = false; const sel = document.getElementById("w-type"); if (sel) sel.value = t.dataset.v; render(); break; }
     case "focus": p.focus = t.dataset.v; saveProfile(); render(); toast(`Food focus: ${FOCUS[p.focus].label}`); break;
     case "lock-now": lockNow(); break;
     case "erase-ask": UI.confirmErase = true; render(); break;
