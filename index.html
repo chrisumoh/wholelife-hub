@@ -1471,6 +1471,24 @@ input,select,textarea{font-size:calc((var(--t-base)) * var(--text-scale,1));font
 .ps-txt{display:flex;flex-direction:column;min-width:0;flex:1;gap:1px}
 .ps-name{font-size:calc((var(--t-lg)) * var(--text-scale,1));font-weight:800;letter-spacing:-.018em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ps-actions{display:flex;align-items:center;gap:8px;flex:none}
+.scgrid{display:grid;gap:12px;grid-template-columns:1fr}
+.scgrid.plain{grid-template-columns:repeat(2,1fr)}
+@media (min-width:600px){.scgrid{grid-template-columns:repeat(2,1fr)}}
+@media (min-width:1000px){.scgrid,.scgrid.plain{grid-template-columns:repeat(4,1fr)}}
+.sc{position:relative;background:var(--surface);border-radius:var(--r);display:flex;flex-direction:column;min-width:0}
+.sc-top{display:flex;align-items:center;gap:12px;padding:14px}
+.sc-ic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--a),var(--b))}
+.sc-t{display:flex;flex-direction:column;min-width:0;flex:1}
+.sc-l{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-l,.sc-tip,.sc-bot,.sc-d{font-size:calc(var(--t-sm) * var(--text-scale,1))}
+.sc-v{font-size:1.4rem;line-height:1.2}
+.sc-i{border:0;background:none;color:var(--muted);padding:6px;cursor:pointer}
+.sc-tip{position:absolute;right:10px;top:54px;z-index:3;max-width:240px;padding:8px 10px;border-radius:10px;background:var(--text);color:var(--surface);display:none}
+.sc-i:hover+.sc-tip,.sc-i:focus-visible+.sc-tip,.sc.tipon .sc-tip{display:block}
+.sc-bot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line);color:var(--muted)}
+.sc-d{display:inline-flex;gap:4px;padding:2px 8px;border-radius:999px;font-weight:700;background:var(--raise);color:var(--muted);white-space:nowrap}
+.sc-d.up{background:var(--good-soft);color:var(--good)}.sc-d.down{background:var(--bad-soft);color:var(--bad)}
+.scgrid.plain .sc{flex-direction:row;align-items:center;gap:10px;padding:10px 12px}
 .ps-streak{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;font-size:calc((var(--t-sm)) * var(--text-scale,1));font-weight:700;
   background:color-mix(in srgb,var(--gold) 16%,transparent);color:var(--gold);white-space:nowrap}
 @media (max-width:600px){.profstrip{padding:8px 10px;gap:10px}.ps-actions .btn{display:none}}
@@ -3753,7 +3771,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.15", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.16", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3767,6 +3785,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.15", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.16",
+      area:"Summary",
+      title:"Weekly stat cards on Summary and Workouts",
+      bug:"The Summary page had no quick view of this week against last, and Workouts opened straight into forms.",
+      fix:"Summary starts with up to four cards (workout minutes, workout calories, water, sleep), each with an info tip and a green, red or grey change pill against the same days last week. Cards with no data are left out. Workouts starts with a compact row: workouts, minutes, streak and your challenge standing.",
+      where:"index.html: weeklyStatsRow(), workoutStatsRow(), .sc CSS. tests/browser/statcards.mjs.",
+      test:"Open Summary and Workouts. node tests/browser/statcards.mjs.",
+      limits:"Week so far against the same days last week." },
     { id:"8.3.15",
       area:"Notifications",
       title:"Pop-up cards for friend requests, challenge invites and saved workouts",
@@ -10465,6 +10491,56 @@ function glanceCardOld(p){
     ${ring("#/metric/water", water ? Math.min(1, water/waterGoal) : 0, `<span class="rc-main">${water ? countUp(METRICS.water.fmt(water,p)) : "—"}</span>`, water ? `${METRICS.water.fmt(water,p)} ${METRICS.water.unit(p)} of water` : "No water logged", "var(--c-water)", "glass", "Water", water ? `of ${METRICS.water.fmt(waterGoal,p)} ${METRICS.water.unit(p)}` : "Not logged yet")}
   </section>`;
 }
+// ---- weekly stat cards ----
+// Week so far (Monday on) against the same days last week, from data the app really tracks.
+function weekPair(fn){
+  const ws = weekStart(today()), n = Math.round((parseYmd(today()) - parseYmd(ws)) / 864e5) + 1;
+  const a = [], b = [];
+  for (let i = 0; i < n; i++) { a.push(fn(addDays(ws, i))); b.push(fn(addDays(ws, i - 7))); }
+  return [a, b];
+}
+const sumN = a => a.reduce((t, x) => t + (x || 0), 0);
+const avgN = a => { const v = a.filter(x => x != null); return v.length ? sumN(v) / v.length : null; };
+function deltaPill(cur, prev){
+  if (cur == null || prev == null) return `<span class="sc-d">No data</span>`;
+  if (!prev && cur) return `<span class="sc-d up">&uarr; New</span>`;
+  const pc = prev ? Math.round((cur - prev) / prev * 100) : 0;
+  return `<span class="sc-d ${pc > 0 ? "up" : pc < 0 ? "down" : ""}">${pc > 0 ? "&uarr;" : pc < 0 ? "&darr;" : "&rarr;"} ${Math.abs(pc)}%</span>`;
+}
+function statCard(l, v, cur, prev, i, g, tip){
+  return `<div class="sc"><div class="sc-top"><span class="sc-ic" style="--a:var(--si-${g}-a);--b:var(--si-${g}-b)">${icon(i, "", 20)}</span>
+    <div class="sc-t"><span class="sc-l">${l}</span><b class="sc-v">${v}</b></div>
+    <button type="button" class="sc-i" data-act="sc-tip" aria-label="Info">${icon("info", "", 15)}</button><span class="sc-tip" role="tooltip">${tip}</span></div>
+    <div class="sc-bot"><span>From last week</span>${deltaPill(cur, prev)}</div></div>`;
+}
+function weeklyStatsRow(p){
+  const kg = latestWeightKg(p), wk = d => onDate("workouts", d);
+  const [m1, m0] = weekPair(d => sumN(wk(d).map(w => w.minutes)));
+  const [k1, k0] = weekPair(d => Math.round(sumN(wk(d).map(x => workoutExtraKcal(x, kg)))));
+  const v = k => weekPair(d => vitalsOf(d)?.[k] ?? null), [w1, w0] = v("water"), [s1, s0] = v("sleep");
+  const mt = sumN(m1), mp = sumN(m0), kt = sumN(k1), kp = sumN(k0), wa = avgN(w1), wp = avgN(w0), sa = avgN(s1), sp = avgN(s0);
+  const cards = [
+    mt || mp ? statCard("Workout minutes", mt + " min", mt, mp, "run", "workouts", "Logged workout minutes, week so far.") : "",
+    kt || kp ? statCard("Workout calories", kt + " kcal", kt, kp, "spark", "summary", "Extra calories from logged workouts, week so far.") : "",
+    wa == null && wp == null ? "" : statCard("Water a day", wa == null ? "-" : (wa / 1000).toFixed(1) + " L", wa, wp, "glass", "health", "Average on days you logged water."),
+    sa == null && sp == null ? "" : statCard("Sleep a night", sa == null ? "-" : (sa / 60).toFixed(1) + " h", sa, sp, "moon", "coach", "Average on nights you logged sleep.")
+  ].join("");
+  return cards ? `<h2 class="sec-title">This week</h2><div class="scgrid">${cards}</div>` : "";
+}
+function workoutStatsRow(p){
+  const [m1, m0] = weekPair(d => onDate("workouts", d).length);
+  const [t1, t0] = weekPair(d => sumN(onDate("workouts", d).map(w => w.minutes)));
+  const ch = CH.on && CH.rows.find(c => c.status !== "invited" && c.starts_on <= today() && c.ends_on >= today() && (CH.boards[c.id] || []).some(m => m.is_you));
+  const b = ch && CH.boards[ch.id], me = ch && b.find(m => m.is_you);
+  const cards = [
+    { l:"Workouts", v:String(sumN(m1)), cur:sumN(m1), prev:sumN(m0), i:"dumbbell", g:"workouts" },
+    { l:"Minutes", v:String(sumN(t1)), cur:sumN(t1), prev:sumN(t0), i:"run", g:"meals" },
+    { l:"Streak", v:currentStreak(p) + "d", i:"spark", g:"summary" },
+    ch ? { l:ch.title, v:`${1 + b.filter(m => +m.total > +me.total).length} of ${b.length}`, i:"trophy", g:"awards" } : null
+  ].filter(Boolean);
+  return `<div class="scgrid plain">${cards.map(c => `<div class="sc"><span class="sc-ic" style="--a:var(--si-${c.g}-a);--b:var(--si-${c.g}-b)">${icon(c.i, "", 18)}</span>
+    <div class="sc-t"><span class="sc-l">${esc(c.l)}</span><b class="sc-v">${esc(c.v)}</b></div>${c.cur === undefined ? "" : deltaPill(c.cur, c.prev)}</div>`).join("")}</div>`;
+}
 function homeView(p){
   const at = lastUpdated();
   const when = at ? `${new Date(at).toDateString() === new Date().toDateString() ? "today" : new Date(at).toLocaleDateString(undefined,{month:"short",day:"numeric"})} at ${new Date(at).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}` : null;
@@ -10483,6 +10559,7 @@ function homeView(p){
       <span class="ps-streak" title="Current workout streak">${icon("spark","",15)} ${currentStreak(p)}d</span>
     </div>
   </div>
+  ${weeklyStatsRow(p)}
   ${glanceCard(p)}
   ${widgetSection(p, "home")}
   ${typeof isPremium === "function" && isPremium() && typeof microWidget === "function"
@@ -12006,6 +12083,7 @@ function workoutsView(p){
   const kg = latestWeightKg(p);
   const imp = UI.import;
   return `
+  ${workoutStatsRow(p)}
   ${typeof restBox === "function" ? restBox(p) : ""}
   ${equipPhotoCard(p)}
   <section class="card"><button type="button" class="btn sm" style="align-self:flex-start" data-act="imp-toggle" aria-expanded="${UI.impOpen}">${UI.impOpen ? "Hide imports" : "Import from Apple Health or another app"}</button></section>
@@ -12824,6 +12902,7 @@ document.addEventListener("click", async e => {
     case "del-workout": removeEntry("workouts", t.dataset.id); render(); break;
     case "ring-day": UI.ringDay = t.dataset.v; render(); document.querySelector(`.rday[data-v="${t.dataset.v}"]`)?.focus(); break;
     case "act-toggle": wSaveDraft(); UI.actOpen = !UI.actOpen; render(); document.querySelector('[data-act="act-toggle"]')?.focus(); break;
+    case "sc-tip": t.closest(".sc")?.classList.toggle("tipon"); break;
     case "imp-toggle": wSaveDraft(); UI.impOpen = !UI.impOpen; render(); break;
     case "pg": UI[t.dataset.k] = +t.dataset.v; UI.focus = `pg-${t.dataset.k}-${t.dataset.v}`; render(); break;
     case "dpv": UI.dpv = UI.dpv === t.dataset.id ? null : t.dataset.id; render(); break;
