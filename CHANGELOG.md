@@ -14,6 +14,14 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 - **How to test:** Run node tests/browser/motion.mjs. By hand: Summary > activity rings, tap another day in the strip; Recipes or Meal plans, tap a page number; Snacks, change the region. The gold ring should glide to the new choice. Turn Settings > Motion to Reduced and it should snap.
 - **Known limits:** The ring is gold (var(--gold)), as in 8.2.20, not a new colour. Checked in headless Chrome only. Page numbers shift when the list changes length, so the ring may glide a little further than one step.
 
+## 8.3.18 · Friends: A tidier Friends card
+
+- **Problem:** The Friends card was a stack of plain fields and checkboxes with a large red Leave friends button, and online pills sat beside the names in a cluttered row.
+- **Change:** The card is now in sections. Your app name sits in one row with its Save button, with the 3 to 20 character hint under it. Let people find me and Show when I am online are on and off switches that save as you flip them. Find a friend is one row with a Search button, results show under it, and Your friends lists each person with the Online, Offline or request pill under their name and Message, Remove, Accept or Decline on the right. Leave friends is a quiet button at the bottom with a line saying what it does. No change to what is stored or shared.
+- **Where:** `index.html`: `friendsCard` (layout and switches), `frRows`, `frSaveMe` (reads the switches), the `fr-sw` action, `.fr-sec` `.fr-h` `.fr-line` `.fr-opt` `.fr-row` `.fr-foot` CSS. `CHANGELOG.md`, `README.md`, `docs/BUILD_PLAN.md`.
+- **How to test:** Sign in, open Settings > Household > Friends. Flip each switch (it saves, and a refresh keeps it). Change the name and press Save. Search a name and press Add. Check light, dark and a narrow phone width. `node tests/check-repo.mjs`.
+- **Known limits:** Only the layout changed. The card is still hidden when signed out. Checked in headless Chrome with sample data, not with two live accounts.
+
 ## 8.3.17 · Friends: Message your friends
 
 - **Problem:** Friends could see each other online, but there was no way to talk to them.
