@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.13, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.14, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.14 · Recipes: Recipe and meal plan cards match Food culture, with page numbers
+
+- **Problem:** Recipe and meal plan cards looked different from the Food culture cards, the open-up animation bounced, the grid left ragged rows, and Browse all dishes dumped every dish on one page.
+- **Change:** Recipe and plan cards now use the Food culture layout (cuisine label, name, calories). The preview opens smoothly with no bounce. The library is a tidy grid of 12 dishes a page and the meal plan shows one day a page, both with a Previous / Next pager and page numbers.
+- **Where:** index.html: pager(), recipesView(), planView(), the pg action, .dpv and .pager CSS, APP_VERSION, WLH.changelog. tests/browser/compact.mjs. docs/CSS_NOTES.md (comments moved to make room), CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open Recipes: page through the library and the plan, hover or tap a dish arrow. node tests/browser/compact.mjs.
+- **Known limits:** Dish names longer than the card are cut with an ellipsis (full name on hover). Checked in headless Chrome only.
 
 ## 8.3.13 · Summary: Pinned cards no longer flicker or go black when you move the mouse over them after a flip
 
