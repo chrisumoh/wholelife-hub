@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.23 | App readiness kit: install manifest, offline service worker, error-tracking starter (not wired in yet) | IN PROGRESS: dante/app-readiness-kit |
 | 8.3.22 | Housekeeping: CLAUDE.md names Codex as the PR reviewer; Phase 4 marked done | IN PROGRESS: claude/project-thread-whr4aa |
 | 8.3.21 | Friends: blocking screen (block, unblock, Blocked people list; no new migration) | IN PROGRESS: claude/project-thread-ate422 |
 | 8.3.20 | Phone fixes: menu black screen after scrolling, account row inside the profile card, tips go to the bell | IN PROGRESS: claude/project-thread-3qyz9x |

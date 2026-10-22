@@ -40,7 +40,7 @@ const ASSET_CACHE = VERSION + '-assets'; // images and fonts (cache-forever styl
 const PRECACHE_URLS = [
   '/',                    // the whole app is one document
   '/manifest.webmanifest',
-  '/img/icon-512.png'
+  '/img/icon-192.png'
 ];
 
 // --- Install: warm the shell cache, then take over promptly --------------
@@ -50,7 +50,8 @@ const PRECACHE_URLS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(SHELL_CACHE)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
+      // One missing file must not stop the worker installing: add each on its own and ignore failures.
+      .then((cache) => Promise.all(PRECACHE_URLS.map((u) => cache.add(u).catch(() => {}))))
       .then(() => self.skipWaiting())
   );
 });
@@ -86,8 +87,11 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(SHELL_CACHE).then((cache) => cache.put('/', copy));
+          // Only a good page is kept as the offline copy, never an error page.
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(SHELL_CACHE).then((cache) => cache.put('/', copy)).catch(() => {});
+          }
           return response;
         })
         .catch(() => caches.match('/'))
@@ -103,7 +107,7 @@ self.addEventListener('fetch', (event) => {
       const cached = await cache.match(request);
       const network = fetch(request)
         .then((response) => {
-          if (response.ok) cache.put(request, response.clone());
+          if (response.ok && response.status !== 206) cache.put(request, response.clone()).catch(() => {}); // partial (media range) responses cannot be cached
           return response;
         })
         .catch(() => cached); // offline: fall back to whatever we have

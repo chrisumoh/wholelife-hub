@@ -7,9 +7,10 @@ existing behaviour; each piece only activates once wired in (step 2).
 
 ## The files
 
-- `manifest.webmanifest` — the install description: app name, dark default
-  canvas colour (`#000000`, from the design tokens), and the icons that
-  already exist in `img/` (512px home-screen icon, 180px touch icon).
+- `manifest.webmanifest` — the install description: app name, the app's own
+  green theme colour (`#1FA36B`, the same as the page's `theme-color`), and
+  three icons in `img/`: 192px and 512px (rendered from the app's own logo) and
+  the 180px touch icon that was already there.
 - `sw.js` — the service worker. Network-first for the app document (a fresh
   build always wins when online; the cached copy is only an offline
   fallback), stale-while-revalidate for images and fonts, and a hard rule:
@@ -17,17 +18,18 @@ existing behaviour; each piece only activates once wired in (step 2).
 - `observability.js` — error capture with no third-party service. Uncaught
   errors and unhandled promise rejections are de-duplicated, capped per
   session, stripped to page *paths* only (no query strings, no user data),
-  and posted to an insert-only table in your own Supabase project. It fits
+  and posted (with `fetch` and `keepalive`, so JSON and the key headers go
+  through) to an insert-only table in your own Supabase project. It fits
   the current Content-Security-Policy in `vercel.json` unchanged; a hosted
   tracker would need its domain added to `connect-src` first.
 
 ## Wiring (the only edits to existing files — all in `index.html`)
 
-In `<head>`, before the app's main script so startup errors are caught:
+In `<head>`, before the app's main script so startup errors are caught. (The page
+already has a `theme-color` meta tag; do not add a second one.)
 
 ```html
 <link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#000000">
 <script src="/observability.js"></script>
 ```
 

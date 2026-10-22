@@ -98,23 +98,19 @@
       return;
     }
     const body = JSON.stringify([payload]);
-    // sendBeacon survives page close (exactly when crashes happen); fetch
-    // with keepalive is the fallback for browsers without it.
-    const beaconOk = navigator.sendBeacon &&
-      navigator.sendBeacon(CONFIG.ENDPOINT + '?apikey=' + CONFIG.ANON_KEY, body);
-    if (!beaconOk) {
-      fetch(CONFIG.ENDPOINT, {
-        method: 'POST',
-        keepalive: true,
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': CONFIG.ANON_KEY,
-          'Authorization': 'Bearer ' + CONFIG.ANON_KEY,
-          'Prefer': 'return=minimal'
-        },
-        body: body
-      }).catch(function () { enqueue(payload); }); // offline: retry later
-    }
+    // fetch with keepalive survives the page closing, and (unlike sendBeacon, which can only send text/plain and
+    // which the REST API rejects) it can send the JSON content type and the key headers.
+    fetch(CONFIG.ENDPOINT, {
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': CONFIG.ANON_KEY,
+        'Authorization': 'Bearer ' + CONFIG.ANON_KEY,
+        'Prefer': 'return=minimal'
+      },
+      body: body
+    }).catch(function () { enqueue(payload); }); // offline: retry when the browser comes back online
   }
 
   function enqueue(payload) {
