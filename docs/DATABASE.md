@@ -103,9 +103,9 @@ Everything a person logs syncs, signed in, through the tables above. No migratio
 | `20261004134137` | `wlh_8_1_1_drop_duplicate_indexes` | Removes duplicate indexes. |
 | `20261004142625` | `wlh_8_1_9_full_unique_sync_keys` | Replaces the partial `(owner_id, app_id)` unique indexes with plain ones, and adds `updated_at` indexes. The repo file was added in 8.1.11 as an exact copy of the remote record. |
 | `20261005035516` | `wlh_8_1_11_meal_est` | Adds `meal_logs.est boolean not null default false`. |
-| `20261022020000` | `wlh_8_3_6_friends_presence` | Friends: `member_names`, `friendships`, `member_blocks`, functions `search_members`, `friend_list`, `member_ping`. **Not applied until the owner runs it.** |
+| `20261022020000` | `wlh_8_3_7_friends_presence` | Friends: `member_names`, `friendships`, `member_blocks`, functions `search_members`, `friend_list`, `member_ping`. **Not applied until the owner runs it.** |
 
-## Friends and online status (8.3.6)
+## Friends and online status (8.3.7)
 
 Opt-in social layer, no health data. All three tables have RLS on and no `anon` access.
 

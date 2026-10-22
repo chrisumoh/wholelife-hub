@@ -1,4 +1,4 @@
--- 8.3.6: friend search by app name, friend requests and online status.
+-- 8.3.7: friend search by app name, friend requests and online status.
 -- Opt-in: nobody is searchable until they turn it on. No health data lives in these tables.
 
 create table public.member_names (
