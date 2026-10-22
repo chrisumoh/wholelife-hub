@@ -97,6 +97,15 @@ await fresh(); await click('[data-act="ob-next"]'); await sleep(250); await pick
 ok("the age block shows and there is no sign-in card", await ev(`!document.getElementById("sb-email") && !UI.obAuth`));
 await ev(`localStorage.removeItem("wlh.ageblock"); true`);
 
+console.log("--- the first-run tour offer");
+await fresh();
+await ev(`(async () => { const p = newProfile("Ada"); Object.assign(p, { onboarded: true, coachPrompted: true, tourSeen: "", age: 30 }); S.profiles = [p]; S.activeId = p.id; saveProfile(); await flush(); location.hash = "#/home"; render(); return true; })()`);
+ok("the tour offer appears for a signed-out person", await waitFor(`!!document.querySelector(".tour-offer")`, 8000));
+ok("it asks about saving to an account, with Google or email", await ev(`/account/.test(document.querySelector(".tour-offer").textContent) && /Google or email/.test(document.querySelector(".tour-offer").textContent)`));
+await click('.tour-offer [data-act="tour-offer-auth"]'); await sleep(500);
+ok("Sign in closes the offer and opens the sign-in card with Google", await ev(`!document.querySelector(".tour-offer") && !!document.querySelector('#pop-auth [data-act="sb-google"]') && document.getElementById("auth-title").textContent === "Welcome back"`));
+ok("the tour was not marked as answered", await ev(`P().tourSeen === ""`));
+
 console.log("--- the Account area");
 await fresh();
 await ev(`(async () => { const p = newProfile("Ada"); Object.assign(p, { onboarded: true, coachPrompted: true, tourSeen: "dismissed", age: 30 }); S.profiles = [p]; S.activeId = p.id; saveProfile(); await flush(); location.hash = "#/settings/profile"; render(); return true; })()`); await sleep(600);

@@ -3749,7 +3749,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.11", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.12", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3763,6 +3763,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.11", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.12",
+      area:"Sign-in",
+      title:"Tour offer asks about saving to an account",
+      bug:"The first-run tour offer said nothing about signing in, so new people only met the sign-in card if they went looking in Settings.",
+      fix:"The New to Whole Life Hub? pop-up now also asks, when signed out and sign-in is available, whether to save the hub to an account so it follows you to every device, with Google or email. A new Sign in button closes the pop-up and opens the sign-in card. It does not mark the tour as answered, so the tour is offered again after signing in. Show me and Not now work as before.",
+      where:"index.html: tourOffer(), the tour-offer-auth case in the tour click handler, APP_VERSION and the change log. tests/browser/authcard.mjs (4 new checks, 27 in all). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"In a private window, finish setup (or skip it) and open the Summary page: the pop-up shows a line about saving to an account and a Sign in button. Press it: the sign-in card opens. Run node tests/browser/authcard.mjs.",
+      limits:"Only shown signed out, on the Summary page, until the tour is answered. After signing in the page reloads and the offer comes back once. Checked in headless Chrome with a faked Supabase." },
     { id:"8.3.11",
       area:"Sign-in",
       title:"Sign-in card with Google and email, offered during setup",
@@ -22594,8 +22602,10 @@ function tourOffer(){
     <div class="tour-offer-txt">
       <b id="tour-offer-t">New to Whole Life Hub?</b>
       <span id="tour-offer-b">Take a one-minute tour of how logging, plans and your coach connect. You can find it again in Settings any time.</span>
+      ${sbClient() && !SB.user ? `<span>Want it saved to an account, so it follows you to every device? You can use Google or email.</span>` : ""}
       <div class="tour-offer-actions">
         <button type="button" class="btn sm primary" data-act="tour-offer-yes">Show me</button>
+        ${sbClient() && !SB.user ? `<button type="button" class="btn sm" data-act="tour-offer-auth">Sign in</button>` : ""}
         <button type="button" class="btn sm ghost" data-act="tour-offer-no">Not now</button>
       </div>
     </div>`;
@@ -22718,6 +22728,7 @@ document.addEventListener("click", e => {
   e.stopPropagation(); // tour-* actions are handled only here, never by the app's main click switch
   if (a === "tour-start") { e.preventDefault(); tourStart(t.dataset.v || "quick"); return; }
   if (a === "tour-offer-yes") { e.preventDefault(); tourMarkSeen("done"); tourStart("quick"); return; }
+  if (a === "tour-offer-auth") { e.preventDefault(); tourOfferClose(); openAuthPopup("in", t); return; } // the offer stays unanswered, so the tour is offered again after signing in
   if (a === "tour-offer-no") {
     e.preventDefault(); tourMarkSeen("dismissed"); tourOfferClose();
     toast("No problem. The tour is in Settings › Data & about whenever you want it.");
