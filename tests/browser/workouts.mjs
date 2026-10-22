@@ -8,7 +8,7 @@ import { join, extname } from "node:path";
 // Run from the repo root:  node tests/browser/workouts.mjs   (needs Node 22+ and Chrome; set CHROME to its path, CI=1 as root)
 // Build 8.2.11: the workout picker. Every activity has its own icon drawn inside the tile, a colour, a MET value and a group; the picker shows them in groups;
 // every coach sport has three sessions and an icon; imports (Apple Health and file names) land on the right activity; a logged workout gets the right calorie estimate.
-// The icons are original artwork inside the app (ten are Boxicons glyphs since 8.2.17), so this test is the check that none is missing, blank, clipped or a copy of another.
+// The icons are original artwork inside the app (redrawn by the designer in 8.3.5), so this test is the check that none is missing, blank, clipped or a copy of another.
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const NO_SANDBOX = process.env.CI || process.env.NO_SANDBOX ? ["--no-sandbox"] : [];
@@ -64,14 +64,19 @@ const I = await ev(`(() => { const host = document.createElement("div"); host.st
     out.push({ k: a.k, w: b.width, h: b.height, x: b.x, y: b.y, left: html.includes("§"), paint: !/url\(#[^)]*\)/.test(g.getAttribute("stroke")) , userSpace: /gradientUnits="userSpaceOnUse"/.test(svg.innerHTML), dup: dup || null, shapes: g.querySelectorAll("path,circle,ellipse,rect").length }); }
   host.remove(); return out; })()`);
 const bad = [];
-// Boxicons glyphs (8.2.17) are drawn as one filled path, so they need one shape, not two
-const BX = await ev(`Object.keys(WI_ART).filter(k => WI_ART[k].includes('scale(1.5)'))`);
-for (const i of I) { if (i.w < 14 || i.h < 14) bad.push(i.k + " too small " + Math.round(i.w) + "x" + Math.round(i.h)); if (i.x < 1 || i.y < 1 || i.x + i.w > 47 || i.y + i.h > 47) bad.push(i.k + " leaves the tile " + [i.x, i.y, i.x + i.w, i.y + i.h].map(Math.round)); if (i.left) bad.push(i.k + " has an unreplaced paint token"); if (i.dup) bad.push(i.k + " is a copy of " + i.dup); if (i.shapes < (BX.includes(i.k) ? 1 : 2)) bad.push(i.k + " has only " + i.shapes + " shape"); if (!i.userSpace) bad.push(i.k + " gradient is not in user space (a straight line would vanish)"); }
-ok(`all ${I.length} icons: drawn, 14px or more, inside the tile, not copies, gradient safe`, bad.length === 0, bad.slice(0, 5).join(" | "));
+for (const i of I) { if (i.w < 14 || i.h < (i.k === "stretch" ? 12 : 14)) bad.push(i.k + " too small " + Math.round(i.w) + "x" + Math.round(i.h)); if (i.x < 1 || i.y < 1 || i.x + i.w > 47 || i.y + i.h > 47) bad.push(i.k + " leaves the tile " + [i.x, i.y, i.x + i.w, i.y + i.h].map(Math.round)); if (i.left) bad.push(i.k + " has an unreplaced paint token"); if (i.dup) bad.push(i.k + " is a copy of " + i.dup); if (i.shapes < 1) bad.push(i.k + " has only " + i.shapes + " shape"); if (!i.userSpace) bad.push(i.k + " gradient is not in user space (a straight line would vanish)"); }
+ok(`all ${I.length} icons: drawn, 14px or more (Stretching 12 tall), inside the tile, not copies, gradient safe`, bad.length === 0, bad.slice(0, 5).join(" | "));
 const clash = await ev(`(() => { const ids = ACTIVITIES.map(a => a.k); const cols = ids.map(k => WI_COLOR[k].join()); return ids.filter((k, i) => cols.indexOf(cols[i]) !== i); })()`);
 ok("no two activities share the same colour pair", clash.length === 0, clash.join(", "));
 const contrast = await ev(`(() => { const lum = h => { const [r, g, b] = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4); return .2126 * r + .7152 * g + .0722 * b; }; return ACTIVITIES.filter(a => { const l = lum(WI_COLOR[a.k][1]); return (1.05) / (l + .05) > 12 || (l + .05) / .05 < 1.5; }).map(a => a.k); })()`);
 ok("every light gradient colour is visible on a dark tile (and not white)", contrast.length === 0, contrast.join(", "));
+
+// Hover animations move whole groups, so a group must hold one wheel, and a ball's seams must sit inside its ball group.
+const anim = await ev(`(() => { const host = document.createElement("div"); document.body.append(host); const out = [];
+  for (const k of ["cycle", "skate"]) { host.innerHTML = wicon(k, 48); const gs = [...host.querySelectorAll(".w-wheel")]; if (gs.length !== 2 || gs.some(g => g.querySelectorAll("circle").length !== 1)) out.push(k + " wheels share a group"); }
+  for (const k of ["soccer", "basketball", "football", "rugby", "volleyball", "baseball"]) { host.innerHTML = wicon(k, 48); const art = host.querySelector(".wi-art"); if ([...art.children].some(c => !c.classList.contains("w-ball"))) out.push(k + " has markings outside w-ball"); }
+  host.remove(); return out; })()`);
+ok("each wheel is its own animated group, and ball markings move with the ball", anim.length === 0, anim.join(", "));
 
 console.log("--- 3. the picker");
 const pick = await ev(`(() => { const groups = [...document.querySelectorAll(".actgroup")]; return { n: groups.length, heads: groups.map(g => g.querySelector(".actgh").textContent), btns: document.querySelectorAll(".actbtn").length, icons: document.querySelectorAll(".actbtn .wi-svg").length, sel: document.getElementById("w-type").options.length, ungrouped: [...document.querySelectorAll(".actbtn")].filter(b => !b.closest(".actgroup")).length, label: document.querySelector('[role="group"][aria-label="Activity"]') ? true : false }; })()`);
