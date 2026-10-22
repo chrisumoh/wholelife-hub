@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.8, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.9, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.9 · Notifications: Notification centre: tabs, unread count, mark all read
+
+- **Problem:** The bell menu was a plain list with no tabs, no unread count and no way to mark everything read.
+- **Change:** The bell menu is now a notification centre up to 430px wide: unread count, Mark all read, tabs for All, Mentions and System with counts, and a card per notification (icon, title, time, text, unread dot). Kinds friend and mention show under Mentions, reminder and system under System, the rest only under All.
+- **Where:** `index.html`: `notifPanel()`, `notifCat()`, `notifTone()`, `NOTIF_TABS`, the `notif-tab` and `notif-read` cases, `UI.nTab`, the `bellOff` icon, CSS `.np-*`. `CHANGELOG.md`, `README.md`, `docs/BUILD_PLAN.md`.
+- **How to test:** Run `notify('friend','Ana','Hi')` in the console, tap the bell, switch tabs, tap Mark all read.
+- **Known limits:** No card action buttons yet. Nothing in the app calls `notify()` yet.
 
 ## 8.3.8 · Summary: Activity rings card: pick a day, rings draw in one by one
 
