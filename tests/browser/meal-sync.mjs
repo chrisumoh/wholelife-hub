@@ -73,7 +73,7 @@ await ev(`flush()`); await sleep(300);
 ok("meals left the local blob", (await blobMeals("wlh.v62@u_axcom")) === 0, await blobMeals("wlh.v62@u_axcom"));
 ok("local cache holds 2 meals", (await cacheN()) === 2, await cacheN());
 ok("memory still shows 2 meals", (await memMeals()) === 2);
-ok("account card shows signed-in email", await ev(`(()=>{ render(); return document.getElementById("sb-account").textContent.includes("a@x.com"); })()`));
+ok("signed in: the account row sits inside the profile card, with no separate email card above it", await ev(`(()=>{ render(); const a = document.getElementById("sb-account"); return !!a && !!a.closest(".card.hero") && !a.textContent.includes("a@x.com") && document.querySelectorAll("#sb-account").length === 1; })()`));
 
 console.log("--- 3. add and delete while signed in");
 await addMeal("Egusi soup"); await sleep(2500); await synced();
