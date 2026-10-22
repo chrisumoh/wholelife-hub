@@ -3781,7 +3781,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.20", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.21", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3795,6 +3795,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.20", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.21",
+      area:"Friends",
+      title:"Blocking screen: block and unblock people from the Friends card",
+      bug:"The database could block people, but the app had no way to do it.",
+      fix:"Every friend, request and search result on the Friends card has a Block button. Blocked people move to a Blocked people list with an Unblock button. A blocked person cannot find you in search, send you a request or message, or see you online, and blocking ends any friendship. Unblocking does not bring a friendship back.",
+      where:"index.html: FR.blocks, frLoad(), frBlock(), frUnblock(), frBlockedRows(), frRows(), frPaint(), friendsCard(), the fr-block and fr-unblock cases, LS_USER_BASES. tests/browser/blocking.mjs, tests/browser/run-all.mjs. CHANGELOG.md, README.md, docs/DATABASE.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/blocking.mjs. On two friend accounts: A taps Block next to B on Settings > Household > Friends. B disappears from A's friends and from A's search results, B cannot search A, request A or message A, and A shows Offline to nobody. Unblock from the Blocked people list.",
+      limits:"No new migration. The names in the Blocked people list are kept on the device that blocked them; on another device the entry reads Blocked person until a server function can return names. No two-account live test yet." },
     { id:"8.3.20",
       area:"Phone fixes",
       title:"Side menu no longer goes black after scrolling, account row merged into the profile card, tips go to the bell",
@@ -7731,7 +7739,7 @@ const S = { profiles:[], activeId:null, logs:{}, mode:"memory" };
 const LS_KEY = "wlh.v62", LS_OLD = "wlh.v61";
 let STORE_UID = null, LEAVING = false; // account whose store is loaded (null = guest); LEAVING blocks every write while that store is being removed
 const ukey = base => STORE_UID ? `${base}@${STORE_UID}` : base;
-const LS_USER_BASES = ["wlh.v62", "wlh.v61", "wlh.notif.", "wlh.rem.", "wlh.advice."]; // every key that holds a person's data
+const LS_USER_BASES = ["wlh.v62", "wlh.v61", "wlh.notif.", "wlh.rem.", "wlh.advice.", "wlh.frblocks"]; // every key that holds a person's data
 // Remove one account's keys (uid), the guest keys (uid === null), or all of them (uid === undefined).
 function lsRemoveUserData(uid){
   try {
@@ -9152,7 +9160,11 @@ function openAcctInfo(triggerEl){
 // ---- friends and online status (8.3.7) ----
 // Opt-in: only the chosen app name is searchable. Presence is shown to accepted friends only (see DATABASE.md).
 const FR_NAME = /^[A-Za-z0-9_.-]{3,20}$/;
-const FR = { me:null, rows:[], res:null, q:"", on:false, err:false, ping:0 };
+const FR = { me:null, rows:[], res:null, q:"", on:false, err:false, ping:0, blocks:[] };
+// Blocked names are kept on this device (the server only stores ids and cannot read another person's name for us).
+const frBlockKey = () => ukey("wlh.frblocks");
+const frBlockNames = () => { try { return JSON.parse(localStorage.getItem(frBlockKey()) || "{}"); } catch { return {}; } };
+const frBlocked = id => FR.blocks.includes(id);
 const frDb = () => sbActive() ? sbClient() : null;
 const frHas = id => FR.rows.some(r => r.member_id === id);
 async function frLoad(){
@@ -9162,6 +9174,8 @@ async function frLoad(){
     if (m.error) throw m.error;
     FR.me = m.data || false;
     if (FR.me) { const r = await db.rpc("friend_list"); if (r.error) throw r.error; FR.rows = r.data || []; }
+    const b = await db.from("member_blocks").select("blocked_id"); if (b.error) throw b.error;
+    FR.blocks = (b.data || []).map(x => x.blocked_id);
     FR.on = true; FR.err = false;
   } catch (e) { FR.err = true; console.warn("Friends unavailable:", e?.code || e?.name || "error"); }
   frPaint(); frNotify();
@@ -9236,15 +9250,20 @@ setInterval(frTick, 30000);
 setTimeout(frTick, 4000);
 function frRows(){
   const pill = r => r.status !== "accepted" ? `<span class="tag">${r.incoming ? "Wants to be friends" : "Requested"}</span>` : r.online ? `<span class="neon">Online</span>` : `<span class="fr-off">Offline</span>`;
-  const btns = r => r.status === "pending" && r.incoming ? `<button class="btn sm primary" data-act="fr-accept" data-id="${esc(r.friendship_id)}">Accept</button><button class="btn sm" data-act="fr-remove" data-id="${esc(r.friendship_id)}">Decline</button>`
-    : `${r.status === "accepted" ? `<button class="btn sm primary" data-act="fm-open" data-id="${esc(r.member_id)}">Message</button>` : ""}<button class="btn sm" data-act="fr-remove" data-id="${esc(r.friendship_id)}">${r.status === "pending" ? "Cancel" : "Remove"}</button>`;
+  const btns = r => r.status === "pending" && r.incoming ? `<button class="btn sm primary" data-act="fr-accept" data-id="${esc(r.friendship_id)}">Accept</button><button class="btn sm" data-act="fr-remove" data-id="${esc(r.friendship_id)}">Decline</button><button class="btn sm" data-act="fr-block" data-id="${esc(r.member_id)}">Block</button>`
+    : `${r.status === "accepted" ? `<button class="btn sm primary" data-act="fm-open" data-id="${esc(r.member_id)}">Message</button>` : ""}<button class="btn sm" data-act="fr-remove" data-id="${esc(r.friendship_id)}">${r.status === "pending" ? "Cancel" : "Remove"}</button><button class="btn sm" data-act="fr-block" data-id="${esc(r.member_id)}">Block</button>`;
   return FR.rows.length ? FR.rows.map(r => `<div class="li fr-row"><div class="grow"><b>${esc(r.app_name)}</b><div>${pill(r)}</div></div><div class="row" style="gap:6px">${btns(r)}</div></div>`).join("")
     : `<p class="small muted">No friends yet. Search for a friend's app name above.</p>`;
 }
+function frBlockedRows(){
+  const names = frBlockNames();
+  return FR.blocks.length ? `<div class="fr-sec"><div class="fr-h">Blocked people</div>${FR.blocks.map(id => `<div class="li fr-row"><div class="grow"><b>${esc(names[id] || "Blocked person")}</b></div><button class="btn sm" data-act="fr-unblock" data-id="${esc(id)}">Unblock</button></div>`).join("")}<p class="tiny muted">Blocked people cannot find you, send requests or messages, or see you online. Unblocking does not bring a friendship back.</p></div>` : "";
+}
 function frPaint(){
   const l = document.getElementById("fr-list"); if (l) l.innerHTML = frRows();
+  const bl = document.getElementById("fr-blocked"); if (bl) bl.innerHTML = frBlockedRows();
   const s = document.getElementById("fr-res");
-  if (s && FR.res) s.innerHTML = FR.res.length ? FR.res.map(m => `<div class="li"><b>${esc(m.app_name)}</b>${frHas(m.member_id) ? `<span class="tag">Added</span>` : `<button class="btn sm primary" data-act="fr-add" data-id="${esc(m.member_id)}">Add</button>`}</div>`).join("") : `<p class="small muted">No one found. People only show up if they chose to be searchable.</p>`;
+  if (s && FR.res) s.innerHTML = FR.res.length ? FR.res.map(m => `<div class="li"><b>${esc(m.app_name)}</b>${frHas(m.member_id) ? `<span class="tag">Added</span>` : `<span class="row" style="gap:6px"><button class="btn sm primary" data-act="fr-add" data-id="${esc(m.member_id)}">Add</button><button class="btn sm" data-act="fr-block" data-id="${esc(m.member_id)}">Block</button></span>`}</div>`).join("") : `<p class="small muted">No one found. People only show up if they chose to be searchable.</p>`;
 }
 function friendsCard(){
   const head = `<div class="eyebrow">Friends</div><h2 style="margin-top:4px">Friends and online status</h2>`;
@@ -9262,7 +9281,7 @@ function friendsCard(){
     ${FR.me ? `<form data-form="fr-search" class="fr-sec"><label class="fr-h" for="fr-q">Find a friend</label>
       <div class="fr-line"><input id="fr-q" minlength="3" maxlength="20" autocomplete="off" placeholder="Their app name" value="${esc(FR.q)}"><button class="btn" type="submit">Search</button></div></form>
     <div id="fr-res" aria-live="polite"></div>
-    <div class="fr-sec"><div class="fr-h">Your friends</div><div id="fr-list" aria-live="polite">${frRows()}</div></div><div id="fm">${fmView()}</div>
+    <div class="fr-sec"><div class="fr-h">Your friends</div><div id="fr-list" aria-live="polite">${frRows()}</div></div><div id="fr-blocked" aria-live="polite">${frBlockedRows()}</div><div id="fm">${fmView()}</div>
     <div class="fr-foot"><button class="btn sm ghost" type="button" data-act="fr-leave">Leave friends</button><span class="tiny muted">Deletes your name and requests.</span></div>` : ""}
   </section>`;
 }
@@ -9288,6 +9307,23 @@ async function frAct(act, id){
     : await db.from("friendships").delete().eq("id", id);
   if (r.error) { toast(r.error.code === "23505" ? "Already added." : "That did not work. Try again.", "warn"); return; }
   await frLoad(); toast(act === "fr-add" ? "Request sent." : act === "fr-accept" ? "Friend added." : "Done.");
+}
+async function frBlock(id){
+  const db = frDb(); if (!db || !id || frBlocked(id)) return;
+  const name = (FR.rows.find(r => r.member_id === id) || (FR.res || []).find(m => m.member_id === id) || {}).app_name;
+  const r = await db.from("member_blocks").insert({ blocked_id: id });
+  if (r.error && r.error.code !== "23505") { toast("Could not block. Try again.", "warn"); return; }
+  if (name) try { localStorage.setItem(frBlockKey(), JSON.stringify({ ...frBlockNames(), [id]: name })); } catch {}
+  if (FM.with === id) FM.with = null;
+  if (FR.res) FR.res = FR.res.filter(m => m.member_id !== id);
+  await frLoad(); fmPaint(); toast("Blocked. They can no longer find or contact you.");
+}
+async function frUnblock(id){
+  const db = frDb(); if (!db) return;
+  const r = await db.from("member_blocks").delete().eq("blocked_id", id);
+  if (r.error) { toast("Could not unblock. Try again.", "warn"); return; }
+  try { const n = frBlockNames(); delete n[id]; localStorage.setItem(frBlockKey(), JSON.stringify(n)); } catch {}
+  await frLoad(); toast("Unblocked.");
 }
 async function frLeave(){
   const db = frDb(); if (!db) return;
@@ -13088,6 +13124,8 @@ document.addEventListener("click", async e => {
       saveProfile(); render();
       toast(p.targetKg ? `Targets saved. Goal weight ${fmtWeight(p.targetKg, p)}.` : "Targets saved", "success"); break; }
     case "fr-add": case "fr-accept": case "fr-remove": frAct(a, t.dataset.id); break;
+    case "fr-block": frBlock(t.dataset.id); break;
+    case "fr-unblock": frUnblock(t.dataset.id); break;
     case "fr-leave": frLeave(); break;
     case "fr-sw": t.setAttribute("aria-checked", t.getAttribute("aria-checked") !== "true"); if (FR.me) frSaveMe(); break;
     case "fm-open": FM.with = t.dataset.id; fmPaint(); fmLoad(); document.getElementById("fm-in")?.focus(); break;

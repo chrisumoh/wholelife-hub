@@ -113,7 +113,7 @@ Opt-in social layer, no health data. All three tables have RLS on and no `anon` 
 
 - `member_names` (one row per account): `app_name` (3 to 20 of `A-Za-z0-9_.-`, unique ignoring case), `discoverable` (default false), `show_presence` (default true), `last_seen_at`. Owner-only policy. The app can write only the first three columns; `last_seen_at` is set by `member_ping()`.
 - `friendships`: `requester_id`, `addressee_id`, `status` (`pending` or `accepted`), one row per pair. Either party reads or deletes it; only the requester inserts (pending) and only the addressee accepts.
-- `member_blocks`: owner and blocked account. A blocked account cannot send a request, and blocking removes an existing friendship. No screen uses it yet.
+- `member_blocks`: owner and blocked account. A blocked account cannot send a request, and blocking removes an existing friendship. The Friends card blocks and unblocks through it (8.3.21); the app reads only the blocked ids, so names shown in the Blocked people list are kept on the device.
 - `search_members(q)`: security definer, 3+ characters, name prefix, discoverable accounts only, never yourself or anyone who blocked you, 10 results. Returns name and id only.
 - `friend_list()`: your friendships with the other person's name and, for accepted friends who allow it, `online` (seen within 2 minutes).
 - Search and presence are the only way to see another account's row; there is no select policy on another person's `member_names`.
