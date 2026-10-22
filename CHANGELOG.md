@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.7, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.8, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.8 · Summary: Activity rings card: pick a day, rings draw in one by one
+
+- **Problem:** The rings card only showed today, and all three rings filled in at once.
+- **Change:** The rings card has a strip of the last seven days under the title, each with a tiny ring showing how many of the three closed. Tap a day to see that day's rings, numbers and legend (Exercise counts that week up to the chosen day). The dial shows how many are closed in the middle, and the rings now draw in one after another, outer ring first. Reduced motion skips the animation. No data changes.
+- **Where:** `index.html`: `RING_DEFS` (get takes the date), `ringData()`, `ringsDial()`, `ringsCard()`, the `ring-day` click case, CSS `.rdays` and `.rday` next to the rings CSS, `APP_VERSION` and the change log. `CHANGELOG.md`, `README.md`, `docs/BUILD_PLAN.md`.
+- **How to test:** Open Summary: tap each day in the strip and check the numbers match that day's meals, workouts and water. Reload and watch the rings draw outer to inner. Tab to the day buttons and press Enter.
+- **Known limits:** The day strip covers the last seven days only. Built to match the style of an Untitled UI activity rings card from the pasted import line; the component source was not available, so it is not an exact copy.
 
 ## 8.3.7 · Household: Find friends by app name and see who is online
 
