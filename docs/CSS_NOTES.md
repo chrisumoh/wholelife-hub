@@ -869,3 +869,101 @@ Historical explanations moved from inline styles in build 8.2.23 to reduce the a
    the card's edge. Same layers and maths as the React version; the card's own ::before/::after
    are already used by the app (the sheen), so the three layers are real child elements here. */
 ```
+
+## 87
+
+```css
+/* 8.1.10 bug fix: the coach-advice footnote (.faint) measured 4.27:1 on the dark card, under WCAG AA 4.5:1;
+   it only shows for some advice items, which is why earlier daytime sweeps missed it. */
+```
+
+## 88
+
+```css
+/* The wipe clips the top image rather than narrowing it: a narrowed box would squeeze the photo
+   into the strip instead of revealing the left of a full-size one, and the two would not line up. */
+```
+
+## 89
+
+```css
+/* One timing system. Every signature motion uses only transform, opacity or stroke-dashoffset,
+   moves at most two elements, and plays once — on hover, and once when its page is arrived at. */
+```
+
+## 90
+
+```css
+/* the toggle stays put and clickable above the open drawer: if the large header has scrolled
+     away, the compact bar keeps just its toggle on screen while the rest of the bar stays hidden */
+```
+
+## 91
+
+```css
+/* The right cluster may never spill over the toggle: it shrinks inside its grid column, the
+   time and bell keep their size, and a long title steps its font down to fit (fitHeadTitle). */
+```
+
+## 92
+
+```css
+/* v9.1 TASK 5 sweep: dropped a redundant per-button focus-visible override (currentColor,
+   no radius-match) -- the global :focus-visible rule already covers every element site-wide. */
+```
+
+## 93
+
+```css
+/* StatusMark (React Bits), state read from [data-sm-status] on the mark's root -- a .status-mark
+   span or a checklist row's label. Done/error colors come from the component config. */
+```
+
+## 94
+
+```css
+/* On a narrow phone "Good afternoon, Christopher" is longer than the strip, and an ellipsis
+   in the middle of someone's own name reads as a bug. Let it size down and wrap instead. */
+```
+
+## 95
+
+```css
+/* The two ends sit on their own row under the dots. Squeezing them onto the dot row meant they
+   wrapped to full-width lines of their own on a phone, which read as two stray words. */
+```
+
+## 96
+
+```css
+/* Phase 6 TASK 6.7: the group label is now a real disclosure button (collapsible, state
+   remembered) instead of a static heading -- same look, so the regroup itself is invisible. */
+```
+
+## 97
+
+```css
+/* 8.1.6: Log / Plan / Progress are plain labels again (nothing collapses). Premium + Settings sit
+   below a hairline so the account-ish rows read as separate from the daily ones. */
+```
+
+## 98
+
+```css
+/* Tap targets: nothing smaller than a fingertip. .nav a already carries its own 40px
+     min-height/12px padding (v9.1 Task 3) so no mobile-only override is needed here anymore. */
+```
+
+## 99
+
+```css
+/* The print sheet is off-screen until the browser asks for pages. Nothing is captured as an
+   image, so the text stays selectable and the reader's own font settings still apply. */
+```
+
+## 100
+
+```css
+/* The label takes the slack so every switch lines up in one column, whatever the description
+   length. Without this each row sat at its own x and the set read as a ragged edge. */
+```

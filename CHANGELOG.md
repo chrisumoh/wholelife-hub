@@ -13,6 +13,15 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 - **Where:** index.html: swipeToast() (rich option, X button), ST_ICONS.info, CSS .swipe-toast[data-rich] and .swipe-toast__x, frSeen(), frNotify(), frLoad(), chLoad(), notify(), the log-workout case. tests/browser/toasts.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
 - **How to test:** Run node tests/browser/toasts.mjs. By hand: log a workout on Workouts, a green card appears. With two friend accounts, send a request and wait up to 30 seconds: the other account gets a card and a bell entry.
 - **Known limits:** There is no friend-to-friend messaging yet, so only requests and invites notify. Friends starting a workout is not announced. Alerts arrive on the 30 second friends refresh while the app is open, not when it is closed. No avatar or online dot on the card yet. Checked in headless Chrome with a faked Supabase.
+Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.14 · Recipes: Recipe and meal plan cards match Food culture, with page numbers
+
+- **Problem:** Recipe and meal plan cards looked different from the Food culture cards, the open-up animation bounced, the grid left ragged rows, and Browse all dishes dumped every dish on one page.
+- **Change:** Recipe and plan cards now use the Food culture layout (cuisine label, name, calories). The preview opens smoothly with no bounce. The library is a tidy grid of 12 dishes a page and the meal plan shows one day a page, both with a Previous / Next pager and page numbers.
+- **Where:** index.html: pager(), recipesView(), planView(), the pg action, .dpv and .pager CSS, APP_VERSION, WLH.changelog. tests/browser/compact.mjs. docs/CSS_NOTES.md (comments moved to make room), CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open Recipes: page through the library and the plan, hover or tap a dish arrow. node tests/browser/compact.mjs.
+- **Known limits:** Dish names longer than the card are cut with an ellipsis (full name on hover). Checked in headless Chrome only.
 
 ## 8.3.13 · Summary: Pinned cards no longer flicker or go black when you move the mouse over them after a flip
 
