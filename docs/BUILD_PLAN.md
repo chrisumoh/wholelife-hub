@@ -8,7 +8,6 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Phase | Contents | Status |
 |---|---|---|
-| 8.3.17 | Friends: messages between accepted friends (new `friend_messages` table) | IN PROGRESS: claude/project-thread-qrbmf2 |
 | 1 | Bug fixes: duplicate avatar, clipped text, menu-over-Settings layering glitch, Settings tabs | DONE (already fixed in earlier builds; checked at 375px and 820px in 8.2.21) |
 | 2 | Premium system: purchase-gated flag, badges, Telegram-style premium screen | DONE except payments (receipt dialog ready from 8.3.2; isPremium flag, dev override and premium screen exist; BETA_OPEN is on; prices and checkout are placeholders) |
 | 3 | Coach: full data access + personalized advice card (9 rules) | PARTLY DONE: advice card built; 8.2.21 adds repeat marking and the evening review. No protein advice (calories only); Task 3.1 plan adjustments not audited |
@@ -22,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.17 | Friends: messages between accepted friends (new `friend_messages` table) | IN PROGRESS: claude/project-thread-qrbmf2 |
 | 8.3.16 | Summary and Workouts: weekly stat cards compared with last week | IN PROGRESS: claude/project-thread-wk0x38 |
 | 8.3.15 | Notifications: rich pop-up cards for friend requests, challenge invites and saved workouts | IN PROGRESS: claude/project-thread-qrbmf2 |
 | 8.3.14 | Recipes: recipe and meal plan cards match Food culture; pager (12 dishes / 1 plan day a page) | IN PROGRESS: claude/project-thread-5uw7hi |
