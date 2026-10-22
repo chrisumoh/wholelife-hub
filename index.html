@@ -3781,7 +3781,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.23", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.24", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3795,7 +3795,7 @@ const APP_VERSION = { update: "8.3", build: "8.3.23", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
-    { id:"8.3.23",
+    { id:"8.3.24",
       area:"Install and errors",
       title:"Install manifest, offline service worker and an error-tracking starter (not switched on yet)",
       bug:"Whole Life Hub could not be installed to a phone's home screen, worked poorly on a bad connection, and a bug in a tester's browser was invisible unless they reported it. A review of main found all three. The first version of the kit also had faults that would have stopped it working once switched on: its icon file did not exist (so the service worker would have failed to install and the manifest had no usable icon), error reports were sent in a form the database rejects, and a second theme colour tag would have clashed with the page's own.",
@@ -3803,6 +3803,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.23", channel: "Dev Testing", da
       where:"manifest.webmanifest, sw.js, observability.js, img/icon-192.png, img/icon-512.png, docs/APP_READINESS.md, tests/pwa-kit.cjs (new, 12 checks), .github/workflows/tests.yml (runs it), APP_VERSION and the change log in index.html, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.",
       test:"node --test tests/pwa-kit.cjs (the manifest's icons exist at the size they claim and its colour matches the page; the worker installs with a file missing, ignores writes and other sites, keeps only a good app page and answers offline from it; the reporter sends JSON, the path only, once, and stops at 20; a token in a web address or in error text never reaches a report; a 503 or 429 is retried then dropped, a 401 or 404 is not retried). node tests/check-repo.mjs. After wiring (docs/APP_READINESS.md): on a preview, DevTools > Application shows the manifest and an activated worker, the app offers to install, and it opens offline.",
       limits:"Not wired into index.html, so nothing changes until the lines in docs/APP_READINESS.md are pasted in. Collecting reports needs a new error_reports table in Supabase (SQL in the doc), which needs approval before it is run. A worker that takes over at once can mix an old page with a new script for one load. The icons are the logo on its own rounded square, not designer artwork; no maskable version yet. Not tried on a real phone." },
+    { id:"8.3.23",
+      area:"Premium",
+      title:"Lemon Squeezy checkout, licence key check and a Save yearly option",
+      bug:"Premium could not be bought: the slide-to-pay only said Not available yet, licence keys were never checked, and the plan rows showed placeholder text such as [PRICE] and Save [REAL %]. There was no yearly saving on the Premium screens.",
+      fix:"Sliding to pay (or Settings > Premium > Choose Monthly or Yearly) opens that plan's Lemon Squeezy checkout in a new tab; the slide then says Checkout opened, never Paid. After paying, the buyer pastes the key from the order email into Settings > Premium. A new Supabase edge function called license (supabase/functions/license, not yet deployed) activates the key with Lemon Squeezy, checks it belongs to our store and product, reads the order and returns the plan and the real receipt (items, tax, total, currency, order number, date) for the 8.3.2 receipt animation. Each profile's key and device id stay on the device under its account, never shared between profiles; once a day the app asks again and ends Premium only on a clear expired, refunded or invalid answer, never when offline, rate limited or when Lemon Squeezy has an outage (the function answers error for those). A slow answer that arrives after the profile changed is dropped. The Premium panel, Terms and Refunds no longer say payments are not live, and Settings > Premium has a Manage subscription link to Lemon Squeezy's My Orders page for cancelling. The yearly row now says Save yearly, and shows Save 37% worked out from the two real prices ($7.99 monthly, $59.99 yearly); if prices are ever missing, no price or percentage is shown. The ?previewreceipt=1 link is unchanged.",
+      where:"index.html: CHECKOUT_URLS, planPrice(), planSavePct(), premiumHub() plan rows and fine print, premiumCtaTap(), scCommit() and the Checkout opened label, the plan-pick case, the Settings > Premium plan cards, validateLicenseKey(), licCall(), licRecheck(), activateLicense(), CSS .sc-t-open. supabase/functions/license/index.ts, handler.ts and logic.ts (new), LS_USER_BASES, dropProfile(), subscriptionPanel(), termsView() and the Refunds page copy. tests/browser/slidepay.mjs (22 new checks), tests/license-logic.test.mjs (new, 6 checks), tests/license-handler.test.mjs (new, 13 checks). docs/DATABASE.md, docs/SECURITY.md, APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/slidepay.mjs and node --test tests/license-logic.test.mjs tests/license-handler.test.mjs. By hand, once the function is deployed in test mode: open /?premium=0#/premium, slide to pay, the Lemon Squeezy test checkout opens; pay with their test card, copy the key from the email, paste it in Settings > Premium and press Activate. Premium turns on and the receipt prints. Try a wrong key and see a plain message.",
+      limits:"The license function is deployed with CJ's go and its secrets are set in Supabase, and a test-mode purchase worked on the preview. It still uses test-mode keys and links (LEMONSQUEEZY_ALLOW_TEST=1); before real sales switch the API key, both product ids and the two checkout links to live mode and drop that switch. The prices on screen ($7.99 a month, $59.99 a year, giving Save 37%) are set in PREMIUM_PLANS and must be kept equal to the prices on the Lemon Squeezy variants. The receipt reads the order with the API key, which must be a test-mode key while testing. Renewals and cancellations are only noticed by the daily re-check, so a refund can take up to a day to end Premium. The licence call is not rate limited by us. Beta stays open (BETA_OPEN), so testers still see everything unlocked." },
     { id:"8.3.22",
       area:"Docs",
       title:"Review rule names Codex, not Greptile; build plan marks Phase 4 (fonts) done",
@@ -6980,9 +6988,29 @@ const PREMIUM_PHASES = { 1:"Food and nutrition", 2:"Training and body", 3:"Coach
 // Plan cards. Prices are deliberately absent until a processor is live: showing a number the
 // app cannot charge would be a lie told in the interface.
 const PREMIUM_PLANS = [
-  { k:"monthly", name:"Monthly",  price:"TBA", note:"Billed every month. Cancel any time." },
-  { k:"yearly",  name:"Yearly",   price:"TBA", note:"Billed once a year. The cheaper of the two.", best:true }
+  { k:"monthly", name:"Monthly",  price:"TBA", amount:7.99,  cur:"USD", note:"Billed every month. Cancel any time." },
+  { k:"yearly",  name:"Yearly",   price:"TBA", amount:59.99, cur:"USD", note:"Billed once a year. The cheaper of the two.", best:true }
 ];
+// Lemon Squeezy hosted checkout links (public). `amount` and `cur` on PREMIUM_PLANS must match the price set on each
+// Lemon Squeezy variant (CJ, 2026-10-22: $7.99 monthly, $59.99 yearly); the screens show them and work out the yearly saving.
+// An empty link keeps that plan on "Not available yet".
+const CHECKOUT_URLS = {
+  monthly:"https://wholelife.lemonsqueezy.com/checkout/buy/1529f71b-22cb-42d9-b615-1d2046e2ecfc",
+  yearly:"https://wholelife.lemonsqueezy.com/checkout/buy/ec3b118f-7db1-4f0a-b4cd-e5e63c7183d1"
+};
+function planPrice(k){
+  const pl = PREMIUM_PLANS.find(x => x.k === k);
+  if (!pl || typeof pl.amount !== "number" || !/^[A-Z]{3}$/.test(pl.cur || "")) return null;
+  try { return new Intl.NumberFormat(undefined, { style:"currency", currency:pl.cur }).format(pl.amount) + (k === "yearly" ? " / year" : " / month"); }
+  catch { return null; }
+}
+// Percent saved by paying yearly, from the two real prices only; null until both are set.
+function planSavePct(){
+  const m = PREMIUM_PLANS.find(x => x.k === "monthly"), y = PREMIUM_PLANS.find(x => x.k === "yearly");
+  if (typeof m?.amount !== "number" || typeof y?.amount !== "number" || m.cur !== y.cur || m.amount <= 0) return null;
+  const pct = Math.round((1 - y.amount / (m.amount * 12)) * 100);
+  return pct > 0 ? pct : null;
+}
 
 // ---------- Beta owner unlock ----------
 // The code itself is never in the source. What ships is SHA-256 of salt + code, compared
@@ -7755,7 +7783,7 @@ const S = { profiles:[], activeId:null, logs:{}, mode:"memory" };
 const LS_KEY = "wlh.v62", LS_OLD = "wlh.v61";
 let STORE_UID = null, LEAVING = false; // account whose store is loaded (null = guest); LEAVING blocks every write while that store is being removed
 const ukey = base => STORE_UID ? `${base}@${STORE_UID}` : base;
-const LS_USER_BASES = ["wlh.v62", "wlh.v61", "wlh.notif.", "wlh.rem.", "wlh.advice.", "wlh.frblocks"]; // every key that holds a person's data
+const LS_USER_BASES = ["wlh.v62", "wlh.v61", "wlh.notif.", "wlh.rem.", "wlh.advice.", "wlh.frblocks", "wlh.lic"]; // every key that holds a person's data
 // Remove one account's keys (uid), the guest keys (uid === null), or all of them (uid === undefined).
 function lsRemoveUserData(uid){
   try {
@@ -7977,7 +8005,7 @@ function sbProfFromRow(r){
 function dropProfile(id){
   S.profiles = S.profiles.filter(x => x.id !== id);
   for (const m in (S.logs[id] || {})) { delete S.logs[id][m]; markLog(id, m); }
-  delete S.logs[id]; if (S.activeId === id) S.activeId = S.profiles[0]?.id || null;
+  licSave(id, null); delete S.logs[id]; if (S.activeId === id) S.activeId = S.profiles[0]?.id || null;
 }
 // Change tracking for profiles: markRoot() calls this, like markLog() calls sbTrack() for meals. Waits for the first sync
 // (SB.started): that one decides, per profile, whether this device or the account has the newer copy.
@@ -13295,6 +13323,7 @@ document.addEventListener("input", e => {
   // ?previewreceipt=1 shows the receipt with made-up sample numbers so its design can be seen. It reads nothing and writes nothing:
   // no purchase happens, and isPremium() and the saved entitlement are untouched.
   try { if (new URLSearchParams(location.search).get("previewreceipt") === "1" && typeof showPurchaseReceipt === "function") setTimeout(() => showPurchaseReceipt({ orderNo:"SAMPLE", date:"SAMPLE PREVIEW", currency:"USD", items:[{ label:"Premium Monthly (sample)", amount:10 }], taxes:[{ label:"Tax (sample)", amount:2 }], total:12 }, "monthly", true), 400); } catch {}
+  setTimeout(() => { try { licRecheck(); } catch {} }, 4000);
   if (UI.premiumWanted) { UI.premiumWanted = false; if (typeof afterPremiumBlock === "function") afterPremiumBlock(); }
   // Probe optional capabilities quietly (no prompts until used)
   window.claude?.use?.("sample").then(s => { if (!s) { UI.sampleOk = false; render(); } });
@@ -16712,7 +16741,7 @@ function termsView(){
     <p>Coach sharing is the one feature here where another person can see something about you, once you choose what and it has somewhere to go (see the Privacy Policy, section 3, for why that link isn't live yet). When it is: no harassment, no illegal or sexually explicit content, and no giving medical advice to another person through it. We can remove content that breaks these rules and suspend a profile's access to shared features; nothing else you've logged is touched by that. Family challenges and Community recipes are not built yet, so these rules will apply to them too once they are.</p>
 
     <h3>Subscription terms</h3>
-    <p>Premium is billed on the plan and price shown on the Premium screen at the time you subscribe, renews automatically until you cancel, and can be cancelled from Settings &gt; Premium at any time — cancelling stops the next renewal but does not retroactively refund the current period except as described on the <a href="#/refunds">Refunds page</a>. Payments are not live yet in this build; the Premium screen says so plainly rather than pretending otherwise, and nothing can be charged until they are.</p>
+    <p>Premium is billed on the plan and price shown on the Premium screen at the time you subscribe, renews automatically until you cancel, and can be cancelled from Settings &gt; Premium at any time — cancelling stops the next renewal but does not retroactively refund the current period except as described on the <a href="#/refunds">Refunds page</a>. Payments are taken by Lemon Squeezy, our payment provider, on its own checkout page; the app never sees your card details, and nothing is charged until you confirm there.</p>
 
     <h3>Your responsibilities</h3>
     <p>You are responsible for what you log, for keeping your own passcode safe, and for deciding what to do with what the app shows you. Because a passcode encrypts the copy of your data on your own device and is never stored anywhere, nobody can reset it for you. If you lose it, the copy on that device is gone. A passcode is not a backup and does not protect your account's copy: signing in on a device again brings the data back from your account.</p>
@@ -16732,10 +16761,10 @@ function refundsView(){
     <div class="eyebrow">Legal</div>
     <h2>Refunds &amp; cancellation</h2>
     <p class="small muted">Last updated: ${esc(LEGAL_UPDATED)}</p>
-    <p>Payments are not live in this build yet (see the Premium screen and the Terms). Nothing can be charged today, so nothing needs refunding today — this page is the policy that will apply once subscriptions go live, written now so it's in place before they do.</p>
+    <p>Payments are taken by Lemon Squeezy, our payment provider, on its own checkout page, and nothing is charged until you confirm there. This page is the refund policy for those payments.</p>
 
     <h3>How to cancel</h3>
-    <p>Cancel any time from <a href="#/settings/premium">Settings &gt; Premium</a>. Cancelling stops the next renewal; you keep Premium access for the rest of the period you already paid for.</p>
+    <p>Cancel any time from <a href="#/settings/premium">Settings &gt; Premium</a> &gt; Manage subscription, which opens Lemon Squeezy's My Orders page (sign in with the email you bought with). Cancelling stops the next renewal; you keep Premium access for the rest of the period you already paid for.</p>
 
     <h3>What happens after cancelling</h3>
     <p>Premium features stop working at the end of the period you already paid for. Everything you logged stays exactly where it is — cancelling never deletes or hides your meals, workouts, weigh-ins or history, only the Premium features themselves.</p>
@@ -17838,7 +17867,7 @@ function premiumHub(p){
       <input type="radio" name="prem-plan" value="${pl.k}" ${sel ? "checked" : ""}>
       <span class="ps-check">${icon("check","",13)}</span>
       <span class="grow"><b>${esc(pl.name)}</b><span class="tiny muted">${pl.k === "yearly" ? "12 months" : "Billed monthly"}</span></span>
-      <span class="ps-meta">${pl.k === "yearly" ? `<span class="ps-disc">Save [REAL %]</span>` : ""}<span class="ps-price">[PRICE]/mo</span></span>
+      <span class="ps-meta">${pl.k === "yearly" ? `<span class="ps-disc">${planSavePct() ? "Save " + planSavePct() + "%" : "Save yearly"}</span>` : ""}<span class="ps-price">${esc(planPrice(pl.k) || "Price TBA")}</span></span>
     </label>`;
   };
   return `
@@ -17875,19 +17904,19 @@ function premiumHub(p){
     </div>
   </section>
   ${on ? "" : `<div class="prem-cta-bar">${slidePayHTML(plan === "yearly" ? "Annual" : "Monthly")}
-    <p class="tiny muted prem-cta-fine">[PRICE] billed ${plan === "yearly" ? "once a year" : "every month"}, renews automatically until you cancel. Cancel any time in Settings &gt; Premium — see <a href="#/refunds">Refunds</a>.</p></div>`}
+    <p class="tiny muted prem-cta-fine">${esc(planPrice(plan) || "Price to be announced,")} billed ${plan === "yearly" ? "once a year" : "every month"}, renews automatically until you cancel. Cancel any time in Settings &gt; Premium &gt; Manage subscription — see <a href="#/refunds">Refunds</a>.</p></div>`}
   </div>
   ${subscriptionPanel(p)}`;
 }
-// TODO(payment): wire the real processor here (see the architecture note at the top of this
-// file). This click currently does nothing but say so -- it must never simulate success.
-//   1. On "prem-cta": open the processor's hosted checkout for UI.premPlan (or route to
-//      Settings > Premium > "Have a license key?" if going the license-key route instead).
-//   2. On the processor's success callback/webhook: call setPremium("purchase", expires) --
-//      that's the one function that's allowed to flip the entitlement on.
-//   3. [PRICE] and [REAL PERCENTAGE] above are placeholders on purpose (see PREMIUM_PLANS in
-//      data8.js): fill in real numbers there once a plan and processor are chosen.
-function premiumCtaTap(){ toast("Payments aren't live yet — coming soon."); }
+// Opens the chosen plan's Lemon Squeezy checkout in a new tab. The entitlement is never written here: it only turns on
+// when a licence key from the order email passes validateLicenseKey(). Returns false while a plan has no link.
+function premiumCtaTap(plan = UI.premPlan){
+  const url = CHECKOUT_URLS[plan === "monthly" ? "monthly" : "yearly"];
+  if (!url) { toast("Payments aren't live yet — coming soon."); return false; }
+  const a = document.createElement("a"); a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer"; a.click();
+  toast("Checkout opened. After you pay, paste the key from your email in Settings > Premium.");
+  return true;
+}
 
 // ---- slide to pay ----
 // An original vanilla take on a slide-to-confirm control (the idea is common; no third-party code is used). Payments are not live, so
@@ -17895,7 +17924,7 @@ function premiumCtaTap(){ toast("Payments aren't live yet — coming soon."); }
 const SC_PAD = 4;
 const slidePayHTML = plan => `<div class="sc" data-phase="idle">
     <div class="sc-track"><span class="sc-fill" aria-hidden="true"></span>
-      <span class="sc-label" aria-hidden="true"><span class="sc-t-plain">Slide to pay</span><span class="sc-t-err">Not available yet</span></span>
+      <span class="sc-label" aria-hidden="true"><span class="sc-t-plain">Slide to pay</span><span class="sc-t-err">Not available yet</span><span class="sc-t-open">Checkout opened</span></span>
       <div class="sc-handle" role="slider" tabindex="0" aria-label="Slide to pay, ${esc(plan)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Slide to pay, 0%">${icon("chevR","",22)}</div></div>
     <span class="sc-sr" role="status"></span></div>`;
 const scTravel = el => Math.max(1, el.querySelector(".sc-track").clientWidth - el.querySelector(".sc-handle").offsetWidth - SC_PAD * 2);
@@ -17907,8 +17936,8 @@ function scMove(el, x){
 function scCommit(el){
   if (el.dataset.phase !== "idle") return;
   const t = scTravel(el); scMove(el, t);
-  premiumCtaTap(); // never simulates success: payments are not live, so this ends in the error state below
-  el.dataset.phase = "error"; el.querySelector(".sc-sr").textContent = "Not available yet. Payments aren't live.";
+  const opened = premiumCtaTap(); // never simulates success: a paid state only follows a validated licence key
+  el.dataset.phase = opened ? "open" : "error"; el.querySelector(".sc-sr").textContent = opened ? "Checkout opened in a new tab." : "Not available yet. Payments aren't live.";
   setTimeout(() => { if (el.isConnected) scMove(el, 0); }, 300);
   setTimeout(() => { if (el.isConnected) { el.dataset.phase = "idle"; el.querySelector(".sc-sr").textContent = ""; } }, 1800);
 }
@@ -17953,29 +17982,34 @@ function subscriptionPanel(p){
       ${factRow("Renews or expires", p.premium?.expires ? fmtDay(p.premium.expires) : on ? "No end date" : "—")}
     </dl>
     <p class="small muted" style="margin-top:10px">${BETA_OPEN
-      ? "Open beta: every feature is unlocked for everyone who opens the app, so testers never meet a paywall. Payments are not live and nothing in here can charge you."
-      : "Payments are not live yet. While the app is in beta every premium feature is free, and nothing in here can charge you."}</p>
+      ? "Open beta: every feature is unlocked for everyone who opens the app, so testers never meet a paywall. Choosing a plan below opens Lemon Squeezy's secure checkout in a new tab; you are charged only there, after you confirm."
+      : "Choosing a plan opens Lemon Squeezy's secure checkout in a new tab. You are charged only there, after you confirm, and the app unlocks Premium when you paste the key from your email."}</p>
 
     <div class="setgroup"><div class="setlabel">Plans</div>
       <div class="grid g2 plangrid">${PREMIUM_PLANS.map(pl => `
         <div class="plancard${pl.best ? " best" : ""}">
           ${pl.best ? `<span class="planflag">Best value</span>` : ""}
           <b>${esc(pl.name)}</b>
-          <span class="planprice">${esc(pl.price)}</span>
-          <span class="tiny muted">${esc(pl.note)}</span>
-          <button class="btn sm" data-act="plan-pick" data-v="${pl.k}" disabled>Not available in beta</button>
+          <span class="planprice">${esc(planPrice(pl.k) || pl.price)}</span>
+          <span class="tiny muted">${esc(pl.note)}${pl.k === "yearly" ? esc(planSavePct() ? ` Save ${planSavePct()}% against paying monthly.` : " Save more than paying monthly.") : ""}</span>
+          <button class="btn sm" data-act="plan-pick" data-v="${pl.k}"${CHECKOUT_URLS[pl.k] ? "" : " disabled"}>${CHECKOUT_URLS[pl.k] ? "Choose " + esc(pl.name) : "Not available yet"}</button>
         </div>`).join("")}</div>
-      <span class="tiny muted">Prices are marked TBA on purpose: showing a number the app cannot charge would be a lie.</span>
+      <span class="tiny muted">A price shows only once it is set. Checkout opens in a new tab; paste the key from your email below.</span>
     </dl>
 
     <div class="setgroup"><div class="setlabel">Have a license key?</div>
       <form class="row" data-form="license" style="gap:8px;flex-wrap:wrap">
         <label class="f grow" style="flex:1;min-width:200px"><span class="tiny muted">License key</span>
-          <input type="text" id="lic-key" maxlength="64" autocomplete="off" spellcheck="false" placeholder="WLH-XXXX-XXXX-XXXX"></label>
+          <input type="text" id="lic-key" maxlength="64" autocomplete="off" spellcheck="false" placeholder="Paste your key"></label>
         <button class="btn" type="submit"${UI.licBusy ? " disabled" : ""}>${UI.licBusy ? "Checking…" : "Activate"}</button>
       </form>
       ${lic ? `<div class="note${lic.ok ? " good" : ""}">${esc(lic.msg)}</div>` : ""}
-      <span class="tiny muted">Keys are issued by the payment processor after checkout. None exist yet.</span>
+      <span class="tiny muted">Lemon Squeezy emails your key after checkout. Paste it here to turn Premium on.</span>
+    </div>
+
+    <div class="setgroup"><div class="setlabel">Manage subscription</div>
+      <span class="tiny muted">To cancel, change your card or find a receipt, open My Orders at Lemon Squeezy and sign in with the email you bought with. Cancelling stops the next renewal; Premium stays on until the period you paid for ends.</span>
+      <a class="btn sm" href="https://app.lemonsqueezy.com/my-orders" target="_blank" rel="noopener noreferrer" style="margin-top:8px">Manage subscription</a>
     </dl>
 
     <div class="setgroup"><div class="setlabel">Debugging</div>
@@ -18125,33 +18159,59 @@ function ownerMark(){
     <span class="tiny faint">Whole Life Hub · Update ${APP_VERSION.update} (${APP_VERSION.channel})</span></div>`;
 }
 
-// ---------- License activation stub ----------
-// The real flow, with nothing filled in. Every piece the live version needs is here: the call
-// site, the three response shapes, the entitlement write and the error paths.
+// ---------- License activation ----------
+// The key is checked by the `license` edge function (supabase/functions/license), which holds the Lemon Squeezy API key
+// and reads the order for the receipt. This file never sees a secret. Each profile's key and device id are kept on this
+// device only, under its account (wlh.lic@<account>, a map by profile id), so one profile's key can never decide another's
+// Premium; a later re-check can then end Premium after a refund or a cancelled subscription.
+function licMap(){ try { return JSON.parse(localStorage.getItem(ukey("wlh.lic")) || "{}") || {}; } catch { return {}; } }
+const licLoad = pid => licMap()[pid] || null;
+function licSave(pid, v){ // a declaration, so dropProfile() can call it whenever it runs
+  if (LEAVING || !pid) return;
+  try { const m = licMap(); if (v) m[pid] = v; else delete m[pid]; Object.keys(m).length ? localStorage.setItem(ukey("wlh.lic"), JSON.stringify(m)) : localStorage.removeItem(ukey("wlh.lic")); } catch {}
+}
+async function licCall(body){
+  const r = await fetch(`${SB_URL}/functions/v1/license`, { method:"POST", headers:{ "content-type":"application/json", apikey:SB_KEY }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error("license " + r.status);
+  return r.json();
+}
 async function validateLicenseKey(key){
   const k = String(key || "").trim();
   if (!k) return { state:"invalid", message:"Enter a license key first." };
-
-  // >>> LIVE CALL GOES HERE <<<
-  // Replace the stub return below with:
-  //   const r = await fetch(LICENSE_ENDPOINT, { method:"POST", headers:{ "content-type":"application/json" },
-  //                                             body: JSON.stringify({ key: k, product: "wholelife-premium" }) });
-  //   if (!r.ok) return { state:"error", message:"Couldn't reach the licence server. Try again in a minute." };
-  //   const d = await r.json();                       // { valid, plan, expires }
-  //   if (d.valid === false) return { state:"invalid", message:"That key isn't recognised." };
-  //   if (d.expires && d.expires < today()) return { state:"expired", message:"That key has expired." };
-  //   return { state:"valid", plan: d.plan, expires: d.expires || null };
-  return { state:"beta", message:"License activation is not available during beta." };
+  const saved = licLoad(P()?.id);
+  let d;
+  try { d = await licCall({ key:k, instance: saved?.k === k ? saved.i : undefined }); }
+  catch { return { state:"error", message:"Couldn't reach the licence server. Try again in a minute." }; }
+  if (d.state === "valid") return { state:"valid", plan:d.plan, expires:d.expires || null, receipt:d.receipt, lic:{ k, i:d.instance || null } };
+  const msg = { invalid:"That key isn't recognised.", expired:"That key has expired or was refunded.", limit:"That key is already on its limit of devices." }[d.state];
+  return { state: msg ? d.state : "error", message: msg || "Something went wrong checking that key." };
+}
+// Once a day, ask again whether this profile's purchased key still stands. Only a clear "expired" or "invalid" ends
+// Premium; an offline, rate-limited or failed check ("error") never does. The answer is applied only if the same profile
+// is still open when it arrives.
+async function licRecheck(){
+  const p = P(), pid = p?.id, lic = licLoad(pid);
+  if (!lic?.k || p.premium?.source !== "purchase" || lic.d === today()) return;
+  let d;
+  try { d = await licCall({ key:lic.k, instance:lic.i || undefined, check:true }); } catch { return; }
+  if (P()?.id !== pid) return;
+  if (d.state === "valid") { licSave(pid, { ...lic, d:today() }); if (d.expires) setPremium("purchase", d.expires); return; }
+  if (d.state === "expired" || d.state === "invalid") {
+    p.premium = { ...p.premium, active:false }; saveProfile(); licSave(pid, null); render();
+    toast("Your Premium key is no longer active.");
+  }
 }
 async function activateLicense(){
-  const key = val("lic-key");
+  const key = val("lic-key"), pid = P()?.id;
   UI.licBusy = true; UI.licState = null; render();
   let res;
   try { res = await validateLicenseKey(key); }
   catch { res = { state:"error", message:"Something went wrong checking that key." }; }
   UI.licBusy = false;
+  if (P()?.id !== pid) { render(); toast("The profile changed while the key was being checked. Open the right profile and try again."); return; }
   if (res.state === "valid") {
     setPremium("purchase", res.expires || null);
+    if (res.lic) licSave(pid, { ...res.lic, d:today() });
     UI.licState = { ok:true, msg:"Activated. Premium is on." };
     render(); toast("Premium activated.", "success");
     try { showPurchaseReceipt(res.receipt, res.plan); } catch {}
@@ -18248,6 +18308,7 @@ document.addEventListener("click", e => {
   if (a === "prem-off") { clearPremium(); if (UI.route === "premium") { UI.route = "home"; UI.param = null; location.hash = "#/home"; } render(); toast("Premium turned off."); return; }
   if (a === "prem-plan") { e.preventDefault(); UI.premPlan = t.dataset.v === "monthly" ? "monthly" : "yearly"; render(); return; }
   if (a === "prem-cta") { e.preventDefault(); premiumCtaTap(); return; }
+  if (a === "plan-pick") { e.preventDefault(); premiumCtaTap(t.dataset.v); return; }
   if (a === "prem-restore") { e.preventDefault(); toast("Nothing to restore — payments aren't live yet."); return; }
 });
 document.addEventListener("submit", e => {
@@ -22505,7 +22566,8 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .sc[data-held] .sc-track{cursor:grabbing}
 .sc-fill{position:absolute;left:0;top:0;bottom:0;width:calc(var(--sc-x) + 52px);border-radius:999px;background:color-mix(in srgb,var(--accent) 28%,transparent)}
 .sc-label{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-size:calc((15px) * var(--text-scale,1));font-weight:600;color:var(--muted);opacity:calc(1 - var(--sc-p) * 1.8)}
-.sc-t-plain,.sc-t-err{grid-area:1/1}.sc-t-err{color:var(--bad);opacity:0}
+.sc-t-plain,.sc-t-err,.sc-t-open{grid-area:1/1}.sc-t-err{color:var(--bad);opacity:0}.sc-t-open{opacity:0}
+.sc[data-phase="open"] .sc-t-plain{opacity:0}.sc[data-phase="open"] .sc-t-open{opacity:1}.sc[data-phase="open"] .sc-label{opacity:1}
 .sc[data-phase="error"] .sc-t-plain{opacity:0}.sc[data-phase="error"] .sc-t-err{opacity:1}.sc[data-phase="error"] .sc-label{opacity:1}
 .sc-handle{position:absolute;top:4px;left:4px;width:48px;height:48px;border-radius:999px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;outline:none;transform:translateX(var(--sc-x))}
 .sc:not([data-held]) .sc-handle,.sc:not([data-held]) .sc-fill{transition:transform .4s cubic-bezier(.34,1.4,.64,1),width .4s cubic-bezier(.34,1.4,.64,1)}
