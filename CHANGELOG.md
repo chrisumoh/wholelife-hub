@@ -2,11 +2,11 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.21, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.22, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
 
-## 8.3.21 · Docs: Review rule names Codex, not Greptile; build plan marks Phase 4 (fonts) done
+## 8.3.22 · Docs: Review rule names Codex, not Greptile; build plan marks Phase 4 (fonts) done
 
 - **Problem:** CLAUDE.md section 6 still said Greptile reviews pull requests, but Codex is the automatic reviewer now. The build plan also still listed Phase 4 (font system) as PROMPTED although the picker already shipped.
 - **Change:** CLAUDE.md section 6 now says Codex: after every push, read Codex's comments on the pull request, say whether each is valid, fix the valid ones on the same branch with a test, and reply only when a finding is wrong or won't be fixed. The rest of the rule is unchanged. Phase 4 was audited against the running app and needed no code: all eight typefaces are self-hosted, each applies through [data-font] on the root and loads, numbers use tabular figures, and nothing scrolls sideways at 375px in any of them. The build plan marks Phase 4 done. No app behavior changed.
