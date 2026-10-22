@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.6 | Workouts and Recipes: compact pages with an open-the-full-menu control and a food row preview | IN PROGRESS: claude/project-thread-h02qn5 |
 | 8.3.5 | Workouts: all 44 icons replaced with the designer set; Boxicons removed | IN PROGRESS: claude/project-thread-hay4cp |
 | 8.3.4 | Premium: slide-to-pay control on the payment button (never shows a paid state; payments not live) | IN PROGRESS: claude/project-thread-7alpk4 |
 | 8.3.3 | Premium: ?previewreceipt=1 shows the receipt with marked sample numbers (no purchase, nothing saved) | IN PROGRESS: claude/project-thread-7alpk4 |

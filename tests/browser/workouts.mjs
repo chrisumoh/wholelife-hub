@@ -79,6 +79,8 @@ const anim = await ev(`(() => { const host = document.createElement("div"); docu
 ok("each wheel is its own animated group, and ball markings move with the ball", anim.length === 0, anim.join(", "));
 
 console.log("--- 3. the picker");
+ok("the picker starts collapsed: one current activity, no group tiles", await ev(`document.querySelectorAll(".actbtn").length === 0 && !!document.querySelector(".actcur")`));
+await click('[data-act="act-toggle"]'); await sleep(250);
 const pick = await ev(`(() => { const groups = [...document.querySelectorAll(".actgroup")]; return { n: groups.length, heads: groups.map(g => g.querySelector(".actgh").textContent), btns: document.querySelectorAll(".actbtn").length, icons: document.querySelectorAll(".actbtn .wi-svg").length, sel: document.getElementById("w-type").options.length, ungrouped: [...document.querySelectorAll(".actbtn")].filter(b => !b.closest(".actgroup")).length, label: document.querySelector('[role="group"][aria-label="Activity"]') ? true : false }; })()`);
 ok("the Activity picker has all seven group headings", pick.n === 7 && pick.heads.join("|") === "Cardio|Strength and studio|Team sports|Racket and club sports|Combat|Water and outdoors|Other", pick.heads.join("|"));
 ok("every activity has a button with its icon, and the hidden select lists them all", pick.btns === L.keys.length && pick.icons === L.keys.length && pick.sel === L.keys.length && pick.ungrouped === 0, JSON.stringify(pick));
@@ -92,12 +94,12 @@ await view(1440); await sleep(300);
 
 console.log("--- 4. logging with a new activity");
 await click('[data-act="pick-act"][data-v="pilates"]'); await sleep(250);
-ok("tapping Pilates selects it", await ev(`document.getElementById("w-type").value === "pilates" && document.querySelector('.actbtn[data-v="pilates"]').getAttribute("aria-pressed") === "true" && document.querySelectorAll('.actbtn[aria-pressed="true"]').length === 1`));
+ok("tapping Pilates selects it and folds the picker back to Pilates", await ev(`document.getElementById("w-type").value === "pilates" && document.querySelectorAll(".actbtn").length === 0 && document.querySelector(".actcur b").textContent === "Pilates"`));
 await ev(`(() => { document.getElementById("w-min").value = "60"; return true; })()`);
 await click('[data-act="log-workout"]'); await sleep(400);
 const e1 = await ev(`(() => { const w = entries("workouts").find(x => x.type === "pilates"); return w ? { type: w.type, min: w.minutes, kcal: workoutKcal(w, 70), row: !!document.querySelector(".wrow .wi-pilates") } : null; })()`);
 ok("it is saved as Pilates, its calories come from its MET (3 x 70 kg x 1 h = 210) and its own icon shows in the list", e1 && e1.type === "pilates" && e1.kcal === 210 && e1.row, JSON.stringify(e1));
-await click('[data-act="pick-act"][data-v="jumprope"]'); await ev(`(() => { document.getElementById("w-min").value = "30"; return true; })()`); await click('[data-act="log-workout"]'); await sleep(400);
+await click('[data-act="act-toggle"]'); await sleep(200); await click('[data-act="pick-act"][data-v="jumprope"]'); await ev(`(() => { document.getElementById("w-min").value = "30"; return true; })()`); await click('[data-act="log-workout"]'); await sleep(400);
 ok("Jump rope for 30 minutes at 70 kg estimates 11.8 x 70 x 0.5 = 413", await ev(`workoutKcal(entries("workouts").find(x => x.type === "jumprope"), 70) === 413`));
 ok("an old saved type with no group still shows its icon and calories", await ev(`workoutKcal({ type: "walk", minutes: 60 }, 70) === 245 && wicon("walk", 30).includes("wi-walk") && wicon("nonsense", 30).includes("wi-other")`));
 

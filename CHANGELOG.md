@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.5, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.6, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.6 · Workouts and Recipes: Compact Workouts and Recipes pages
+
+- **Problem:** The Workouts page opened with every import card and all 44 activity tiles, and the Recipes page listed the whole dish catalog and every day of the meal plan. Both pages were very long for little use.
+- **Change:** Workouts: the activity picker shows only the chosen activity with a Change button that opens the seven groups (picking one folds it back); the Apple Health and file imports sit behind one Import button; history shows 10 workouts first, then 25 more at a time. Recipes: the meal plan shows its first day with a Show all days button; the recipe library shows 6 dishes (12 when searching or filtering) as 64px text-only rows with a Browse all dishes button. A dish row grows to 120px (CJ's height-expand animation) on hover, keyboard focus, or the small arrow button for touch, to preview its cook time, meal types and description. Reduced motion turns the animation off. Nothing is removed from the app, and food rows stay text only.
+- **Where:** index.html: workoutsView(), planView(), recipesView(), the pick-act, act-toggle, imp-toggle, plan-toggle, rec-all and dpv actions, UI state (actOpen, impOpen, planOpen, recAll, dpv), CSS .actcur and .dpv next to the .actbtn rules, APP_VERSION and the change log. tests/browser/compact.mjs (new), tests/browser/workouts.mjs (opens the picker first), tests/browser/run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** node tests/browser/compact.mjs and node tests/browser/workouts.mjs. By hand: Workouts (Change activity, Import button, Show more), Recipes (Show all days, Browse all dishes, hover a dish, then tap the arrow at phone width and use Tab).
+- **Known limits:** The hover expand follows CJ's CSS but is scoped to the new .dpv rows, not every .card. The Culture, Snacks and meal-log pages are unchanged. Checked in headless Chrome only.
 
 ## 8.3.5 · Workouts: All 44 workout icons redrawn
 
