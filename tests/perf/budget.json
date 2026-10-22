@@ -1,7 +1,7 @@
 {
- "_about": "Release gate limits for node tests/perf/measure.mjs --gate. Measured on build 8.2.12: raw 1854 KB (raw limit raised from 2,000 to 2,010 KB in 8.3.7 for the Friends card, then to 2,022 KB raw, 512 brotli and 606 gzip in 8.3.10 for Challenges; compressed limits unchanged), brotli 470 KB, gzip 555 KB; mid-range phone first paint 260 ms, ready 3,054 ms, largest paint 3,336 ms, blocking time 442 ms. Sizes and node counts have about 8% headroom; timings about 50%, because CI machines are slower and noisier than a developer machine. Raise a limit only in a pull request that says why.",
+ "_about": "Release gate limits for node tests/perf/measure.mjs --gate. Measured on build 8.2.12: raw 1854 KB (raw limit raised from 2,000 to 2,010 KB in 8.3.7 for the Friends card, then to 2,022 KB raw, 512 brotli and 606 gzip in 8.3.10 for Challenges, then raw to 2,028 KB in 8.3.15 for the notification cards; compressed limits unchanged), brotli 470 KB, gzip 555 KB; mid-range phone first paint 260 ms, ready 3,054 ms, largest paint 3,336 ms, blocking time 442 ms. Sizes and node counts have about 8% headroom; timings about 50%, because CI machines are slower and noisier than a developer machine. Raise a limit only in a pull request that says why.",
  "sizeKB": {
-  "raw": 2022,
+  "raw": 2028,
   "brotli": 512,
   "gzip": 606
  },

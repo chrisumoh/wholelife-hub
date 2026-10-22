@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.13, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.15, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.15 · Notifications: Pop-up notification cards for friend requests, challenge invites and saved workouts
+
+- **Problem:** Toasts were a single plain line, friend requests and challenge invites only showed up if you opened Settings or Workouts, and the notification centre had nothing feeding it.
+- **Change:** The pop-up toasts get a notification-card look: a 40px tinted icon circle (info, success, warning, error or bell), a time beside the title, an optional description and button, an X to close, and the thin countdown bar along the bottom. A new friend request or challenge invite now shows one of these pop-ups and is added to the notification centre once (the ids already told about are remembered). Saving a workout shows a green card with the activity and minutes. The existing stack, swipe-to-dismiss, pause on hover and reduced-motion handling are reused.
+- **Where:** index.html: swipeToast() (rich option, X button), ST_ICONS.info, CSS .swipe-toast[data-rich] and .swipe-toast__x, frSeen(), frNotify(), frLoad(), chLoad(), notify(), the log-workout case. tests/browser/toasts.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/toasts.mjs. By hand: log a workout on Workouts, a green card appears. With two friend accounts, send a request and wait up to 30 seconds: the other account gets a card and a bell entry.
+- **Known limits:** There is no friend-to-friend messaging yet, so only requests and invites notify. Friends starting a workout is not announced. Alerts arrive on the 30 second friends refresh while the app is open, not when it is closed. No avatar or online dot on the card yet. Checked in headless Chrome with a faked Supabase.
 
 ## 8.3.13 · Summary: Pinned cards no longer flicker or go black when you move the mouse over them after a flip
 
