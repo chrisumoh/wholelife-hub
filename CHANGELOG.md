@@ -14,6 +14,14 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 - **How to test:** Open the app in a private window, press Set up my hub, answer the age question: the Create your account card shows; Skip for now goes on to Choose your coach. Settings > Account > Sign in opens the same card with the lamp; switch to Create an account and back. Run node tests/browser/authcard.mjs.
 - **Known limits:** Google still needs the owner's Google and Supabase setup. Email sign-up still needs the confirmation link. Because sign-in reloads the page, a person who signs in during setup must press Set up my hub again. Checked in headless Chrome with a faked Supabase.
 
+## 8.3.10 · Workouts: Challenges: compete with friends
+
+- **Problem:** Workouts had no way to compete with anyone.
+- **Change:** The Workouts page has a Challenges card (signed in, Friends on). Start a 3, 7, 14 or 30 day challenge, pick the winner measure (workout minutes, workouts or calories burned) and invite up to 9 accepted friends. They join or decline. A leaderboard shows each joined member's total only, never their workouts. The owner can end it; others can leave. New tables `challenges` and `challenge_members` with RLS, plus five functions.
+- **Where:** `index.html`: `CH`, `chLoad`, `chRows`, `challengesCard`, `chNew`, `chAct`, the `ch-*` click cases and the `ch-new` form, `workoutsView`. `supabase/migrations/20261022030000_wlh_8_3_10_workout_challenges.sql`. `tests/perf/budget.json` (size limits raised). `docs/DATABASE.md`, `docs/BUILD_PLAN.md`, `CHANGELOG.md`, `README.md`.
+- **How to test:** Apply the migration first. On two friend accounts: A starts a challenge and invites B; B sees the invite on Workouts and joins. Log a workout on each and check both totals and the order. A ends it and it disappears for B.
+- **Known limits:** Totals come from synced workouts of each person's main profile only, so unsynced devices lag. Counts up to 3 open challenges per owner. Block has no screen yet. No live two-account test has been done.
+
 ## 8.3.9 · Notifications: Notification centre: tabs, unread count, mark all read
 
 - **Problem:** The bell menu was a plain list with no tabs, no unread count and no way to mark everything read.

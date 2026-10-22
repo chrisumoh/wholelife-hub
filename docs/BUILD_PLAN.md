@@ -22,6 +22,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 | Build | Contents | Status |
 |---|---|---|
 | 8.3.11 | Sign-in: card with Google and email in setup (after the age question) and in Settings > Account; old Account pair removed | IN PROGRESS: claude/project-thread-7alpk4 |
+| 8.3.10 | Workouts: friends challenges (new `challenges`, `challenge_members` tables) | IN PROGRESS: claude/project-thread-oz3ex2 |
 | 8.3.9 | Notifications: notification centre with All, Mentions and System tabs, unread count and Mark all read | IN PROGRESS: claude/project-thread-nzyu0w |
 | 8.3.8 | Summary: activity rings card with a seven-day picker and staggered ring draw-in | IN PROGRESS: claude/project-thread-e4yqki |
 | 8.3.7 | Household: friends card, search by app name, online and offline status (new `member_names`, `friendships`, `member_blocks` tables) | IN PROGRESS: claude/project-thread-e9j467 |
