@@ -29,10 +29,11 @@
 <meta property="og:description" content="Private meal, snack and workout tracking built around West African cooking.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2096%2096%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27b%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270.35%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%230E8397%27%2F%3E%3Cstop%20offset%3D%2748%25%27%20stop-color%3D%27%231FA36B%27%2F%3E%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%2363C832%27%2F%3E%3C%2FlinearGradient%3E%3CradialGradient%20id%3D%27o%27%20cx%3D%2738%25%27%20cy%3D%2730%25%27%20r%3D%2778%25%27%3E%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%23EAFBFF%27%20stop-opacity%3D%27.95%27%2F%3E%3Cstop%20offset%3D%2745%25%27%20stop-color%3D%27%239FE2F0%27%20stop-opacity%3D%27.55%27%2F%3E%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%232FA7C4%27%20stop-opacity%3D%27.28%27%2F%3E%3C%2FradialGradient%3E%3ClinearGradient%20id%3D%27l%27%20x1%3D%270%27%20y1%3D%271%27%20x2%3D%271%27%20y2%3D%270%27%3E%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%233FA83C%27%2F%3E%3Cstop%20offset%3D%2755%25%27%20stop-color%3D%27%238FE06A%27%2F%3E%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%23D8F7A8%27%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%27s%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%23BFF0FF%27%20stop-opacity%3D%27.95%27%2F%3E%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%235FC7DE%27%20stop-opacity%3D%27.55%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2796%27%20height%3D%2796%27%20rx%3D%2727%27%20fill%3D%27url%28%23b%29%27%2F%3E%3Ccircle%20cx%3D%2748%27%20cy%3D%2750%27%20r%3D%2733%27%20fill%3D%27url%28%23o%29%27%2F%3E%3Cpath%20d%3D%27M21%2046c4.5.4%207-1%209.5-6.5S35%2026%2037.5%2026s4%206%206%2012%203.5%209%206%209%204.5-3%206.5-7%27%20fill%3D%27none%27%20stroke%3D%27%23EAFBFF%27%20stroke-opacity%3D%27.92%27%20stroke-width%3D%274%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%2F%3E%3Cpath%20d%3D%27M56%2055c2-13%2011-21%2024-22%201%2013-8%2023-21%2023.5z%27%20fill%3D%27url%28%23l%29%27%2F%3E%3Cpath%20d%3D%27M28%2064c5.5-7%2014-9.5%2021-6.5%206.5%202.8%209%209.5%2016.5%209.5%205%200%208.5-2.2%2011-6-1.5%2012-11%2020.5-23%2020.5-14%200-24-9.5-25.5-17.5z%27%20fill%3D%27url%28%23s%29%27%20opacity%3D%27.85%27%2F%3E%3Ccircle%20cx%3D%2748%27%20cy%3D%2750%27%20r%3D%278%27%20fill%3D%27%23EAFDFF%27%2F%3E%3C%2Fsvg%3E">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-<!-- The PWA manifest used to be inlined here as a data: URL. It was the only embedded file
-     that was not an image, and an inlined manifest cannot be reviewed for public sharing, which
-     blocked an open link. iOS home-screen install still works from the apple-* meta tags and the
-     touch icon below; Chrome's "install app" prompt is what this costs. -->
+<!-- The manifest is a real file (manifest.webmanifest), not an inlined data: URL, so it can be
+     reviewed for public sharing. observability.js comes before the main scripts so startup errors
+     are caught. The theme-color meta above is the only one: the manifest uses the same colour. -->
+<link rel="manifest" href="/manifest.webmanifest">
+<script src="/observability.js"></script>
 <meta name="apple-mobile-web-app-title" content="WholeLife">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Whole Life Hub","applicationCategory":"HealthApplication","operatingSystem":"Any web browser","description":"Private meal, snack and workout tracker built around West African cooking, with weight estimates, meal plans and a personal coach."}</script>
@@ -3794,7 +3795,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.26", channel: "Dev Testing", date: "2026-10-23", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.27", channel: "Dev Testing", date: "2026-10-23", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3808,6 +3809,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.26", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.27",
+      area:"Install and errors",
+      title:"Install and error tracking switched on",
+      bug:"The install manifest, offline service worker and error tracker from build 8.3.24 were in the repo but not connected to the page, so the app could not be installed from the browser, did not work offline and no error reports were collected.",
+      fix:"The page now links manifest.webmanifest, loads observability.js before the main scripts and registers sw.js after the page loads. The page's existing theme-color (#1FA36B, the app green) is kept and no second one was added, because the manifest uses the same colour and tests/pwa-kit.cjs checks that they match. Error reports stay in the console until a Supabase endpoint is set in observability.js.",
+      where:"index.html: <head> (manifest link, observability.js script), the service worker registration script before </body>, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.",
+      test:"Run node --test tests/pwa-kit.cjs and node tests/check-repo.mjs. On the preview in Chrome: DevTools > Application shows the manifest and an activated service worker, and the address bar offers Install. On Android, Add to Home Screen installs the app; on iPhone use Share > Add to Home Screen. With the network off, reload and the app still opens.",
+      limits:"The theme colour stays green, not black; the manifest background is black. Error reports are not sent anywhere until the endpoint and key are filled in (docs/APP_READINESS.md). The first load after this build is online; offline use starts once the worker has installed." },
     { id:"8.3.26",
       area:"Workouts",
       title:"File upload button with a progress fill (WLUpload) on the file imports",
@@ -23655,6 +23664,15 @@ function tourGuideCard(){
   if (typeof render === "function") { const r0 = render; window.render = function(){ const out = r0.apply(this, arguments); queue(); return out; }; }
   queue();
 })();
+</script>
+
+<script>
+// Register the service worker after load so it never competes with startup; failures are silent.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("/sw.js").catch(function () {});
+  });
+}
 </script>
 
 </body></html>
