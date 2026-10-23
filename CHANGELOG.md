@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.25, 2026-10-23. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.26, 2026-10-23. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.26 · Legal: EULA and Copyright / DMCA pages
+
+- **Problem:** The app had Terms and a Privacy Policy but no End User License Agreement and no copyright (DMCA) policy, which a copyright owner needs in order to report a problem and which the safe harbour under 17 U.S.C. 512 relies on.
+- **Change:** Two new legal pages written for what the app really does (friends, messages, challenges, blocking, the under-13 screen, Google and email sign-in, passcode, Premium through Lemon Squeezy as seller and merchant of record with licence keys). They fold long sections behind Read more like the other legal pages. They are linked from the sidebar Legal group, the footer and the end of the Terms. Facts only the owner can give (DMCA agent, governing law, liability amount, court district) are bracketed placeholders for now.
+- **Where:** index.html: eulaView(), dmcaView() and the LEGAL_PAGES_UPDATED, LEGAL_GOVERNING_LAW, LEGAL_LIABILITY_CAP, DMCA_AGENT_* and DMCA_DISTRICT constants (after termsView), NAV, TITLES, DESCS, the route table, siteFooter(), the end of termsView(). tests/browser/legal.mjs (section 6). APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/legal.mjs. By hand: open #/eula and #/dmca (or Legal > EULA and Copyright / DMCA in the menu, or the footer links), press Read more on a section, and check the text against the app.
+- **Known limits:** Drafts, not legal advice: a lawyer should review them. The bracketed placeholders show on the live page until filled in, so do not merge until they are. The DMCA agent must also be registered with the U.S. Copyright Office. The Privacy Policy is not changed, so it still lacks the friends messages paragraph. The sign-up agreement still points only to the Terms and the Privacy Policy, and TERMS_VERSION is not bumped, so nobody is asked to agree again.
 
 ## 8.3.25 · Premium: Receipt shows the subtotal, the tax with its rate, the total and the amount paid
 
