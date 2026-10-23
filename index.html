@@ -17943,7 +17943,7 @@ const WLCheckout = {
   close(){
     const el = this.el; if (!el) return;
     document.removeEventListener("keydown", this.key); window.removeEventListener("message", this.msg); this.el = null; el.remove();
-    const back = this.opener?.isConnected ? this.opener : document.querySelector(".sc-handle, [data-act=\"prem-cta\"]");
+    const back = this.opener?.isConnected ? this.opener : document.querySelector(".sc-handle, [data-act=\"plan-pick\"]");
     this.opener = null; back?.focus?.({ preventScroll:true });
   },
   key(ev){

@@ -137,11 +137,23 @@ ok("Shift+Tab from the first control wraps to the last", await ev(`document.acti
 await ev(`document.querySelector(".sc-handle").focus(); true`); await tabKey("Tab");
 ok("if focus is somewhere behind it, Tab pulls it back in", await inPanel());
 ok("the checkout frame is one of the stops", await ev(`(() => { const f = document.querySelector(".co-frame"); f.focus(); return document.activeElement === f; })()`));
+// Real key presses (not synthetic events), so the browser's own Tab movement is tested too.
+const KEYS = { Tab: { key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 }, Escape: { key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 }, Enter: { key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r" } };
+const realKey = async (k, shift) => { const t = KEYS[k]; await send("Input.dispatchKeyEvent", { type: "keyDown", modifiers: shift ? 8 : 0, ...t }); await send("Input.dispatchKeyEvent", { type: "keyUp", modifiers: shift ? 8 : 0, ...t }); await sleep(40); };
+const walk = async shift => { let out = true; await ev(`document.querySelector(".co-x").focus(); true`); for (let i = 0; i < 8; i++) { await realKey("Tab", shift); if (!await ev(`(() => { const o = document.querySelector(".co-open"); const a = document.activeElement; return !!o && o.contains(a); })()`)) out = false; } return out; };
+ok("real Tab presses through every control stay inside the open checkout", await walk(false));
+ok("real Shift+Tab presses stay inside too", await walk(true));
 await ev(`window.postMessage({ event: "Checkout.Success" }, "*"); true`); await sleep(200);
 ok("a success message that does not come from the checkout frame is ignored", await ev(`!document.querySelector(".co-open").dataset.paid`));
 await tabKey("Escape");
 ok("Escape closes it and focus goes back to the slider", await ev(`!document.querySelector(".co-open") && document.activeElement === document.querySelector(".sc-handle")`));
 await sleep(1900);
+await ev(`document.querySelector('[data-act="plan-pick"][data-v="monthly"]').focus(); true`); await realKey("Enter"); await sleep(300);
+ok("the Settings > Premium plan button opens the same checkout with the keyboard", await ev(`document.querySelector(".co-open .co-frame")?.src === CHECKOUT_URLS.monthly + "?embed=1"`));
+ok("from there, real Tab and Shift+Tab presses stay inside", await walk(false) && await walk(true));
+await realKey("Escape");
+ok("and a real Escape closes it and returns focus to that plan button", await ev(`!document.querySelector(".co-open") && document.activeElement === document.querySelector('[data-act="plan-pick"][data-v="monthly"]')`));
+await sleep(300);
 await ev(`CHECKOUT_URLS.yearly = window.__links.yearly + "?autopay=1"; true`);
 await key("End"); await sleep(250);
 ok("when the checkout frame reports the order went through, the panel says so and points to the key", await waitFor(`document.querySelector(".co-open")?.dataset.paid === "1" && /paste it in Settings > Premium/.test(document.querySelector(".co-status").textContent)`, 5000));
@@ -153,11 +165,13 @@ ok("the checkout's own close button closes the panel", await waitFor(`!document.
 await ev(`CHECKOUT_URLS.yearly = window.__links.yearly; true`); await sleep(1900);
 await ev(`window.__opened.length = 0; WLCheckout.open({ url: CHECKOUT_URLS.monthly, currency: "USD", total: 7.99, items: [], processPayment: () => true }); true`); await sleep(1700);
 ok("CJ's processPayment shape without a frame never claims a new tab opened and keeps a Continue link", await ev(`(() => { const o = document.querySelector(".co-open"); return o.dataset.state === "sent" && /sent to a new tab/.test(o.textContent) && !/Checkout is open/.test(o.textContent) && /Continue to checkout/.test(o.querySelector("a[href]").textContent); })()`));
+ok("real Tab and Shift+Tab presses stay inside the sent panel", await walk(false) && await walk(true));
 await ev(`window.__nav = null; window.addEventListener("click", e => { window.__nav = e.defaultPrevented ? "blocked" : "allowed"; e.preventDefault(); }, { once: true }); document.querySelector(".co-open a[href]").dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })); true`); await sleep(100);
 ok("the new-tab link is a real link the app does not cancel, and the panel closes after it", await ev(`window.__nav === "allowed" && !document.querySelector(".co-open")`));
 await ev(`WLCheckout.open({ url: CHECKOUT_URLS.monthly, currency: "USD", total: 7.99, items: [{ label: "Whole Life Premium", detail: "1 month", amount: 7.99 }], processPayment: async () => { throw new Error("blocked"); } }); true`); await sleep(300);
 ok("if opening fails the panel says so and offers the link", await ev(`(() => { const o = document.querySelector(".co-open"); const a = o.querySelector("a[href]"); return o.dataset.state === "fail" && /Couldn't open/.test(o.textContent) && a.href === CHECKOUT_URLS.monthly && getComputedStyle(a).display !== "none"; })()`));
 ok("the failure panel is reachable by keyboard", await inPanel());
+ok("real Tab and Shift+Tab presses stay inside the failure panel", await walk(false) && await walk(true));
 await tabKey("Escape");
 ok("and nothing is unlocked", await ev(`!document.querySelector(".co-open") && !P().premium?.active`));
 await ev(`WLCheckout.open({ currency: "USD", total: 7.99, items: [], processPayment: () => new Promise(() => {}) }); true`); await sleep(150);
