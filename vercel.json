@@ -3,11 +3,11 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://zemxqbinpehkrkyvzlue.supabase.co; media-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://zemxqbinpehkrkyvzlue.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://zemxqbinpehkrkyvzlue.supabase.co; media-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://zemxqbinpehkrkyvzlue.supabase.co; frame-src https://wholelife.lemonsqueezy.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), geolocation=(), payment=(), usb=(), serial=(), bluetooth=()" }
+        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), geolocation=(), payment=(\"https://wholelife.lemonsqueezy.com\"), usb=(), serial=(), bluetooth=()" }
       ]
     }
   ]
