@@ -3799,9 +3799,9 @@ const APP_VERSION = { update: "8.3", build: "8.3.25", channel: "Dev Testing", da
       area:"Premium",
       title:"Opening secure checkout panel: an animated step between sliding to pay and the checkout",
       bug:"Sliding to pay opened the Lemon Squeezy checkout with only a small message, so the moment between the tap and the checkout had no animation. CJ asked for a second checkout animation and supplied a checkout component (checkout.html).",
-      fix:"Sliding to pay (or Choose Monthly or Yearly in Settings > Premium) now shows a Checkout panel: a glowing card marked Paying with the real price, a spinner, Opening secure checkout and the order lines (plan, length, total) from PREMIUM_PLANS. The checkout opens at the same moment, inside the tap, so a new tab is not blocked. The panel fades after about a second and a half. If the checkout could not be opened the panel says so and offers Open in a new tab. It has a close button and respects reduced motion. It is built as WLCheckout.open({ items, total, currency, savedCard, processPayment, url }), CJ's call shape, and shows only what it is given: a saved card appears only if a provider ever supplies one, and none is passed today.",
-      where:"index.html: premiumCtaTap(), coTab(), WLCheckout, CO_MIN_MS, the co-close and co-tab cases, CSS block 8.3.25 (.co-*). tests/browser/slidepay.mjs (9 new checks). APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
-      test:"Run node tests/browser/slidepay.mjs. By hand on the preview: open /?premium=0#/premium, slide to pay: the panel appears, the checkout opens in a new tab, and the panel fades. Try Reduce motion on and a 375px phone.",
+      fix:"Sliding to pay (or Choose Monthly or Yearly in Settings > Premium) now shows a Checkout panel: a glowing card marked Paying with the real price, a spinner, Opening secure checkout and the order lines (plan, length, total) from PREMIUM_PLANS. The checkout opens at the same moment, inside the tap, so a new tab is not blocked. The browser cannot say whether a new tab really opened, so the panel never claims it did: it says the checkout was sent to a new tab and always shows a Continue to checkout link, and stays until closed. Keyboard focus moves into the panel, Tab stays inside, Escape closes it and focus returns to where it was. It respects reduced motion. It is built as WLCheckout.open({ items, total, currency, savedCard, processPayment, url }), CJ's call shape, and shows only what it is given: a saved card appears only if a provider ever supplies one, and none is passed today.",
+      where:"index.html: premiumCtaTap(), coTab(), WLCheckout (open, close, key), the co-close case, CSS block 8.3.25 (.co-*). tests/browser/slidepay.mjs (keyboard, suppressed-opener and failure checks). APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/slidepay.mjs. By hand on the preview: open /?premium=0#/premium, slide to pay: the panel appears, the checkout is sent to a new tab and the panel stays with a Continue to checkout link. Try Tab, Shift+Tab and Escape. Try Reduce motion on and a 375px phone.",
       limits:"From CJ's checkout.html this build takes the dialog, the glowing card, the spinner and the WLCheckout.open call shape. It does not take the card number, name, expiry and CVV fields, the flipping card preview, the saved card and address, the demo payment simulator, or the success and receipt steps: Lemon Squeezy takes card details only on its own checkout page and has no way to charge a card typed into this app, and the app must not say Payment successful until the provider confirms. The receipt animation still plays after a valid key. Showing the checkout inside the page (Lemon Squeezy overlay) needs a security-policy exception and waits for CJ's decision. Checked in headless Chrome only." },
     { id:"8.3.24",
       area:"Install and errors",
@@ -17928,21 +17928,39 @@ function premiumCtaTap(plan = UI.premPlan){
   if (!url) { toast("Payments aren't live yet — coming soon."); return false; }
   const amount = typeof pl.amount === "number" ? pl.amount : undefined;
   WLCheckout.open({ url, currency: pl.cur, total: amount, items:[{ label:"Whole Life Premium", detail: k === "yearly" ? "1 year" : "1 month", amount }], processPayment: () => coTab(url) });
-  toast("Checkout opened. After you pay, paste the key from your email in Settings > Premium.");
+  toast("After you pay, paste the key from your email in Settings > Premium.");
   return true;
 }
 
 // ---- checkout panel ----
 // The animated "Opening secure checkout" panel (CJ's WLCheckout.open shape). It shows only what it is given: our plan and
 // price, and a saved card only if a provider ever supplies one (the app never sees card details, so none is passed today).
-// processPayment() runs at once, inside the tap, so a new tab is not blocked as a pop-up; it resolves with something truthy
-// when the checkout is open and the panel then fades out. If it fails the panel offers the new-tab link instead.
+// processPayment() runs at once, inside the tap, so a new tab is not blocked as a pop-up. A browser gives no way to tell whether
+// a noopener tab really opened, so the panel never claims it did: it stays until closed and always offers a real
+// "Continue to checkout" link. Focus moves into it, Tab stays inside, Escape closes and focus goes back to the opener.
 const CO_MIN_MS = 1400;
 const WLCheckout = {
   el: null,
-  close(){ this.el?.remove(); this.el = null; },
+  close(){
+    const el = this.el; if (!el) return;
+    document.removeEventListener("keydown", this.key); this.el = null; el.remove();
+    const back = this.opener?.isConnected ? this.opener : document.querySelector(".sc-handle, [data-act=\"prem-cta\"]");
+    this.opener = null; back?.focus?.({ preventScroll:true });
+  },
+  key(ev){
+    const el = WLCheckout.el; if (!el) return;
+    if (ev.key === "Escape") { ev.preventDefault(); WLCheckout.close(); return; }
+    if (ev.key !== "Tab") return;
+    const f = [...el.querySelectorAll("button,a[href]")].filter(x => !x.hidden && x.offsetParent !== null);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (!el.contains(document.activeElement)) { ev.preventDefault(); first.focus(); }
+    else if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  },
   async open({ items = [], total, currency, savedCard, processPayment, url }){
     this.close();
+    this.opener = document.activeElement;
     const money = n => (rcptNum(n) !== null && rcptMoney(n, currency)) || "";
     const row = (l, d, a, cls = "") => `<div class="co-row ${cls}"><span>${esc(l)}${d ? ` <span class="muted">${esc(d)}</span>` : ""}</span><span>${esc(money(a))}</span></div>`;
     const el = document.createElement("div");
@@ -17954,22 +17972,22 @@ const WLCheckout = {
       <p class="co-title">Opening secure checkout&hellip;</p>
       <p class="co-status" role="status" aria-live="polite">Connecting to Lemon Squeezy…</p>
       <div class="co-lines">${items.map(i => row(i.label || "Premium", i.detail, i.amount)).join("")}${savedCard ? row([savedCard.brand, savedCard.last4 ? "•••• " + savedCard.last4 : ""].filter(Boolean).join(" "), savedCard.expiry, undefined, "co-card-row") : ""}${rcptNum(total) !== null ? row("Total", "", total, "co-total") : ""}</div>
-      <div class="co-actions"><button class="btn sm" type="button" data-act="co-tab"${url ? ` data-v="${esc(url)}"` : " hidden"}>Open in a new tab</button><button class="btn sm" type="button" data-act="co-close">Close</button></div>
+      <div class="co-actions">${url ? `<a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener noreferrer" data-act="co-go">Continue to checkout</a>` : ""}<button class="btn sm" type="button" data-act="co-close">Close</button></div>
     </div>`;
     document.body.appendChild(el); this.el = el;
+    document.addEventListener("keydown", this.key);
+    el.querySelector(".co-x").focus({ preventScroll:true });
     const t0 = Date.now(), status = el.querySelector(".co-status");
     let ok = false;
     try { ok = !!(await processPayment()); } catch {}
     if (this.el !== el) return ok; // closed while waiting
-    if (ok) {
-      status.textContent = "Checkout is open.";
-      const wait = lampReduced() ? 0 : CO_MIN_MS - (Date.now() - t0);
-      if (wait > 0) await new Promise(r => setTimeout(r, wait));
-      if (this.el !== el) return ok;
-      el.classList.add("co-done"); setTimeout(() => { if (this.el === el) this.close(); }, lampReduced() ? 0 : 280);
-    } else {
-      el.dataset.state = "fail"; status.textContent = "Couldn't open the checkout here. You can open it in a new tab.";
-    }
+    // Let the opening animation play for a moment before the panel settles on what it actually knows.
+    const wait = ok && !lampReduced() ? CO_MIN_MS - (Date.now() - t0) : 0;
+    if (wait > 0) await new Promise(r => setTimeout(r, wait));
+    if (this.el !== el) return ok;
+    el.dataset.state = ok ? "sent" : "fail";
+    el.querySelector(".co-title").textContent = ok ? "Checkout sent to a new tab" : "Couldn't open the checkout here";
+    status.textContent = ok ? "We can't see whether your browser allowed the new tab. If it isn't there, choose Continue to checkout." : "Choose Continue to checkout to open it yourself.";
     return ok;
   }
 };
@@ -17980,7 +17998,7 @@ const WLCheckout = {
 const SC_PAD = 4;
 const slidePayHTML = plan => `<div class="sc" data-phase="idle">
     <div class="sc-track"><span class="sc-fill" aria-hidden="true"></span>
-      <span class="sc-label" aria-hidden="true"><span class="sc-t-plain">Slide to pay</span><span class="sc-t-err">Not available yet</span><span class="sc-t-open">Checkout opened</span></span>
+      <span class="sc-label" aria-hidden="true"><span class="sc-t-plain">Slide to pay</span><span class="sc-t-err">Not available yet</span><span class="sc-t-open">Checkout sent</span></span>
       <div class="sc-handle" role="slider" tabindex="0" aria-label="Slide to pay, ${esc(plan)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Slide to pay, 0%">${icon("chevR","",22)}</div></div>
     <span class="sc-sr" role="status"></span></div>`;
 const scTravel = el => Math.max(1, el.querySelector(".sc-track").clientWidth - el.querySelector(".sc-handle").offsetWidth - SC_PAD * 2);
@@ -17993,7 +18011,7 @@ function scCommit(el){
   if (el.dataset.phase !== "idle") return;
   const t = scTravel(el); scMove(el, t);
   const opened = premiumCtaTap(); // never simulates success: a paid state only follows a validated licence key
-  el.dataset.phase = opened ? "open" : "error"; el.querySelector(".sc-sr").textContent = opened ? "Checkout opened in a new tab." : "Not available yet. Payments aren't live.";
+  el.dataset.phase = opened ? "open" : "error"; el.querySelector(".sc-sr").textContent = opened ? "Checkout sent to a new tab." : "Not available yet. Payments aren't live.";
   setTimeout(() => { if (el.isConnected) scMove(el, 0); }, 300);
   setTimeout(() => { if (el.isConnected) { el.dataset.phase = "idle"; el.querySelector(".sc-sr").textContent = ""; } }, 1800);
 }
@@ -18366,7 +18384,7 @@ document.addEventListener("click", e => {
   if (a === "prem-cta") { e.preventDefault(); premiumCtaTap(); return; }
   if (a === "plan-pick") { e.preventDefault(); premiumCtaTap(t.dataset.v); return; }
   if (a === "co-close") { e.preventDefault(); WLCheckout.close(); return; }
-  if (a === "co-tab") { e.preventDefault(); const u = Object.values(CHECKOUT_URLS).includes(t.dataset.v) ? t.dataset.v : ""; if (u) coTab(u); WLCheckout.close(); return; }
+  if (a === "co-go") { setTimeout(() => WLCheckout.close(), 0); return; } // the link itself opens the checkout
   if (a === "prem-restore") { e.preventDefault(); toast("Nothing to restore — payments aren't live yet."); return; }
 });
 document.addEventListener("submit", e => {
@@ -22652,10 +22670,10 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .co-row{display:flex;justify-content:space-between;gap:10px;padding-block:5px;font-size:calc((14px) * var(--text-scale,1));border-bottom:1px solid var(--line)}
 .co-total{border-bottom:0;font-weight:700}
 .co-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-.co-open:not([data-state="fail"]) .co-actions{display:none}
-.co-open[data-state="fail"] .co-spinner{animation:none;border-color:var(--bad)}
+.co-open:not([data-state]) .co-actions{display:none}
+.co-open[data-state] .co-spinner{animation:none;border-top-color:var(--raise)}
+.co-open[data-state="fail"] .co-spinner{border-color:var(--bad)}
 .co-open[data-state="fail"] .co-bigcard{animation:none}
-.co-done{animation:coOut .28s ease both}
 :root[data-motion="reduced"] .co-open,:root[data-motion="reduced"] .co-open *{animation:none!important}
 :root[data-motion="reduced"] .co-spinner{animation:coSpin 2.4s linear infinite!important}
 @media (prefers-reduced-motion:reduce){.co-open,.co-open *{animation:none!important}.co-spinner{animation:coSpin 2.4s linear infinite!important}}
@@ -22663,7 +22681,6 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 @keyframes coRise{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
 @keyframes coGlow{0%,100%{box-shadow:0 0 0 transparent;transform:translateY(0)}50%{box-shadow:0 18px 50px color-mix(in srgb,var(--accent) 45%,transparent);transform:translateY(-5px)}}
 @keyframes coSpin{to{transform:rotate(360deg)}}
-@keyframes coOut{to{opacity:0}}
 /* ===================== 8.3.11 sign-in card ===================== */
 .auth-desc{margin:0 0 12px}
 .auth-pop .auth-alt{margin:16px 0 0}
