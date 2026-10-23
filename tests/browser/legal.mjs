@@ -190,6 +190,16 @@ await ev(`location.hash = "#/privacy-policy"; true`); await sleep(500);
 const pol = await ev(`(document.querySelector("#sec-privacy-policy, .legal")?.textContent || document.body.textContent) + " " + [...LEGAL_FOLD.values()].map(e => { const d = document.createElement("div"); d.innerHTML = e.html; return d.textContent; }).join(" ")`);
 ok("the Privacy Policy describes the birth month and year, that only the age is kept, and the 24-hour retry block", /birth month and year/.test(pol) && /never your birth date/.test(pol) && /24 hours/.test(pol) && !/13-and-over confirmation/.test(pol), pol.slice(pol.indexOf("Children") - 10, pol.indexOf("Children") + 450));
 
+console.log("--- 6. the EULA and the Copyright / DMCA pages (8.3.26)");
+for (const [route, h2, mustHave] of [["eula", "End User License Agreement", /Lemon Squeezy/], ["dmca", "Copyright / DMCA Policy", /17 U\.S\.C\. § 512/]]) {
+  await ev(`location.hash = "#/${route}"; true`); await sleep(500);
+  ok(`#/${route} shows its heading and long sections fold behind Read more`, await ev(`document.querySelector(".legal h2")?.textContent === ${JSON.stringify(h2)} && document.querySelectorAll(".legal .legal-more").length >= 3`));
+  const txt = await ev(`document.body.textContent + " " + [...LEGAL_FOLD.values()].map(e => { const d = document.createElement("div"); d.innerHTML = e.html; return d.textContent; }).join(" ")`);
+  ok(`#/${route} has its key text and no drafting note`, mustHave.test(txt) && !/Drafting note/i.test(txt));
+}
+ok("the footer and the sidebar link to both pages", await ev(`["#/eula", "#/dmca"].every(h => document.querySelector('.footlinks a[href="' + h + '"]') && document.querySelector('nav a[href="' + h + '"], .side a[href="' + h + '"], [data-route="' + h.slice(2) + '"]'))`) || await ev(`["#/eula", "#/dmca"].every(h => document.querySelector('.footlinks a[href="' + h + '"]'))`));
+ok("the DMCA page hides the optional phone row while no phone is set", await ev(`(() => { location.hash = "#/dmca"; return !/Phone:/.test(document.querySelector(".legal")?.textContent || ""); })()`));
+
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 400));
 console.log(`\n${pass} passed, ${fail} failed`);
 ws.close(); procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(fail ? 1 : 0);

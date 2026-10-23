@@ -3781,7 +3781,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.25", channel: "Dev Testing", date: "2026-10-23", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.26", channel: "Dev Testing", date: "2026-10-23", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3795,6 +3795,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.25", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.26",
+      area:"Legal",
+      title:"EULA and Copyright / DMCA pages",
+      bug:"The app had Terms and a Privacy Policy but no End User License Agreement and no copyright (DMCA) policy, which a copyright owner needs in order to report a problem and which the safe harbour under 17 U.S.C. 512 relies on.",
+      fix:"Two new legal pages written for what the app really does (friends, messages, challenges, blocking, the under-13 screen, Google and email sign-in, passcode, Premium through Lemon Squeezy as seller and merchant of record with licence keys). They fold long sections behind Read more like the other legal pages. They are linked from the sidebar Legal group, the footer and the end of the Terms. Facts only the owner can give (DMCA agent, governing law, liability amount, court district) are bracketed placeholders for now.",
+      where:"index.html: eulaView(), dmcaView() and the LEGAL_PAGES_UPDATED, LEGAL_GOVERNING_LAW, LEGAL_LIABILITY_CAP, DMCA_AGENT_* and DMCA_DISTRICT constants (after termsView), NAV, TITLES, DESCS, the route table, siteFooter(), the end of termsView(). tests/browser/legal.mjs (section 6). APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/legal.mjs. By hand: open #/eula and #/dmca (or Legal > EULA and Copyright / DMCA in the menu, or the footer links), press Read more on a section, and check the text against the app.",
+      limits:"Drafts, not legal advice: a lawyer should review them. The bracketed placeholders show on the live page until filled in, so do not merge until they are. The DMCA agent must also be registered with the U.S. Copyright Office. The Privacy Policy is not changed, so it still lacks the friends messages paragraph. The sign-up agreement still points only to the Terms and the Privacy Policy, and TERMS_VERSION is not bumped, so nobody is asked to agree again." },
     { id:"8.3.25",
       area:"Premium",
       title:"Receipt shows the subtotal, the tax with its rate, the total and the amount paid",
@@ -11184,7 +11192,7 @@ const NAV = [
  ["EAT & TRAIN",[["recipes","Recipes & meal plans","book"],["culture","Food culture","globe"],["coach","Personal coach","coach"]]],
  ["PREMIUM",[["premium","Premium","crown"]]],
  ["ACCOUNT",[["settings","Settings & profiles","gear"]]],
- ["LEGAL",[["privacy-policy","Privacy Policy","lock"],["terms","Terms","book"],["refunds","Refunds","book"],["contact","Contact","book"],["credits","Credits","book"]]]
+ ["LEGAL",[["privacy-policy","Privacy Policy","lock"],["terms","Terms","book"],["eula","EULA","book"],["dmca","Copyright / DMCA","book"],["refunds","Refunds","book"],["contact","Contact","book"],["credits","Credits","book"]]]
 ];
 
 // =================== ROUTER ===================
@@ -11292,7 +11300,7 @@ darkMQ?.addEventListener?.("change", () => applyLook());
 new MutationObserver(() => applyLook()).observe(document.documentElement, { attributes:true, attributeFilter:["data-theme"] });
 setInterval(() => { if (P()?.look?.accent === "dynamic") applyLook(); }, 5 * 60 * 1000);
 
-const TITLES = {home:"Summary",health:"Health data",browse:"Health data",cat:"Category",metric:"Metric",nutrition:"Daily nutrition",workouts:"Workouts",snacks:"Snack log",alcohol:"Daily nutrition",awards:"Achievements & Goals",recipes:"Recipes & meal plans",culture:"Food culture",coach:"Personal coach",premium:"Premium",settings:"Settings & profiles","privacy-policy":"Privacy Policy",terms:"Terms & Conditions",refunds:"Refunds & cancellation",contact:"Contact",credits:"Licenses & credits","404":"Page not found"};
+const TITLES = {home:"Summary",health:"Health data",browse:"Health data",cat:"Category",metric:"Metric",nutrition:"Daily nutrition",workouts:"Workouts",snacks:"Snack log",alcohol:"Daily nutrition",awards:"Achievements & Goals",recipes:"Recipes & meal plans",culture:"Food culture",coach:"Personal coach",premium:"Premium",settings:"Settings & profiles","privacy-policy":"Privacy Policy",terms:"Terms & Conditions",eula:"End User License Agreement",dmca:"Copyright / DMCA Policy",refunds:"Refunds & cancellation",contact:"Contact",credits:"Licenses & credits","404":"Page not found"};
 function setMeta(title, desc, jsonld){
   document.title = title === "Home" ? "Whole Life Hub" : `${title} · Whole Life Hub`;
   let m = document.querySelector('meta[name="description"]'); if (!m) { m = document.createElement("meta"); m.name = "description"; document.head.append(m); }
@@ -11300,7 +11308,7 @@ function setMeta(title, desc, jsonld){
   document.getElementById("ld-page")?.remove();
   if (jsonld) { const sc = document.createElement("script"); sc.type = "application/ld+json"; sc.id = "ld-page"; sc.textContent = JSON.stringify(jsonld); document.head.append(sc); }
 }
-const DESCS = {health:"All your health data in one place: activity, body, heart, respiratory, sleep, nutrition and snacks.",browse:"Browse every health category: activity, body, heart, respiratory, sleep, nutrition and snacks.",cat:"Health category",metric:"Health data",home:"Today's calories, weight estimate, meals picked for you and this week's workouts.",nutrition:"Log meals, drinks and extras, see the last 7 days and your weight estimate.",workouts:"Import Apple Health or Google data, or log workouts by hand.",snacks:"A separate snack log with West African and global snack ideas.",alcohol:"Log drinks with their real calorie cost, counted toward your day.",awards:"Badges, goals, the monthly challenge and a household scoreboard.",recipes:"West African–first recipe library with step-by-step methods and meal plans.",culture:"Daily and weekly meals based on where your food comes from.",coach:"Weekly workout plans, sport training, reminders and coaching answers.",premium:"Everything in the Premium tier, and what is still being built.",settings:"Profiles, appearance, targets, privacy and security.","privacy-policy":"What this app stores, where it stores it, and what leaves your device.",terms:"How to use this app, and why nothing in it is medical advice.",refunds:"How to cancel Premium, and the refund policy.",contact:"How to reach us.",credits:"Fonts, icons and data sources, with their licenses.","404":"This page doesn't exist."};
+const DESCS = {health:"All your health data in one place: activity, body, heart, respiratory, sleep, nutrition and snacks.",browse:"Browse every health category: activity, body, heart, respiratory, sleep, nutrition and snacks.",cat:"Health category",metric:"Health data",home:"Today's calories, weight estimate, meals picked for you and this week's workouts.",nutrition:"Log meals, drinks and extras, see the last 7 days and your weight estimate.",workouts:"Import Apple Health or Google data, or log workouts by hand.",snacks:"A separate snack log with West African and global snack ideas.",alcohol:"Log drinks with their real calorie cost, counted toward your day.",awards:"Badges, goals, the monthly challenge and a household scoreboard.",recipes:"West African–first recipe library with step-by-step methods and meal plans.",culture:"Daily and weekly meals based on where your food comes from.",coach:"Weekly workout plans, sport training, reminders and coaching answers.",premium:"Everything in the Premium tier, and what is still being built.",settings:"Profiles, appearance, targets, privacy and security.","privacy-policy":"What this app stores, where it stores it, and what leaves your device.",terms:"How to use this app, and why nothing in it is medical advice.",eula:"The licence to use this app, what you own, and the rules for friends, messages and Premium.",dmca:"How to report copyright infringement and how to respond if your content was removed.",refunds:"How to cancel Premium, and the refund policy.",contact:"How to reach us.",credits:"Fonts, icons and data sources, with their licenses.","404":"This page doesn't exist."};
 // render() replaces the whole app with innerHTML, which destroys the sidebar and rebuilds it at
 // scrollTop 0. The nav's position is read before that and written back synchronously after, so a
 // click never moves the sidebar. Everything that used to "correct" this afterwards is gone.
@@ -11443,7 +11451,7 @@ function render(){
   // Someone who set their hub up before coaches existed is asked once, politely, with a
   // coach already highlighted. Keeping it is one tap and nothing they have is touched.
   if (typeof coachPromptView === "function" && !p.coachPrompted) { morphInto(root, coachPromptView(p)); setMeta("Choose your coach", "Pick the voice your coach uses."); afterRender(); return; }
-  const view = ({health:healthView, browse:healthView, cat:catView, metric:metricView, home:homeView, nutrition:nutritionView, workouts:workoutsView, snacks:snacksView, alcohol:alcoholView, awards:awardsView, recipes:recipesView, culture:cultureView, coach:coachView, settings:settingsView, premium:premiumView, "privacy-policy":privacyPolicyView, terms:termsView, refunds:refundsView, contact:contactView, credits:creditsView, "404":notFoundView})[UI.route] || notFoundView;
+  const view = ({health:healthView, browse:healthView, cat:catView, metric:metricView, home:homeView, nutrition:nutritionView, workouts:workoutsView, snacks:snacksView, alcohol:alcoholView, awards:awardsView, recipes:recipesView, culture:cultureView, coach:coachView, settings:settingsView, premium:premiumView, "privacy-policy":privacyPolicyView, terms:termsView, eula:eulaView, dmca:dmcaView, refunds:refundsView, contact:contactView, credits:creditsView, "404":notFoundView})[UI.route] || notFoundView;
   const titles = TITLES;
   const dish = UI.route === "recipes" && UI.param ? DISHES.find(d => d.id === UI.param) : null;
   const setTab = UI.route === "settings" && UI.param ? SET_TABS.find(t => t[0] === UI.param) : null;
@@ -16599,6 +16607,8 @@ function siteFooter(){
       <nav class="footlinks" aria-label="Legal">
         <a href="#/privacy-policy">Privacy Policy</a>
         <a href="#/terms">Terms</a>
+        <a href="#/eula">EULA</a>
+        <a href="#/dmca">Copyright</a>
         <a href="#/refunds">Refunds</a>
         <a href="#/contact">Contact</a>
         <a href="#/credits">Credits</a>
@@ -16767,7 +16777,186 @@ function termsView(){
     <p>These terms may change as the app changes. The date at the top shows when they were last updated, and continuing to use the app after that means the updated terms apply.</p>
 
     <h3>Contact</h3>
+    <p>The <a href="#/eula">End User License Agreement</a> and the <a href="#/dmca">Copyright / DMCA Policy</a> are part of these terms.</p>
     <p>Questions about these terms: <b>${esc(CONTACT_EMAIL)}</b>, or see the <a href="#/contact">Contact page</a>.</p>
+  </section>`);
+}
+
+// =================== EULA AND COPYRIGHT (DMCA) ===================
+// Template, not legal advice. Review before publishing. The bracketed constants are facts only the owner can supply;
+// the DMCA agent must also be registered with the U.S. Copyright Office before the safe harbour applies.
+const LEGAL_PAGES_UPDATED = "23 October 2026";
+const LEGAL_GOVERNING_LAW = "[GOVERNING LAW: state or country whose law applies]"; // TODO: confirm with a lawyer
+const LEGAL_LIABILITY_CAP = "[LIABILITY AMOUNT, e.g. US $100]";                   // TODO: confirm with a lawyer
+const DMCA_AGENT_NAME = "[DMCA AGENT NAME OR TITLE]";                              // TODO: fill in, then register with the U.S. Copyright Office
+const DMCA_AGENT_EMAIL = "[DMCA AGENT EMAIL]";                                      // TODO: fill in
+const DMCA_AGENT_PHONE = "";                                                        // optional; the row is hidden while this is empty
+const DMCA_DISTRICT = "[U.S. FEDERAL DISTRICT where the operator is located]";      // TODO: fill in
+
+function eulaView(){
+  return legalFold(`
+  <section class="card legal">
+    <div class="eyebrow">Legal</div>
+    <h2>End User License Agreement</h2>
+    <p class="small muted">Last updated: ${esc(LEGAL_PAGES_UPDATED)}</p>
+    <p>This agreement is between you and <b>${esc(LEGAL_BUSINESS_NAME)}</b> ("Whole Life Hub", "we", "us"), who runs Whole Life Hub. It sits alongside the <a href="#/terms">Terms &amp; Conditions</a>, the <a href="#/privacy-policy">Privacy Policy</a> and the <a href="#/refunds">Refunds &amp; cancellation</a> page. If this agreement and the Terms ever disagree, the stricter rule for the situation applies.</p>
+
+    <h3>1. Accepting this agreement</h3>
+    <p>By creating an account, creating a profile or using Whole Life Hub (the "App"), you agree to this agreement, the Terms and the Privacy Policy. If you do not agree, do not use the App.</p>
+
+    <h3>2. Who can use it</h3>
+    <p>You must be at least 13 years old, or the minimum age of digital consent where you live if that is higher. The App asks for your birth month and year when you set up a profile and turns away anyone under 13. If you are under 18, use the App only with a parent or guardian's permission. You are responsible for making sure your use is lawful where you live.</p>
+
+    <h3>3. What the App does</h3>
+    <p>Whole Life Hub is a health and fitness companion. You can log meals, snacks, drinks, workouts, weigh-ins and health numbers; browse a West African-first food catalog and recipes; get coach-style guidance and meal and workout plans; keep household profiles; and, if you sign in, sync your data across devices, add friends, message them, join workout challenges and block people. Some features are beta or preview and may change, break or be removed.</p>
+
+    <h3>4. Not medical advice</h3>
+    <p class="note">Whole Life Hub gives general wellness information only. It is not medical advice and does not diagnose, treat, cure or prevent any condition. Coach answers, plans, calorie and nutrition values, calorie-burn figures, weight projections and the Recovery score are estimates and may be wrong or unsuitable for you.</p>
+    <p>Talk to a qualified health professional before changing how you eat or train, and never ignore professional advice because of something in the App. Stop exercising and get medical help if you feel pain, dizziness, chest tightness or shortness of breath. In an emergency, call your local emergency number.</p>
+
+    <h3>5. Your account and passcode</h3>
+    <p>You can sign in with Google or with an email address and password. Give accurate details and keep your sign-in secure. You are responsible for what happens under your account. Tell us at <b>${esc(CONTACT_EMAIL)}</b> if you think someone else has used it.</p>
+    <p>A passcode, if you set one, locks and encrypts the copy of your data on that device only. We never store it and cannot reset it. If you forget it, that device's copy is lost, although signing in again brings back what was synced to your account.</p>
+
+    <h3>6. Licence to use the App</h3>
+    <p>We give you a limited, personal, non-exclusive, non-transferable, revocable licence to use the App for your own non-commercial purposes, for you and the people in your household who have profiles in it. You do not get ownership of the App.</p>
+
+    <h3>7. What we own</h3>
+    <p>The App, including its code, design, text, artwork, logos, and the way its food, recipe and exercise content is selected and organised, belongs to us or our licensors and is protected by intellectual property law. Open-source and third-party parts are credited on the <a href="#/credits">Licenses &amp; credits</a> page and stay under their own licences. Except for the licence in section 6, you get no rights in any of it. Do not copy, modify, sell, rent or distribute the App except as this agreement or the law allows.</p>
+
+    <h3>8. What you own</h3>
+    <p>You keep ownership of what you add: your logs, photos, profile details, messages and anything else you enter ("Your Content"). You give us a worldwide, non-exclusive, royalty-free licence to store, copy, process and display Your Content only as needed to run the App for you. That means syncing it to your account, showing your app name, online status, challenge totals and messages to the friends you choose, and providing features you use. This licence ends when you delete the content or your account, apart from short-lived backups and copies other people already received, such as a message a friend has already read.</p>
+    <p>Only add content you have the right to share. Do not add another person's photos or health information without their permission.</p>
+
+    <h3>9. Acceptable use</h3>
+    <p>You agree not to:</p>
+    <ul class="clean">
+      <li>Break the law, or infringe anyone's copyright, privacy or other rights.</li>
+      <li>Harass, threaten, impersonate or spam other people, or use friends, messages or challenges to harm anyone.</li>
+      <li>Send sexually explicit, hateful or illegal content in messages or app names.</li>
+      <li>Upload malware, try to get into accounts or data that are not yours, probe or disrupt the App, or get around any limit, sign-in or Premium check, including sharing or reselling a Premium licence key.</li>
+      <li>Scrape or bulk-copy the App's content or database, other than through the export feature for your own data.</li>
+      <li>Reverse engineer the App, except where the law says you may.</li>
+      <li>Use the App to give medical diagnosis or treatment to anyone.</li>
+    </ul>
+
+    <h3>10. Friends, messages, challenges and blocking</h3>
+    <p>Signed-in accounts can set an app name, choose whether others can find them by it (off until you tick it) and whether friends can see when they are online. Friends can send each other text messages and invite up to nine friends to a workout challenge, where the leaderboard shows each member's total only. You control who you add. You can remove a friend, leave a challenge or block someone from Settings &gt; Household &gt; Friends. Blocking ends the friendship and stops that person finding you, requesting you, messaging you or seeing you online.</p>
+    <p>We may, but do not have to, review messages and names. We may remove content or restrict an account that breaks this agreement. To report abuse, email <b>${esc(CONTACT_EMAIL)}</b>.</p>
+
+    <h3>11. Copyright</h3>
+    <p>We respond to notices of alleged copyright infringement as set out in our <a href="#/dmca">Copyright / DMCA Policy</a>, which also explains how to send a counter-notice.</p>
+
+    <h3>12. Premium, payments and licence keys</h3>
+    <p>Premium is an optional paid plan. The plans, prices, taxes and billing period are shown on the Premium screen and again on the checkout page before you pay. During beta, Premium may be free or in test mode; these terms apply to paid plans once payments are live.</p>
+    <ul class="clean">
+      <li>Payment is handled by Lemon Squeezy, which acts as the seller and merchant of record. You enter your card details on Lemon Squeezy's page, never in this App, and Lemon Squeezy's own terms apply to the purchase.</li>
+      <li>After you pay, you get a licence key. The App checks it with Lemon Squeezy through our server when you paste it and about once a day. Your key is for your own use.</li>
+      <li>Plans renew automatically until you cancel. You can cancel from <a href="#/settings/premium">Settings &gt; Premium</a> &gt; Manage subscription. Cancelling stops the next renewal and you keep Premium until the end of the period you paid for.</li>
+      <li>Refunds follow the <a href="#/refunds">Refunds &amp; cancellation</a> page.</li>
+      <li>We may change prices or Premium features going forward. A change does not affect a period you have already paid for.</li>
+    </ul>
+
+    <h3>13. Your data</h3>
+    <p>The Privacy Policy explains what is stored on your device, what is synced to your account and which outside services the App contacts. Without an account, your data lives only in your browser, and clearing the site's data or uninstalling can delete it for good. You can export your data from Data &amp; about and delete it from Privacy &amp; security. To delete your account and everything synced to it, email <b>${esc(CONTACT_EMAIL)}</b>.</p>
+
+    <h3>14. Third-party services</h3>
+    <p>The App relies on services we do not run, including Vercel (hosting), Supabase (database and sign-in), Google (if you choose Google sign-in), Lemon Squeezy (payments) and, for AI features, Claude. They have their own terms and privacy policies, and we are not responsible for them.</p>
+
+    <h3>15. Changes and availability</h3>
+    <p>We aim to keep the App running and accurate, but we do not promise it will always be available, error-free or lose no data. Nutrition values and estimates can be wrong. We may change, pause or end any part of the App. If a change seriously affects something you have paid for, we will give reasonable notice where we can.</p>
+
+    <h3>16. No warranty</h3>
+    <p>To the fullest extent the law allows, the App is provided "as is" and "as available", without warranties of any kind, including fitness for a particular purpose and non-infringement. Nothing here removes rights you have under the law that cannot be removed.</p>
+
+    <h3>17. Limit of liability</h3>
+    <p>To the fullest extent the law allows, we are not liable for indirect, incidental, special, consequential or punitive losses, or for lost profits, data or goodwill, arising from your use of the App. Where liability cannot be excluded, it is limited to the greater of what you paid us in the 12 months before the claim and ${esc(LEGAL_LIABILITY_CAP)}. Nothing in this agreement limits liability for death or personal injury caused by negligence, for fraud, or for anything else the law does not allow us to limit.</p>
+
+    <h3>18. Indemnity</h3>
+    <p>To the extent the law allows, you agree to cover us for claims, losses and reasonable costs that come from Your Content, your misuse of the App or your breaking this agreement or the law.</p>
+
+    <h3>19. Ending your use</h3>
+    <p>You can stop using the App at any time. We may suspend or end your access if you seriously break this agreement, put other people at risk, or where the law requires. Sections that by their nature should continue (ownership, disclaimers, liability, indemnity and disputes) do so after your access ends.</p>
+
+    <h3>20. Changes to this agreement</h3>
+    <p>We may update this agreement. Material changes will be announced in the App or by other reasonable means and the date at the top will change. Using the App after a change takes effect means you accept it.</p>
+
+    <h3>21. Governing law and disputes</h3>
+    <p>This agreement is governed by ${esc(LEGAL_GOVERNING_LAW)}. Before starting any claim, contact us at <b>${esc(CONTACT_EMAIL)}</b> and give us 30 days to try to settle it informally. If you are a consumer, you keep any mandatory rights you have under the law where you live.</p>
+
+    <h3>22. App stores</h3>
+    <p>If the App is ever offered through the Apple App Store or Google Play, that store's terms also apply, and the store provider is a third-party beneficiary of this agreement where its rules require. The store has no duty to support the App.</p>
+
+    <h3>23. Contact</h3>
+    <p>Questions about this agreement: <b>${esc(CONTACT_EMAIL)}</b>, or see the <a href="#/contact">Contact page</a>.</p>
+  </section>`);
+}
+
+function dmcaView(){
+  const phone = DMCA_AGENT_PHONE ? `<li><b>Phone:</b> ${esc(DMCA_AGENT_PHONE)}</li>` : "";
+  return legalFold(`
+  <section class="card legal">
+    <div class="eyebrow">Legal</div>
+    <h2>Copyright / DMCA Policy</h2>
+    <p class="small muted">Last updated: ${esc(LEGAL_PAGES_UPDATED)}</p>
+    <p>Whole Life Hub respects other people's intellectual property and expects its users to do the same. This page explains how a copyright owner can report content, how a person whose content was removed can respond, and how repeat infringers are handled, under the Digital Millennium Copyright Act, 17 U.S.C. § 512.</p>
+
+    <h3>1. What this covers</h3>
+    <p>It covers content people add to Whole Life Hub: profile and app names, messages to friends, and photos and notes in their own accounts. Photos and logs are private to the account that added them unless that person shares something. Content we ship ourselves is covered by the <a href="#/eula">End User License Agreement</a> and the <a href="#/credits">Licenses &amp; credits</a> page.</p>
+
+    <h3>2. Our designated copyright agent</h3>
+    <p>Send copyright notices and counter-notices to:</p>
+    <ul class="clean">
+      <li><b>Agent:</b> ${esc(DMCA_AGENT_NAME)}</li>
+      <li><b>Organisation:</b> ${esc(LEGAL_BUSINESS_NAME)}</li>
+      <li><b>Postal address:</b> ${esc(MAILING_ADDRESS)}</li>
+      <li><b>Email:</b> ${esc(DMCA_AGENT_EMAIL)}</li>
+      ${phone}
+    </ul>
+    <p>Use this address for copyright matters only. For support or privacy questions, write to <b>${esc(CONTACT_EMAIL)}</b>.</p>
+
+    <h3>3. How to report infringing content</h3>
+    <p>If you believe something on Whole Life Hub infringes your copyright, send our agent a written notice with:</p>
+    <ul class="clean">
+      <li>A description of the copyrighted work you say was infringed, or a representative list if one notice covers several works.</li>
+      <li>A description of the material and where it appears, with enough detail for us to find it, such as the app name involved, a screenshot and when it was sent or posted.</li>
+      <li>Your full name, postal address, telephone number and email address.</li>
+      <li>A statement that you believe in good faith that the use is not authorised by the copyright owner, its agent or the law.</li>
+      <li>A statement, made under penalty of perjury, that the information in your notice is accurate and that you are the owner or authorised to act for the owner.</li>
+      <li>Your physical or electronic signature.</li>
+    </ul>
+    <p>An incomplete notice may delay or prevent action.</p>
+
+    <h3>4. What happens after a notice</h3>
+    <p>When we receive a valid notice, we review it and act promptly, which may mean removing or disabling the material. Where we can and the law allows, we tell the person whose content it was and explain the counter-notice steps below. We keep a record of the notices we receive.</p>
+
+    <h3>5. Counter-notice</h3>
+    <p>If your content was removed and you believe that was a mistake or a misidentification, send our agent a counter-notice with:</p>
+    <ul class="clean">
+      <li>Your full name, postal address and telephone number.</li>
+      <li>What was removed and where it appeared before removal.</li>
+      <li>A statement, under penalty of perjury, that you believe in good faith it was removed because of a mistake or misidentification.</li>
+      <li>A statement that you consent to the jurisdiction of the U.S. federal district court for the district where your address is (or, if you are outside the United States, ${esc(DMCA_DISTRICT)}), and that you will accept service of process from the person who sent the original notice or their agent.</li>
+      <li>Your physical or electronic signature.</li>
+    </ul>
+
+    <h3>6. After a counter-notice</h3>
+    <p>We pass your counter-notice to the person who sent the original notice. Unless that person tells our agent they have started a court action against the alleged infringing activity, we may restore the material between 10 and 14 business days after we receive your counter-notice, where that is lawful and appropriate.</p>
+
+    <h3>7. Repeat infringers</h3>
+    <p>In appropriate circumstances we close the accounts of people who repeatedly infringe copyright. We may also remove content, limit features or suspend an account earlier where we think it is warranted, for example for clear infringement or because of a court order.</p>
+
+    <h3>8. False claims</h3>
+    <p>Under 17 U.S.C. § 512(f), anyone who knowingly and materially misrepresents that content is infringing, or that it was removed by mistake, can be liable for damages. Send only notices and counter-notices you believe are accurate.</p>
+
+    <h3>9. Monitoring</h3>
+    <p>We do not interfere with standard technical measures that copyright owners use to protect their works. We are not required to monitor the App for infringement, but we may review content when someone reports it or when a person blocks another.</p>
+
+    <h3>10. Other rights</h3>
+    <p>This page is about copyright. If you think content infringes your trademark or another right, email <b>${esc(CONTACT_EMAIL)}</b> with details and we will look at it under the law and the <a href="#/terms">Terms</a>.</p>
+
+    <h3>11. Changes</h3>
+    <p>We may update this policy and will change the date at the top when we do. If our agent's details change, we will update this page and the U.S. Copyright Office directory promptly.</p>
   </section>`);
 }
 
