@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.24, 2026-10-22. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.25, 2026-10-23. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.25 · Logo: New Whole Life Hub logo: a leaf and a heartbeat ring
+
+- **Problem:** The app still showed the old logo (a glass sphere with an ECG line and a small leaf). CJ supplied a new one: a leaf and a heartbeat ring.
+- **Change:** The new mark replaces the old one everywhere the old one appeared: the browser tab icon, the home-screen icon (apple-touch-icon), the install icons (192 and 512px, used by the manifest and the offline worker) and every spot in the app that draws the logo (sidebar, sign-in, welcome, loading and the other cards that carry it). It keeps the app's own teal-to-green tile colours rather than the dark blue background of the uploaded picture, so it matches the rest of the app. It is redrawn as a small vector (not a pasted picture), so it stays sharp at every size and adds almost nothing to the page.
+- **Where:** index.html: logoSVG() and the favicon <link rel="icon">, APP_VERSION, WLH.changelog. img/icon-192.png, img/icon-512.png, img/apple-touch-icon.png (replaced; the touch icon is a full square because iOS rounds it itself). CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.
+- **How to test:** Open the app: the new logo shows in the sidebar header, on the sign-in card and while loading, and as the browser tab icon (hard refresh, tab icons are cached). Open /img/icon-512.png, /img/icon-192.png and /img/apple-touch-icon.png directly. node --test tests/pwa-kit.cjs. node tests/check-repo.mjs.
+- **Known limits:** Redrawn by hand from the picture, so the leaf veins and the glass shine are simpler than in the original artwork. The picture's dark blue tile was not used on purpose. A phone that already installed the app may keep the old home-screen icon until it is removed and added again. No maskable icon yet. The ios/ app icon set has no images, so it is unchanged.
 
 ## 8.3.24 · Install and errors: Install manifest, offline service worker and an error-tracking starter (not switched on yet)
 
