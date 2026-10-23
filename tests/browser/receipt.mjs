@@ -74,6 +74,22 @@ ok("Print again tucks the paper back and reprints", await ev(`new DOMMatrix(getC
 await shut();
 ok("Done closes it", await ev(`!document.getElementById("pop-receipt")`));
 
+console.log("--- receipt with subtotal, discount, tax rate and amount paid");
+await open({ ...FULL, items: [{ label: "Premium Yearly", amount: 59.99 }], subtotal: 59.99, discount: 5, taxes: [{ label: "VAT 20%", amount: 11, included: false }], total: 65.99, paid: 65.99 }); await sleep(200);
+const tf = await txt("#pop-receipt");
+ok("shows the price, Subtotal, Discount, the tax with its rate, TOTAL and AMOUNT PAID, in that order", /Premium Yearly[\s\S]*Subtotal[\s\S]*Discount[\s\S]*VAT 20%[\s\S]*TOTAL[\s\S]*AMOUNT PAID/.test(tf) && /-\$5\.00|−\$5\.00|\$-5\.00/.test(tf) && /\$11\.00/.test(tf) && (tf.match(/\$65\.99/g) || []).length === 2, tf);
+await shut();
+await open({ ...FULL, taxes: [{ label: "VAT 20%", amount: 2, included: true }] }); await sleep(200);
+ok("tax already in the price is marked included", /VAT 20% \(included\)/.test(await txt("#pop-receipt")));
+await shut();
+await open({ ...FULL, taxes: [], total: 10, paid: 10 }); await sleep(200);
+const tz = await txt("#pop-receipt");
+ok("no tax charged prints a Tax $0.00 line instead of leaving taxes out", /Tax\s*\$0\.00/.test(tz) && !/didn't send/.test(tz), tz);
+await shut();
+await open(FULL); await sleep(200);
+ok("without an amount paid from the provider, no AMOUNT PAID line is made up from the total", !/AMOUNT PAID|Subtotal|Discount/.test(await txt("#pop-receipt")));
+await shut();
+
 console.log("--- receipt with missing data");
 await open({}); await sleep(200);
 const t2 = await txt("#pop-receipt");

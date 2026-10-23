@@ -26,6 +26,10 @@ ok("every expected header is configured", ["Content-Security-Policy", "X-Content
 ok("framing is refused twice (CSP and X-Frame-Options)", /frame-ancestors 'none'/.test(csp) && HEADERS["X-Frame-Options"] === "DENY");
 ok("no plugins, base tag or form posts to other sites", /object-src 'none'/.test(csp) && /base-uri 'self'/.test(csp) && /form-action 'self'/.test(csp));
 ok("scripts only from this site and jsDelivr", /script-src 'self' 'unsafe-inline' https:\/\/cdn\.jsdelivr\.net;/.test(csp));
+ok("frames only from the Lemon Squeezy store (the in-app checkout), nothing else", /frame-src https:\/\/wholelife\.lemonsqueezy\.com;/.test(csp) && (csp.match(/frame-src [^;]*/) || [""])[0].split(" ").length === 2);
+ok("the payment feature only for that same store, not this page or any other site", /payment=\("https:\/\/wholelife\.lemonsqueezy\.com"\)/.test(HEADERS["Permissions-Policy"] || ""));
+const ckHosts = [...readFileSync(join(REPO, "index.html"), "utf8").matchAll(/https:\/\/([a-z0-9-]+\.lemonsqueezy\.com)\/checkout\//g)].map(m => m[1]);
+ok("every checkout link in the app is on the host the frame policy allows", ckHosts.length > 0 && ckHosts.every(h => h === "wholelife.lemonsqueezy.com"), ckHosts.join(","));
 ok("network only to this site and the Supabase project", /connect-src 'self' https:\/\/[a-z0-9]+\.supabase\.co;/.test(csp));
 const html = readFileSync(join(REPO, "index.html"), "utf8");
 ok("the Supabase URL in the policy matches the app's SB_URL", html.includes(`SB_URL = "${(csp.match(/connect-src 'self' (https:\/\/[a-z0-9]+\.supabase\.co)/) || [])[1]}"`));

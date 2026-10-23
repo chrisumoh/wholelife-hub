@@ -3781,7 +3781,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.24", channel: "Dev Testing", date: "2026-10-22", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.25", channel: "Dev Testing", date: "2026-10-23", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3795,6 +3795,22 @@ const APP_VERSION = { update: "8.3", build: "8.3.24", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.25",
+      area:"Premium",
+      title:"Receipt shows the subtotal, the tax with its rate, the total and the amount paid",
+      bug:"The receipt listed the plan, one tax line and the total. CJ asked for it to show the amount paid, all taxes, and then the final amount.",
+      fix:"The licence function now passes on more of the Lemon Squeezy order: subtotal, any discount, the tax name with its rate (for example VAT 20%), whether the tax is included in the price, and, only when the order is marked paid, the amount paid. The receipt prints the plan and price, Subtotal, Discount (only if there was one), the tax line (marked included when it is inside the price, or Tax 0.00 when no tax was charged), TOTAL and AMOUNT PAID. Nothing is added up in the app: every number is one Lemon Squeezy sent. The ?previewreceipt=1 sample shows the new lines with AMOUNT (SAMPLE).",
+      where:"supabase/functions/license/logic.ts receiptOf() and rateOf() (deployed, version 5). index.html: receiptHTML(), the previewreceipt sample in boot(), CSS .rc-paid. tests/license-logic.test.mjs (2 new tests), tests/browser/receipt.mjs (4 new checks). docs/DATABASE.md.",
+      test:"Run node --test tests/license-logic.test.mjs and node tests/browser/receipt.mjs. Open ?previewreceipt=1 to see the layout. On the preview, make a test purchase, paste the key in Settings > Premium and press Activate: the receipt shows Subtotal, the tax line, TOTAL and AMOUNT PAID from the real order.",
+      limits:"Lemon Squeezy reports one combined tax per order, so a receipt has one tax line, not one per tax. A partly refunded order shows no amount paid. Not yet checked against a real test order's data." },
+    { id:"8.3.25",
+      area:"Premium",
+      title:"Checkout inside the app: an animated Opening secure checkout panel that then shows Lemon Squeezy's checkout",
+      bug:"Sliding to pay opened the Lemon Squeezy checkout with only a small message, so the moment between the tap and the checkout had no animation. CJ asked for a second checkout animation and supplied a checkout component (checkout.html). CJ also asked for the paywall to show in the website itself rather than in a new tab.",
+      fix:"Sliding to pay (or Choose Monthly or Yearly in Settings > Premium) now shows a Checkout panel: a glowing card marked Paying with the real price, a spinner, Opening secure checkout and the order lines (plan, length, total) from PREMIUM_PLANS. After about a second and a half the panel grows into Lemon Squeezy's own checkout page, loaded inside the app in a sandboxed frame (no Lemon Squeezy script runs in the app, and the frame cannot read or navigate it). Card details are typed into Lemon Squeezy's page only. An Open in a new tab instead link is always shown, because a browser can refuse a frame without telling the app. When the checkout frame reports the order went through, the panel says so and points to Settings > Premium for the key; it never turns Premium on itself. The checkout's own close button closes the panel. Keyboard focus moves into the panel, Tab stays inside, Escape closes it and focus returns to where it was. It respects reduced motion. It is built as WLCheckout.open({ items, total, currency, savedCard, processPayment, url, embed }), CJ's call shape; with processPayment and no frame it never claims a new tab opened and keeps a Continue to checkout link. It shows only what it is given: a saved card appears only if a provider ever supplies one, and none is passed today. vercel.json allows frames from wholelife.lemonsqueezy.com only and gives the payment permission (Apple Pay, Google Pay) to that origin only. The privacy policy now lists Lemon Squeezy under Other services (Terms version 2026-10-23).",
+      where:"index.html: coEmbedUrl(), premiumCtaTap(), WLCheckout (open, close, key, msg), CO_MIN_MS, CO_FRAME_MS, the co-close and co-go cases, CSS block 8.3.25 (.co-*), privacy policy section 6, subscription panel copy, LEGAL_UPDATED, TERMS_VERSION. vercel.json (frame-src, Permissions-Policy payment). docs/SECURITY.md section 8. tests/browser/slidepay.mjs (fake Lemon Squeezy page; frame, message, keyboard and failure checks), tests/browser/headers.mjs, tests/browser/legal.mjs. APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/slidepay.mjs and node tests/browser/headers.mjs. By hand on the preview: open /?premium=0#/premium and slide to pay: the panel animates, then Lemon Squeezy's test checkout appears inside it. Pay with the test card 4242 4242 4242 4242: the panel says the order went through, the key arrives by email, paste it in Settings > Premium. Try Open in a new tab instead, Tab, Shift+Tab and Escape, Reduce motion on and a 375px phone.",
+      limits:"From CJ's checkout.html this build takes the dialog, the glowing card, the spinner and the WLCheckout.open call shape. It does not take the card number, name, expiry and CVV fields, the flipping card preview, the saved card and address, the demo payment simulator, or the success and receipt steps: card details go only into Lemon Squeezy's page, and the app must not say Payment successful until the provider confirms. The receipt animation still plays after a valid key. The success and close messages follow what lemon.js listens for; they have not been confirmed against a real Lemon Squeezy checkout yet, and if they differ the panel just keeps its normal wording. Whether Lemon Squeezy lets this site frame its checkout was not checked from here (the sandbox cannot reach it); the new-tab link covers a refusal. A future custom checkout domain needs CHECKOUT_URLS, frame-src and the payment origin changed together. Checked in headless Chrome only." },
     { id:"8.3.24",
       area:"Install and errors",
       title:"Install manifest, offline service worker and an error-tracking starter (not switched on yet)",
@@ -11806,7 +11822,7 @@ function obGround(){ return `<div class="obg-bg" aria-hidden="true"><i></i><i></
 // is kept, never the birth date. Someone under 13 gets a plain "can't set up" screen, and the device refuses another try for 24 hours
 // (a flag in this browser; clearing site data removes it, so it deters a retry rather than guaranteeing one).
 const AGE_BLOCK_KEY = "wlh.ageblock", AGE_BLOCK_MS = 24 * 3600 * 1000, CONSENT_KEY = "wlh.consent";
-const TERMS_VERSION = "2026-10-22"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
+const TERMS_VERSION = "2026-10-23"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
 const ageBlocked = () => { try { return +localStorage.getItem(AGE_BLOCK_KEY) > Date.now(); } catch { return false; } };
 const blockAge = () => { try { localStorage.setItem(AGE_BLOCK_KEY, String(Date.now() + AGE_BLOCK_MS)); } catch {} };
 // Whole years old. The birth day is not asked, so a birthday this month counts as not reached yet.
@@ -13322,7 +13338,7 @@ document.addEventListener("input", e => {
   render();
   // ?previewreceipt=1 shows the receipt with made-up sample numbers so its design can be seen. It reads nothing and writes nothing:
   // no purchase happens, and isPremium() and the saved entitlement are untouched.
-  try { if (new URLSearchParams(location.search).get("previewreceipt") === "1" && typeof showPurchaseReceipt === "function") setTimeout(() => showPurchaseReceipt({ orderNo:"SAMPLE", date:"SAMPLE PREVIEW", currency:"USD", items:[{ label:"Premium Monthly (sample)", amount:10 }], taxes:[{ label:"Tax (sample)", amount:2 }], total:12 }, "monthly", true), 400); } catch {}
+  try { if (new URLSearchParams(location.search).get("previewreceipt") === "1" && typeof showPurchaseReceipt === "function") setTimeout(() => showPurchaseReceipt({ orderNo:"SAMPLE", date:"SAMPLE PREVIEW", currency:"USD", items:[{ label:"Premium Monthly (sample)", amount:10 }], subtotal:10, taxes:[{ label:"Tax 20% (sample)", amount:2 }], total:12, paid:12 }, "monthly", true), 400); } catch {}
   setTimeout(() => { try { licRecheck(); } catch {} }, 4000);
   if (UI.premiumWanted) { UI.premiumWanted = false; if (typeof afterPremiumBlock === "function") afterPremiumBlock(); }
   // Probe optional capabilities quietly (no prompts until used)
@@ -16564,7 +16580,7 @@ const CONTACT_EMAIL = "[YOUR CONTACT EMAIL]";                // TODO: set your c
 const LEGAL_BUSINESS_NAME = "[YOUR LEGAL BUSINESS NAME]";    // TODO: fill in before publishing
 const MAILING_ADDRESS = "[YOUR MAILING ADDRESS]";            // TODO: fill in before publishing
 const REFUND_POLICY_TEXT = "[REFUND POLICY: fill in — how many days, which plans, and whether a partial period is refunded]"; // TODO
-const LEGAL_UPDATED = "22 October 2026";
+const LEGAL_UPDATED = "23 October 2026";
 
 function applyCanonical(){
   if (/\[YOUR-DOMAIN\]/.test(SITE_URL)) return;              // nothing to point at yet
@@ -16696,12 +16712,13 @@ function privacyPolicyView(){
     </table>
 
     <h3>6. Other services the app contacts</h3>
-    <p>Three services, and nothing else:</p>
+    <p>These services, and nothing else:</p>
     <ul class="clean small">
       <li><b>Vercel</b>, which hosts this page. When you load it, Vercel receives and keeps standard web-request logs (for example your IP address, browser details and the page requested). It is not sent anything from your hub.</li>
       <li><b>Supabase</b>, our database and sign-in service. Your email, password and the items listed in section 4, photos included, go there when you create an account, sign in, or are signed in. Without an account, none of your health data is sent to it.</li>
       <li><b>jsDelivr</b>, a public content delivery network. Every time the page loads, the browser fetches the supabase-js library from it (a fixed version, checked against a fingerprint before it runs). Like any web server it can see your IP address and browser details. It is not sent anything from your hub.</li>
       <li><b>Claude</b>, the AI, answers coach questions, meal suggestions and the photo estimates described in section 3, but only when the app is opened inside Claude and you start the feature (for the photo ones, only after you've allowed them once). Outside Claude those features show as unavailable and nothing is sent.</li>
+      <li><b>Lemon Squeezy</b>, our payment provider, only if you choose a Premium plan. Its checkout page opens inside this app (or in a new tab, if you pick that) and you type your email and payment details into Lemon Squeezy's page, not ours: this app never sees them. When you paste your licence key, the key is sent through our Supabase function to Lemon Squeezy to check it, and checked again about once a day. None of your health data is sent.</li>
       <li><b>Your own downloads</b> when you export your data, which stay on your device.</li>
     </ul>
     <p>Fonts are bundled with the app, not loaded from a font service. The app makes no other requests: no analytics, no advertising networks, no social media widgets, no ad identifiers.</p>
@@ -17908,15 +17925,95 @@ function premiumHub(p){
   </div>
   ${subscriptionPanel(p)}`;
 }
-// Opens the chosen plan's Lemon Squeezy checkout in a new tab. The entitlement is never written here: it only turns on
-// when a licence key from the order email passes validateLicenseKey(). Returns false while a plan has no link.
+// Opens the chosen plan's Lemon Squeezy checkout inside the page, in the checkout panel. The entitlement is never written
+// here: it only turns on when a licence key from the order email passes validateLicenseKey(). Returns false while a plan
+// has no link.
+const coEmbedUrl = url => url + (url.includes("?") ? "&" : "?") + "embed=1";
 function premiumCtaTap(plan = UI.premPlan){
-  const url = CHECKOUT_URLS[plan === "monthly" ? "monthly" : "yearly"];
+  const k = plan === "monthly" ? "monthly" : "yearly", url = CHECKOUT_URLS[k], pl = PREMIUM_PLANS.find(x => x.k === k);
   if (!url) { toast("Payments aren't live yet — coming soon."); return false; }
-  const a = document.createElement("a"); a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer"; a.click();
-  toast("Checkout opened. After you pay, paste the key from your email in Settings > Premium.");
+  const amount = typeof pl.amount === "number" ? pl.amount : undefined;
+  WLCheckout.open({ url, embed: coEmbedUrl(url), currency: pl.cur, total: amount, items:[{ label:"Whole Life Premium", detail: k === "yearly" ? "1 year" : "1 month", amount }] });
   return true;
 }
+
+// ---- checkout panel ----
+// The animated "Opening secure checkout" panel (CJ's WLCheckout.open shape). It shows only what it is given: our plan and
+// price, and a saved card only if a provider ever supplies one (the app never sees card details, so none is passed today).
+// With `embed` it loads Lemon Squeezy's own checkout page in a sandboxed frame: no Lemon Squeezy script runs in this page,
+// and the frame cannot read the page or navigate it. Card details are typed into Lemon Squeezy's page, never ours. A real
+// new-tab link is always offered, because a browser may refuse the frame without telling us. A success message from the
+// frame only changes the wording; Premium still waits for the emailed key. Focus moves into the panel, Tab stays inside,
+// Escape closes and focus goes back to the opener.
+const CO_MIN_MS = 1400, CO_FRAME_MS = 15000;
+const WLCheckout = {
+  el: null,
+  close(){
+    const el = this.el; if (!el) return;
+    document.removeEventListener("keydown", this.key); window.removeEventListener("message", this.msg); this.el = null; el.remove();
+    const back = this.opener?.isConnected ? this.opener : document.querySelector(".sc-handle, [data-act=\"plan-pick\"]");
+    this.opener = null; back?.focus?.({ preventScroll:true });
+  },
+  key(ev){
+    const el = WLCheckout.el; if (!el) return;
+    if (ev.key === "Escape") { ev.preventDefault(); WLCheckout.close(); return; }
+    if (ev.key !== "Tab") return;
+    const f = [...el.querySelectorAll("button,a[href],iframe")].filter(x => !x.hidden && x.offsetParent !== null);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (!el.contains(document.activeElement)) { ev.preventDefault(); first.focus(); }
+    else if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  },
+  // Only messages from the checkout frame itself count. "close" is the frame's own close button.
+  msg(ev){
+    const el = WLCheckout.el, fr = el?.querySelector(".co-frame");
+    if (!fr || ev.source !== fr.contentWindow || ev.origin !== new URL(fr.src).origin) return;
+    const d = ev.data;
+    if (d === "close") { WLCheckout.close(); return; }
+    if (d && typeof d === "object" && d.event === "Checkout.Success") {
+      el.dataset.paid = "1";
+      el.querySelector(".co-status").textContent = "Lemon Squeezy says your order went through. Your key is on its way by email: paste it in Settings > Premium to turn Premium on.";
+    }
+  },
+  async open({ items = [], total, currency, savedCard, processPayment, url, embed }){
+    this.close();
+    this.opener = document.activeElement;
+    const money = n => (rcptNum(n) !== null && rcptMoney(n, currency)) || "";
+    const row = (l, d, a, cls = "") => `<div class="co-row ${cls}"><span>${esc(l)}${d ? ` <span class="muted">${esc(d)}</span>` : ""}</span><span>${esc(money(a))}</span></div>`;
+    const el = document.createElement("div");
+    el.className = "co-open"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Secure checkout");
+    el.innerHTML = `<div class="co-panel">
+      <div class="co-head"><b>Checkout</b><button class="co-x" type="button" data-act="co-close" aria-label="Close checkout">${icon("x", "", 14)}</button></div>
+      <div class="co-bigcard" aria-hidden="true"><div class="co-top"><span class="co-chip"></span><span class="co-brand">SECURE CHECKOUT</span></div><span class="co-meta">PAYING<b>${esc(rcptNum(total) !== null ? money(total) : "Premium")}</b></span></div>
+      <div class="co-spinner" aria-hidden="true"></div>
+      <p class="co-title">Opening secure checkout&hellip;</p>
+      <p class="co-status" role="status" aria-live="polite">Connecting to Lemon Squeezy…</p>
+      <div class="co-lines">${items.map(i => row(i.label || "Premium", i.detail, i.amount)).join("")}${savedCard ? row([savedCard.brand, savedCard.last4 ? "•••• " + savedCard.last4 : ""].filter(Boolean).join(" "), savedCard.expiry, undefined, "co-card-row") : ""}${rcptNum(total) !== null ? row("Total", "", total, "co-total") : ""}</div>
+      ${embed ? `<iframe class="co-frame" title="Lemon Squeezy secure checkout" src="${esc(embed)}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox" allow="payment" referrerpolicy="strict-origin-when-cross-origin"></iframe>` : ""}
+      <div class="co-actions">${url ? `<a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener noreferrer" data-act="co-go">${embed ? "Open in a new tab instead" : "Continue to checkout"}</a>` : ""}<button class="btn sm" type="button" data-act="co-close">Close</button></div>
+    </div>`;
+    const fr = el.querySelector(".co-frame");
+    // Wait for the frame's load before the panel is in the page, so a quick load is not missed.
+    const loaded = fr && new Promise(r => { fr.addEventListener("load", () => r(true), { once:true }); setTimeout(() => r(false), CO_FRAME_MS); });
+    document.body.appendChild(el); this.el = el;
+    document.addEventListener("keydown", this.key);
+    if (fr) window.addEventListener("message", this.msg);
+    el.querySelector(".co-x").focus({ preventScroll:true });
+    const t0 = Date.now(), status = el.querySelector(".co-status");
+    let ok = false;
+    try { ok = !!(await (processPayment ? processPayment() : loaded)); } catch {}
+    if (this.el !== el) return ok; // closed while waiting
+    // Let the opening animation play for a moment before the panel settles on what it actually knows.
+    const wait = ok && !lampReduced() ? CO_MIN_MS - (Date.now() - t0) : 0;
+    if (wait > 0) await new Promise(r => setTimeout(r, wait));
+    if (this.el !== el) return ok;
+    el.dataset.state = !ok ? "fail" : fr ? "embed" : "sent";
+    el.querySelector(".co-title").textContent = !ok ? "Couldn't open the checkout here" : fr ? "Secure checkout" : "Checkout sent to a new tab";
+    if (!el.dataset.paid) status.textContent = !ok ? "Open it in a new tab instead." : fr ? "Pay on Lemon Squeezy's page below. Nothing is charged until you confirm there. If it stays blank, open it in a new tab." : "We can't see whether your browser allowed the new tab. If it isn't there, choose Continue to checkout.";
+    return ok;
+  }
+};
 
 // ---- slide to pay ----
 // An original vanilla take on a slide-to-confirm control (the idea is common; no third-party code is used). Payments are not live, so
@@ -17924,7 +18021,7 @@ function premiumCtaTap(plan = UI.premPlan){
 const SC_PAD = 4;
 const slidePayHTML = plan => `<div class="sc" data-phase="idle">
     <div class="sc-track"><span class="sc-fill" aria-hidden="true"></span>
-      <span class="sc-label" aria-hidden="true"><span class="sc-t-plain">Slide to pay</span><span class="sc-t-err">Not available yet</span><span class="sc-t-open">Checkout opened</span></span>
+      <span class="sc-label" aria-hidden="true"><span class="sc-t-plain">Slide to pay</span><span class="sc-t-err">Not available yet</span><span class="sc-t-open">Opening checkout</span></span>
       <div class="sc-handle" role="slider" tabindex="0" aria-label="Slide to pay, ${esc(plan)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Slide to pay, 0%">${icon("chevR","",22)}</div></div>
     <span class="sc-sr" role="status"></span></div>`;
 const scTravel = el => Math.max(1, el.querySelector(".sc-track").clientWidth - el.querySelector(".sc-handle").offsetWidth - SC_PAD * 2);
@@ -17937,7 +18034,7 @@ function scCommit(el){
   if (el.dataset.phase !== "idle") return;
   const t = scTravel(el); scMove(el, t);
   const opened = premiumCtaTap(); // never simulates success: a paid state only follows a validated licence key
-  el.dataset.phase = opened ? "open" : "error"; el.querySelector(".sc-sr").textContent = opened ? "Checkout opened in a new tab." : "Not available yet. Payments aren't live.";
+  el.dataset.phase = opened ? "open" : "error"; el.querySelector(".sc-sr").textContent = opened ? "Opening the secure checkout." : "Not available yet. Payments aren't live.";
   setTimeout(() => { if (el.isConnected) scMove(el, 0); }, 300);
   setTimeout(() => { if (el.isConnected) { el.dataset.phase = "idle"; el.querySelector(".sc-sr").textContent = ""; } }, 1800);
 }
@@ -17982,8 +18079,8 @@ function subscriptionPanel(p){
       ${factRow("Renews or expires", p.premium?.expires ? fmtDay(p.premium.expires) : on ? "No end date" : "—")}
     </dl>
     <p class="small muted" style="margin-top:10px">${BETA_OPEN
-      ? "Open beta: every feature is unlocked for everyone who opens the app, so testers never meet a paywall. Choosing a plan below opens Lemon Squeezy's secure checkout in a new tab; you are charged only there, after you confirm."
-      : "Choosing a plan opens Lemon Squeezy's secure checkout in a new tab. You are charged only there, after you confirm, and the app unlocks Premium when you paste the key from your email."}</p>
+      ? "Open beta: every feature is unlocked for everyone who opens the app, so testers never meet a paywall. Choosing a plan below opens Lemon Squeezy's secure checkout inside the app; you are charged only there, after you confirm."
+      : "Choosing a plan opens Lemon Squeezy's secure checkout inside the app. You are charged only there, after you confirm, and the app unlocks Premium when you paste the key from your email."}</p>
 
     <div class="setgroup"><div class="setlabel">Plans</div>
       <div class="grid g2 plangrid">${PREMIUM_PLANS.map(pl => `
@@ -18242,7 +18339,10 @@ function receiptHTML(r, plan, sample = false){
   const lines = items.length
     ? items.map(i => row(i.label || "Premium", i.amount)).join("")
     : `<div class="rc-row"><span>${esc(plan ? "Premium · " + plan : "Premium")}</span></div>`;
-  const taxHTML = taxes === null ? "" : taxes.map(t => row(t.label || "Tax", t.amount)).join("");
+  // An empty tax list is the provider saying no tax was charged, so it prints as a zero line rather than nothing.
+  const taxHTML = taxes === null ? "" : taxes.length ? taxes.map(t => row((t.label || "Tax") + (t.included ? " (included)" : ""), t.amount)).join("") : row("Tax", 0);
+  const subtotal = rcptNum(r.subtotal), discount = rcptNum(r.discount), paid = rcptNum(r.paid);
+  const sumHTML = (subtotal !== null ? row("Subtotal", subtotal) : "") + (discount ? row("Discount", -Math.abs(discount)) : "");
   const missing = [];
   if (rcptMoney(0, cur) === null) missing.push("currency");
   if (!items.length || items.some(i => rcptNum(i.amount) === null)) missing.push("price");
@@ -18259,9 +18359,10 @@ function receiptHTML(r, plan, sample = false){
     <p class="rc-brand">WHOLE LIFE HUB</p><p class="rc-sub">PREMIUM</p>
     <p class="rc-meta">${esc([r.date, r.orderNo ? "ORDER #" + r.orderNo : ""].filter(Boolean).join("  ·  "))}</p>
     <div class="rc-rule"></div>${lines}
-    ${taxHTML ? `<div class="rc-rule"></div>${taxHTML}` : ""}
+    ${sumHTML ? `<div class="rc-rule"></div>${sumHTML}` : ""}
+    ${taxHTML ? `${sumHTML ? "" : `<div class="rc-rule"></div>`}${taxHTML}` : ""}
     <div class="rc-rule"></div>
-    <div class="rc-totals">${total !== null ? row("TOTAL", total, "rc-total") : ""}<div class="rc-stamp">${sample ? "SAMPLE" : "PAID"}</div></div>
+    <div class="rc-totals">${total !== null ? row("TOTAL", total, "rc-total") : ""}${paid !== null ? row(sample ? "AMOUNT (SAMPLE)" : "AMOUNT PAID", paid, "rc-paid") : ""}<div class="rc-stamp">${sample ? "SAMPLE" : "PAID"}</div></div>
     ${missing.length ? `<p class="rc-note">Your payment provider didn't send the ${esc(missing.join(", "))} for this order.</p>` : ""}
     <div class="rc-bars" aria-hidden="true">${bars}</div><p class="rc-thanks">${sample ? "Sample only. No payment was made." : "Thank you for your purchase!"}</p></div>`;
 }
@@ -18309,6 +18410,8 @@ document.addEventListener("click", e => {
   if (a === "prem-plan") { e.preventDefault(); UI.premPlan = t.dataset.v === "monthly" ? "monthly" : "yearly"; render(); return; }
   if (a === "prem-cta") { e.preventDefault(); premiumCtaTap(); return; }
   if (a === "plan-pick") { e.preventDefault(); premiumCtaTap(t.dataset.v); return; }
+  if (a === "co-close") { e.preventDefault(); WLCheckout.close(); return; }
+  if (a === "co-go") { setTimeout(() => WLCheckout.close(), 0); return; } // the link itself opens the checkout
   if (a === "prem-restore") { e.preventDefault(); toast("Nothing to restore — payments aren't live yet."); return; }
 });
 document.addEventListener("submit", e => {
@@ -22553,6 +22656,7 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .rc-row{display:flex;justify-content:space-between;gap:12px;font-size:13px;margin:5px 0}
 .rc-row>span{min-width:0;overflow-wrap:anywhere}.rc-row>span:last-child:not(:first-child){flex:none;white-space:nowrap}
 .rc-row.rc-total{font-weight:700;font-size:15px}
+.rc-row.rc-paid{font-weight:700}
 .rc-totals{position:relative;min-height:108px}
 .rc-stamp{position:absolute;right:4px;top:30px;width:76px;height:76px;border:3px solid var(--accent);border-radius:50%;color:var(--accent);display:grid;place-items:center;font-weight:700;letter-spacing:.2em;font-size:14px;transform:rotate(-12deg);opacity:.92;pointer-events:none;background:rgba(255,255,255,.55)}
 .rc-note{font-size:11px;color:var(--rc-soft);margin:10px 0 0}
@@ -22576,6 +22680,39 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .sc-handle:focus-visible{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent)}
 @keyframes scShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
 .sc-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* ===================== 8.3.25 checkout panel ===================== */
+.co-open{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:16px;background:color-mix(in srgb,var(--ground) 62%,transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:coFade .25s ease both}
+.co-panel{width:min(400px,100%);max-height:92vh;overflow:auto;display:grid;gap:10px;justify-items:center;padding:18px 20px 16px;border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.35);animation:coRise .4s cubic-bezier(.2,.9,.3,1.1) both}
+.co-head{width:100%;display:flex;align-items:center;justify-content:space-between;font-size:calc((18px) * var(--text-scale,1))}
+.co-x{width:32px;height:32px;border:0;border-radius:999px;background:var(--raise);color:var(--text,inherit);display:grid;place-items:center;cursor:pointer}
+.co-bigcard{width:min(300px,84%);aspect-ratio:1.586;margin:6px auto 4px;border-radius:var(--r-lg);padding:16px;box-sizing:border-box;color:var(--accent-ink);background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#000));display:flex;flex-direction:column;justify-content:space-between;animation:coGlow 1.6s ease-in-out infinite}
+.co-top{display:flex;justify-content:space-between;align-items:flex-start}
+.co-chip{width:38px;height:27px;border-radius:6px;background:linear-gradient(135deg,#F6D47C,#C9A227)}
+.co-brand{font-size:calc((11px) * var(--text-scale,1));font-weight:800;letter-spacing:.12em}
+.co-meta{display:block;font-size:calc((12px) * var(--text-scale,1));opacity:.9}
+.co-meta b{display:block;font-size:calc((20px) * var(--text-scale,1));letter-spacing:.02em}
+.co-spinner{width:30px;height:30px;border-radius:999px;border:4px solid var(--raise);border-top-color:var(--accent);animation:coSpin .8s linear infinite}
+.co-title{margin:0;font-weight:700;font-size:calc((16px) * var(--text-scale,1))}
+.co-status{margin:0;text-align:center;color:var(--muted);font-size:calc((13px) * var(--text-scale,1))}
+.co-lines{width:100%;display:grid;gap:6px;margin-top:4px}
+.co-row{display:flex;justify-content:space-between;gap:10px;padding-block:5px;font-size:calc((14px) * var(--text-scale,1));border-bottom:1px solid var(--line)}
+.co-total{border-bottom:0;font-weight:700}
+.co-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.co-open:not([data-state]) .co-actions,.co-frame{display:none}
+.co-open[data-state="embed"] .co-panel{width:min(560px,100%);height:min(820px,94vh);max-height:none;align-content:start;grid-template-rows:auto auto 1fr auto;padding:12px 12px 10px}
+.co-open[data-state="embed"] :is(.co-bigcard,.co-spinner,.co-lines){display:none}
+.co-open[data-state="embed"] .co-title{display:none}
+.co-open[data-state="embed"] .co-frame{display:block;width:100%;height:100%;min-height:360px;border:0;border-radius:var(--r-lg)}
+.co-open[data-state] .co-spinner{animation:none;border-top-color:var(--raise)}
+.co-open[data-state="fail"] .co-spinner{border-color:var(--bad)}
+.co-open[data-state="fail"] .co-bigcard{animation:none}
+:root[data-motion="reduced"] .co-open,:root[data-motion="reduced"] .co-open *{animation:none!important}
+:root[data-motion="reduced"] .co-spinner{animation:coSpin 2.4s linear infinite!important}
+@media (prefers-reduced-motion:reduce){.co-open,.co-open *{animation:none!important}.co-spinner{animation:coSpin 2.4s linear infinite!important}}
+@keyframes coFade{from{opacity:0}to{opacity:1}}
+@keyframes coRise{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes coGlow{0%,100%{box-shadow:0 0 0 transparent;transform:translateY(0)}50%{box-shadow:0 18px 50px color-mix(in srgb,var(--accent) 45%,transparent);transform:translateY(-5px)}}
+@keyframes coSpin{to{transform:rotate(360deg)}}
 /* ===================== 8.3.11 sign-in card ===================== */
 .auth-desc{margin:0 0 12px}
 .auth-pop .auth-alt{margin:16px 0 0}
