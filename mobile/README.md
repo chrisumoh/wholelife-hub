@@ -8,9 +8,9 @@ This directory contains the first native React Native screen prototype. It has n
 
 1. Install Node.js LTS and Android Studio (or use an Android device).
 2. From the repository root, create the native project in a separate temporary directory:
-   `npx create-expo-app@latest wholelife-native --template default@sdk-58`
+   `npx create-expo-app@latest wholelife-native`
 3. Copy this directory's `app/` and `components/` into the new project's route root (usually `src/app/` for routes and `components/` at project root). Replace the generated example routes, but **keep the Expo-generated package.json, configuration, assets, and dependencies**.
-4. In the new project run `npx expo start`, then press `a` with Android Studio emulator running. For SDK 58, use a development build if Expo Go has not yet been updated.
+4. In the new project run `npx expo start`, then press `a` with Android Studio emulator running. If Expo Go does not support the project SDK, use an Android development build.
 5. After validating on Android, move the generated Expo project into `mobile/` in a follow-up PR, keeping its generated lockfile and config.
 
 ## Prototype routes
