@@ -3810,12 +3810,12 @@ const APP_VERSION = { update: "8.3", build: "8.3.26", channel: "Dev Testing", da
   const CHANGELOG = [
     { id:"8.3.26",
       area:"Workouts",
-      title:"File upload button with a progress fill (WLUpload) on the Apple Health and workout file imports",
+      title:"File upload button with a progress fill (WLUpload) on the file imports",
       bug:"The import spots on the Workouts page were plain Choose file buttons with no feedback while a file was read. CJ supplied a WLUpload.attach call from a component with a progress-fill upload animation and asked to use it for the document upload sections.",
-      fix:"New WLUpload.attach(el, { maxBytes, accept, multiple, label, onUpload(file, report), onDone(file), onStart, onReject, onError, onFinish }), CJ's call shape. The button itself fills left to right as onUpload calls report(0..1), with the file name and percent on it, then shows Done (or Try again with a reason) and goes back to idle. The fill follows only the numbers it is given: it never moves on a timer, never goes backwards and is held at 100%. A file over maxBytes is refused before onUpload runs. Both Workouts imports now use it. Apple Health reports bytes read from export.xml. The Google/other-app import reports bytes read for each file (nine tenths), then parsing (the last tenth), and handles several files in a row. What each import does with the data is unchanged, including the 25 MB cap, the summary card and the skipped-file count. The file input is no longer display:none, so it can be reached with the keyboard.",
-      where:"index.html: WLUpload, WLUpload.reg, wluScan() (called from afterRender()), importApple(file, report), importOne(), importSummary(), IMP_TALLY (importFiles() split up), the two import cards in workoutsView(), CSS block 8.3.26 (.wlu-*). tests/browser/upload.mjs (new), tests/browser/run-all.mjs. APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
-      test:"Run node tests/browser/upload.mjs and node tests/browser/compact.mjs. By hand: Workouts, Import from Apple Health or another app, pick a CSV, JSON or TCX file under Google Health, Fitbit and other apps, or export.xml under Apple Health: the button fills while the file is read, then shows Done and the summary card appears. Pick a file over 25 MB there to see it refused. Try Reduce motion on and a 375px phone.",
-      limits:"Nothing in the app sends a document to a server today: these imports read the file on the device, so the fill shows bytes read, not network upload. The only upload to Supabase is the automatic background sync of photos, which has no button and was not touched; supabase-js reports no upload progress, so a fill for it would need an edge function or a different upload call (ask first). The photo and video pickers (profile photo, meal and gym photos, form-check video, body photos) were left as they are. The look is built from the app's own colours, not CJ's component CSS, which was not supplied. Checked in headless Chrome only." },
+      fix:"New WLUpload.attach(el, { maxBytes, accept, multiple, label, onUpload(file, report), onDone(file), onStart, onReject, onError, onFinish }), CJ's call shape. The button itself fills left to right as onUpload calls report(0..1), with the file name and percent on it, then shows Done (or Try again with a reason) and goes back to idle. The fill follows only the numbers it is given: it never moves on a timer, never goes backwards and is held at 100%. A file over maxBytes is refused before onUpload runs. Both Workouts imports now use it, and so do the Import a video buttons on Form check and the Import a photo button on Body progress. Apple Health reports bytes read from export.xml. The Google/other-app import reports bytes read for each file (nine tenths), then parsing (the last tenth), and handles several files in a row. What each import does with the data is unchanged, including the 25 MB cap, the summary card and the skipped-file count. The file input is no longer display:none, so it can be reached with the keyboard.",
+      where:"index.html: WLUpload, WLUpload.reg, wluScan() (called from afterRender()), importApple(file, report), importOne(), importSummary(), IMP_TALLY (importFiles() split up), the two import cards in workoutsView(), the video import (three places in formCheckView()/formCheckOptIn()) and the body-photo import in bodyView(), WLUpload.read(), CSS block 8.3.26 (.wlu-*). tests/browser/upload.mjs (new), tests/browser/run-all.mjs. APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/upload.mjs and node tests/browser/compact.mjs. By hand: Settings > turn on Form check and Body progress (Premium), block camera access in the browser, then Import a video / Import a photo show the same button. Workouts, Import from Apple Health or another app, pick a CSV, JSON or TCX file under Google Health, Fitbit and other apps, or export.xml under Apple Health: the button fills while the file is read, then shows Done and the summary card appears. Pick a file over 25 MB there to see it refused. Try Reduce motion on and a 375px phone.",
+      limits:"Nothing in the app sends a document to a server today: these imports read the file on the device, so the fill shows bytes read, not network upload. The only upload to Supabase is the automatic background sync of photos, which has no button and was not touched; supabase-js reports no upload progress, so a fill for it would need an edge function or a different upload call (ask first). The profile photo, meal photo and food/gym photo pickers were left as they are: they open the live camera first, and that behaviour was not touched. The Import a video and Import a photo buttons only show when the camera is unavailable or declined, as before. The look is built from the app's own colours, not CJ's component CSS, which was not supplied. Checked in headless Chrome only." },
     { id:"8.3.25",
       area:"Premium",
       title:"Receipt shows the subtotal, the tax with its rate, the total and the amount paid",
@@ -12457,13 +12457,16 @@ function importSummary(){
 const WLUpload = (() => {
   const clamp = v => Math.min(1, Math.max(0, Number.isFinite(+v) ? +v : 0));
   const sz = n => n >= 1048576 ? `${round(n / 1048576, 1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`;
-  const txt = o => { const s = o._st; return s.phase === "busy" ? `${s.name} · ${Math.round(s.p * 100)}%` : s.phase === "done" ? "Done" : s.phase === "error" ? "Try again" : (o.label || "Choose file"); };
+  const txt = (o, el) => { const s = o._st; return s.phase === "busy" ? `${s.name} · ${Math.round(s.p * 100)}%` : s.phase === "done" ? "Done" : s.phase === "error" ? "Try again" : (el.dataset.label || o.label || "Choose file"); };
   function paint(o){
-    const el = o._el, s = o._st; if (!el) return;
+    for (const el of o._els) { if (el.isConnected) paintOne(o, el); else o._els.delete(el); }
+  }
+  function paintOne(o, el){
+    const s = o._st;
     const btn = el.querySelector(".wlu-btn"), bar = el.querySelector(".wlu-fill"); if (!btn) return;
     el.dataset.state = s.phase; btn.style.setProperty("--p", s.phase === "done" ? 1 : s.p);
     bar.setAttribute("aria-valuenow", Math.round(s.p * 100));
-    for (const t of el.querySelectorAll(".wlu-t")) t.textContent = txt(o);
+    for (const t of el.querySelectorAll(".wlu-t")) t.textContent = txt(o, el);
     el.querySelector(".wlu-msg").textContent = s.msg;
     el.querySelector("input").disabled = s.phase === "busy";
     btn.setAttribute("aria-busy", s.phase === "busy");
@@ -12488,20 +12491,22 @@ const WLUpload = (() => {
   }
   function attach(el, o){
     if (!el || !o) return null;
-    o._st = o._st || { phase:"idle", p:0, name:"", msg:"" }; o._el = el;
+    o._st = o._st || { phase:"idle", p:0, name:"", msg:"" }; (o._els = o._els || new Set()).add(el);
     if (el._wlu === o) { paint(o); return o; }
     el._wlu = o;
     el.innerHTML = `<label class="btn wlu-btn"><span class="wlu-fill" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></span><span class="wlu-t"></span><span class="wlu-t on" aria-hidden="true"></span><input type="file" class="wlu-in"></label><div class="small muted wlu-msg" role="status"></div>`;
+    for (const c of (el.dataset.cls || "").split(" ").filter(Boolean)) el.querySelector(".wlu-btn").classList.add(c);
     const inp = el.querySelector("input"); if (o.accept) inp.accept = o.accept; if (o.multiple) inp.multiple = true; if (o.inputId) inp.id = o.inputId;
     inp.addEventListener("change", () => { const files = [...inp.files]; inp.value = ""; run(o, files); });
     paint(o); return o;
   }
-  // Real read progress for text files: bytes the browser has read so far, as a share of 0..0.9 (parsing is the last tenth).
-  const readText = (f, report) => new Promise((res, rej) => {
-    const r = new FileReader(); r.onprogress = e => { if (e.lengthComputable) report(0.9 * e.loaded / e.total); };
-    r.onload = () => res(r.result); r.onerror = () => rej(new Error("read")); r.readAsText(f);
+  // Real read progress: bytes the browser has read so far, as a share of 0..span (the work after reading is the rest).
+  const read = (f, report, how = "Text", span = 0.9) => new Promise((res, rej) => {
+    const r = new FileReader(); r.onprogress = e => { if (e.lengthComputable) report(span * e.loaded / e.total); };
+    r.onload = () => res(r.result); r.onerror = () => rej(new Error("read")); r["readAs" + how](f);
   });
-  return { attach, readText, reg:{} };
+  const readText = (f, report) => read(f, report, "Text", 0.9);
+  return { attach, read, readText, reg:{} };
 })();
 WLUpload.reg.apple = { label:"Choose export.xml", accept:".xml,text/xml", inputId:"f-apple", onUpload: (f, report) => importApple(f, report) };
 WLUpload.reg.workoutFile = { label:"Choose file", accept:".csv,.json,.tcx,text/csv,application/json", multiple:true, inputId:"f-google", maxBytes: IMPORT_FILE_MAX_BYTES,
@@ -20246,7 +20251,7 @@ function formCheckOptIn(){
     <p class="small muted">Turn this on any time from here, or off again in Settings &gt; Privacy and security. Importing a video file instead needs no camera permission at all.</p>
     <div class="row" style="gap:8px;margin-top:10px">
       <button class="btn primary" data-act="fc-optin">Turn it on</button>
-      <label class="btn ghost">Import a video instead<input type="file" id="fc-file" accept="video/*" hidden></label>
+      <div class="wlu" data-wlu="video" data-label="Import a video instead" data-cls="ghost" data-morph-skip></div>
     </div>
   </section>`;
 }
@@ -20265,7 +20270,7 @@ function formCheckView(p){
     </div>
   </section>
   ${UI.fcErr ? `<section class="card"><div class="note">${esc(camMessage(UI.fcErr, "video"))}</div>
-    <label class="btn" style="align-self:flex-start;margin-top:8px">Import a video file<input type="file" id="fc-file" accept="video/*" hidden></label></section>` : ""}
+    <div class="wlu" style="margin-top:8px" data-wlu="video" data-label="Import a video file" data-morph-skip></div></section>` : ""}
   <section class="card">
     <div class="row between"><h2 style="margin:0">${UI.fcState === "review" ? "Keep this one?" : "Record a set"}</h2>
       <span class="small muted tab">${clips.length} of ${CLIP_CAP}</span></div>
@@ -20291,7 +20296,7 @@ function formCheckView(p){
     : `<p class="small muted">Up to ${CLIP_SECS} seconds, heavily compressed so ${CLIP_CAP} of them fit. Prop the phone where it can see the whole movement.</p>
       <div class="row" style="gap:8px;margin-top:10px">
         <button class="btn primary" data-act="fc-open">Open the camera</button>
-        <label class="btn">Import a video<input type="file" id="fc-file" accept="video/*" hidden></label>
+        <div class="wlu" data-wlu="video" data-label="Import a video" data-morph-skip></div>
       </div>`}
   </section>
   ${sel ? formPlayer(p, sel) : ""}
@@ -20379,7 +20384,7 @@ function bodyView(p){
     </div>
   </section>
   ${UI.bdErr ? `<section class="card"><div class="note">${esc(camMessage(UI.bdErr, "photo"))}</div>
-    <label class="btn" style="align-self:flex-start;margin-top:8px">Import a photo<input type="file" id="bd-file" accept="image/*" hidden></label></section>` : ""}
+    <div class="wlu" style="margin-top:8px" data-wlu="bodyPhoto" data-label="Import a photo" data-morph-skip></div></section>` : ""}
   ${UI.bdState === "live" ? bodyCamera(p, shots) : ""}
   ${shots.length >= 2 ? bodyCompare(p, shots) : ""}
   ${shots.length ? `
@@ -20599,23 +20604,21 @@ document.addEventListener("input", e => {
 document.addEventListener("change", async e => {
   const t = e.target, p = P(); if (!p) return;
   if (t?.dataset?.act === "bd-pick") { UI[t.dataset.side === "a" ? "bdA" : "bdB"] = t.value; render(); return; }
-  if (t?.id === "fc-file" && t.files?.[0]) {
-    const f = t.files[0]; t.value = "";
-    if (f.size > CLIP_BYTES) { toast(`That file is ${Math.round(f.size / 1024)}KB, over the ${Math.round(CLIP_BYTES / 1024)}KB a clip can be.`); return; }
-    const data = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
-    UI.fcPending = { v: data, secs: 0, bytes: f.size }; UI.fcState = "review"; UI.fcErr = null; render();
-    return;
-  }
-  if (t?.id === "bd-file" && t.files?.[0]) {
-    const f = t.files[0]; t.value = "";
+});
+// The two file pickers on the form-check and body pages (no camera involved). The fill is bytes read; the photo is then resized.
+WLUpload.reg.video = { accept:"video/*", inputId:"fc-file", maxBytes: CLIP_BYTES,
+  onReject: f => toast(`That file is ${Math.round(f.size / 1024)}KB, over the ${Math.round(CLIP_BYTES / 1024)}KB a clip can be.`),
+  onUpload: async (f, report) => { const data = await WLUpload.read(f, report, "DataURL", 1); UI.fcPending = { v: data, secs: 0, bytes: f.size }; UI.fcState = "review"; UI.fcErr = null; render(); } };
+WLUpload.reg.bodyPhoto = { accept:"image/*", inputId:"bd-file",
+  onUpload: async (f, report) => {
+    const p = P(); if (!p) return;
     try {
-      const img = await bodyImport(f);
+      const buf = await WLUpload.read(f, report, "ArrayBuffer", 0.8), img = await bodyImport(new Blob([buf], { type: f.type }));
       const st = bodyState(p);
       st.shots = [{ id: uid(), at: Date.now(), date: today(), img }, ...(st.shots || [])].slice(0, BODY_CAP);
       UI.bdErr = null; saveProfile(); render(); toast("Photo added.", "success");
-    } catch { toast("That file couldn't be used. Try a JPEG or PNG."); }
-  }
-});
+    } catch { toast("That file couldn't be used. Try a JPEG or PNG."); const e = new Error("photo"); e.userMessage = "That file couldn't be used. Try a JPEG or PNG."; throw e; }
+  } };
 // Leaving either page must switch the camera off; a live stream is not something to forget.
 window.addEventListener("hashchange", () => { if (CAM.stream) { camStop(); UI.fcState = null; UI.bdState = null; } });
 function openBodyShot(s){

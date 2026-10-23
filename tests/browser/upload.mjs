@@ -97,6 +97,23 @@ await pick("#f-apple", [xml]); await sleep(900);
 ok("an Apple Health export imports through the widget", await ev(`document.querySelector("#f-apple").closest(".wlu").dataset.state === "done" && /Added|skipped/.test(document.body.textContent)`));
 ok("the widget survives page re-renders while open", await ev(`(() => { const el = document.querySelector('[data-wlu="apple"]'); render(); render(); return el === document.querySelector('[data-wlu="apple"]') && el.querySelector("input") === document.getElementById("f-apple"); })()`));
 
+console.log("--- Video and body photo pickers");
+const png = join(tmp, "me.png"); writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64"));
+const clip = join(tmp, "set.mp4"); writeFileSync(clip, Buffer.alloc(4000, 1));
+const bigClip = join(tmp, "long.mp4"); writeFileSync(bigClip, Buffer.alloc(1500000, 1));
+await ev(`(async () => { P().premium = { active: true, since: "2026-10-01", source: "purchase", expires: "2027-10-01" }; P().prem = { clipsConsent: true, body: { on: true, shots: [] } }; UI.bdErr = "denied"; UI.fcErr = "denied"; saveProfile(); await flush(); location.hash = "#/premium/body"; render(); return true; })()`); await sleep(600);
+ok("the body page has the widget and keeps the bd-file input id", await ev(`!!document.querySelector('.wlu #bd-file')`));
+await pick("#bd-file", [png]); await sleep(900);
+ok("a photo is added through the widget (the import card then goes away, as before)", await ev(`(P().prem?.body?.shots || []).length === 1`), await ev(`JSON.stringify(Object.keys(P().prem || {}))`));
+await ev(`location.hash = "#/premium/formcheck"; render(); true`); await sleep(600);
+ok("the form-check page has the video widget", await ev(`!!document.querySelector('.wlu #fc-file')`));
+await pick("#fc-file", [bigClip]); await sleep(500);
+ok("a clip over the cap is refused and nothing is kept", await ev(`document.querySelector("#fc-file").closest(".wlu").dataset.state === "error" && !UI.fcPending`), await ev(`document.querySelector("#fc-file").closest(".wlu").dataset.state + "|" + JSON.stringify(UI.fcPending) + document.querySelectorAll("#fc-file").length`));
+await sleep(2800);
+await pick("#fc-file", [clip]); await sleep(900);
+ok("a small clip goes to the review step", await ev(`UI.fcState === "review" && UI.fcPending?.bytes === 4000`));
+ok("no uncaught exceptions in the new pickers", errors.length === 0, errors.join(" | ").slice(0, 400));
+
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 400));
 console.log(`\n${pass} passed, ${fail} failed`);
 ws.close(); procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(fail ? 1 : 0);
