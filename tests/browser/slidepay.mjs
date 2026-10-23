@@ -101,6 +101,31 @@ await ev(`document.querySelector('[data-act="prem-plan"][data-v="monthly"]').cli
 await key("End"); await sleep(150);
 ok("choosing Monthly opens the monthly checkout", await ev(`window.__opened.length === 2 && window.__opened[1].href === CHECKOUT_URLS.monthly`));
 await sleep(2000);
+console.log("--- the checkout panel")
+await ev(`CHECKOUT_URLS.monthly = window.__links.monthly; CHECKOUT_URLS.yearly = window.__links.yearly; window.__opened.length = 0; WLCheckout.close(); true`);
+await ev(`document.querySelector('[data-act="prem-plan"][data-v="yearly"]').click(); true`); await sleep(200);
+await key("End"); await sleep(250);
+ok("sliding to pay shows the Opening secure checkout panel with the real plan and price", await ev(`(() => { const o = document.querySelector(".co-open"); return !!o && o.getAttribute("role") === "dialog" && /Opening secure checkout/.test(o.textContent) && /Whole Life Premium/.test(o.textContent) && /\\$59\\.99/.test(o.textContent) && /1 year/.test(o.textContent); })()`));
+ok("it takes no card details, shows no card number and no saved card", await ev(`(() => { const o = document.querySelector(".co-open"); return o.querySelectorAll("input,textarea,select").length === 0 && !/VISA|MASTERCARD|\\d{4}\\s?\\d{4}/.test(o.textContent); })()`));
+ok("the checkout opened at the same moment (a new tab was not blocked)", await ev(`window.__opened.length === 1 && window.__opened[0].href === CHECKOUT_URLS.yearly`));
+ok("the panel fits a phone with no sideways scroll", await ev(`(() => { const r = document.querySelector(".co-panel").getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && document.documentElement.scrollWidth <= innerWidth; })()`));
+await sleep(2200);
+ok("then it fades away by itself", await ev(`!document.querySelector(".co-open")`));
+await sleep(1600);
+await ev(`window.__rej = true; WLCheckout.open({ url: CHECKOUT_URLS.monthly, currency: "USD", total: 7.99, items: [{ label: "Whole Life Premium", detail: "1 month", amount: 7.99 }], processPayment: async () => { throw new Error("blocked"); } }); true`); await sleep(300);
+ok("if it can't open here, the panel says so and offers the new-tab link", await ev(`(() => { const o = document.querySelector(".co-open"); const b = o.querySelector('[data-act="co-tab"]'); return o.dataset.state === "fail" && /Couldn't open/.test(o.textContent) && !b.hidden && getComputedStyle(b).display !== "none"; })()`));
+await ev(`document.querySelector('[data-act="co-tab"]').click(); true`); await sleep(150);
+ok("the link opens the monthly checkout and closes the panel; nothing is unlocked", await ev(`window.__opened.length === 2 && window.__opened[1].href === CHECKOUT_URLS.monthly && !document.querySelector(".co-open") && !P().premium?.active`));
+await ev(`WLCheckout.open({ currency: "USD", total: 7.99, items: [], processPayment: () => new Promise(() => {}) }); true`); await sleep(150);
+ok("the close button dismisses the panel", await ev(`(() => { document.querySelector('.co-open [data-act="co-close"]').click(); return !document.querySelector(".co-open"); })()`));
+await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
+await ev(`WLCheckout.open({ currency: "USD", total: 7.99, items: [], processPayment: () => new Promise(() => {}) }); true`); await sleep(200);
+ok("with reduced motion the card does not glow", await ev(`getComputedStyle(document.querySelector(".co-bigcard")).animationName === "none"`));
+await ev(`WLCheckout.close(); true`);
+await send("Emulation.setEmulatedMedia", { features: [] });
+await ev(`CHECKOUT_URLS.monthly = ""; CHECKOUT_URLS.yearly = ""; true`);
+await sleep(1900);
+
 ok("the plan rows show the real prices and a saving worked out from them", await ev(`(() => { const t = document.querySelector(".prem-store-page").textContent; return /\\$7\\.99/.test(t) && /\\$59\\.99/.test(t) && planSavePct() === 37 && /Save 37%/.test(document.querySelector('[data-v="yearly"] .ps-disc').textContent); })()`));
 ok("no placeholder text is left on the plan rows or the fine print", await ev(`!/\\[PRICE\\]|\\[REAL|TBA/.test(document.querySelector(".prem-store-page").textContent)`));
 await ev(`window.__amt = PREMIUM_PLANS.map(p => p.amount); PREMIUM_PLANS.forEach(p => delete p.amount); render(); true`); await sleep(200);

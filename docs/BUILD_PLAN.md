@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.25 | Premium: animated Opening secure checkout panel (WLCheckout) | IN PROGRESS: claude/project-thread-q620yf |
 | 8.3.24 | App readiness kit: install manifest, offline service worker, error-tracking starter (not wired in yet) | IN PROGRESS: dante/app-readiness-kit |
 | 8.3.23 | Premium: Lemon Squeezy checkout, licence key check and Save yearly option | IN PROGRESS: claude/project-thread-q620yf |
 | 8.3.22 | Housekeeping: CLAUDE.md names Codex as the PR reviewer; Phase 4 marked done | IN PROGRESS: claude/project-thread-whr4aa |
