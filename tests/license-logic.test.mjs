@@ -29,7 +29,20 @@ test("test-mode keys are refused unless testing is switched on", () => {
 
 test("the receipt carries only what the order has, in whole currency units", () => {
   const r = receiptOf({ attributes: { order_number: 1042, created_at: "2026-10-22T10:00:00Z", currency: "USD", subtotal: 1000, tax: 200, tax_name: "VAT", total: 1200, first_order_item: { product_name: "Whole Life Premium", variant_name: "Monthly" } } });
-  assert.deepEqual(r, { orderNo: "1042", date: "22 OCT 2026", currency: "USD", items: [{ label: "Whole Life Premium · Monthly", amount: 10 }], taxes: [{ label: "VAT", amount: 2 }], total: 12 });
+  assert.deepEqual(r, { orderNo: "1042", date: "22 OCT 2026", currency: "USD", items: [{ label: "Whole Life Premium · Monthly", amount: 10 }], subtotal: 10, taxes: [{ label: "VAT", amount: 2 }], total: 12 });
+});
+
+test("subtotal, discount, the tax rate, included tax and the amount paid come from the order", () => {
+  const r = receiptOf({ attributes: { currency: "USD", status: "paid", subtotal: 5999, discount_total: 500, tax: 1100, tax_name: "VAT", tax_rate: "20.00", tax_inclusive: false, total: 6599 } });
+  assert.equal(r.subtotal, 59.99); assert.equal(r.discount, 5); assert.equal(r.total, 65.99); assert.equal(r.paid, 65.99);
+  assert.deepEqual(r.taxes, [{ label: "VAT 20%", amount: 11 }]);
+  assert.deepEqual(receiptOf({ attributes: { tax: 200, tax_name: "GST", tax_rate: 7.5, tax_inclusive: true } }).taxes, [{ label: "GST 7.5%", amount: 2, included: true }]);
+});
+
+test("no amount paid unless the order is paid, and no discount line for a zero discount", () => {
+  for (const status of ["refunded", "pending", "failed", undefined]) assert.equal("paid" in receiptOf({ attributes: { status, total: 1200 } }), false);
+  assert.equal("discount" in receiptOf({ attributes: { discount_total: 0, total: 1200 } }), false);
+  assert.deepEqual(receiptOf({ attributes: { tax: 200, tax_rate: "0" } }).taxes, [{ label: "Tax", amount: 2 }]);
 });
 
 test("a zero-tax order has an empty tax list, and a missing tax field has none at all", () => {

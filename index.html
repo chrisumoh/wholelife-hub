@@ -3797,6 +3797,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.25", channel: "Dev Testing", da
   const CHANGELOG = [
     { id:"8.3.25",
       area:"Premium",
+      title:"Receipt shows the subtotal, the tax with its rate, the total and the amount paid",
+      bug:"The receipt listed the plan, one tax line and the total. CJ asked for it to show the amount paid, all taxes, and then the final amount.",
+      fix:"The licence function now passes on more of the Lemon Squeezy order: subtotal, any discount, the tax name with its rate (for example VAT 20%), whether the tax is included in the price, and, only when the order is marked paid, the amount paid. The receipt prints the plan and price, Subtotal, Discount (only if there was one), the tax line (marked included when it is inside the price, or Tax 0.00 when no tax was charged), TOTAL and AMOUNT PAID. Nothing is added up in the app: every number is one Lemon Squeezy sent. The ?previewreceipt=1 sample shows the new lines with AMOUNT (SAMPLE).",
+      where:"supabase/functions/license/logic.ts receiptOf() and rateOf() (deployed, version 5). index.html: receiptHTML(), the previewreceipt sample in boot(), CSS .rc-paid. tests/license-logic.test.mjs (2 new tests), tests/browser/receipt.mjs (4 new checks). docs/DATABASE.md.",
+      test:"Run node --test tests/license-logic.test.mjs and node tests/browser/receipt.mjs. Open ?previewreceipt=1 to see the layout. On the preview, make a test purchase, paste the key in Settings > Premium and press Activate: the receipt shows Subtotal, the tax line, TOTAL and AMOUNT PAID from the real order.",
+      limits:"Lemon Squeezy reports one combined tax per order, so a receipt has one tax line, not one per tax. A partly refunded order shows no amount paid. Not yet checked against a real test order's data." },
+    { id:"8.3.25",
+      area:"Premium",
       title:"Checkout inside the app: an animated Opening secure checkout panel that then shows Lemon Squeezy's checkout",
       bug:"Sliding to pay opened the Lemon Squeezy checkout with only a small message, so the moment between the tap and the checkout had no animation. CJ asked for a second checkout animation and supplied a checkout component (checkout.html). CJ also asked for the paywall to show in the website itself rather than in a new tab.",
       fix:"Sliding to pay (or Choose Monthly or Yearly in Settings > Premium) now shows a Checkout panel: a glowing card marked Paying with the real price, a spinner, Opening secure checkout and the order lines (plan, length, total) from PREMIUM_PLANS. After about a second and a half the panel grows into Lemon Squeezy's own checkout page, loaded inside the app in a sandboxed frame (no Lemon Squeezy script runs in the app, and the frame cannot read or navigate it). Card details are typed into Lemon Squeezy's page only. An Open in a new tab instead link is always shown, because a browser can refuse a frame without telling the app. When the checkout frame reports the order went through, the panel says so and points to Settings > Premium for the key; it never turns Premium on itself. The checkout's own close button closes the panel. Keyboard focus moves into the panel, Tab stays inside, Escape closes it and focus returns to where it was. It respects reduced motion. It is built as WLCheckout.open({ items, total, currency, savedCard, processPayment, url, embed }), CJ's call shape; with processPayment and no frame it never claims a new tab opened and keeps a Continue to checkout link. It shows only what it is given: a saved card appears only if a provider ever supplies one, and none is passed today. vercel.json allows frames from wholelife.lemonsqueezy.com only and gives the payment permission (Apple Pay, Google Pay) to that origin only. The privacy policy now lists Lemon Squeezy under Other services (Terms version 2026-10-23).",
@@ -13330,7 +13338,7 @@ document.addEventListener("input", e => {
   render();
   // ?previewreceipt=1 shows the receipt with made-up sample numbers so its design can be seen. It reads nothing and writes nothing:
   // no purchase happens, and isPremium() and the saved entitlement are untouched.
-  try { if (new URLSearchParams(location.search).get("previewreceipt") === "1" && typeof showPurchaseReceipt === "function") setTimeout(() => showPurchaseReceipt({ orderNo:"SAMPLE", date:"SAMPLE PREVIEW", currency:"USD", items:[{ label:"Premium Monthly (sample)", amount:10 }], taxes:[{ label:"Tax (sample)", amount:2 }], total:12 }, "monthly", true), 400); } catch {}
+  try { if (new URLSearchParams(location.search).get("previewreceipt") === "1" && typeof showPurchaseReceipt === "function") setTimeout(() => showPurchaseReceipt({ orderNo:"SAMPLE", date:"SAMPLE PREVIEW", currency:"USD", items:[{ label:"Premium Monthly (sample)", amount:10 }], subtotal:10, taxes:[{ label:"Tax 20% (sample)", amount:2 }], total:12, paid:12 }, "monthly", true), 400); } catch {}
   setTimeout(() => { try { licRecheck(); } catch {} }, 4000);
   if (UI.premiumWanted) { UI.premiumWanted = false; if (typeof afterPremiumBlock === "function") afterPremiumBlock(); }
   // Probe optional capabilities quietly (no prompts until used)
@@ -18331,7 +18339,10 @@ function receiptHTML(r, plan, sample = false){
   const lines = items.length
     ? items.map(i => row(i.label || "Premium", i.amount)).join("")
     : `<div class="rc-row"><span>${esc(plan ? "Premium · " + plan : "Premium")}</span></div>`;
-  const taxHTML = taxes === null ? "" : taxes.map(t => row(t.label || "Tax", t.amount)).join("");
+  // An empty tax list is the provider saying no tax was charged, so it prints as a zero line rather than nothing.
+  const taxHTML = taxes === null ? "" : taxes.length ? taxes.map(t => row((t.label || "Tax") + (t.included ? " (included)" : ""), t.amount)).join("") : row("Tax", 0);
+  const subtotal = rcptNum(r.subtotal), discount = rcptNum(r.discount), paid = rcptNum(r.paid);
+  const sumHTML = (subtotal !== null ? row("Subtotal", subtotal) : "") + (discount ? row("Discount", -Math.abs(discount)) : "");
   const missing = [];
   if (rcptMoney(0, cur) === null) missing.push("currency");
   if (!items.length || items.some(i => rcptNum(i.amount) === null)) missing.push("price");
@@ -18348,9 +18359,10 @@ function receiptHTML(r, plan, sample = false){
     <p class="rc-brand">WHOLE LIFE HUB</p><p class="rc-sub">PREMIUM</p>
     <p class="rc-meta">${esc([r.date, r.orderNo ? "ORDER #" + r.orderNo : ""].filter(Boolean).join("  ·  "))}</p>
     <div class="rc-rule"></div>${lines}
-    ${taxHTML ? `<div class="rc-rule"></div>${taxHTML}` : ""}
+    ${sumHTML ? `<div class="rc-rule"></div>${sumHTML}` : ""}
+    ${taxHTML ? `${sumHTML ? "" : `<div class="rc-rule"></div>`}${taxHTML}` : ""}
     <div class="rc-rule"></div>
-    <div class="rc-totals">${total !== null ? row("TOTAL", total, "rc-total") : ""}<div class="rc-stamp">${sample ? "SAMPLE" : "PAID"}</div></div>
+    <div class="rc-totals">${total !== null ? row("TOTAL", total, "rc-total") : ""}${paid !== null ? row(sample ? "AMOUNT (SAMPLE)" : "AMOUNT PAID", paid, "rc-paid") : ""}<div class="rc-stamp">${sample ? "SAMPLE" : "PAID"}</div></div>
     ${missing.length ? `<p class="rc-note">Your payment provider didn't send the ${esc(missing.join(", "))} for this order.</p>` : ""}
     <div class="rc-bars" aria-hidden="true">${bars}</div><p class="rc-thanks">${sample ? "Sample only. No payment was made." : "Thank you for your purchase!"}</p></div>`;
 }
@@ -22644,6 +22656,7 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .rc-row{display:flex;justify-content:space-between;gap:12px;font-size:13px;margin:5px 0}
 .rc-row>span{min-width:0;overflow-wrap:anywhere}.rc-row>span:last-child:not(:first-child){flex:none;white-space:nowrap}
 .rc-row.rc-total{font-weight:700;font-size:15px}
+.rc-row.rc-paid{font-weight:700}
 .rc-totals{position:relative;min-height:108px}
 .rc-stamp{position:absolute;right:4px;top:30px;width:76px;height:76px;border:3px solid var(--accent);border-radius:50%;color:var(--accent);display:grid;place-items:center;font-weight:700;letter-spacing:.2em;font-size:14px;transform:rotate(-12deg);opacity:.92;pointer-events:none;background:rgba(255,255,255,.55)}
 .rc-note{font-size:11px;color:var(--rc-soft);margin:10px 0 0}

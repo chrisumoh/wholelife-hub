@@ -21,10 +21,16 @@ export function keyState(key: LsKey | undefined, allowTest: boolean): "valid" | 
 
 export type Receipt = {
   orderNo?: string; date?: string; currency?: string;
-  items?: { label: string; amount?: number }[]; taxes?: { label: string; amount?: number }[]; total?: number;
+  items?: { label: string; amount?: number }[]; taxes?: { label: string; amount?: number; included?: boolean }[];
+  subtotal?: number; discount?: number; total?: number; paid?: number;
 };
 
 const cents = (n: unknown) => (typeof n === "number" && Number.isFinite(n) ? n / 100 : undefined);
+// Lemon Squeezy sends the rate as a number or a string such as "20.00"; it is shown as "20%".
+const rateOf = (v: unknown) => {
+  const n = typeof v === "string" && v.trim() ? Number(v) : v;
+  return typeof n === "number" && Number.isFinite(n) && n > 0 ? `${+n.toFixed(3)}%` : "";
+};
 
 // Maps a Lemon Squeezy order (JSON:API) to the receipt shape the app prints. Only fields the order really carries are
 // set, so a missing one shows up as "didn't send" on the receipt instead of being guessed.
@@ -41,8 +47,17 @@ export function receiptOf(order: { attributes?: Record<string, unknown> } | unde
   if (typeof a.currency === "string") r.currency = a.currency;
   const subtotal = cents(a.subtotal);
   if (label || subtotal !== undefined) r.items = [{ label: label || "Premium", amount: subtotal }];
-  if (tax !== undefined) r.taxes = tax > 0 ? [{ label: typeof a.tax_name === "string" && a.tax_name ? a.tax_name : "Tax", amount: tax }] : [];
+  if (subtotal !== undefined) r.subtotal = subtotal;
+  const discount = cents(a.discount_total);
+  if (discount !== undefined && discount > 0) r.discount = discount;
+  // Lemon Squeezy reports one combined tax per order, with its name and rate.
+  if (tax !== undefined) {
+    const name = typeof a.tax_name === "string" && a.tax_name ? a.tax_name : "Tax", rate = rateOf(a.tax_rate);
+    r.taxes = tax > 0 ? [{ label: rate ? `${name} ${rate}` : name, amount: tax, ...(a.tax_inclusive === true ? { included: true } : {}) }] : [];
+  }
   const total = cents(a.total);
   if (total !== undefined) r.total = total;
+  // Only an order Lemon Squeezy marks as paid has an amount paid; a refunded or pending one shows none.
+  if (total !== undefined && a.status === "paid") r.paid = total;
   return r;
 }

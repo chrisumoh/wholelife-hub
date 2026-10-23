@@ -6,6 +6,14 @@ Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changel
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
 
+## 8.3.25 · Premium: Receipt shows the subtotal, the tax with its rate, the total and the amount paid
+
+- **Problem:** The receipt listed the plan, one tax line and the total. CJ asked for it to show the amount paid, all taxes, and then the final amount.
+- **Change:** The licence function now passes on more of the Lemon Squeezy order: subtotal, any discount, the tax name with its rate (for example VAT 20%), whether the tax is included in the price, and, only when the order is marked paid, the amount paid. The receipt prints the plan and price, Subtotal, Discount (only if there was one), the tax line (marked included when it is inside the price, or Tax 0.00 when no tax was charged), TOTAL and AMOUNT PAID. Nothing is added up in the app: every number is one Lemon Squeezy sent. The ?previewreceipt=1 sample shows the new lines with AMOUNT (SAMPLE).
+- **Where:** supabase/functions/license/logic.ts receiptOf() and rateOf() (deployed, version 5). index.html: receiptHTML(), the previewreceipt sample in boot(), CSS .rc-paid. tests/license-logic.test.mjs (2 new tests), tests/browser/receipt.mjs (4 new checks). docs/DATABASE.md.
+- **How to test:** Run node --test tests/license-logic.test.mjs and node tests/browser/receipt.mjs. Open ?previewreceipt=1 to see the layout. On the preview, make a test purchase, paste the key in Settings > Premium and press Activate: the receipt shows Subtotal, the tax line, TOTAL and AMOUNT PAID from the real order.
+- **Known limits:** Lemon Squeezy reports one combined tax per order, so a receipt has one tax line, not one per tax. A partly refunded order shows no amount paid. Not yet checked against a real test order's data.
+
 ## 8.3.25 · Premium: Checkout inside the app: an animated Opening secure checkout panel that then shows Lemon Squeezy's checkout
 
 - **Problem:** Sliding to pay opened the Lemon Squeezy checkout with only a small message, so the moment between the tap and the checkout had no animation. CJ asked for a second checkout animation and supplied a checkout component (checkout.html). CJ also asked for the paywall to show in the website itself rather than in a new tab.
