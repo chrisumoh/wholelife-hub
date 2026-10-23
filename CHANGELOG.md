@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.26, 2026-10-23. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.27, 2026-10-23. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.27 · Install and errors: Install and error tracking switched on
+
+- **Problem:** The install manifest, offline service worker and error tracker from build 8.3.24 were in the repo but not connected to the page, so the app could not be installed from the browser, did not work offline and no error reports were collected.
+- **Change:** The page now links manifest.webmanifest, loads observability.js before the main scripts and registers sw.js after the page loads. The page's existing theme-color (#1FA36B, the app green) is kept and no second one was added, because the manifest uses the same colour and tests/pwa-kit.cjs checks that they match. Error reports stay in the console until a Supabase endpoint is set in observability.js.
+- **Where:** index.html: head (manifest link, observability.js script), the service worker registration script before the closing body tag, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.
+- **How to test:** Run node --test tests/pwa-kit.cjs and node tests/check-repo.mjs. On the preview in Chrome: DevTools > Application shows the manifest and an activated service worker, and the address bar offers Install. On Android, Add to Home Screen installs the app; on iPhone use Share > Add to Home Screen. With the network off, reload and the app still opens.
+- **Known limits:** The theme colour stays green, not black; the manifest background is black. Error reports are not sent anywhere until the endpoint and key are filled in (docs/APP_READINESS.md). The first load after this build is online; offline use starts once the worker has installed.
 
 ## 8.3.26 · Workouts: File upload button with a progress fill (WLUpload) on the file imports
 
