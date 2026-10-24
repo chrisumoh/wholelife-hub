@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.30, 2026-10-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.31, 2026-10-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.31 · Legal: The Refunds page states the full refund policy, with real contact details
+
+- **Problem:** The Refunds page carried a one-paragraph placeholder for the policy, and the contact email, business name and mailing address on the legal pages were still placeholder text, so a buyer asking about renewals, duplicate or unauthorised charges, price changes or a removed feature had no answer, and no one could be written to.
+- **Change:** The Refunds page now states the whole policy, approved by CJ: 14 days from the date of any charge (the first one and every renewal), refunded in full for any reason; no refund of the unused part after the 14 days; cancelling kept separate from refunding; the charges always refunded (after cancelling, duplicate, wrong amount or plan, unauthorised); how to cancel and how to request a refund with the 3, 2 and 5 to 10 day timings; what happens on a price change or a removed feature; chargebacks; statutory rights; and that a refund deletes nothing. Sections fold behind Read more like the other legal pages, with the short version always visible. REFUND_POLICY_TEXT is rewritten to match. The contact email is wholelifehub@hotmail.com, the mailing address is 13022 Thunderhead Drive, Germantown, MD 20874 and the business name shows as Whole Life Hub. SITE_URL is left as it was by CJ's choice. LEGAL_UPDATED and TERMS_VERSION move to 24 October 2026.
+- **Where:** index.html: REFUND_POLICY_TEXT, refundsView() (now returned through legalFold()), CONTACT_EMAIL, LEGAL_BUSINESS_NAME, MAILING_ADDRESS, LEGAL_UPDATED, TERMS_VERSION, APP_VERSION, WLH.changelog. tests/browser/legal.mjs (12 new checks on #/refunds, one date assertion moved). CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.
+- **How to test:** Run node tests/check-repo.mjs, node tests/perf/size.mjs and node tests/browser/legal.mjs. Open #/refunds: the short version shows without tapping, each Read more opens its section, and no [YOUR ...] text remains anywhere on the page.
+- **Known limits:** This is copy, not legal advice; a lawyer's read is still on the checklist. The business name is the product name, not a registered company; change it if you form one. The 3-day reply, 2-day issue and 5 to 10 day bank timings are promises the owner must be able to meet, and refunds are issued by hand in the Lemon Squeezy dashboard. The Lemon Squeezy store's own refund policy field should carry the same text. The page still says there is no free trial; if a free period is added it must exist in Lemon Squeezy first and this page changes with it. It replaces the shorter 14-day wording that build 8.3.30 (PR #75) put in REFUND_POLICY_TEXT.
 
 ## 8.3.30 · Legal: The Refunds page states the refund policy: 14 days, any reason
 

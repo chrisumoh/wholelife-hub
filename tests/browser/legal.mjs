@@ -190,6 +190,24 @@ await ev(`location.hash = "#/privacy-policy"; true`); await sleep(500);
 const pol = await ev(`(document.querySelector("#sec-privacy-policy, .legal")?.textContent || document.body.textContent) + " " + [...LEGAL_FOLD.values()].map(e => { const d = document.createElement("div"); d.innerHTML = e.html; return d.textContent; }).join(" ")`);
 ok("the Privacy Policy describes the birth month and year, that only the age is kept, and the 24-hour retry block", /birth month and year/.test(pol) && /never your birth date/.test(pol) && /24 hours/.test(pol) && !/13-and-over confirmation/.test(pol), pol.slice(pol.indexOf("Children") - 10, pol.indexOf("Children") + 450));
 
+console.log("--- 6. the refunds page states the whole policy");
+await ev(`location.hash = "#/refunds"; true`); await sleep(500);
+const rf = await ev(`(() => { const live = document.querySelector(".legal")?.textContent || "";
+  const folded = [...LEGAL_FOLD.values()].map(e => { const d = document.createElement("div"); d.innerHTML = e.html; return d.textContent; }).join(" ");
+  return { live, all: live + " " + folded, more: document.querySelectorAll(".legal .legal-more").length }; })()`);
+ok("refunds promises a full refund within 14 days of any charge", /14 days/.test(rf.live) && /full/i.test(rf.live) && /charge/i.test(rf.live), rf.live.slice(0, 300));
+ok("the 14 days apply to renewals too, not just the first charge", /renewal/.test(rf.all));
+ok("refunds says there is no pro-rata refund after the 14 days", /unused part|not refundable/.test(rf.all));
+ok("refunds names Lemon Squeezy and the 5 to 10 day bank window", /Lemon Squeezy/.test(rf.all) && /10 days/.test(rf.all));
+ok("cancelling is described separately from refunding", /separate/.test(rf.all));
+ok("the charges that are always refunded are listed", /duplicate|twice/.test(rf.all) && /did not authorise|without your permission/.test(rf.all));
+ok("statutory rights are preserved", /law gives you|law wins/.test(rf.all));
+ok("a refund is stated to delete nothing", /Nothing is deleted|never deletes/.test(rf.all));
+ok("the long sections fold behind Read more", rf.more >= 6, String(rf.more));
+ok("the short version stays visible without a tap", /1\. The short version/.test(rf.live) && /Every payment for Premium has 14 days/.test(rf.live));
+ok("the one-paragraph policy states the same 14-day promise", await ev(`/14 days/.test(REFUND_POLICY_TEXT) && /full/.test(REFUND_POLICY_TEXT) && /renewal/.test(REFUND_POLICY_TEXT) && /unused part/.test(REFUND_POLICY_TEXT)`));
+ok("no placeholder text is left on the page, and the contact details are shown", !/\[YOUR|\[REFUND/.test(rf.all) && /wholelifehub@hotmail\.com/.test(rf.all) && /13022 Thunderhead Drive, Germantown, MD 20874/.test(rf.all));
+
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 400));
 console.log(`\n${pass} passed, ${fail} failed`);
 ws.close(); procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(fail ? 1 : 0);
