@@ -152,9 +152,8 @@ ok("View invoice opens the invoice and closes the receipt", await ev(`!!document
 ok("the invoice shows the provider's numbers as sent", await ev(`(() => { const t = document.getElementById("inv-paper").textContent; return /12\\.00/.test(t) && /10\\.00/.test(t) && /2\\.00/.test(t) && /WLH-1/.test(t) && /Amount paid/.test(t); })()`));
 ok("user text is escaped, never markup", await ev(`!document.querySelector("#inv-paper img") && /<img/.test(document.getElementById("inv-paper").textContent)`));
 ok("no invented fields: no Billed to, Due, Qty or Unit", await ev(`!/Billed|Due|Qty|Unit/.test(document.getElementById("inv-paper").textContent)`));
-await click('[data-v="modern"]'); await sleep(700);
-ok("switching style changes the theme and pressed state", await ev(`document.getElementById("inv").dataset.theme === "modern" && document.querySelector('[data-v="modern"]').getAttribute("aria-pressed") === "true" && document.querySelector('[data-v="classic"]').getAttribute("aria-pressed") === "false"`));
-ok("Modern puts the totals first", await ev(`(() => { const a = document.querySelector('[data-sec="totals"]').getBoundingClientRect().top, b = document.querySelector('[data-sec="items"]').getBoundingClientRect().top; return a < b; })()`));
+ok("only one invoice style: no style switcher", await ev(`!document.querySelector("#pop-invoice [data-act='inv-theme']") && !document.querySelector("#pop-invoice .inv-theme")`));
+ok("the total comes before the items", await ev(`document.querySelector('[data-sec="totals"]').getBoundingClientRect().top < document.querySelector('[data-sec="items"]').getBoundingClientRect().top`));
 ok("the invoice fits a 375px phone with no sideways scroll", await (async () => { await view(375, 800); await sleep(300); return ev(`(() => { const c = document.querySelector("#pop-invoice .pop-card"); return c.scrollWidth <= c.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth; })()`); })());
 await view(1440);
 await ev(`window.print = () => { window.__printed = document.getElementById("printsheet")?.textContent || ""; }; true`);

@@ -21,7 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
-| 8.3.28 | Premium: View invoice button on the receipt opens an invoice in three styles (Classic, Modern, Dark) with download as PDF; real provider data only | IN PROGRESS: claude/project-thread-59gjx9 |
+| 8.3.28 | Premium: View invoice button on the receipt opens an invoice in the Modern style with download as PDF; real provider data only | IN PROGRESS: claude/project-thread-59gjx9 |
 | 8.3.27 | Install and errors: manifest, error tracker and service worker switched on in index.html | IN PROGRESS: claude/project-thread-isol15 |
 | 8.3.26 | Workouts: WLUpload file button with a progress fill on the file imports | IN PROGRESS: claude/project-thread-tb7f4s |
 | 8.3.25 | Premium: animated Opening secure checkout panel and Lemon Squeezy checkout inside the app (WLCheckout) | IN PROGRESS: claude/project-thread-q620yf |

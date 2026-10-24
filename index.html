@@ -3811,11 +3811,11 @@ const APP_VERSION = { update: "8.3", build: "8.3.28", channel: "Dev Testing", da
   const CHANGELOG = [
     { id:"8.3.28",
       area:"Premium",
-      title:"Invoice view with three styles, opened from the receipt",
+      title:"Invoice view (Modern style), opened from the receipt",
       bug:"The receipt printed after a purchase is a till slip. CJ supplied a themed invoice component (three styles, sections that glide into a new order, download as PDF) and asked whether it could be an in-app invoice using the app's colours.",
-      fix:"The payment-successful receipt (and the ?previewreceipt=1 sample) has a new View invoice button. It opens the same order as an invoice in three styles, Classic, Modern and Dark, and when you switch style the sections glide into their new order (no movement if reduced motion is on). Download PDF opens the browser's print dialog with only the invoice, so Save as PDF gives a PDF. Like the receipt it shows only what Lemon Squeezy sent: order number, date, items, subtotal, discount, tax, total and amount paid, never added up here. Quantity, unit price, Billed to and Due are left out because the provider order does not carry them in the app. All text goes through esc(). Modern takes its header colour from the app accent and Classic its heading colour from the app gold; Dark uses the app green; the paper itself stays fixed so it prints the same in any app theme. The sample invoice says Sample and that no payment was made.",
-      where:"index.html: INV_THEMES, RCPT_LAST, invoiceHTML(), showInvoice(), invSetTheme(), printInvoice(), the rcpt-invoice, inv-theme, inv-print and inv-back click cases, showPurchaseReceipt() (View invoice button, remembers the receipt), CSS block 8.3.28 (.inv-*), .rc-actions wraps. tests/browser/receipt.mjs (new invoice checks). APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.",
-      test:"Run node tests/browser/receipt.mjs. By hand, open the app with ?previewreceipt=1 on the address, press View invoice, switch between Classic, Modern and Dark, then Download PDF and choose Save as PDF. After a test-mode purchase, the receipt that prints after activation has the same button.",
+      fix:"The payment-successful receipt (and the ?previewreceipt=1 sample) has a new View invoice button. It opens the same order as an invoice in the Modern style (total first, accent-coloured header). CJ chose Modern after seeing all three, so the Classic and Dark styles and the style switcher were removed. Download PDF opens the browser's print dialog with only the invoice, so Save as PDF gives a PDF. Like the receipt it shows only what Lemon Squeezy sent: order number, date, items, subtotal, discount, tax, total and amount paid, never added up here. Quantity, unit price, Billed to and Due are left out because the provider order does not carry them in the app. All text goes through esc(). The header takes its colour from the app accent; the paper itself stays fixed so it prints the same in any app theme. The sample invoice says Sample and that no payment was made.",
+      where:"index.html: RCPT_LAST, invoiceHTML(), showInvoice(), printInvoice(), the rcpt-invoice, inv-print and inv-back click cases, showPurchaseReceipt() (View invoice button, remembers the receipt), CSS block 8.3.28 (.inv-*), .rc-actions wraps. tests/browser/receipt.mjs (new invoice checks). APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.",
+      test:"Run node tests/browser/receipt.mjs. By hand, open the app with ?previewreceipt=1 on the address, press View invoice, then Download PDF and choose Save as PDF. After a test-mode purchase, the receipt that prints after activation has the same button.",
       limits:"The invoice is only reachable right after activation (or from the sample link) because the app does not store receipts; reopening it later needs the order saved, which is a separate decision. The buyer name and a due date are not shown since the provider data used does not include them. The sample is the only way to see it before a purchase. Payments are still in test mode." },
     { id:"8.3.27",
       area:"Install and errors",
@@ -18501,10 +18501,9 @@ function showPurchaseReceipt(receipt, plan, sample = false){
 }
 
 // ---------- Invoice view (8.3.28) ----------
-// The same order data as the receipt, laid out as an invoice in three house styles. Like the receipt it
+// The same order data as the receipt, laid out as an invoice (the Modern style: total first, accent header). Like the receipt it
 // only formats what the payment provider sent (r); it never adds, multiplies or estimates, and a field
 // the provider did not send (buyer, due date, quantity, unit price) is left out, not made up.
-const INV_THEMES = ["classic", "modern", "dark"];
 let RCPT_LAST = null;
 function invoiceHTML(r, plan, sample = false){
   const cur = r.currency;
@@ -18524,53 +18523,32 @@ function invoiceHTML(r, plan, sample = false){
   if (total === null) missing.push("total");
   const meta = [["Issued", r.date], ["Order", r.orderNo]].filter(m => m[1]);
   return `<article class="inv-paper" id="inv-paper" aria-label="${sample ? "Sample invoice" : "Invoice"}">
-    <header class="inv-sec inv-head" data-sec="head">
+    <header class="inv-head" data-sec="head">
       <div><div class="inv-brand">Whole Life Hub</div><div class="inv-doc">${sample ? "Sample invoice" : "Invoice"}</div></div>
       <div class="inv-right">${r.orderNo ? `<div class="inv-num">No. ${esc(r.orderNo)}</div>` : ""}<div class="inv-status">${sample ? "Sample" : "Paid"}</div></div>
     </header>
-    ${meta.length ? `<section class="inv-sec inv-meta" data-sec="meta">${meta.map(m => `<div><span class="k">${m[0]}</span>${esc(m[1])}</div>`).join("")}</section>` : ""}
-    <section class="inv-sec" data-sec="items"><table class="inv-items"><thead><tr><th>Description</th><th class="r">Amount</th></tr></thead><tbody>${rows}</tbody></table></section>
-    <section class="inv-sec inv-totals" data-sec="totals">
+    ${meta.length ? `<section class="inv-meta" data-sec="meta">${meta.map(m => `<div><span class="k">${m[0]}</span>${esc(m[1])}</div>`).join("")}</section>` : ""}
+    <section data-sec="items"><table class="inv-items"><thead><tr><th>Description</th><th class="r">Amount</th></tr></thead><tbody>${rows}</tbody></table></section>
+    <section class="inv-totals" data-sec="totals">
       ${subtotal !== null ? trow("Subtotal", subtotal) : ""}${discount ? trow("Discount", -Math.abs(discount)) : ""}${taxHTML}
       ${total !== null ? trow("Total", total, "grand") : ""}${paid !== null ? trow(sample ? "Amount (sample)" : "Amount paid", paid) : ""}
     </section>
-    <footer class="inv-sec inv-note" data-sec="note">${missing.length ? `<p>Your payment provider didn't send the ${esc(missing.join(", "))} for this order.</p>` : ""}<p>${sample ? "Sample only. No payment was made." : "Thank you for your purchase."}</p></footer>
+    <footer class="inv-note" data-sec="note">${missing.length ? `<p>Your payment provider didn't send the ${esc(missing.join(", "))} for this order.</p>` : ""}<p>${sample ? "Sample only. No payment was made." : "Thank you for your purchase."}</p></footer>
   </article>`;
 }
 function showInvoice(receipt, plan, sample = false){
   const r = receipt && typeof receipt === "object" ? receipt : {};
   RCPT_LAST = { r, plan, sample };
-  if (!INV_THEMES.includes(UI.invTheme)) UI.invTheme = "classic";
   closePopover("receipt");
   openPopover("invoice", {
     label: sample ? "Sample invoice, no payment made" : "Invoice",
     width: "min(680px, calc(100vw - 32px))",
     focusSel: '[data-act="inv-print"]',
-    bodyHTML: `<div class="inv" id="inv" data-theme="${UI.invTheme}">
-      <div class="inv-bar" role="group" aria-label="Invoice style">${INV_THEMES.map(t => `<button type="button" class="inv-theme" data-act="inv-theme" data-v="${t}" aria-pressed="${t === UI.invTheme}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</div>
+    bodyHTML: `<div class="inv" id="inv">
       ${invoiceHTML(r, plan, sample)}
       <div class="inv-actions"><button type="button" class="btn" data-act="inv-back">Back to receipt</button>
         <button type="button" class="btn" data-act="inv-print">Download PDF</button>
         <button type="button" class="btn primary" data-pop="close">Done</button></div></div>`
-  });
-}
-// FLIP: measure, switch theme (CSS order changes), invert, play.
-function invSetTheme(theme){
-  const root = document.getElementById("inv");
-  if (!root || !INV_THEMES.includes(theme) || root.dataset.theme === theme) return;
-  const secs = [...root.querySelectorAll(".inv-sec")];
-  const first = secs.map(el => el.getBoundingClientRect());
-  root.dataset.theme = theme; UI.invTheme = theme;
-  root.querySelectorAll("[data-act='inv-theme']").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === theme)));
-  if (lampReduced()) return;
-  secs.forEach((el, i) => {
-    const b = el.getBoundingClientRect(), dx = first[i].left - b.left, dy = first[i].top - b.top;
-    if (!dx && !dy) return;
-    el.style.transition = "none"; el.style.transform = `translate(${dx}px,${dy}px)`;
-    requestAnimationFrame(() => {
-      el.style.transition = "transform .55s cubic-bezier(.25,.9,.25,1)"; el.style.transform = "";
-      setTimeout(() => { el.style.transition = ""; }, 600);
-    });
   });
 }
 // Print: a copy of the invoice in the hidden print sheet, then the browser's own print dialog (the weekly review does the same).
@@ -18579,8 +18557,7 @@ function printInvoice(){
   document.getElementById("printsheet")?.remove();
   const d = document.createElement("div");
   d.id = "printsheet";
-  d.innerHTML = `<div class="inv" data-theme="${esc(root.dataset.theme)}">${paper.outerHTML.replace(' id="inv-paper"', "")}</div>`;
-  d.querySelectorAll(".inv-sec").forEach(el => { el.style.transform = ""; el.style.transition = ""; });
+  d.innerHTML = `<div class="inv">${paper.outerHTML.replace(' id="inv-paper"', "")}</div>`;
   document.body.appendChild(d);
   const done = () => { document.getElementById("printsheet")?.remove(); window.removeEventListener("afterprint", done); };
   window.addEventListener("afterprint", done);
@@ -18594,7 +18571,6 @@ document.addEventListener("click", e => {
   const a = t.dataset.act;
   if (a === "rcpt-again") { rcptPrint(); return; }
   if (a === "rcpt-invoice" && RCPT_LAST) { showInvoice(RCPT_LAST.r, RCPT_LAST.plan, RCPT_LAST.sample); return; }
-  if (a === "inv-theme") { invSetTheme(t.dataset.v); return; }
   if (a === "inv-print") { printInvoice(); return; }
   if (a === "inv-back" && RCPT_LAST) { closePopover("invoice"); showPurchaseReceipt(RCPT_LAST.r, RCPT_LAST.plan, RCPT_LAST.sample); return; }
   if (a === "paywall") { e.preventDefault(); openPaywall(); return; }
@@ -22857,56 +22833,29 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .rc-thanks{text-align:center;font-size:12px;color:var(--rc-ink);margin:6px 0 0}
 .rc-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:20px 16px}
 /* ===================== 8.3.28 invoice view ===================== */
-.inv{--inv-a:var(--accent);--inv-a-ink:var(--accent-ink);--inv-g:color-mix(in srgb,var(--good) 55%,#fff)}
-.inv-bar{display:flex;flex-wrap:wrap;gap:8px;padding:16px 16px 12px}
-.inv-theme{background:var(--raise);color:var(--text);border:2px solid transparent;border-radius:999px;padding:7px 16px;font:inherit;font-size:calc((14px) * var(--text-scale,1));font-weight:600;cursor:pointer}
-.inv-theme[aria-pressed="true"]{border-color:var(--accent)}
-.inv-paper{display:flex;flex-direction:column;gap:22px;margin:0 16px;padding:30px 32px;border-radius:6px;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact;transition:background .45s ease,color .45s ease}
-.inv-sec{will-change:transform}
-.inv p,.inv-paper div{overflow-wrap:anywhere}
+.inv{padding-top:16px}
+.inv-paper{display:flex;flex-direction:column;gap:22px;margin:0 16px;padding:30px 32px;border-radius:6px;overflow:hidden;background:#F6F8FB;color:#14181F;font-family:var(--body);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.inv-paper div,.inv-paper p{overflow-wrap:anywhere}
 .inv-paper p{margin:0}
-.inv-brand{font-weight:800}.inv-doc{text-transform:uppercase;letter-spacing:3px}
-.inv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.inv-brand{font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:1px}
+.inv-doc{text-transform:uppercase;letter-spacing:3px;font-size:12px;font-weight:800;opacity:.85}
+.inv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;background:var(--accent);color:var(--accent-ink);border-radius:14px;padding:18px}
 .inv-right{text-align:right}.inv-num{font-weight:700}
 .inv-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;font-size:13.5px}
 .inv-meta .k{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1.4px;opacity:.62;margin-bottom:3px}
 .inv-items{width:100%;border-collapse:collapse;font-size:14.5px}
 .inv-items th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:1.2px;opacity:.62;padding:0 8px 8px 0}
-.inv-items td{padding:9px 8px 9px 0;vertical-align:top}
+.inv-items td{padding:9px 8px 9px 0;vertical-align:top;border-top:2px solid #DCE3EE}
 .inv-items .r{text-align:right;padding-right:0;white-space:nowrap}
-.inv-totals{margin-left:auto;width:min(300px,100%);font-size:14.5px}
+.inv-totals{width:100%;background:#14181F;color:#fff;border-radius:14px;padding:16px 18px;box-sizing:border-box;font-size:14.5px}
 .inv-trow{display:flex;justify-content:space-between;gap:12px;padding:5px 0}
 .inv-trow>span:last-child{flex:none;white-space:nowrap}
-.inv-trow.grand{font-size:19px;font-weight:800;margin-top:6px;padding-top:10px}
+.inv-trow.grand{font-size:30px;font-weight:800;padding:2px 0}
 .inv-note{font-size:13px;opacity:.75}.inv-note p+p{margin-top:4px}
 .inv-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:20px 16px}
-.inv[data-theme="classic"] .inv-paper{background:#FAF5E9;color:#2B2620;font-family:Georgia,"Times New Roman",serif}
-.inv[data-theme="classic"] .inv-brand{font-size:26px}
-.inv[data-theme="classic"] .inv-doc{color:var(--gold);font-size:13px}
-.inv[data-theme="classic"] .inv-head{border-bottom:2px solid #2B2620;padding-bottom:16px}
-.inv[data-theme="classic"] .inv-items td{border-top:1px solid #DDD2BC}
-.inv[data-theme="classic"] .inv-trow.grand{border-top:2px solid #2B2620}
-.inv[data-theme="classic"] [data-sec="head"]{order:1}.inv[data-theme="classic"] [data-sec="meta"]{order:2}.inv[data-theme="classic"] [data-sec="items"]{order:3}.inv[data-theme="classic"] [data-sec="totals"]{order:4}.inv[data-theme="classic"] [data-sec="note"]{order:5}
-.inv[data-theme="modern"] .inv-paper{background:#F6F8FB;color:#14181F;font-family:var(--body)}
-.inv[data-theme="modern"] .inv-brand{font-size:22px;text-transform:uppercase;letter-spacing:1px}
-.inv[data-theme="modern"] .inv-doc{font-size:12px;font-weight:800;opacity:.85}
-.inv[data-theme="modern"] .inv-head{background:var(--inv-a);color:var(--inv-a-ink);border-radius:14px;padding:18px}
-.inv[data-theme="modern"] .inv-items td{border-top:2px solid #DCE3EE}
-.inv[data-theme="modern"] .inv-totals{width:100%;margin:0;background:#14181F;color:#fff;border-radius:14px;padding:16px 18px;box-sizing:border-box}
-.inv[data-theme="modern"] .inv-trow.grand{font-size:30px;margin:0;padding:2px 0;color:#fff}
-.inv[data-theme="modern"] [data-sec="totals"]{order:1}.inv[data-theme="modern"] [data-sec="head"]{order:2}.inv[data-theme="modern"] [data-sec="items"]{order:3}.inv[data-theme="modern"] [data-sec="meta"]{order:4}.inv[data-theme="modern"] [data-sec="note"]{order:5}
-.inv[data-theme="dark"] .inv-paper{background:#0B0E11;color:#C9E7D4;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;border:1px solid #1E2A22}
-.inv[data-theme="dark"] .inv-brand{font-size:20px;color:var(--inv-g)}
-.inv[data-theme="dark"] .inv-brand::before{content:"> "}
-.inv[data-theme="dark"] .inv-doc{font-size:12px;opacity:.85}
-.inv[data-theme="dark"] .inv-head{border-bottom:1px dashed #2E4A38;padding-bottom:14px}
-.inv[data-theme="dark"] .inv-items td{border-top:1px dashed #2E4A38}
-.inv[data-theme="dark"] .inv-totals{border:1px dashed #2E4A38;padding:10px 12px}
-.inv[data-theme="dark"] .inv-trow.grand{border-top:1px dashed #2E4A38;color:var(--inv-g)}
-.inv[data-theme="dark"] [data-sec="head"]{order:1}.inv[data-theme="dark"] [data-sec="totals"]{order:2}.inv[data-theme="dark"] [data-sec="items"]{order:3}.inv[data-theme="dark"] [data-sec="meta"]{order:4}.inv[data-theme="dark"] [data-sec="note"]{order:5}
+.inv-paper [data-sec="totals"]{order:1}.inv-paper [data-sec="head"]{order:2}.inv-paper [data-sec="items"]{order:3}.inv-paper [data-sec="meta"]{order:4}.inv-paper [data-sec="note"]{order:5}
 @media (max-width:560px){.inv-paper{padding:22px 18px}.inv-head{flex-direction:column}.inv-right{text-align:left}}
 @media print{#printsheet .inv-paper{margin:0;border-radius:0}}
-@media (prefers-reduced-motion:reduce){.inv-paper{transition:none}}
 /* ===================== 8.3.4 slide to pay ===================== */
 .sc{--sc-x:0px;--sc-p:0;position:relative;width:100%}
 .sc-track{position:relative;height:56px;border-radius:999px;background:var(--raise);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;-webkit-tap-highlight-color:transparent}
