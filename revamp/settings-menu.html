@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whole Life Hub — Settings, revamped (drop-in block)</title>
+<!--
+  ============================================================================
+  SETTINGS MENU REVAMP — original drop-in block for Whole Life Hub (2026)
+  What changes vs the current settings page:
+   - A search box at the top filters rows live (no more hunting).
+   - Rows are grouped the way people think: You, Training, Food,
+     Appearance, Notifications, Data, Premium, Legal & about.
+   - One row pattern everywhere: gradient tile, label, value/chevron or a
+     real switch. Switches and segmented controls actually work and persist
+     to a settings object (localStorage here; the app's store in production).
+   - Danger actions (delete account) sit alone at the bottom, in red.
+  HOW TO IMPLEMENT: copy the CSS between COPY markers into the app
+  stylesheet, the markup where the settings page renders, and the JS into
+  the app script. WLSettings.load(savedObject) / WLSettings.onChange(fn)
+  is the only surface the app needs.
+  ============================================================================
+-->
+<style>
+  body { margin: 0; min-height: 100vh; background: #000; color: #fff;
+         font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+         display: grid; place-items: start center; padding: 24px 12px 60px; box-sizing: border-box; }
+  .demo-note { color: #8E8E93; font-size: 13.5px; text-align: center; max-width: 430px; margin: 0 0 16px; }
+
+  /* ==================== COPY: CSS START ==================== */
+  .wlset { width: min(430px, 94vw); }
+  .wlset h1 { font-size: 30px; margin: 4px 0 14px; }
+  .wlset-search { width: 100%; box-sizing: border-box; background: #1C1C1E; color: #fff;
+    border: 1px solid #2C2C2E; border-radius: 12px; padding: 12px 14px; font-size: 16px; margin-bottom: 18px; }
+  .wlset-search::placeholder { color: #636366; }
+  .wlset-group { margin-bottom: 22px; }
+  .wlset-gtitle { font-size: 12px; letter-spacing: 1.6px; text-transform: uppercase; color: #8E8E93; margin: 0 2px 8px; }
+  .wlset-card { background: #141416; border: 1px solid #26262A; border-radius: 18px; overflow: hidden; }
+  .wlset-row { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box;
+    padding: 13px 14px; background: none; border: 0; color: #fff; font-size: 16px; text-align: left;
+    cursor: pointer; font-family: inherit; }
+  .wlset-row + .wlset-row { border-top: 1px solid #232326; }
+  .wlset-row .tile { width: 34px; height: 34px; border-radius: 9px; flex: none; display: grid; place-items: center; font-size: 17px; }
+  .wlset-row .lbl { flex: 1; }
+  .wlset-row .val { color: #8E8E93; font-size: 15px; }
+  .wlset-row .chev { color: #48484A; font-size: 20px; line-height: 1; }
+  .wlset-row.danger .lbl { color: #FF453A; }
+  .wlset-profile { display: flex; align-items: center; gap: 13px; padding: 15px 14px; }
+  .wlset-avatar { width: 52px; height: 52px; border-radius: 50%; flex: none; display: grid; place-items: center;
+    font-weight: 800; font-size: 19px; color: #06121A; background: linear-gradient(135deg, #22D3EE, #818CF8); }
+  .wlset-profile .nm { font-size: 18px; font-weight: 700; }
+  .wlset-profile .em { color: #8E8E93; font-size: 13.5px; }
+  /* switch */
+  .wlset-sw { position: relative; width: 51px; height: 31px; flex: none; }
+  .wlset-sw input { opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .wlset-sw .tr { position: absolute; inset: 0; border-radius: 99px; background: #39393D; pointer-events: none; transition: background .2s; }
+  .wlset-sw .tr::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px;
+    border-radius: 50%; background: #fff; transition: transform .2s; }
+  .wlset-sw input:checked + .tr { background: #30D158; }
+  .wlset-sw input:checked + .tr::after { transform: translateX(20px); }
+  .wlset-sw input:focus-visible + .tr { outline: 2px solid #0A84FF; outline-offset: 2px; }
+  /* segmented */
+  .wlset-seg { display: flex; background: #2C2C2E; border-radius: 10px; padding: 2px; flex: none; }
+  .wlset-seg button { border: 0; background: none; color: #AEAEB2; font-size: 13.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+  .wlset-seg button[aria-pressed="true"] { background: #636366; color: #fff; }
+  .wlset-empty { color: #8E8E93; text-align: center; padding: 18px 0; display: none; }
+  .wlset-foot { color: #636366; font-size: 12.5px; text-align: center; margin-top: 6px; }
+  /* ==================== COPY: CSS END ==================== */
+</style>
+</head>
+<body>
+
+<p class="demo-note">Demo shell — try the search and the switches. In the app, only the block below is used.</p>
+
+<!-- ==================== COPY: MARKUP START ==================== -->
+<div class="wlset" id="wlSettings">
+  <h1>Settings</h1>
+  <input class="wlset-search" id="wlsetSearch" type="search" placeholder="Search settings" aria-label="Search settings">
+
+  <div class="wlset-group" data-group>
+    <div class="wlset-card">
+      <div class="wlset-profile">
+        <div class="wlset-avatar">CS</div>
+        <div><div class="nm">Chris Sulley</div><div class="em">Premium · Beta tester</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wlset-group" data-group>
+    <p class="wlset-gtitle">You</p>
+    <div class="wlset-card">
+      <button class="wlset-row" data-nav="profile"><span class="tile" style="background:#0A84FF">👤</span><span class="lbl">Edit profile</span><span class="chev">›</span></button>
+      <button class="wlset-row" data-nav="profiles"><span class="tile" style="background:#BF5AF2">👥</span><span class="lbl">Profiles</span><span class="val">1</span><span class="chev">›</span></button>
+      <div class="wlset-row" style="cursor:default"><span class="tile" style="background:#64D2FF">⚖️</span><span class="lbl">Units</span>
+        <span class="wlset-seg" data-seg="units"><button data-v="lb" aria-pressed="true">lb</button><button data-v="kg" aria-pressed="false">kg</button></span></div>
+      <div class="wlset-row" style="cursor:default"><span class="tile" style="background:#FFD60A">📅</span><span class="lbl">Week starts</span>
+        <span class="wlset-seg" data-seg="weekStart"><button data-v="sun" aria-pressed="true">Sun</button><button data-v="mon" aria-pressed="false">Mon</button></span></div>
+    </div>
+  </div>
+
+  <div class="wlset-group" data-group>
+    <p class="wlset-gtitle">Training &amp; food</p>
+    <div class="wlset-card">
+      <div class="wlset-row" style="cursor:default"><span class="tile" style="background:#30D158">⏱️</span><span class="lbl">Rest timer sound</span>
+        <label class="wlset-sw"><input type="checkbox" data-set="restSound" checked><span class="tr"></span></label></div>
+      <div class="wlset-row" style="cursor:default"><span class="tile" style="background:#FF9F0A">🔔</span><span class="lbl">Meal reminders</span>
+        <label class="wlset-sw"><input type="checkbox" data-set="mealReminders"><span class="tr"></span></label></div>
+      <button class="wlset-row" data-nav="water"><span class="tile" style="background:#32ADE6">💧</span><span class="lbl">Water goal</span><span class="val">2.0 L</span><span class="chev">›</span></button>
+    </div>
+  </div>
+
+  <div class="wlset-group" data-group>
+    <p class="wlset-gtitle">Appearance &amp; alerts</p>
+    <div class="wlset-card">
+      <div class="wlset-row" style="cursor:default"><span class="tile" style="background:#5856D6">🌙</span><span class="lbl">Theme</span>
+        <span class="wlset-seg" data-seg="theme"><button data-v="dark" aria-pressed="true">Dark</button><button data-v="light" aria-pressed="false">Light</button><button data-v="auto" aria-pressed="false">Auto</button></span></div>
+      <div class="wlset-row" style="cursor:default"><span class="tile" style="background:#FF453A">🔥</span><span class="lbl">Streak alerts</span>
+        <label class="wlset-sw"><input type="checkbox" data-set="streakAlerts" checked><span class="tr"></span></label></div>
+      <div class="wlset-row" style="cursor:default"><span class="tile" style="background:#5E5CE6">🗓️</span><span class="lbl">Weekly review alert</span>
+        <label class="wlset-sw"><input type="checkbox" data-set="weeklyAlert" checked><span class="tr"></span></label></div>
+    </div>
+  </div>
+
+  <div class="wlset-group" data-group>
+    <p class="wlset-gtitle">Premium &amp; data</p>
+    <div class="wlset-card">
+      <button class="wlset-row" data-nav="premium"><span class="tile" style="background:#FFD60A">⭐</span><span class="lbl">Premium</span><span class="val">Active</span><span class="chev">›</span></button>
+      <button class="wlset-row" data-nav="export"><span class="tile" style="background:#30D158">⬇️</span><span class="lbl">Export my data</span><span class="chev">›</span></button>
+      <button class="wlset-row" data-nav="backup"><span class="tile" style="background:#64D2FF">☁️</span><span class="lbl">Backup</span><span class="val">On this device</span><span class="chev">›</span></button>
+    </div>
+  </div>
+
+  <div class="wlset-group" data-group>
+    <p class="wlset-gtitle">Legal &amp; about</p>
+    <div class="wlset-card">
+      <button class="wlset-row" data-nav="terms"><span class="tile" style="background:#8E8E93">📄</span><span class="lbl">Terms</span><span class="chev">›</span></button>
+      <button class="wlset-row" data-nav="privacy"><span class="tile" style="background:#8E8E93">🔒</span><span class="lbl">Privacy</span><span class="chev">›</span></button>
+      <button class="wlset-row" data-nav="refunds"><span class="tile" style="background:#8E8E93">↩️</span><span class="lbl">Refunds</span><span class="chev">›</span></button>
+      <button class="wlset-row" data-nav="about"><span class="tile" style="background:#8E8E93">ℹ️</span><span class="lbl">About WholeLife Hub</span><span class="val">8.3</span><span class="chev">›</span></button>
+    </div>
+  </div>
+
+  <div class="wlset-group" data-group>
+    <div class="wlset-card">
+      <button class="wlset-row danger" data-nav="delete"><span class="tile" style="background:#3A1512">🗑️</span><span class="lbl">Delete account</span><span class="chev">›</span></button>
+    </div>
+  </div>
+
+  <p class="wlset-empty" id="wlsetEmpty">No settings match that search.</p>
+  <p class="wlset-foot">General information, not medical advice.</p>
+</div>
+<!-- ==================== COPY: MARKUP END ==================== -->
+
+<script>
+/* ==================== COPY: JS START ====================
+   WLSettings — state + search filter (original, vanilla JS).
+   In the app: seed with the stored settings object, persist on change
+   through onChange. Navigation rows emit 'wlset:nav' CustomEvents with
+   detail.key so the app's router handles them.                    */
+const WLSettings = (() => {
+  const root = document.getElementById('wlSettings');
+  const KEY = 'wlset-demo';
+  let state = { units: 'lb', weekStart: 'sun', theme: 'dark',
+                restSound: true, mealReminders: false, streakAlerts: true, weeklyAlert: true };
+  try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+  const listeners = [];
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+                       listeners.forEach(fn => fn({ ...state })); };
+
+  root.querySelectorAll('[data-seg]').forEach(seg => {
+    const key = seg.dataset.seg;
+    const paint = () => seg.querySelectorAll('button').forEach(b =>
+      b.setAttribute('aria-pressed', String(b.dataset.v === state[key])));
+    seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      state[key] = b.dataset.v; paint(); save();
+    }));
+    paint();
+  });
+
+  root.querySelectorAll('[data-set]').forEach(input => {
+    input.checked = !!state[input.dataset.set];
+    input.addEventListener('change', () => { state[input.dataset.set] = input.checked; save(); });
+  });
+
+  root.querySelectorAll('[data-nav]').forEach(row =>
+    row.addEventListener('click', () =>
+      root.dispatchEvent(new CustomEvent('wlset:nav', { detail: { key: row.dataset.nav }, bubbles: true }))));
+
+  const search = document.getElementById('wlsetSearch');
+  const empty = document.getElementById('wlsetEmpty');
+  search.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase();
+    let anyVisible = false;
+    root.querySelectorAll('[data-group]').forEach(group => {
+      let groupVisible = false;
+      group.querySelectorAll('.wlset-row').forEach(row => {
+        const hit = !q || row.textContent.toLowerCase().includes(q);
+        row.style.display = hit ? '' : 'none';
+        if (hit) groupVisible = true;
+      });
+      group.style.display = groupVisible ? '' : 'none';
+      if (groupVisible) anyVisible = true;
+    });
+    empty.style.display = anyVisible ? 'none' : 'block';
+  });
+
+  return { get: () => ({ ...state }), onChange: fn => listeners.push(fn) };
+})();
+/* ==================== COPY: JS END ==================== */
+</script>
+
+</body>
+</html>
