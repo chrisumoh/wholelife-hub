@@ -30,6 +30,14 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 - **How to test:** Open docs/BUILD_PLAN.md: no 8.3 row says IN PROGRESS except 8.3.30, 8.3.13 is there, and the backlog no longer says Stripe.
 - **Known limits:** Rows before 8.3 still show the status they had when they were written; they are flagged above the table instead of being rewritten.
 
+## 8.3.29 · Premium: Invoice view (Modern style), opened from the receipt
+
+- **Problem:** The receipt printed after a purchase is a till slip. CJ supplied a themed invoice component (three styles, sections that glide into a new order, download as PDF) and asked whether it could be an in-app invoice using the app's colours.
+- **Change:** The payment-successful receipt (and the ?previewreceipt=1 sample) has a new View invoice button. It opens the same order as an invoice in the Modern style (total first, accent-coloured header). CJ chose Modern after seeing all three, so the Classic and Dark styles and the style switcher were removed. Download PDF opens the browser's print dialog with only the invoice, so Save as PDF gives a PDF. Like the receipt it shows only what Lemon Squeezy sent: order number, date, items, subtotal, discount, tax, total and amount paid, never added up here. Quantity, unit price, Billed to and Due are left out because the provider order does not carry them in the app. All text goes through esc(). The header takes its colour from the app accent; the paper itself stays fixed so it prints the same in any app theme. The sample invoice says Sample and that no payment was made.
+- **Where:** index.html: RCPT_LAST, invoiceHTML(), showInvoice(), printInvoice(), the rcpt-invoice, inv-print and inv-back click cases, showPurchaseReceipt() (View invoice button, remembers the receipt), CSS block 8.3.29 (.inv-*), .rc-actions wraps. tests/browser/receipt.mjs (new invoice checks). APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.
+- **How to test:** Run node tests/browser/receipt.mjs. By hand, open the app with ?previewreceipt=1 on the address, press View invoice, then Download PDF and choose Save as PDF. After a test-mode purchase, the receipt that prints after activation has the same button.
+- **Known limits:** The invoice is only reachable right after activation (or from the sample link) because the app does not store receipts; reopening it later needs the order saved, which is a separate decision. The buyer name and a due date are not shown since the provider data used does not include them. Payments are still in test mode.
+
 ## 8.3.28 · Install and errors: supabase-js kept for offline starts, and the Android (TWA) plan
 
 - **Problem:** On a cold start with no network, the page could not load supabase-js (a file from another site that the service worker never kept), so a signed-in person could not reach the sign-in layer offline. The service worker only handled files from this site.

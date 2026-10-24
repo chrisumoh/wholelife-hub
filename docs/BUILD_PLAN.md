@@ -24,6 +24,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 | Build | Contents | Status |
 |---|---|---|
 | 8.3.30 | Install and errors: error reports reach the database (new `error_reports` migration) and the privacy policy names them; Legal: the Refunds page states the 14-day policy; docs: the build plan matches main again | IN PROGRESS: build-8.3.30 |
+| 8.3.29 | Premium: View invoice button on the receipt opens an invoice in the Modern style with download as PDF; real provider data only | MERGED: PR #74 |
 | 8.3.28 | Install and errors: supabase-js kept for offline starts; Android TWA plan | MERGED: PR #73 |
 | 8.3.27 | Install and errors: manifest, error tracker and service worker switched on in index.html | MERGED: PR #71 |
 | 8.3.26 | Workouts: WLUpload file button with a progress fill on the file imports | MERGED: PR #69 |
