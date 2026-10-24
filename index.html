@@ -3795,7 +3795,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.28", channel: "Dev Testing", date: "2026-10-24", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.29", channel: "Dev Testing", date: "2026-10-24", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3809,6 +3809,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.28", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.29",
+      area:"Premium",
+      title:"Invoice view (Modern style), opened from the receipt",
+      bug:"The receipt printed after a purchase is a till slip. CJ supplied a themed invoice component (three styles, sections that glide into a new order, download as PDF) and asked whether it could be an in-app invoice using the app's colours.",
+      fix:"The payment-successful receipt (and the ?previewreceipt=1 sample) has a new View invoice button. It opens the same order as an invoice in the Modern style (total first, accent-coloured header). CJ chose Modern after seeing all three, so the Classic and Dark styles and the style switcher were removed. Download PDF opens the browser's print dialog with only the invoice, so Save as PDF gives a PDF. Like the receipt it shows only what Lemon Squeezy sent: order number, date, items, subtotal, discount, tax, total and amount paid, never added up here. Quantity, unit price, Billed to and Due are left out because the provider order does not carry them in the app. All text goes through esc(). The header takes its colour from the app accent; the paper itself stays fixed so it prints the same in any app theme. The sample invoice says Sample and that no payment was made.",
+      where:"index.html: RCPT_LAST, invoiceHTML(), showInvoice(), printInvoice(), the rcpt-invoice, inv-print and inv-back click cases, showPurchaseReceipt() (View invoice button, remembers the receipt), CSS block 8.3.29 (.inv-*), .rc-actions wraps. tests/browser/receipt.mjs (new invoice checks). APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.",
+      test:"Run node tests/browser/receipt.mjs. By hand, open the app with ?previewreceipt=1 on the address, press View invoice, then Download PDF and choose Save as PDF. After a test-mode purchase, the receipt that prints after activation has the same button.",
+      limits:"The invoice is only reachable right after activation (or from the sample link) because the app does not store receipts; reopening it later needs the order saved, which is a separate decision. The buyer name and a due date are not shown since the provider data used does not include them. The sample is the only way to see it before a purchase. Payments are still in test mode." },
     { id:"8.3.28",
       area:"Install and errors",
       title:"supabase-js kept for offline starts, and the Android (TWA) plan",
@@ -18484,6 +18492,7 @@ function rcptPrint(){
 }
 function showPurchaseReceipt(receipt, plan, sample = false){
   const r = receipt && typeof receipt === "object" ? receipt : {};
+  RCPT_LAST = { r, plan, sample };
   openPopover("receipt", {
     label: sample ? "Sample receipt, no payment made" : "Payment successful",
     width: "min(380px, calc(100vw - 32px))",
@@ -18493,9 +18502,75 @@ function showPurchaseReceipt(receipt, plan, sample = false){
       <div class="rc-stage"><div class="rc-slot" aria-hidden="true"></div>
         <div class="rc-window" id="rc-window">${receiptHTML(r, plan, sample)}</div></div>
       <div class="rc-actions"><button type="button" class="btn" data-act="rcpt-again">Print again</button>
+        <button type="button" class="btn" data-act="rcpt-invoice">View invoice</button>
         <button type="button" class="btn primary" data-pop="close">Done</button></div>`
   });
   rcptPrint();
+}
+
+// ---------- Invoice view (8.3.29) ----------
+// The same order data as the receipt, laid out as an invoice (the Modern style: total first, accent header). Like the receipt it
+// only formats what the payment provider sent (r); it never adds, multiplies or estimates, and a field
+// the provider did not send (buyer, due date, quantity, unit price) is left out, not made up.
+let RCPT_LAST = null;
+function invoiceHTML(r, plan, sample = false){
+  const cur = r.currency;
+  const items = (Array.isArray(r.items) ? r.items : []).filter(i => i && typeof i === "object" && (rcptNum(i.amount) !== null || i.label));
+  const taxes = Array.isArray(r.taxes) ? r.taxes.filter(t => t && typeof t === "object" && (rcptNum(t.amount) !== null || t.label)) : null;
+  const money = n => rcptNum(n) === null ? "" : rcptMoney(n, cur) || "";
+  const trow = (l, a, cls = "") => `<div class="inv-trow ${cls}"><span>${esc(l)}</span><span>${esc(money(a))}</span></div>`;
+  const total = rcptNum(r.total), subtotal = rcptNum(r.subtotal), discount = rcptNum(r.discount), paid = rcptNum(r.paid);
+  const rows = items.length
+    ? items.map(i => `<tr><td>${esc(i.label || "Premium")}</td><td class="r">${esc(money(i.amount))}</td></tr>`).join("")
+    : `<tr><td>${esc(plan ? "Premium · " + plan : "Premium")}</td><td class="r"></td></tr>`;
+  const taxHTML = taxes === null ? "" : taxes.length ? taxes.map(t => trow((t.label || "Tax") + (t.included ? " (included)" : ""), t.amount)).join("") : trow("Tax", 0);
+  const missing = [];
+  if (rcptMoney(0, cur) === null) missing.push("currency");
+  if (!items.length || items.some(i => rcptNum(i.amount) === null)) missing.push("price");
+  if (taxes === null || taxes.some(t => rcptNum(t.amount) === null)) missing.push("tax");
+  if (total === null) missing.push("total");
+  const meta = [["Issued", r.date], ["Order", r.orderNo]].filter(m => m[1]);
+  return `<article class="inv-paper" id="inv-paper" aria-label="${sample ? "Sample invoice" : "Invoice"}">
+    <header class="inv-head" data-sec="head">
+      <div><div class="inv-brand">Whole Life Hub</div><div class="inv-doc">${sample ? "Sample invoice" : "Invoice"}</div></div>
+      <div class="inv-right">${r.orderNo ? `<div class="inv-num">No. ${esc(r.orderNo)}</div>` : ""}<div class="inv-status">${sample ? "Sample" : "Paid"}</div></div>
+    </header>
+    ${meta.length ? `<section class="inv-meta" data-sec="meta">${meta.map(m => `<div><span class="k">${m[0]}</span>${esc(m[1])}</div>`).join("")}</section>` : ""}
+    <section data-sec="items"><table class="inv-items"><thead><tr><th>Description</th><th class="r">Amount</th></tr></thead><tbody>${rows}</tbody></table></section>
+    <section class="inv-totals" data-sec="totals">
+      ${subtotal !== null ? trow("Subtotal", subtotal) : ""}${discount ? trow("Discount", -Math.abs(discount)) : ""}${taxHTML}
+      ${total !== null ? trow("Total", total, "grand") : ""}${paid !== null ? trow(sample ? "Amount (sample)" : "Amount paid", paid) : ""}
+    </section>
+    <footer class="inv-note" data-sec="note">${missing.length ? `<p>Your payment provider didn't send the ${esc(missing.join(", "))} for this order.</p>` : ""}<p>${sample ? "Sample only. No payment was made." : "Thank you for your purchase."}</p></footer>
+  </article>`;
+}
+function showInvoice(receipt, plan, sample = false){
+  const r = receipt && typeof receipt === "object" ? receipt : {};
+  RCPT_LAST = { r, plan, sample };
+  closePopover("receipt");
+  openPopover("invoice", {
+    label: sample ? "Sample invoice, no payment made" : "Invoice",
+    width: "min(680px, calc(100vw - 32px))",
+    focusSel: '[data-act="inv-print"]',
+    bodyHTML: `<div class="inv" id="inv">
+      ${invoiceHTML(r, plan, sample)}
+      <div class="inv-actions"><button type="button" class="btn" data-act="inv-back">Back to receipt</button>
+        <button type="button" class="btn" data-act="inv-print">Download PDF</button>
+        <button type="button" class="btn primary" data-pop="close">Done</button></div></div>`
+  });
+}
+// Print: a copy of the invoice in the hidden print sheet, then the browser's own print dialog (the weekly review does the same).
+function printInvoice(){
+  const paper = document.getElementById("inv-paper"), root = document.getElementById("inv"); if (!paper || !root) return;
+  document.getElementById("printsheet")?.remove();
+  const d = document.createElement("div");
+  d.id = "printsheet";
+  d.innerHTML = `<div class="inv">${paper.outerHTML.replace(' id="inv-paper"', "")}</div>`;
+  document.body.appendChild(d);
+  const done = () => { document.getElementById("printsheet")?.remove(); window.removeEventListener("afterprint", done); };
+  window.addEventListener("afterprint", done);
+  setTimeout(done, 60000);
+  requestAnimationFrame(() => { try { window.print(); } catch { done(); toast("This browser would not open a print dialog."); } });
 }
 
 // ---------- Wiring ----------
@@ -18503,6 +18578,9 @@ document.addEventListener("click", e => {
   const t = e.target.closest("[data-act]"); if (!t) return;
   const a = t.dataset.act;
   if (a === "rcpt-again") { rcptPrint(); return; }
+  if (a === "rcpt-invoice" && RCPT_LAST) { showInvoice(RCPT_LAST.r, RCPT_LAST.plan, RCPT_LAST.sample); return; }
+  if (a === "inv-print") { printInvoice(); return; }
+  if (a === "inv-back" && RCPT_LAST) { closePopover("invoice"); showPurchaseReceipt(RCPT_LAST.r, RCPT_LAST.plan, RCPT_LAST.sample); return; }
   if (a === "paywall") { e.preventDefault(); openPaywall(); return; }
   if (a === "premium-popup") { e.preventDefault(); openPremiumPopup(t); return; }
   if (a === "owner-tap") { ownerTap(); return; }
@@ -22761,7 +22839,31 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .rc-bars{display:flex;height:40px;margin:14px 6px 6px;overflow:hidden}
 .rc-bars i{background:#111;display:block;flex:none}
 .rc-thanks{text-align:center;font-size:12px;color:var(--rc-ink);margin:6px 0 0}
-.rc-actions{display:flex;justify-content:center;gap:12px;padding:20px 16px}
+.rc-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:20px 16px}
+/* ===================== 8.3.29 invoice view ===================== */
+.inv{padding-top:16px}
+.inv-paper{display:flex;flex-direction:column;gap:22px;margin:0 16px;padding:30px 32px;border-radius:6px;overflow:hidden;background:#F6F8FB;color:#14181F;font-family:var(--body);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.inv-paper div,.inv-paper p{overflow-wrap:anywhere}
+.inv-paper p{margin:0}
+.inv-brand{font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:1px}
+.inv-doc{text-transform:uppercase;letter-spacing:3px;font-size:12px;font-weight:800;opacity:.85}
+.inv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;background:var(--accent);color:var(--accent-ink);border-radius:14px;padding:18px}
+.inv-right{text-align:right}.inv-num{font-weight:700}
+.inv-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;font-size:13.5px}
+.inv-meta .k{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1.4px;opacity:.62;margin-bottom:3px}
+.inv-items{width:100%;border-collapse:collapse;font-size:14.5px}
+.inv-items th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:1.2px;opacity:.62;padding:0 8px 8px 0}
+.inv-items td{padding:9px 8px 9px 0;vertical-align:top;border-top:2px solid #DCE3EE}
+.inv-items .r{text-align:right;padding-right:0;white-space:nowrap}
+.inv-totals{width:100%;background:#14181F;color:#fff;border-radius:14px;padding:16px 18px;box-sizing:border-box;font-size:14.5px}
+.inv-trow{display:flex;justify-content:space-between;gap:12px;padding:5px 0}
+.inv-trow>span:last-child{flex:none;white-space:nowrap}
+.inv-trow.grand{font-size:30px;font-weight:800;padding:2px 0}
+.inv-note{font-size:13px;opacity:.75}.inv-note p+p{margin-top:4px}
+.inv-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:20px 16px}
+.inv-paper [data-sec="totals"]{order:1}.inv-paper [data-sec="head"]{order:2}.inv-paper [data-sec="items"]{order:3}.inv-paper [data-sec="meta"]{order:4}.inv-paper [data-sec="note"]{order:5}
+@media (max-width:560px){.inv-paper{padding:22px 18px}.inv-head{flex-direction:column}.inv-right{text-align:left}}
+@media print{#printsheet .inv-paper{margin:0;border-radius:0}}
 /* ===================== 8.3.4 slide to pay ===================== */
 .sc{--sc-x:0px;--sc-p:0;position:relative;width:100%}
 .sc-track{position:relative;height:56px;border-radius:999px;background:var(--raise);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;-webkit-tap-highlight-color:transparent}

@@ -21,6 +21,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.29 | Premium: View invoice button on the receipt opens an invoice in the Modern style with download as PDF; real provider data only | IN PROGRESS: claude/project-thread-59gjx9 |
 | 8.3.28 | Install and errors: supabase-js kept for offline starts; Android TWA plan | IN PROGRESS: claude/project-thread-ft2z7b |
 | 8.3.27 | Install and errors: manifest, error tracker and service worker switched on in index.html | IN PROGRESS: claude/project-thread-isol15 |
 | 8.3.26 | Workouts: WLUpload file button with a progress fill on the file imports | IN PROGRESS: claude/project-thread-tb7f4s |
