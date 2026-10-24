@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.27, 2026-10-23. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.28, 2026-10-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.28 · Premium: Invoice view with three styles, opened from the receipt
+
+- **Problem:** The receipt printed after a purchase is a till slip. CJ supplied a themed invoice component (three styles, sections that glide into a new order, download as PDF) and asked whether it could be an in-app invoice using the app's colours.
+- **Change:** The payment-successful receipt (and the ?previewreceipt=1 sample) has a new View invoice button. It opens the same order as an invoice in three styles, Classic, Modern and Dark, and when you switch style the sections glide into their new order (no movement if reduced motion is on). Download PDF opens the browser's print dialog with only the invoice, so Save as PDF gives a PDF. Like the receipt it shows only what Lemon Squeezy sent: order number, date, items, subtotal, discount, tax, total and amount paid, never added up here. Quantity, unit price, Billed to and Due are left out because the provider order does not carry them in the app. All text goes through esc(). Modern takes its header colour from the app accent and Classic its heading colour from the app gold; Dark uses the app green; the paper itself stays fixed so it prints the same in any app theme. The sample invoice says Sample and that no payment was made.
+- **Where:** index.html: INV_THEMES, RCPT_LAST, invoiceHTML(), showInvoice(), invSetTheme(), printInvoice(), the rcpt-invoice, inv-theme, inv-print and inv-back click cases, showPurchaseReceipt() (View invoice button, remembers the receipt), CSS block 8.3.28 (.inv-*), .rc-actions wraps. tests/browser/receipt.mjs (new invoice checks). APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.
+- **How to test:** Run node tests/browser/receipt.mjs. By hand, open the app with ?previewreceipt=1 on the address, press View invoice, switch between Classic, Modern and Dark, then Download PDF and choose Save as PDF. After a test-mode purchase, the receipt that prints after activation has the same button.
+- **Known limits:** The invoice is only reachable right after activation (or from the sample link) because the app does not store receipts; reopening it later needs the order saved, which is a separate decision. The buyer name and a due date are not shown since the provider data used does not include them. Payments are still in test mode.
 
 ## 8.3.27 · Install and errors: Install and error tracking switched on
 
