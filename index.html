@@ -3795,7 +3795,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.28", channel: "Dev Testing", date: "2026-10-24", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.30", channel: "Dev Testing", date: "2026-10-24", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3809,7 +3809,7 @@ const APP_VERSION = { update: "8.3", build: "8.3.28", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
-    { id:"8.3.28",
+    { id:"8.3.30",
       area:"Legal",
       title:"The Refunds page states the refund policy: 14 days, any reason",
       bug:"The Refunds page carried an instruction to whoever filled it in instead of a policy, so the app had no answer for a buyer who wanted their money back, and Lemon Squeezy's own seller guidance expects a refund policy to exist before a store takes real payments.",
@@ -3817,7 +3817,7 @@ const APP_VERSION = { update: "8.3", build: "8.3.28", channel: "Dev Testing", da
       where:"index.html: REFUND_POLICY_TEXT, the How to request a refund paragraph in refundsView(). APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.",
       test:"Open #/refunds: the Refund policy section states the 14 days and the rest, with no instruction text, and How to request a refund starts with Contact. Run node tests/check-repo.mjs; the Refunds wording is also covered by node tests/browser/slidepay.mjs (that it names Lemon Squeezy and no longer says payments are not live), which needs Chrome.",
       limits:"The policy is copy, not legal advice, and the lawyer's review is still on the checklist. The contact address on the page is still the [YOUR CONTACT EMAIL] placeholder, so a request cannot actually reach anyone yet: the four other legal placeholders (SITE_URL, CONTACT_EMAIL, LEGAL_BUSINESS_NAME, MAILING_ADDRESS) still block real sales. Refunds are issued by hand in the Lemon Squeezy dashboard. Not checked in a browser here (no Chrome in this environment)." },
-    { id:"8.3.28",
+    { id:"8.3.30",
       area:"Install and errors",
       title:"Error reports reach the database, and the privacy policy says so",
       bug:"8.3.27 loaded the error tracker but left its endpoint and key empty, so every crash was captured and then dropped in the console: a bug in a tester's browser was still invisible unless the tester described it.",
@@ -3825,14 +3825,22 @@ const APP_VERSION = { update: "8.3", build: "8.3.28", channel: "Dev Testing", da
       where:"observability.js: CONFIG.ENDPOINT, CONFIG.ANON_KEY and the header's where-it-goes note. supabase/migrations/20261024120000_wlh_8_3_28_error_reports.sql (new). index.html: privacyPolicyView() sections 1 and 6, LEGAL_UPDATED, TERMS_VERSION. tests/pwa-kit.cjs (the endpoint no longer has to be blank for the reporter tests, plus a check that the endpoint is this project and the key is the publishable one), tests/browser/legal.mjs. docs/APP_READINESS.md, docs/DATABASE.md. APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
       test:"Run node --test tests/pwa-kit.cjs and node tests/check-repo.mjs. Apply the new migration on the live project first, then on the preview run WLHLog.error('test', new Error('hello')) in the console: one row appears in error_reports with the page path and no token. Open #/privacy-policy and #/terms: both say Last updated 24 October 2026, and section 1 describes the crash report.",
       limits:"Nothing is collected until the migration is applied to the live project; before that every report is rejected with a 404 and dropped, with one console warning. There is no consent switch and no per-IP rate limit: the table is insert-only behind the publishable key, so treat it as a bug inbox, not a system of record. A report carries no account id, so it cannot be traced back to the person who hit it. The live insert was not checked from here, because the migration is not applied." },
-    { id:"8.3.28",
+    { id:"8.3.30",
       area:"Docs",
       title:"The build plan matches main again",
       bug:"docs/BUILD_PLAN.md listed every build from 8.3.2 to 8.3.27 as in progress or open although all of them are merged, had no row for 8.3.13, still called the payment provider Stripe, and still described the Premium prices and checkout as placeholders.",
       fix:"Every 8.3 row now reads MERGED with the pull request number taken from its merge commit (#43 to #71), 8.3.13 has its row at last (#55), the standing backlog names Lemon Squeezy with the real prices (7.99 monthly, 59.99 yearly) and lists the two things actually blocking a real charge (the legal placeholders in index.html and applying the new error_reports migration), and a note records that the 8.2.x rows are history that all predates main's current build. No app behaviour changed.",
       where:"docs/BUILD_PLAN.md: the Phases table, the Builds outside the phases table and the Standing backlog. No code changed. APP_VERSION, WLH.changelog. CHANGELOG.md, README.md.",
-      test:"Open docs/BUILD_PLAN.md: no 8.3 row says IN PROGRESS except 8.3.28, 8.3.13 is there, and the backlog no longer says Stripe.",
+      test:"Open docs/BUILD_PLAN.md: no 8.3 row says IN PROGRESS except 8.3.30, 8.3.13 is there, and the backlog no longer says Stripe.",
       limits:"Rows before 8.3 still show the status they had when they were written; they are flagged above the table instead of being rewritten." },
+    { id:"8.3.28",
+      area:"Install and errors",
+      title:"supabase-js kept for offline starts, and the Android (TWA) plan",
+      bug:"On a cold start with no network, the page could not load supabase-js (a file from another site that the service worker never kept), so a signed-in person could not reach the sign-in layer offline. The service worker only handled files from this site.",
+      fix:"sw.js now also answers the one pinned supabase-js address the page loads (cdn.jsdelivr.net/npm/@supabase/supabase-js@...), stale-while-revalidate like the other static files. Only a normal CORS answer is stored, never an opaque one, and every other file from any other site, including Supabase itself, still passes straight through. Also added docs/ANDROID_TWA_PLAN.md (the plan for packaging the PWA as an Android app, with who owns which files). Nothing under supabase/ changed and no setting was changed.",
+      where:"sw.js: LIBRARY_PREFIX and the fetch handler. tests/pwa-kit.cjs (new test, fails against the old worker). docs/ANDROID_TWA_PLAN.md. APP_VERSION, WLH.changelog, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node --test tests/pwa-kit.cjs and node tests/check-repo.mjs. By hand on the preview in Chrome: load once online, then DevTools > Application > Cache Storage > wlh-v1-assets lists supabase.js; set Network to Offline, hard reload, and the app still starts with its sign-in layer.",
+      limits:"The first visit after this build must be online. The stored library follows the version pinned in index.html; when that pin changes, the new file is fetched once online. Whether offline cold start restores a signed-in account's own data was checked by reading the code, not on a device." },
     { id:"8.3.27",
       area:"Install and errors",
       title:"Install and error tracking switched on",

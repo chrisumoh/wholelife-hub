@@ -2,11 +2,11 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.28, 2026-10-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.30, 2026-10-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
 
-## 8.3.28 · Legal: The Refunds page states the refund policy: 14 days, any reason
+## 8.3.30 · Legal: The Refunds page states the refund policy: 14 days, any reason
 
 - **Problem:** The Refunds page carried an instruction to whoever filled it in instead of a policy, so the app had no answer for a buyer who wanted their money back, and Lemon Squeezy's own seller guidance expects a refund policy to exist before a store takes real payments.
 - **Change:** REFUND_POLICY_TEXT now holds the policy the owner chose: contact us within 14 days of a charge and the period is refunded in full, used or not; after 14 days that period is not refundable but cancelling stops the next charge, and cancelling partway leaves Premium running to the end of the paid period with no refund for the unused part. Refunds return to the card used, through Lemon Squeezy, and can take up to 10 days; a charge taken after cancelling, or taken twice, is refunded. The closing line says none of it affects rights the law gives you where you live. The 14 days matches the cooling-off period consumer law in the UK and EU generally gives for online purchases, so the page no longer promises less than that floor. How to request a refund no longer opens with Once payments are live: it points at the contact address and the Contact page.
@@ -14,7 +14,7 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 - **How to test:** Open #/refunds: the Refund policy section states the 14 days and the rest, with no instruction text, and How to request a refund starts with Contact. Run node tests/check-repo.mjs; the Refunds wording is also covered by node tests/browser/slidepay.mjs (that it names Lemon Squeezy and no longer says payments are not live), which needs Chrome.
 - **Known limits:** The policy is copy, not legal advice, and the lawyer's review is still on the checklist. The contact address on the page is still the [YOUR CONTACT EMAIL] placeholder, so a request cannot actually reach anyone yet: the four other legal placeholders (SITE_URL, CONTACT_EMAIL, LEGAL_BUSINESS_NAME, MAILING_ADDRESS) still block real sales. Refunds are issued by hand in the Lemon Squeezy dashboard. Not checked in a browser here (no Chrome in this environment).
 
-## 8.3.28 · Install and errors: Error reports reach the database, and the privacy policy says so
+## 8.3.30 · Install and errors: Error reports reach the database, and the privacy policy says so
 
 - **Problem:** 8.3.27 loaded the error tracker but left its endpoint and key empty, so every crash was captured and then dropped in the console: a bug in a tester's browser was still invisible unless the tester described it.
 - **Change:** observability.js now posts to the app's own Supabase table, error_reports, with the publishable key the app already uses, and a new migration creates that table: RLS on, one insert-only policy for signed-out and signed-in users, no read path for the browser at all, and a length cap on every text column. A report names the screen as well as the page: the app routes in the hash, so a bare route (#/coach) is kept while a fragment that carries values, such as the sign-in callback's access_token, is dropped whole; the table stamps the time instead of the browser, and an error with no message is sent as (no message) so the insert is not refused. Because reports now leave the device, the Privacy Policy no longer says nothing is collected in the background: section 1 names the crash report and exactly what it carries (the error message, the page path, the browser string and the time, never what was logged, a name or an email), and the Supabase entry in section 6 says the table holds no account id and no health data. LEGAL_UPDATED and TERMS_VERSION move to 24 October 2026.
@@ -22,13 +22,21 @@ Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Up
 - **How to test:** Run node --test tests/pwa-kit.cjs and node tests/check-repo.mjs. Apply the new migration on the live project first, then on the preview run WLHLog.error('test', new Error('hello')) in the console: one row appears in error_reports with the page path and no token. Open #/privacy-policy and #/terms: both say Last updated 24 October 2026, and section 1 describes the crash report.
 - **Known limits:** Nothing is collected until the migration is applied to the live project; before that every report is rejected with a 404 and dropped, with one console warning. There is no consent switch and no per-IP rate limit: the table is insert-only behind the publishable key, so treat it as a bug inbox, not a system of record. A report carries no account id, so it cannot be traced back to the person who hit it. The live insert was not checked from here, because the migration is not applied.
 
-## 8.3.28 · Docs: The build plan matches main again
+## 8.3.30 · Docs: The build plan matches main again
 
 - **Problem:** docs/BUILD_PLAN.md listed every build from 8.3.2 to 8.3.27 as in progress or open although all of them are merged, had no row for 8.3.13, still called the payment provider Stripe, and still described the Premium prices and checkout as placeholders.
 - **Change:** Every 8.3 row now reads MERGED with the pull request number taken from its merge commit (#43 to #71), 8.3.13 has its row at last (#55), the standing backlog names Lemon Squeezy with the real prices (7.99 monthly, 59.99 yearly) and lists the two things actually blocking a real charge (the legal placeholders in index.html and applying the new error_reports migration), and a note records that the 8.2.x rows are history that all predates main's current build. No app behaviour changed.
 - **Where:** docs/BUILD_PLAN.md: the Phases table, the Builds outside the phases table and the Standing backlog. No code changed. APP_VERSION, WLH.changelog. CHANGELOG.md, README.md.
-- **How to test:** Open docs/BUILD_PLAN.md: no 8.3 row says IN PROGRESS except 8.3.28, 8.3.13 is there, and the backlog no longer says Stripe.
+- **How to test:** Open docs/BUILD_PLAN.md: no 8.3 row says IN PROGRESS except 8.3.30, 8.3.13 is there, and the backlog no longer says Stripe.
 - **Known limits:** Rows before 8.3 still show the status they had when they were written; they are flagged above the table instead of being rewritten.
+
+## 8.3.28 · Install and errors: supabase-js kept for offline starts, and the Android (TWA) plan
+
+- **Problem:** On a cold start with no network, the page could not load supabase-js (a file from another site that the service worker never kept), so a signed-in person could not reach the sign-in layer offline. The service worker only handled files from this site.
+- **Change:** sw.js now also answers the one pinned supabase-js address the page loads (cdn.jsdelivr.net/npm/@supabase/supabase-js@...), stale-while-revalidate like the other static files. Only a normal CORS answer is stored, never an opaque one, and every other file from any other site, including Supabase itself, still passes straight through. Also added docs/ANDROID_TWA_PLAN.md (the plan for packaging the PWA as an Android app, with who owns which files). Nothing under supabase/ changed and no setting was changed.
+- **Where:** sw.js: LIBRARY_PREFIX and the fetch handler. tests/pwa-kit.cjs (new test, fails against the old worker). docs/ANDROID_TWA_PLAN.md. APP_VERSION, WLH.changelog, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node --test tests/pwa-kit.cjs and node tests/check-repo.mjs. By hand on the preview in Chrome: load once online, then DevTools > Application > Cache Storage > wlh-v1-assets lists supabase.js; set Network to Offline, hard reload, and the app still starts with its sign-in layer.
+- **Known limits:** The first visit after this build must be online. The stored library follows the version pinned in index.html; when that pin changes, the new file is fetched once online. Whether offline cold start restores a signed-in account's own data was checked by reading the code, not on a device.
 
 ## 8.3.27 · Install and errors: Install and error tracking switched on
 

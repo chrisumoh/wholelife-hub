@@ -67,6 +67,29 @@ test("offline, the app page comes from the copy and other addresses do not get i
   assert.equal((await navigate("/img/icon-512.png")).out, "NO PAGE", "an image address is not answered with the app page");
 });
 
+const settle = () => new Promise(r => setImmediate(r));
+
+// One GET for a file through the worker's fetch handler; reports whether the worker answered it and what it stored.
+async function getFile(url, response, cached) {
+  const h = {}, self = { location: { origin: "https://app.test" }, addEventListener: (t, f) => { h[t] = f; } }, kept = [];
+  const net = async () => { if (!response) throw new Error("offline"); return { ...response, clone() { return this; } }; };
+  vm.runInNewContext(read("sw.js"), { self, caches: { open: async () => ({ match: async () => cached, put: async (k, v) => { kept.push(v); } }) }, URL, Promise, Response: { error: () => "NO PAGE" }, fetch: net });
+  let res; h.fetch({ request: { method: "GET", url, mode: "no-cors" }, respondWith: p => { res = p; } });
+  return { out: res ? await res : undefined, handled: !!res, kept };
+}
+const LIB = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js";
+
+test("the page's pinned supabase-js is kept for offline starts, and only that file from another site", async () => {
+  assert.ok(read("index.html").includes(LIB), "the worker's prefix matches the script tag the page loads");
+  const ok = await getFile(LIB, { ok: true, status: 200, type: "cors" });
+  assert.equal(ok.handled, true); await ok.out; await settle(); assert.equal(ok.kept.length, 1, "a good CORS copy is stored");
+  assert.equal((await getFile(LIB, null, "COPY")).out, "COPY", "offline, the stored copy answers");
+  const opaque = await getFile(LIB, { ok: true, status: 200, type: "opaque" }); await opaque.out; await settle();
+  assert.equal(opaque.kept.length, 0, "an opaque answer is never stored");
+  assert.equal((await getFile("https://cdn.jsdelivr.net/npm/evil@1/x.js", { ok: true, status: 200, type: "cors" })).handled, false, "other jsdelivr files pass straight through");
+  assert.equal((await getFile("https://example.com/supabase.js", { ok: true, status: 200, type: "cors" })).handled, false);
+});
+
 function loadReporter(configured, status = 200, href = "https://app.test/#/coach?token=SECRET") {
   const handlers = {}, calls = [], beacons = [], timers = [];
   // Overwrite whatever the shipped file says, so these tests keep working once the real endpoint is filled in.
@@ -142,7 +165,6 @@ test("tokens in URLs and error text never reach the report", () => {
   assert.ok(body.stack.includes("https://app.test/index.html") && body.label === "https://app.test/auth/callback", "the useful part (the path) is kept");
 });
 
-const settle = () => new Promise(r => setImmediate(r));
 
 test("a busy or unavailable server is retried a few times, with growing waits, then dropped", async () => {
   for (const status of [503, 429]) {
