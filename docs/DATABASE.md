@@ -106,6 +106,7 @@ Everything a person logs syncs, signed in, through the tables above. No migratio
 | `20261022020000` | `wlh_8_3_7_friends_presence` | Friends: `member_names`, `friendships`, `member_blocks`, functions `search_members`, `friend_list`, `member_ping`. **Not applied until the owner runs it.** |
 | `20261022030000` | `wlh_8_3_10_workout_challenges` | Challenges: `challenges`, `challenge_members` (RLS on, no direct grants), functions `create_challenge`, `respond_challenge`, `leave_challenge`, `my_challenges`, `challenge_board`. **Not applied until the owner runs it.** |
 | `20261022060000` | `wlh_8_3_17_friend_messages` | Friend messages: `friend_messages` with RLS and an accepted-friends trigger. Applied to the live project. |
+| `20261024120000` | `wlh_8_3_28_error_reports` | Crash reports: `error_reports`, insert-only for `anon` and `authenticated`, no read path. **Not applied until the owner runs it.** |
 
 ## Friends and online status (8.3.7)
 
@@ -123,6 +124,13 @@ Opt-in social layer, no health data. All three tables have RLS on and no `anon` 
 - `friend_messages`: `sender_id`, `recipient_id`, `body` (1 to 500 characters), `created_at`, `read_at`. RLS on, no `anon` access. Either party reads; a sender inserts as themselves and deletes their own; only the recipient updates, and only `read_at` (column grant).
 - A before-insert trigger (`friend_message_check`, security definer) allows a message only between accepted friends and refuses it when either has blocked the other.
 - Applied to the live project on 2026-10-22 at the owner's request.
+
+## Error reports (8.3.28)
+
+- `error_reports`: one row per captured browser error — `kind` (`error`, `rejection`, `manual`, `event`), `label`, `message`, `stack`, `page` (path only, never the query or hash), `user_agent`, `created_at`. No account id, no health data and nothing that names a person; `observability.js` cuts URLs down to their path and blanks token-looking values before sending.
+- RLS on, one policy: `insert` for `anon` and `authenticated` with `with check (true)`. The grants are `insert` only — no select, update or delete — so the browser can report a failure but can never read the reports back. Read them in the dashboard or with a service role.
+- Every text column has a length cap; the app's own caps are lower. There is no per-account or per-IP rate limit: it is an insert-only table behind the publishable key, so treat it as a bug inbox, not a system of record.
+- **Not applied yet.** Run `20261024120000_wlh_8_3_28_error_reports.sql` on the live project before deploying 8.3.28; until then every report is rejected and dropped.
 
 ## Photo storage
 

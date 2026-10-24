@@ -1,7 +1,7 @@
 // Run:  node --test tests/pwa-kit.cjs
-// The install manifest, the service worker and the error-tracking starter (docs/APP_READINESS.md). None of them is wired into index.html
-// yet, so these tests are what keep them correct until it is: the files the manifest and the worker name exist, the worker still installs
-// when one file is missing, it never keeps an error page or touches other sites, and the error reporter sends JSON, paths only, once.
+// The install manifest, the service worker and the error tracker (docs/APP_READINESS.md), all switched on in index.html since 8.3.27 and
+// reporting for real since 8.3.28: the files the manifest and the worker name exist, the worker still installs when one file is missing,
+// it never keeps an error page or touches other sites, the reporter sends JSON, paths only, once, and it posts to this app's own project.
 const test = require("node:test"), assert = require("node:assert/strict"), fs = require("node:fs"), path = require("node:path"), vm = require("node:vm");
 const root = path.join(__dirname, "..");
 const read = f => fs.readFileSync(path.join(root, f), "utf8");
@@ -69,13 +69,25 @@ test("offline, the app page comes from the copy and other addresses do not get i
 
 function loadReporter(configured, status = 200) {
   const handlers = {}, calls = [], beacons = [], timers = [];
-  let src = read("observability.js");
-  if (configured) src = src.replace("ENDPOINT: ''", "ENDPOINT: 'https://x.supabase.co/rest/v1/error_reports'").replace("ANON_KEY: ''", "ANON_KEY: 'anon-key'");
+  // Overwrite whatever the shipped file says, so these tests keep working once the real endpoint is filled in.
+  const src = read("observability.js")
+    .replace(/ENDPOINT:\s*'[^']*'/, configured ? "ENDPOINT: 'https://x.supabase.co/rest/v1/error_reports'" : "ENDPOINT: ''")
+    .replace(/ANON_KEY:\s*'[^']*'/, configured ? "ANON_KEY: 'anon-key'" : "ANON_KEY: ''");
   const win = { addEventListener: (t, f) => { handlers[t] = f; } };
   const ctx = { window: win, navigator: { onLine: true, userAgent: "UA", sendBeacon: (...a) => { beacons.push(a); return true; } }, location: { href: "https://app.test/#/coach?token=SECRET", origin: "https://app.test" },
     console: { warn: () => {} }, URL, Date, Map, String, JSON, fetch: (u, o) => { calls.push([u, o]); return Promise.resolve({ ok: status < 400, status }); }, setTimeout: (f, ms) => { timers.push(ms); } };
   vm.runInNewContext(src, ctx); return { handlers, calls, beacons, win, timers };
 }
+
+test("the shipped endpoint is this app's own project, reached with the publishable key only", () => {
+  const src = read("observability.js");
+  const endpoint = (/ENDPOINT:\s*'([^']*)'/.exec(src) || [])[1] || "";
+  const key = (/ANON_KEY:\s*'([^']*)'/.exec(src) || [])[1] || "";
+  const project = (/const SB_URL = "([^"]+)"/.exec(read("index.html")) || [])[1];
+  assert.ok(endpoint.endsWith("/rest/v1/error_reports"), "reports go to the error_reports table: " + endpoint);
+  assert.ok(project && endpoint.startsWith(project + "/"), "same Supabase project as SB_URL in index.html: " + endpoint + " vs " + project);
+  assert.ok(/^sb_publishable_/.test(key), "the publishable key, never a secret key");
+});
 
 test("with no endpoint set, reports stay on the device", () => {
   const { handlers, calls, beacons } = loadReporter(false);

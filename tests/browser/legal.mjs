@@ -151,7 +151,7 @@ await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = tr
 const su = await ev(`({ calls: window.__signUps || [], saved: localStorage.getItem("wlh.consent"), tv: TERMS_VERSION, now: Date.now() })`);
 const d0 = su.calls[0]?.options?.data;
 ok("sign-up is sent once with the terms version and the time of agreement", su.calls.length === 1 && d0?.terms_version === su.tv && /^\d{4}-\d\d-\d\dT[\d:.]+Z$/.test(d0?.terms_accepted_at || "") && Math.abs(Date.parse(d0.terms_accepted_at) - su.now) < 60000, JSON.stringify(su.calls));
-ok("the version is the date the legal pages were last updated", await ev(`TERMS_VERSION === "2026-10-23" && LEGAL_UPDATED === "23 October 2026"`));
+ok("the version is the date the legal pages were last updated", await ev(`TERMS_VERSION === "2026-10-24" && LEGAL_UPDATED === "24 October 2026"`));
 ok("the same version and time are saved on this device", (() => { try { const c = JSON.parse(su.saved); return c.v === su.tv && c.at === d0.terms_accepted_at; } catch { return false; } })(), su.saved);
 ok("sign-up adds a 'terms' entry to the on-device history", await ev(`historyGet().some(x => x.k === "terms")`));
 ok("the confirmation message about the email link still shows", await ev(`/Check your email/.test(document.getElementById("pop-auth")?.textContent || "")`));

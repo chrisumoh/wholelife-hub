@@ -18,13 +18,12 @@
  *   - The destination table is INSERT-only for the app (see the SQL in
  *     docs/APP_READINESS.md): the app can report, it can never read back.
  *
- * HOW TO TURN IT ON
- *   1. Run the SQL in docs/APP_READINESS.md to create `error_reports`.
- *   2. Fill in CONFIG.ENDPOINT and CONFIG.ANON_KEY below.
- *   3. Load this file from <head> (before the app's main script) so errors
- *      during startup are caught too — exact lines are in the same doc.
- *   Until step 2 is done it runs in console-only mode: errors are still
- *   captured and visible in devtools, nothing leaves the device.
+ * WHERE IT GOES (switched on in 8.3.28)
+ *   Reports are posted to this project's own `error_reports` table, created by
+ *   supabase/migrations/20261024120000_wlh_8_3_28_error_reports.sql. That migration has to be applied
+ *   to the live project before reports are accepted; until it is, each one is rejected (one console
+ *   warning, nothing else) and the app behaves exactly as before. With ENDPOINT cleared it runs in
+ *   console-only mode again: errors are captured and visible in devtools, nothing leaves the device.
  *
  * MANUAL USE
  *   WLHLog.error('checkout', err)  — report a caught failure with a label.
@@ -36,12 +35,11 @@
 
   // ------------------------------------------------------------------ CONFIG
   const CONFIG = {
-    // Supabase REST endpoint for the error_reports table, e.g.
-    // 'https://<project-ref>.supabase.co/rest/v1/error_reports'
-    ENDPOINT: '',
-    // The project's anon (public) key. Safe to ship in client code ONLY
-    // because the table's RLS policy is insert-only (see the readiness doc).
-    ANON_KEY: '',
+    // Supabase REST endpoint for the error_reports table. Same project as SB_URL in index.html; keep both in step.
+    ENDPOINT: 'https://zemxqbinpehkrkyvzlue.supabase.co/rest/v1/error_reports',
+    // The project's publishable (anon) key, the same one the app itself uses (SB_KEY in index.html).
+    // Safe to ship in client code ONLY because the table is insert-only: reports can be written, never read back.
+    ANON_KEY: 'sb_publishable_sWli_uOByy_C9rg8CE_8vQ_VNglQf0l',
     MAX_PER_SESSION: 20,   // hard cap: a crash loop must not flood the table
     QUEUE_LIMIT: 10,       // offline queue size (oldest dropped first)
     DEDUPE_MS: 60 * 1000   // identical error inside this window counts once

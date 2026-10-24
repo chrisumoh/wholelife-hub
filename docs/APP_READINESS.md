@@ -1,9 +1,10 @@
-# App readiness kit — what's here and how to wire it
+# App readiness kit — what's here and how it is wired
 
 Three small, self-contained pieces that close the gaps a review of main
 (22 Oct 2026) found: the web app wasn't installable as a PWA, and runtime
-errors in testers' browsers were invisible. Nothing here changes any
-existing behaviour; each piece only activates once wired in (step 2).
+errors in testers' browsers were invisible. All three are switched on in
+`index.html` since 8.3.27, and since 8.3.28 the error tracker reports to the
+app's own Supabase project.
 
 ## The files
 
@@ -23,61 +24,35 @@ existing behaviour; each piece only activates once wired in (step 2).
   the current Content-Security-Policy in `vercel.json` unchanged; a hosted
   tracker would need its domain added to `connect-src` first.
 
-## Wiring (the only edits to existing files — all in `index.html`)
+## How it is wired (8.3.27, all in `index.html`)
 
-In `<head>`, before the app's main script so startup errors are caught. (The page
-already has a `theme-color` meta tag; do not add a second one.)
+In `<head>`, before the app's main script so startup errors are caught:
 
 ```html
 <link rel="manifest" href="/manifest.webmanifest">
 <script src="/observability.js"></script>
 ```
 
-Just before `</body>`:
+Just before `</body>`, a service-worker registration after load, so it never
+competes with the app's own startup work. Failures are silent: the app works
+fine as a plain website wherever service workers are unavailable.
 
-```html
-<script>
-  // Register the service worker after load so it never competes with the
-  // app's own startup work. Failures are silent: the app works fine as a
-  // plain website wherever service workers are unavailable.
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () {
-      navigator.serviceWorker.register('/sw.js').catch(function () {});
-    });
-  }
-</script>
-```
+## Where error reports go (8.3.28)
 
-## Turning error reports on (optional, Supabase)
+The tracker is on: `CONFIG.ENDPOINT` points at the project's `error_reports`
+table and `CONFIG.ANON_KEY` holds the publishable key (the same one the app
+uses). The table is created by
+`supabase/migrations/20261024120000_wlh_8_3_28_error_reports.sql` — RLS on, an
+insert-only policy for `anon` and `authenticated`, no read path for the
+browser, and length caps on every text column. The SQL lives in the migration
+only; this doc does not keep a second copy.
 
-The tracker runs console-only until an endpoint is configured. To collect
-reports, create the table, then fill in `CONFIG.ENDPOINT` and
-`CONFIG.ANON_KEY` at the top of `observability.js`:
+**Apply that migration to the live project before the build is deployed.** It
+is a repository file, not an applied change: until it runs, each report is
+rejected with a 404 (one console warning, nothing else) and the app behaves
+exactly as before. To go back to console-only, blank `CONFIG.ENDPOINT`.
 
-```sql
-create table public.error_reports (
-  id bigint generated always as identity primary key,
-  kind text not null,
-  label text default '',
-  message text not null,
-  stack text default '',
-  page text default '',
-  user_agent text default '',
-  created_at timestamptz not null default now()
-);
-
-alter table public.error_reports enable row level security;
-
--- Insert-only for the app's public key: reports can be written,
--- never read back, edited or deleted from the client.
-create policy "error reports are insert-only"
-  on public.error_reports
-  for insert
-  to anon, authenticated
-  with check (true);
-```
-
-Read reports in the Supabase dashboard (Table editor → error_reports) or
+Read reports in the Supabase dashboard (Table editor → `error_reports`) or
 with a service-role query — never from the app itself.
 
 ## Verify
@@ -85,17 +60,19 @@ with a service-role query — never from the app itself.
 1. Deploy a preview and open DevTools → Application: the manifest parses,
    the service worker shows as activated, and the app offers to install.
 2. Go offline (DevTools → Network → Offline) and reload: the app opens.
-3. With the endpoint configured, run `WLHLog.error('test', new Error('hello'))`
-   in the console: one row appears in `error_reports`.
+3. With the migration applied, run `WLHLog.error('test', new Error('hello'))`
+   in the console: one row appears in `error_reports`, with the page path and
+   no token or health data in it.
 
 ## Deliberately NOT in this PR
 
 These need a decision or are already in flight elsewhere, so no code here
 pretends to solve them:
 
-- **Payments** — Premium is wired but checkout is placeholders and beta-open
-  is on; choosing the web checkout (and, later, Apple IAP) is a product
-  decision, and it needs account keys that don't belong in a repo.
+- **Payments** — Lemon Squeezy checkout and the licence check are built
+  (8.3.23–8.3.25) and the licence function is deployed, but it runs in test
+  mode: the legal business details and the refund policy in `index.html` are
+  still placeholders, so nothing can be charged for real yet.
 - **Account sync for the remaining local-only data** — the stacked sync
   branches (8.2.14–8.2.16) already carry this; a parallel implementation
   would collide with them.

@@ -9,7 +9,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 | Phase | Contents | Status |
 |---|---|---|
 | 1 | Bug fixes: duplicate avatar, clipped text, menu-over-Settings layering glitch, Settings tabs | DONE (already fixed in earlier builds; checked at 375px and 820px in 8.2.21) |
-| 2 | Premium system: purchase-gated flag, badges, Telegram-style premium screen | DONE except payments (receipt dialog ready from 8.3.2; isPremium flag, dev override and premium screen exist; BETA_OPEN is on; prices and checkout are placeholders) |
+| 2 | Premium system: purchase-gated flag, badges, Telegram-style premium screen | DONE except live payments (Lemon Squeezy checkout, licence key check and receipt built in 8.3.2–8.3.25; isPremium flag, dev override and premium screen exist; the licence function is deployed but runs in test mode, and the legal business details in index.html are still placeholders) |
 | 3 | Coach: full data access + personalized advice card (9 rules) | PARTLY DONE: advice card built; 8.2.21 adds repeat marking and the evening review. No protein advice (calories only); Task 3.1 plan adjustments not audited |
 | 4 | Font system: 8 options, Perplexity-style default | DONE (already built; audited in 8.3.22: 8 self-hosted fonts apply and load, tabular numbers, no overflow at 375px) |
 | 5 | UI cleanup: blue outlines, compact appearance controls, clean layout, gradient sidebar icons | PROMPTED |
@@ -19,33 +19,37 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 ## Builds outside the phases
 
+Rows for 8.2.x and earlier keep the status they had when they were written; every one of them is in main (the CHANGELOG's current build is 8.3.28).
+
 | Build | Contents | Status |
 |---|---|---|
-| 8.3.27 | Install and errors: manifest, error tracker and service worker switched on in index.html | IN PROGRESS: claude/project-thread-isol15 |
-| 8.3.26 | Workouts: WLUpload file button with a progress fill on the file imports | IN PROGRESS: claude/project-thread-tb7f4s |
-| 8.3.25 | Premium: animated Opening secure checkout panel and Lemon Squeezy checkout inside the app (WLCheckout) | IN PROGRESS: claude/project-thread-q620yf |
-| 8.3.24 | App readiness kit: install manifest, offline service worker, error-tracking starter (not wired in yet) | IN PROGRESS: dante/app-readiness-kit |
-| 8.3.23 | Premium: Lemon Squeezy checkout, licence key check and Save yearly option | IN PROGRESS: claude/project-thread-q620yf |
-| 8.3.22 | Housekeeping: CLAUDE.md names Codex as the PR reviewer; Phase 4 marked done | IN PROGRESS: claude/project-thread-whr4aa |
-| 8.3.21 | Friends: blocking screen (block, unblock, Blocked people list; no new migration) | IN PROGRESS: claude/project-thread-ate422 |
-| 8.3.20 | Phone fixes: menu black screen after scrolling, account row inside the profile card, tips go to the bell | IN PROGRESS: claude/project-thread-3qyz9x |
-| 8.3.19 | Motion: sliding selection ring on the day strip, page numbers and snack region chips | IN PROGRESS: claude/project-thread-3qyz9x |
-| 8.3.18 | Friends: tidier Friends card (sections, switches, one-row search) | IN PROGRESS: claude/project-thread-e9j467 |
-| 8.3.17 | Friends: messages between accepted friends (new `friend_messages` table) | IN PROGRESS: claude/project-thread-qrbmf2 |
-| 8.3.16 | Summary and Workouts: weekly stat cards compared with last week | IN PROGRESS: claude/project-thread-wk0x38 |
-| 8.3.15 | Notifications: rich pop-up cards for friend requests, challenge invites and saved workouts | IN PROGRESS: claude/project-thread-qrbmf2 |
-| 8.3.14 | Recipes: recipe and meal plan cards match Food culture; pager (12 dishes / 1 plan day a page) | IN PROGRESS: claude/project-thread-5uw7hi |
-| 8.3.12 | Sign-in: the first-run tour offer asks about saving to an account and opens the sign-in card | IN PROGRESS: claude/project-thread-7alpk4 |
-| 8.3.11 | Sign-in: card with Google and email in setup (after the age question) and in Settings > Account; old Account pair removed | IN PROGRESS: claude/project-thread-7alpk4 |
-| 8.3.10 | Workouts: friends challenges (new `challenges`, `challenge_members` tables) | IN PROGRESS: claude/project-thread-oz3ex2 |
-| 8.3.9 | Notifications: notification centre with All, Mentions and System tabs, unread count and Mark all read | IN PROGRESS: claude/project-thread-nzyu0w |
-| 8.3.8 | Summary: activity rings card with a seven-day picker and staggered ring draw-in | IN PROGRESS: claude/project-thread-e4yqki |
-| 8.3.7 | Household: friends card, search by app name, online and offline status (new `member_names`, `friendships`, `member_blocks` tables) | IN PROGRESS: claude/project-thread-e9j467 |
-| 8.3.6 | Workouts and Recipes: compact pages with an open-the-full-menu control and a food row preview | IN PROGRESS: claude/project-thread-h02qn5 |
-| 8.3.5 | Workouts: all 44 icons replaced with the designer set; Boxicons removed | IN PROGRESS: claude/project-thread-hay4cp |
-| 8.3.4 | Premium: slide-to-pay control on the payment button (never shows a paid state; payments not live) | IN PROGRESS: claude/project-thread-7alpk4 |
-| 8.3.3 | Premium: ?previewreceipt=1 shows the receipt with marked sample numbers (no purchase, nothing saved) | IN PROGRESS: claude/project-thread-7alpk4 |
-| 8.3.2 | Premium: payment-successful dialog with a receipt that prints out (plan, price, taxes, total from the provider; nothing invented). Payment still not live, so it is wired but not reachable | IN PROGRESS: claude/project-thread-he3th0 |
+| 8.3.28 | Install and errors: error reports reach the database (new `error_reports` migration) and the privacy policy names them; Legal: the Refunds page states the 14-day policy; docs: the build plan matches main again | IN PROGRESS: build-8.3.28 |
+| 8.3.27 | Install and errors: manifest, error tracker and service worker switched on in index.html | MERGED: PR #71 |
+| 8.3.26 | Workouts: WLUpload file button with a progress fill on the file imports | MERGED: PR #69 |
+| 8.3.25 | Premium: animated Opening secure checkout panel and Lemon Squeezy checkout inside the app (WLCheckout) | MERGED: PR #68 |
+| 8.3.24 | App readiness kit: install manifest, offline service worker, error-tracking starter (not wired in yet) | MERGED: PR #65 |
+| 8.3.23 | Premium: Lemon Squeezy checkout, licence key check and Save yearly option | MERGED: PR #66 |
+| 8.3.22 | Housekeeping: CLAUDE.md names Codex as the PR reviewer; Phase 4 marked done | MERGED: PR #64 |
+| 8.3.21 | Friends: blocking screen (block, unblock, Blocked people list; no new migration) | MERGED: PR #63 |
+| 8.3.20 | Phone fixes: menu black screen after scrolling, account row inside the profile card, tips go to the bell | MERGED: PR #62 |
+| 8.3.19 | Motion: sliding selection ring on the day strip, page numbers and snack region chips | MERGED: PR #61 |
+| 8.3.18 | Friends: tidier Friends card (sections, switches, one-row search) | MERGED: PR #60 |
+| 8.3.17 | Friends: messages between accepted friends (new `friend_messages` table) | MERGED: PR #59 |
+| 8.3.16 | Summary and Workouts: weekly stat cards compared with last week | MERGED: PR #58 |
+| 8.3.15 | Notifications: rich pop-up cards for friend requests, challenge invites and saved workouts | MERGED: PR #56 |
+| 8.3.14 | Recipes: recipe and meal plan cards match Food culture; pager (12 dishes / 1 plan day a page) | MERGED: PR #57 |
+| 8.3.13 | Summary: Pinned cards no longer flicker or go black when the mouse moves over them after a flip | MERGED: PR #55 |
+| 8.3.12 | Sign-in: the first-run tour offer asks about saving to an account and opens the sign-in card | MERGED: PR #54 |
+| 8.3.11 | Sign-in: card with Google and email in setup (after the age question) and in Settings > Account; old Account pair removed | MERGED: PR #53 |
+| 8.3.10 | Workouts: friends challenges (new `challenges`, `challenge_members` tables) | MERGED: PR #52 |
+| 8.3.9 | Notifications: notification centre with All, Mentions and System tabs, unread count and Mark all read | MERGED: PR #51 |
+| 8.3.8 | Summary: activity rings card with a seven-day picker and staggered ring draw-in | MERGED: PR #50 |
+| 8.3.7 | Household: friends card, search by app name, online and offline status (new `member_names`, `friendships`, `member_blocks` tables) | MERGED: PR #49 |
+| 8.3.6 | Workouts and Recipes: compact pages with an open-the-full-menu control and a food row preview | MERGED: PR #47 |
+| 8.3.5 | Workouts: all 44 icons replaced with the designer set; Boxicons removed | MERGED: PR #46 |
+| 8.3.4 | Premium: slide-to-pay control on the payment button (never shows a paid state; payments not live) | MERGED: PR #45 |
+| 8.3.3 | Premium: ?previewreceipt=1 shows the receipt with marked sample numbers (no purchase, nothing saved) | MERGED: PR #44 |
+| 8.3.2 | Premium: payment-successful dialog with a receipt that prints out (plan, price, taxes, total from the provider; nothing invented). Payment still not live, so it is wired but not reachable | MERGED: PR #43 |
 | 8.3.1 | A waiting Google sign-in is cancelled when an email sign-in starts | MERGED: PR #42 |
 | 8.3 | Sign-in popup: lamp scene with fireflies and Continue with Google (email unchanged) | MERGED: PR #41 |
 | 8.2.26 | The three daily progress cards keep their colours with less visual detail | IN PROGRESS: claude/project-thread-88d00b |
@@ -84,7 +88,8 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 ## Standing backlog
 
-- Payment provider integration (Stripe): premium CTA is currently "Coming soon" or hidden; prices and discount % are TODO placeholders
+- Payments: Lemon Squeezy is integrated (checkout 8.3.23–8.3.25, $7.99 monthly and $59.99 yearly, shown in the app) and the licence function is deployed in test mode. Charging for real waits on the legal placeholders in index.html: SITE_URL, CONTACT_EMAIL, LEGAL_BUSINESS_NAME, MAILING_ADDRESS and REFUND_POLICY_TEXT
+- Error reports: run `20261024120000_wlh_8_3_28_error_reports.sql` on the live project, then the tracker switched on in 8.3.28 collects reports (until then they are rejected and dropped)
 - Real photos/illustrations: any AI-generated imagery flagged for replacement
 - App Store screenshots: retake after redesign settles
 - Review legal pages with a lawyer before charging money
@@ -241,3 +246,10 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 
 - Local: tests/browser/lamp.mjs (31 passed), legal, security, account-sync, motion, repo checks, size check, screenshots at 390px wide (light and dark).
 - Not run: a real Google sign-in (the provider has to be switched on in Supabase first), a11y.mjs (axe-core unavailable here), real-phone/Safari checks. No database change.
+
+### Checklist run for 8.3.28
+
+- Done: `node --test tests/pwa-kit.cjs` (13, including the new check that the endpoint is this app's own project and that only the publishable key is shipped), `node tests/check-repo.mjs` (21, version, README and change log agree), `node tests/perf/size.mjs` (raw 2,091 of 5,000 KB, brotli 528 of 800, gzip 624 of 800), and `node --check` on `observability.js` and `tests/pwa-kit.cjs`.
+- Not run: the browser suite. There is no Chrome in this environment and no root to install one, so `tests/browser/legal.mjs` — which holds the updated 24 October 2026 assertion — has not been executed, and nothing has been looked at in a browser.
+- Not run, pre-existing: the phone timing gate, a11y.mjs, real-phone and Safari checks, and sign-in on a preview.
+- Database: no Supabase tool was run and nothing was applied. `20261024120000_wlh_8_3_28_error_reports.sql` is a repository file only, so the live insert, the RLS policy and the insert-only grants are untested against Postgres. Apply it, then send one report, before calling error tracking done.
