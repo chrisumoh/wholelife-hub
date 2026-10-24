@@ -151,7 +151,7 @@ await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = tr
 const su = await ev(`({ calls: window.__signUps || [], saved: localStorage.getItem("wlh.consent"), tv: TERMS_VERSION, now: Date.now() })`);
 const d0 = su.calls[0]?.options?.data;
 ok("sign-up is sent once with the terms version and the time of agreement", su.calls.length === 1 && d0?.terms_version === su.tv && /^\d{4}-\d\d-\d\dT[\d:.]+Z$/.test(d0?.terms_accepted_at || "") && Math.abs(Date.parse(d0.terms_accepted_at) - su.now) < 60000, JSON.stringify(su.calls));
-ok("the version is the date the legal pages were last updated", await ev(`TERMS_VERSION === "2026-10-23" && LEGAL_UPDATED === "23 October 2026"`));
+ok("the version is the date the legal pages were last updated", await ev(`TERMS_VERSION === "2026-10-24" && LEGAL_UPDATED === "24 October 2026"`));
 ok("the same version and time are saved on this device", (() => { try { const c = JSON.parse(su.saved); return c.v === su.tv && c.at === d0.terms_accepted_at; } catch { return false; } })(), su.saved);
 ok("sign-up adds a 'terms' entry to the on-device history", await ev(`historyGet().some(x => x.k === "terms")`));
 ok("the confirmation message about the email link still shows", await ev(`/Check your email/.test(document.getElementById("pop-auth")?.textContent || "")`));
@@ -189,6 +189,24 @@ await ev(`location.hash = "#/privacy-policy"; true`); await sleep(500);
 // Long sections are folded behind "Read more" (8.2.25), so the policy text is the page plus every folded section.
 const pol = await ev(`(document.querySelector("#sec-privacy-policy, .legal")?.textContent || document.body.textContent) + " " + [...LEGAL_FOLD.values()].map(e => { const d = document.createElement("div"); d.innerHTML = e.html; return d.textContent; }).join(" ")`);
 ok("the Privacy Policy describes the birth month and year, that only the age is kept, and the 24-hour retry block", /birth month and year/.test(pol) && /never your birth date/.test(pol) && /24 hours/.test(pol) && !/13-and-over confirmation/.test(pol), pol.slice(pol.indexOf("Children") - 10, pol.indexOf("Children") + 450));
+
+console.log("--- 6. the refunds page states the whole policy");
+await ev(`location.hash = "#/refunds"; true`); await sleep(500);
+const rf = await ev(`(() => { const live = document.querySelector(".legal")?.textContent || "";
+  const folded = [...LEGAL_FOLD.values()].map(e => { const d = document.createElement("div"); d.innerHTML = e.html; return d.textContent; }).join(" ");
+  return { live, all: live + " " + folded, more: document.querySelectorAll(".legal .legal-more").length }; })()`);
+ok("refunds promises a full refund within 14 days of any charge", /14 days/.test(rf.live) && /full/i.test(rf.live) && /charge/i.test(rf.live), rf.live.slice(0, 300));
+ok("the 14 days apply to renewals too, not just the first charge", /renewal/.test(rf.all));
+ok("refunds says there is no pro-rata refund after the 14 days", /unused part|not refundable/.test(rf.all));
+ok("refunds names Lemon Squeezy and the 5 to 10 day bank window", /Lemon Squeezy/.test(rf.all) && /10 days/.test(rf.all));
+ok("cancelling is described separately from refunding", /separate/.test(rf.all));
+ok("the charges that are always refunded are listed", /duplicate|twice/.test(rf.all) && /did not authorise|without your permission/.test(rf.all));
+ok("statutory rights are preserved", /law gives you|law wins/.test(rf.all));
+ok("a refund is stated to delete nothing", /Nothing is deleted|never deletes/.test(rf.all));
+ok("the long sections fold behind Read more", rf.more >= 6, String(rf.more));
+ok("the short version stays visible without a tap", /1\. The short version/.test(rf.live) && /Every payment for Premium has 14 days/.test(rf.live));
+ok("the one-paragraph policy states the same 14-day promise", await ev(`/14 days/.test(REFUND_POLICY_TEXT) && /full/.test(REFUND_POLICY_TEXT) && /renewal/.test(REFUND_POLICY_TEXT) && /unused part/.test(REFUND_POLICY_TEXT)`));
+ok("no placeholder text is left on the page, and the contact details are shown", !/\[YOUR|\[REFUND/.test(rf.all) && /wholelifehub@hotmail\.com/.test(rf.all) && /13022 Thunderhead Drive, Germantown, MD 20874/.test(rf.all));
 
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 400));
 console.log(`\n${pass} passed, ${fail} failed`);

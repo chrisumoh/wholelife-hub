@@ -3795,7 +3795,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.29", channel: "Dev Testing", date: "2026-10-24", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.31", channel: "Dev Testing", date: "2026-10-24", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3809,6 +3809,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.29", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.31",
+      area:"Legal",
+      title:"The Refunds page states the full refund policy, with real contact details",
+      bug:"The Refunds page carried a one-paragraph placeholder for the policy, and the contact email, business name and mailing address on the legal pages were still placeholder text, so a buyer asking about renewals, duplicate or unauthorised charges, price changes or a removed feature had no answer, and no one could be written to.",
+      fix:"The Refunds page now states the whole policy, approved by CJ: 14 days from the date of any charge (the first one and every renewal), refunded in full for any reason; no refund of the unused part after the 14 days; cancelling kept separate from refunding; the charges always refunded (after cancelling, duplicate, wrong amount or plan, unauthorised); how to cancel and how to request a refund with the 3, 2 and 5 to 10 day timings; what happens on a price change or a removed feature; chargebacks; statutory rights; and that a refund deletes nothing. Sections fold behind Read more like the other legal pages, with the short version always visible. REFUND_POLICY_TEXT is rewritten to match. The contact email is wholelifehub@hotmail.com, the mailing address is 13022 Thunderhead Drive, Germantown, MD 20874 and the business name shows as Whole Life Hub. SITE_URL is left as it was by CJ's choice. LEGAL_UPDATED and TERMS_VERSION move to 24 October 2026.",
+      where:"index.html: REFUND_POLICY_TEXT, refundsView() (now returned through legalFold()), CONTACT_EMAIL, LEGAL_BUSINESS_NAME, MAILING_ADDRESS, LEGAL_UPDATED, TERMS_VERSION, APP_VERSION, WLH.changelog. tests/browser/legal.mjs (12 new checks on #/refunds, one date assertion moved). CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.",
+      test:"Run node tests/check-repo.mjs, node tests/perf/size.mjs and node tests/browser/legal.mjs. Open #/refunds: the short version shows without tapping, each Read more opens its section, and no [YOUR ...] text remains anywhere on the page.",
+      limits:"This is copy, not legal advice; a lawyer's read is still on the checklist. The business name is the product name, not a registered company; change it if you form one. The 3-day reply, 2-day issue and 5 to 10 day bank timings are promises the owner must be able to meet, and refunds are issued by hand in the Lemon Squeezy dashboard. The Lemon Squeezy store's own refund policy field should carry the same text. The page still says there is no free trial; if a free period is added it must exist in Lemon Squeezy first and this page changes with it. Another PR (#75, build 8.3.30) also edits REFUND_POLICY_TEXT, LEGAL_UPDATED and TERMS_VERSION; whichever merges second merges main and keeps this wording." },
     { id:"8.3.29",
       area:"Premium",
       title:"Invoice view (Modern style), opened from the receipt",
@@ -11869,7 +11877,7 @@ function obGround(){ return `<div class="obg-bg" aria-hidden="true"><i></i><i></
 // is kept, never the birth date. Someone under 13 gets a plain "can't set up" screen, and the device refuses another try for 24 hours
 // (a flag in this browser; clearing site data removes it, so it deters a retry rather than guaranteeing one).
 const AGE_BLOCK_KEY = "wlh.ageblock", AGE_BLOCK_MS = 24 * 3600 * 1000, CONSENT_KEY = "wlh.consent";
-const TERMS_VERSION = "2026-10-23"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
+const TERMS_VERSION = "2026-10-24"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
 const ageBlocked = () => { try { return +localStorage.getItem(AGE_BLOCK_KEY) > Date.now(); } catch { return false; } };
 const blockAge = () => { try { localStorage.setItem(AGE_BLOCK_KEY, String(Date.now() + AGE_BLOCK_MS)); } catch {} };
 // Whole years old. The birth day is not asked, so a birthday this month counts as not reached yet.
@@ -16684,11 +16692,11 @@ function applySeason(p){
 // Change SITE_URL in this one place when the custom domain is live. Nothing else in the
 // app hardcodes a host: every internal link is a relative hash route.
 const SITE_URL = "https://[YOUR-DOMAIN]";                    // TODO: set your domain
-const CONTACT_EMAIL = "[YOUR CONTACT EMAIL]";                // TODO: set your contact address
-const LEGAL_BUSINESS_NAME = "[YOUR LEGAL BUSINESS NAME]";    // TODO: fill in before publishing
-const MAILING_ADDRESS = "[YOUR MAILING ADDRESS]";            // TODO: fill in before publishing
-const REFUND_POLICY_TEXT = "[REFUND POLICY: fill in — how many days, which plans, and whether a partial period is refunded]"; // TODO
-const LEGAL_UPDATED = "23 October 2026";
+const CONTACT_EMAIL = "wholelifehub@hotmail.com";
+const LEGAL_BUSINESS_NAME = "Whole Life Hub";
+const MAILING_ADDRESS = "13022 Thunderhead Drive, Germantown, MD 20874";
+const REFUND_POLICY_TEXT = "Every charge has 14 days. Contact us within 14 days of any charge, the first one or a renewal, and we refund it in full, whether or not you have used Premium in that time, and you do not need a reason. After those 14 days the charge for that period is not refundable, but you can cancel at any time to stop the next one. Cancelling part way through a period leaves Premium running until the period you paid for ends, and we do not refund the unused part. Refunds go back to the card you paid with, through Lemon Squeezy, and can take up to 10 days to appear. If you were charged after cancelling, charged twice, charged the wrong amount, or charged without your permission, tell us and we refund it in full. Ending Premium never deletes anything: every meal, workout, weigh-in and photo stays exactly where it is. Nothing here reduces any right the law gives you where you live.";
+const LEGAL_UPDATED = "24 October 2026";
 
 function applyCanonical(){
   if (/\[YOUR-DOMAIN\]/.test(SITE_URL)) return;              // nothing to point at yet
@@ -16881,25 +16889,62 @@ function termsView(){
 
 // =================== REFUNDS ===================
 function refundsView(){
-  return `
+  return legalFold(`
   <section class="card legal">
     <div class="eyebrow">Legal</div>
     <h2>Refunds &amp; cancellation</h2>
     <p class="small muted">Last updated: ${esc(LEGAL_UPDATED)}</p>
-    <p>Payments are taken by Lemon Squeezy, our payment provider, on its own checkout page, and nothing is charged until you confirm there. This page is the refund policy for those payments.</p>
+    <p>WholeLife Hub Premium is a subscription run by ${esc(LEGAL_BUSINESS_NAME)}. This page is the refund and cancellation policy for every payment for Premium: the first one and every renewal.</p>
+    <p>Payments are taken by Lemon Squeezy, our payment provider and merchant of record, on its own secure checkout page. Nothing is charged until you confirm the payment there. Lemon Squeezy handles your card details, the sales tax or VAT on the purchase, and the money going back to you; its own terms and privacy policy apply to that part of the transaction.</p>
 
-    <h3>How to cancel</h3>
-    <p>Cancel any time from <a href="#/settings/premium">Settings &gt; Premium</a> &gt; Manage subscription, which opens Lemon Squeezy's My Orders page (sign in with the email you bought with). Cancelling stops the next renewal; you keep Premium access for the rest of the period you already paid for.</p>
+    <h3>1. The short version</h3>
+    <p>Every payment for Premium has 14 days in which you can ask for it back, in full, for any reason. After that the period you paid for is not refundable, but you can cancel at any time to stop the next payment.</p>
 
-    <h3>What happens after cancelling</h3>
-    <p>Premium features stop working at the end of the period you already paid for. Everything you logged stays exactly where it is — cancelling never deletes or hides your meals, workouts, weigh-ins or history, only the Premium features themselves.</p>
+    <h3>2. What you are paying for</h3>
+    <p>Premium is ${esc(planPrice("monthly") || "priced as shown on the checkout page")} or ${esc(planPrice("yearly") || "as shown there")}, and renews automatically on the same plan until you cancel. Both plans give the same features; the yearly one is cheaper over twelve months. There is no free trial, and no charge is taken until you complete the checkout yourself.</p>
+    <p>The price, the currency and the renewal date are shown on the checkout page before you pay, and again in the order email Lemon Squeezy sends you. Keep that email: it holds your order number, which makes a refund request faster.</p>
 
-    <h3>Refund policy</h3>
+    <h3>3. The 14-day refund window</h3>
     <p>${esc(REFUND_POLICY_TEXT)}</p>
+    <p>The 14 days start on the date of the charge, not the date you first signed up. Every renewal is a new charge, so every renewal has its own 14 days. One refund per charge: when a charge is refunded, Premium for that period ends.</p>
 
-    <h3>How to request a refund</h3>
-    <p>Once payments are live: contact <b>${esc(CONTACT_EMAIL)}</b> with the email or account the purchase was made under, or use the "Restore Purchases" / cancel path on the Premium screen, and we'll follow the policy above. See the <a href="#/contact">Contact page</a> for more ways to reach us.</p>
-  </section>`;
+    <h3>4. After the 14 days</h3>
+    <p>The charge for the current period is not refundable, including any part of it you have not used. We do not refund part way through a month or a year. You can still cancel at any time, which stops the next charge, and Premium keeps working until the period you have already paid for ends.</p>
+
+    <h3>5. How to cancel</h3>
+    <p>Open <a href="#/settings/premium">Settings &gt; Premium</a> &gt; Manage subscription, which opens Lemon Squeezy's My Orders page; sign in with the email you bought with and cancel there. You can also write to <b>${esc(CONTACT_EMAIL)}</b> from the address you bought with and we will cancel it for you, but if a renewal is due in less than two business days, cancel in the portal yourself to be certain it stops.</p>
+    <p>Cancelling and refunding are separate: cancelling stops future charges and does not refund the current one. If you want both, say so and we will do both.</p>
+    <p>Premium features stop at the end of the period you paid for. Everything you logged stays exactly where it is; cancelling never deletes or hides your meals, workouts, weigh-ins or history.</p>
+
+    <h3>6. How to request a refund</h3>
+    <p>Write to <b>${esc(CONTACT_EMAIL)}</b> with the subject Refund request, from the email address the purchase was made under, and include your order number if you have it. There is no form and you do not need a reason. We reply within 3 business days, usually sooner, and issue an approved refund within 2 business days of your email. The money goes back to the same card or payment method in the same currency; Lemon Squeezy confirms it at once and your bank usually shows it within 5 to 10 days. See the <a href="#/contact">Contact page</a> for other ways to reach us.</p>
+
+    <h3>7. Charges we always refund</h3>
+    <p>Inside or outside the 14 days, tell us and we refund these in full: a charge taken after you cancelled, or after you asked us to cancel and we did not do it in time; a duplicate charge, or two charges for the same period; a charge for the wrong amount or the wrong plan; a charge you did not authorise, including one made with your card by someone else. Write to us as well as your bank in that last case, so we can stop the subscription. A payment retry that succeeds is an ordinary charge and follows this policy like any other.</p>
+
+    <h3>8. If the app is not working</h3>
+    <p>Premium is software and software occasionally breaks. If a Premium feature is broken or unavailable for a sustained period because of something on our side, write to us and we will either fix it or refund the period affected, at your choice. An outage of a few hours, or a problem caused by your device, browser or connection, does not qualify on its own, though we will still look at it with you.</p>
+
+    <h3>9. If we change Premium or its price</h3>
+    <p>A price change never applies to a period you have already paid for: it applies from your next renewal, and we tell you before it takes effect so you can cancel first. If we remove a feature you specifically paid for, you can ask for a refund of the current period within 14 days of the announcement, even if that charge is older than 14 days. If we stop offering Premium altogether, we refund the unused part of any period already paid for, from the date we stop.</p>
+
+    <h3>10. Chargebacks</h3>
+    <p>If something has gone wrong with a payment, write to us first: we can usually fix it faster than a bank can, and we hold the order records. If you raise a chargeback with your bank instead, the bank's process decides the outcome, and we cannot also refund the same charge directly while that is open.</p>
+
+    <h3>11. Your legal rights</h3>
+    <p>Nothing in this policy reduces a right the law gives you where you live, and where the law gives you a longer period or a stronger right than this page, the law wins and we honour it. That includes statutory cancellation and withdrawal rights for distance purchases. In the UK and the EU you generally have 14 days to cancel an online purchase; the 14-day refund above offers that to everyone, wherever you live.</p>
+
+    <h3>12. What a refund does to your data</h3>
+    <p>Nothing is deleted. Your account and every meal, workout, weigh-in, vital, photo and profile field stay where they are; only the Premium features stop working. You can keep using the free features, and Premium can be bought again later without losing anything you logged.</p>
+
+    <h3>13. Changes to this policy</h3>
+    <p>We may update this page, and the date at the top changes when we do. A change never applies backwards to a payment already taken: the policy in force on the day you were charged is the one that applies to that charge. If a change is significant, we say so in the app before it takes effect.</p>
+
+    <h3>14. Contact</h3>
+    <p><b>${esc(LEGAL_BUSINESS_NAME)}</b><br>${esc(MAILING_ADDRESS)}<br>Email: <b>${esc(CONTACT_EMAIL)}</b></p>
+    <p>We aim to reply to every message within a few business days. For what we collect and why, see the <a href="#/privacy-policy">Privacy Policy</a>.</p>
+    <p class="small">This page is a plain-language statement of how we handle refunds. It does not replace the consumer law of the country you live in.</p>
+  </section>`);
 }
 
 // =================== CONTACT ===================
