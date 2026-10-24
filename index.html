@@ -3795,7 +3795,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.27", channel: "Dev Testing", date: "2026-10-23", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.28", channel: "Dev Testing", date: "2026-10-24", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3809,6 +3809,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.27", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.28",
+      area:"Install and errors",
+      title:"supabase-js kept for offline starts, and the Android (TWA) plan",
+      bug:"On a cold start with no network, the page could not load supabase-js (a file from another site that the service worker never kept), so a signed-in person could not reach the sign-in layer offline. The service worker only handled files from this site.",
+      fix:"sw.js now also answers the one pinned supabase-js address the page loads (cdn.jsdelivr.net/npm/@supabase/supabase-js@...), stale-while-revalidate like the other static files. Only a normal CORS answer is stored, never an opaque one, and every other file from any other site, including Supabase itself, still passes straight through. Also added docs/ANDROID_TWA_PLAN.md (the plan for packaging the PWA as an Android app, with who owns which files). Nothing under supabase/ changed and no setting was changed.",
+      where:"sw.js: LIBRARY_PREFIX and the fetch handler. tests/pwa-kit.cjs (new test, fails against the old worker). docs/ANDROID_TWA_PLAN.md. APP_VERSION, WLH.changelog, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node --test tests/pwa-kit.cjs and node tests/check-repo.mjs. By hand on the preview in Chrome: load once online, then DevTools > Application > Cache Storage > wlh-v1-assets lists supabase.js; set Network to Offline, hard reload, and the app still starts with its sign-in layer.",
+      limits:"The first visit after this build must be online. The stored library follows the version pinned in index.html; when that pin changes, the new file is fetched once online. Whether offline cold start restores a signed-in account's own data was checked by reading the code, not on a device." },
     { id:"8.3.27",
       area:"Install and errors",
       title:"Install and error tracking switched on",
