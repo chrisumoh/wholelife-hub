@@ -37,6 +37,9 @@ const ASSET_CACHE = VERSION + '-assets'; // images and fonts (cache-forever styl
 
 // The smallest set that makes "open the app offline" work. Everything else
 // is cached lazily on first successful fetch (see the fetch handler).
+// The one other-site file the page needs to start: the pinned, SRI-checked supabase-js. Without it a cold offline start has no sign-in layer.
+const LIBRARY_PREFIX = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@';
+
 const PRECACHE_URLS = [
   '/',                    // the whole app is one document
   '/manifest.webmanifest',
@@ -76,7 +79,8 @@ self.addEventListener('fetch', (event) => {
 
   // 1) Writes and cross-origin traffic (Supabase, CDNs) pass straight
   //    through to the network. Never intercepted, never cached.
-  if (request.method !== 'GET' || url.origin !== self.location.origin) {
+  const isLibrary = request.url.startsWith(LIBRARY_PREFIX);
+  if (request.method !== 'GET' || (url.origin !== self.location.origin && !isLibrary)) {
     return;
   }
 
@@ -110,7 +114,7 @@ self.addEventListener('fetch', (event) => {
       const cached = await cache.match(request);
       const network = fetch(request)
         .then((response) => {
-          if (response.ok && response.status !== 206) cache.put(request, response.clone()).catch(() => {}); // partial (media range) responses cannot be cached
+          if (response.ok && response.status !== 206 && (!isLibrary || response.type === 'cors')) cache.put(request, response.clone()).catch(() => {}); // partial (media range) responses cannot be cached
           return response;
         })
         .catch(() => cached); // offline: fall back to whatever we have
