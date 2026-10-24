@@ -52,10 +52,16 @@
   const enabled = Boolean(CONFIG.ENDPOINT && CONFIG.ANON_KEY);
 
   // ---------------------------------------------------------------- HELPERS
-  // Keep only the path of a URL — query strings may contain tokens or ids.
+  // Keep the path, plus the route this app keeps in the hash (#/coach): without it a report cannot say which
+  // screen failed. The query is always dropped, and a fragment is kept only when it is a bare route — no query,
+  // no values. Supabase's sign-in callback puts access_token and refresh_token in the hash, and those must not
+  // be sent anywhere, so anything with an "=" or "?" in the fragment is dropped whole. Capped to fit the column.
   function safePath(url) {
-    try { return new URL(url, location.origin).pathname; }
-    catch (e) { return '(unknown page)'; }
+    try {
+      const u = new URL(url, location.origin);
+      const route = /^#\/[\w\-/]*$/.test(u.hash) ? u.hash : '';
+      return (u.pathname + route).slice(0, 300);
+    } catch (e) { return '(unknown page)'; }
   }
 
   // Error text and stack frames carry full URLs, and an auth callback's URL carries its tokens in the query or hash.
@@ -88,11 +94,11 @@
     return {
       kind: kind,                                   // error | rejection | manual | event
       label: scrub(label).slice(0, 200),
-      message: scrub(message).slice(0, 1000),
+      message: scrub(message).slice(0, 1000) || '(no message)',   // the table refuses an empty message
       stack: trimStack(stack),
       page: safePath(location.href),
-      user_agent: navigator.userAgent.slice(0, 300),
-      created_at: new Date().toISOString()
+      user_agent: navigator.userAgent.slice(0, 300)
+      // created_at is left to the table's default: a phone with a wrong clock must not decide when a bug happened.
     };
   }
 

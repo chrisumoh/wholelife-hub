@@ -18,7 +18,9 @@ app's own Supabase project.
   Supabase traffic and writes are never intercepted or cached.
 - `observability.js` — error capture with no third-party service. Uncaught
   errors and unhandled promise rejections are de-duplicated, capped per
-  session, stripped to page *paths* only (no query strings, no user data),
+  session, stripped to the page path and route (no query strings, no
+  fragment that carries values — the sign-in callback's `access_token` is
+  dropped whole — and no user data),
   and posted (with `fetch` and `keepalive`, so JSON and the key headers go
   through) to an insert-only table in your own Supabase project. It fits
   the current Content-Security-Policy in `vercel.json` unchanged; a hosted
@@ -71,8 +73,9 @@ pretends to solve them:
 
 - **Payments** — Lemon Squeezy checkout and the licence check are built
   (8.3.23–8.3.25) and the licence function is deployed, but it runs in test
-  mode: the legal business details and the refund policy in `index.html` are
-  still placeholders, so nothing can be charged for real yet.
+  mode: the legal business details in `index.html` are still placeholders
+  (the refund policy itself was written in 8.3.28), so nothing can be charged
+  for real yet.
 - **Account sync for the remaining local-only data** — the stacked sync
   branches (8.2.14–8.2.16) already carry this; a parallel implementation
   would collide with them.

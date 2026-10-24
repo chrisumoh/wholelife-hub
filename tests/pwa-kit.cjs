@@ -67,14 +67,14 @@ test("offline, the app page comes from the copy and other addresses do not get i
   assert.equal((await navigate("/img/icon-512.png")).out, "NO PAGE", "an image address is not answered with the app page");
 });
 
-function loadReporter(configured, status = 200) {
+function loadReporter(configured, status = 200, href = "https://app.test/#/coach?token=SECRET") {
   const handlers = {}, calls = [], beacons = [], timers = [];
   // Overwrite whatever the shipped file says, so these tests keep working once the real endpoint is filled in.
   const src = read("observability.js")
     .replace(/ENDPOINT:\s*'[^']*'/, configured ? "ENDPOINT: 'https://x.supabase.co/rest/v1/error_reports'" : "ENDPOINT: ''")
     .replace(/ANON_KEY:\s*'[^']*'/, configured ? "ANON_KEY: 'anon-key'" : "ANON_KEY: ''");
   const win = { addEventListener: (t, f) => { handlers[t] = f; } };
-  const ctx = { window: win, navigator: { onLine: true, userAgent: "UA", sendBeacon: (...a) => { beacons.push(a); return true; } }, location: { href: "https://app.test/#/coach?token=SECRET", origin: "https://app.test" },
+  const ctx = { window: win, navigator: { onLine: true, userAgent: "UA", sendBeacon: (...a) => { beacons.push(a); return true; } }, location: { href, origin: new URL(href).origin },
     console: { warn: () => {} }, URL, Date, Map, String, JSON, fetch: (u, o) => { calls.push([u, o]); return Promise.resolve({ ok: status < 400, status }); }, setTimeout: (f, ms) => { timers.push(ms); } };
   vm.runInNewContext(src, ctx); return { handlers, calls, beacons, win, timers };
 }
@@ -83,10 +83,11 @@ test("the shipped endpoint is this app's own project, reached with the publishab
   const src = read("observability.js");
   const endpoint = (/ENDPOINT:\s*'([^']*)'/.exec(src) || [])[1] || "";
   const key = (/ANON_KEY:\s*'([^']*)'/.exec(src) || [])[1] || "";
-  const project = (/const SB_URL = "([^"]+)"/.exec(read("index.html")) || [])[1];
+  const app = /const SB_URL = "([^"]+)", SB_KEY = "([^"]+)"/.exec(read("index.html")) || [];
   assert.ok(endpoint.endsWith("/rest/v1/error_reports"), "reports go to the error_reports table: " + endpoint);
-  assert.ok(project && endpoint.startsWith(project + "/"), "same Supabase project as SB_URL in index.html: " + endpoint + " vs " + project);
+  assert.equal(endpoint, app[1] + "/rest/v1/error_reports", "the same Supabase project as SB_URL in index.html");
   assert.ok(/^sb_publishable_/.test(key), "the publishable key, never a secret key");
+  assert.equal(key, app[2], "byte for byte the SB_KEY in index.html: rotating one without the other would deafen the reporter, with only a console warning to show for it");
 });
 
 test("with no endpoint set, reports stay on the device", () => {
@@ -104,8 +105,28 @@ test("with an endpoint, a report is JSON with the key headers, carries the path 
   const [url, opts] = calls[0], body = JSON.parse(opts.body)[0];
   assert.equal(url, "https://x.supabase.co/rest/v1/error_reports");
   assert.equal(opts.headers["Content-Type"], "application/json"); assert.equal(opts.headers.apikey, "anon-key"); assert.equal(opts.keepalive, true);
-  assert.equal(body.page, "/", "the path, with the hash and query dropped"); assert.ok(!JSON.stringify(body).includes("SECRET"));
-  assert.deepEqual(Object.keys(body).sort(), ["created_at", "kind", "label", "message", "page", "stack", "user_agent"], "nothing else about the person is attached");
+  assert.equal(body.page, "/", "a fragment with a query in it is dropped whole"); assert.ok(!JSON.stringify(body).includes("SECRET"));
+  assert.deepEqual(Object.keys(body).sort(), ["kind", "label", "message", "page", "stack", "user_agent"], "nothing else about the person is attached, and no client clock");
+});
+
+test("the report names the screen: a route is kept, a sign-in fragment is not", () => {
+  const route = loadReporter(true, 201, "https://app.test/#/premium/pantry");
+  route.handlers.error({ message: "boom", error: { stack: "Error: boom\n at a" } });
+  assert.equal(JSON.parse(route.calls[0][1].body)[0].page, "/#/premium/pantry", "the hash route is the only way to tell which screen failed in a single-page app");
+
+  const tokens = loadReporter(true, 201, "https://app.test/#access_token=SYNTH_ROUTE&refresh_token=SYNTH_ROUTE");
+  tokens.handlers.error({ message: "boom", error: { stack: "Error: boom\n at a" } });
+  const body = JSON.parse(tokens.calls[0][1].body)[0];
+  assert.equal(body.page, "/", "a fragment that carries values is dropped whole");
+  assert.ok(!JSON.stringify(body).includes("SYNTH_ROUTE"), "no token reaches the table: " + JSON.stringify(body));
+});
+
+test("an empty message still lands, and the table sets the time", () => {
+  const { handlers, calls } = loadReporter(true, 201);
+  handlers.error({ message: "", error: undefined });
+  const body = JSON.parse(calls[0][1].body)[0];
+  assert.equal(body.message, "(no message)", "the table refuses a zero-length message, and a 400 is not retried");
+  assert.ok(!("created_at" in body), "a phone with a wrong clock must not file the bug");
 });
 
 test("tokens in URLs and error text never reach the report", () => {
