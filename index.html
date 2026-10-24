@@ -3795,7 +3795,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.28", channel: "Dev Testing", date: "2026-10-24", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.29", channel: "Dev Testing", date: "2026-10-24", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3809,14 +3809,22 @@ const APP_VERSION = { update: "8.3", build: "8.3.28", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
-    { id:"8.3.28",
+    { id:"8.3.29",
       area:"Premium",
       title:"Invoice view (Modern style), opened from the receipt",
       bug:"The receipt printed after a purchase is a till slip. CJ supplied a themed invoice component (three styles, sections that glide into a new order, download as PDF) and asked whether it could be an in-app invoice using the app's colours.",
       fix:"The payment-successful receipt (and the ?previewreceipt=1 sample) has a new View invoice button. It opens the same order as an invoice in the Modern style (total first, accent-coloured header). CJ chose Modern after seeing all three, so the Classic and Dark styles and the style switcher were removed. Download PDF opens the browser's print dialog with only the invoice, so Save as PDF gives a PDF. Like the receipt it shows only what Lemon Squeezy sent: order number, date, items, subtotal, discount, tax, total and amount paid, never added up here. Quantity, unit price, Billed to and Due are left out because the provider order does not carry them in the app. All text goes through esc(). The header takes its colour from the app accent; the paper itself stays fixed so it prints the same in any app theme. The sample invoice says Sample and that no payment was made.",
-      where:"index.html: RCPT_LAST, invoiceHTML(), showInvoice(), printInvoice(), the rcpt-invoice, inv-print and inv-back click cases, showPurchaseReceipt() (View invoice button, remembers the receipt), CSS block 8.3.28 (.inv-*), .rc-actions wraps. tests/browser/receipt.mjs (new invoice checks). APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.",
+      where:"index.html: RCPT_LAST, invoiceHTML(), showInvoice(), printInvoice(), the rcpt-invoice, inv-print and inv-back click cases, showPurchaseReceipt() (View invoice button, remembers the receipt), CSS block 8.3.29 (.inv-*), .rc-actions wraps. tests/browser/receipt.mjs (new invoice checks). APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.",
       test:"Run node tests/browser/receipt.mjs. By hand, open the app with ?previewreceipt=1 on the address, press View invoice, then Download PDF and choose Save as PDF. After a test-mode purchase, the receipt that prints after activation has the same button.",
       limits:"The invoice is only reachable right after activation (or from the sample link) because the app does not store receipts; reopening it later needs the order saved, which is a separate decision. The buyer name and a due date are not shown since the provider data used does not include them. The sample is the only way to see it before a purchase. Payments are still in test mode." },
+    { id:"8.3.28",
+      area:"Install and errors",
+      title:"supabase-js kept for offline starts, and the Android (TWA) plan",
+      bug:"On a cold start with no network, the page could not load supabase-js (a file from another site that the service worker never kept), so a signed-in person could not reach the sign-in layer offline. The service worker only handled files from this site.",
+      fix:"sw.js now also answers the one pinned supabase-js address the page loads (cdn.jsdelivr.net/npm/@supabase/supabase-js@...), stale-while-revalidate like the other static files. Only a normal CORS answer is stored, never an opaque one, and every other file from any other site, including Supabase itself, still passes straight through. Also added docs/ANDROID_TWA_PLAN.md (the plan for packaging the PWA as an Android app, with who owns which files). Nothing under supabase/ changed and no setting was changed.",
+      where:"sw.js: LIBRARY_PREFIX and the fetch handler. tests/pwa-kit.cjs (new test, fails against the old worker). docs/ANDROID_TWA_PLAN.md. APP_VERSION, WLH.changelog, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node --test tests/pwa-kit.cjs and node tests/check-repo.mjs. By hand on the preview in Chrome: load once online, then DevTools > Application > Cache Storage > wlh-v1-assets lists supabase.js; set Network to Offline, hard reload, and the app still starts with its sign-in layer.",
+      limits:"The first visit after this build must be online. The stored library follows the version pinned in index.html; when that pin changes, the new file is fetched once online. Whether offline cold start restores a signed-in account's own data was checked by reading the code, not on a device." },
     { id:"8.3.27",
       area:"Install and errors",
       title:"Install and error tracking switched on",
@@ -18500,7 +18508,7 @@ function showPurchaseReceipt(receipt, plan, sample = false){
   rcptPrint();
 }
 
-// ---------- Invoice view (8.3.28) ----------
+// ---------- Invoice view (8.3.29) ----------
 // The same order data as the receipt, laid out as an invoice (the Modern style: total first, accent header). Like the receipt it
 // only formats what the payment provider sent (r); it never adds, multiplies or estimates, and a field
 // the provider did not send (buyer, due date, quantity, unit price) is left out, not made up.
@@ -22832,7 +22840,7 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .rc-bars i{background:#111;display:block;flex:none}
 .rc-thanks{text-align:center;font-size:12px;color:var(--rc-ink);margin:6px 0 0}
 .rc-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:20px 16px}
-/* ===================== 8.3.28 invoice view ===================== */
+/* ===================== 8.3.29 invoice view ===================== */
 .inv{padding-top:16px}
 .inv-paper{display:flex;flex-direction:column;gap:22px;margin:0 16px;padding:30px 32px;border-radius:6px;overflow:hidden;background:#F6F8FB;color:#14181F;font-family:var(--body);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .inv-paper div,.inv-paper p{overflow-wrap:anywhere}
