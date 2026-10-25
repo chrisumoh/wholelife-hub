@@ -18419,8 +18419,8 @@ function premiumHub(p){
 
     <div class="prem-about">
       <div class="eyebrow">About Premium</div>
-      <p class="draft">[draft] WholeLife Premium bundles every optional feature we build past the core tracker into one
-      subscription, priced to cover the work rather than to squeeze a free app. [draft] It never changes how the free
+      <p class="draft">WholeLife Premium bundles every optional feature we build past the core tracker into one
+      subscription, priced to cover the work rather than to squeeze a free app. It never changes how the free
       tier logs food or workouts, and nothing you've already logged is ever held back behind it.</p>
     </div>
 
@@ -24271,4 +24271,58 @@ if ("serviceWorker" in navigator) {
 }
 </script>
 
+
+<style>
+/* ================================================================
+   WL NEAT PASS - 25 Oct 2026 - Ultron, at CJ's request
+   One alignment + calm-down layer for the whole app, placed last
+   so it wins cascade ties: a single spacing rhythm, cards edged
+   with a hairline, the duplicate phone clock and breadcrumb trail
+   dropped on small screens, the cursor-glow card borders switched
+   off, and Premium feature lines shown in full, not cut mid-word.
+   Revert: delete this one block. Nothing else was restructured.
+   ================================================================ */
+
+/* 1 - One rhythm: every card shares the same gap and padding */
+:root{ --card-gap:16px; --card-padding:20px; }
+
+/* 2 - Cards read as boxes: a hairline edge on the shared card */
+.card{ border:1px solid var(--line); }
+
+/* 3 - Small screens: drop the in-page clock (the phone status bar
+   already shows the time) and the breadcrumb trail that collided
+   with the title in the header */
+@media (max-width:640px){
+  #live-clock{ display:none; }
+  .ph-text .crumbs{ display:none; }
+}
+
+/* 4 - Page titles on one calm scale */
+.page-title{ letter-spacing:-.01em; }
+
+/* 5 - Settings groups breathe on the same rhythm */
+.setgroup{ gap:10px; }
+
+/* 6 - Glow borders off: mute every paint variable the
+   cursor-tracking glow card (.border-glow-card) uses */
+.border-glow-card{
+  --fill-opacity:0;
+  --bg-c1:transparent; --bg-c2:transparent; --bg-c3:transparent;
+  --bg-glow:transparent; --bg-glow-tint:transparent;
+  --glow-color:transparent; --glow-color-60:transparent;
+  --glow-color-50:transparent; --glow-color-40:transparent;
+  --glow-color-30:transparent; --glow-color-20:transparent;
+  --glow-color-10:transparent;
+  --gradient-one:none; --gradient-two:none; --gradient-three:none;
+  --gradient-four:none; --gradient-five:none;
+}
+
+/* 7 - Premium: feature blurbs in full, no mid-word ellipsis;
+   the About paragraph is final copy now, not a draft */
+.prem-feat-row .tiny{ white-space:normal; overflow:visible; text-overflow:clip; }
+.prem-about .draft{ font-style:normal; }
+
+/* 8 - One calm selection highlight everywhere */
+::selection{ background:var(--accent-soft); }
+</style>
 </body></html>
