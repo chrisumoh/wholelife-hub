@@ -3138,8 +3138,13 @@ html .side .nav a .si-tile svg{color:#fff}
 .wl-copy{display:flex;flex-direction:column;gap:22px;max-width:34rem}
 .wl h1{font-family:var(--wl-display);font-weight:700;font-size:calc((clamp(40px,6.4vw,76px)) * var(--text-scale,1));line-height:.98;letter-spacing:-.025em;margin:0;
   color:var(--wl-ink);text-wrap:balance}
-.wl h1 span{display:block;animation:wlRise var(--dur-page) var(--ease-spring) both}
-.wl h1 span:nth-child(1){animation-delay:.25s}.wl h1 span:nth-child(2){animation-delay:.38s}
+.wl h1 .wl-sh{display:block;overflow:hidden;padding-bottom:.08em}
+.wl-w{display:inline-block;white-space:nowrap}
+.wl-w i{display:inline-block;font-style:normal;animation:wlShuf .5s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(.2s + var(--i) * 30ms)}
+.wl-w:nth-child(even) i:nth-child(even),.wl-w i:nth-child(odd){--sx:110%}
+.wl-w i:nth-child(even){--sx:-110%}
+@keyframes wlShuf{from{opacity:0;transform:translateX(var(--sx,110%))}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.wl-w i{animation:none}}
 .wl-lede{font-size:calc((clamp(16px,1.6vw,19px)) * var(--text-scale,1));line-height:1.5;color:var(--wl-muted);margin:0;max-width:44ch;animation:wlRise var(--dur-page) .5s var(--ease-spring) both}
 .wl-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;animation:wlRise var(--dur-page) .62s var(--ease-spring) both}
 .wl-cta{appearance:none;border:0;cursor:pointer;font:inherit;font-family:var(--wl-display);font-weight:700;font-size:calc((18px) * var(--text-scale,1));
@@ -3148,8 +3153,8 @@ html .side .nav a .si-tile svg{color:#fff}
 @media (hover:hover) and (pointer:fine){.wl-cta:hover{background:#F6C25A}}
 .wl-cta:active{transform:scale(.96);box-shadow:0 4px 14px -6px rgba(242,179,61,.6);transition-duration:var(--dur-tap)}
 .wl-link{appearance:none;background:none;border:0;cursor:pointer;font:inherit;font-size:calc((15px) * var(--text-scale,1));font-weight:600;color:var(--wl-muted);
-  padding:12px 4px;text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgba(247,244,236,.35)}
-@media (hover:hover) and (pointer:fine){.wl-link:hover{color:var(--wl-ink);text-decoration-color:var(--wl-ink)}}
+  padding:12px 4px;text-decoration:none}
+@media (hover:hover) and (pointer:fine){.wl-link:hover{color:var(--wl-ink)}}
 .wl-cta:focus-visible,.wl-link:focus-visible{outline:3px solid var(--wl-mint);outline-offset:3px}
 .wl-note{font-size:calc((14px) * var(--text-scale,1));line-height:1.5;color:var(--wl-faint);margin:0;animation:wlFade var(--dur-page) .8s var(--ease-smooth) both}
 .wl-art{position:relative;justify-self:center;width:min(100%,460px);aspect-ratio:1}
@@ -3795,7 +3800,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.33", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.34", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3809,6 +3814,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.33", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.34",
+      area:"Sign-in",
+      title:"Sign in with Google or email when the app opens",
+      bug:"Sign-in was only offered inside Settings, or once during first-time setup after the age question. Someone opening the app signed out went straight in, and had to know to look in Settings to save their hub to an account.",
+      fix:"A signed-out person now sees the sign-in card first, before the welcome screen or the app: Continue with Google, or email and password (with Create an account and Forgot password), using the same card as Settings and setup. Under it, Continue without an account goes on into the app exactly as before, and that choice is remembered on this device (wlh.startskip), so the screen is not shown again until the person signs in and later signs out of a cleared browser. It is never shown to someone signed in, when sign-in could not load, on the Terms, Privacy Policy, Refunds, Contact and Credits pages (so their links open), or while the 24-hour under-13 block is active. The setup stop after the age question is unchanged. The welcome headline now slides in letter by letter (Shuffle style, plain CSS, off with reduced motion), the helper line under the buttons is gone, and Skip setup and Cancel are plain text with no underline.",
+      where:"index.html: wlShuffle(), welcomeView(), the .wl-sh/.wl-w/.wl-link CSS, authScreen() (shared by obAuthView()), START_SKIP_KEY, START_OPEN, startGateOn(), startGateView(), render(), the start-skip case, the privacy storage-key table, APP_VERSION, WLH.changelog. tests/browser/startgate.mjs (new), fake-supabase.js (skips the screen unless a test asks for it), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. Nothing under supabase/ changed.",
+      test:"Open the app in a private window: the sign-in card shows first. Choose Continue without an account: the welcome screen or your hub opens, and a reload goes straight in. Sign in with email or Google: you land in the app signed in and the screen does not return. Open #/terms in a fresh private window: the page opens, not the sign-in card. node tests/browser/startgate.mjs.",
+      limits:"Sign-in is optional: Continue without an account is always offered. Signing out does not bring the screen back on that browser if Continue without an account was chosen earlier. Google sign-in still depends on the Google provider being on in Supabase. Creating an account here happens before the age question (the age question still comes first for setting up a profile), so an under-13 who has not yet been asked could create an account; say if you want the age question moved ahead of this screen." },
     { id:"8.3.33",
       area:"Sign-in",
       title:"Sign-in library served from our own site, with a Reload button",
@@ -9313,14 +9326,29 @@ function authFormHTML(){
 }
 // Onboarding stop after the age question and before the coach: Google or email, or skip. Signing in reloads the page (sbReload), so a person
 // who signs in here lands on the welcome screen signed in, and this stop is skipped the next time.
-function obAuthView(){
+function authScreen(foot){
   return `<main class="ob obg">${obGround()}<div class="panel st-panel auth-ob">
     <div class="row">${logoSVG(46)}<div class="eyebrow">Your account</div></div>
     <h1 class="ob-h1" tabindex="-1" data-st-focus>${AUTH_TITLE[UI.acct || "up"]}</h1>
     <div class="auth-pop"><div class="pop-body">${authFormHTML()}</div></div>
-    <div class="st-foot modal-foot"><div class="foot-left"><span class="tiny muted">You can sign in later in Settings.</span></div>
-      <div class="foot-right"><button class="btn ghost" data-act="ob-auth-go">Skip for now</button></div></div>
+    <div class="st-foot modal-foot">${foot}</div>
   </div></main>`;
+}
+function obAuthView(){
+  return authScreen(`<div class="foot-left"><span class="tiny muted">You can sign in later in Settings.</span></div>
+      <div class="foot-right"><button class="btn ghost" data-act="ob-auth-go">Skip for now</button></div>`);
+}
+// ---- startup sign-in (8.3.34) ----
+// Shown before anything else to a signed-out person until they sign in or choose to carry on without an account.
+// The choice is remembered on this device; the legal pages and the under-13 block are never gated.
+const START_SKIP_KEY = "wlh.startskip", START_OPEN = ["terms", "privacy-policy", "refunds", "contact", "credits"];
+function startGateOn(){
+  if (!SB.booted || SB.user || !sbClient() || START_OPEN.includes(UI.route) || ageBlocked()) return false;
+  try { return !localStorage.getItem(START_SKIP_KEY); } catch { return false; }
+}
+function startGateView(){
+  return authScreen(`<div class="foot-left"><span class="tiny muted">Without an account everything stays on this device.</span></div>
+      <div class="foot-right"><button class="btn ghost" data-act="start-skip">Continue without an account</button></div>`);
 }
 function openAuthPopup(mode, triggerEl){
   UI.acct = mode; UI.sbMsg = null; UI.sbAgree = false; // each new form asks again
@@ -11561,6 +11589,7 @@ function render(){
   if (SB.recovery) { morphInto(root, recoveryView()); setMeta("New password", "Choose a new Whole Life Hub password."); afterRender(); return; }
   if (UI.locked) { morphInto(root, lockView()); setMeta("Locked", "Whole Life Hub is locked."); afterRender(); return; }
   if (UI.sessionExpired && !SB.user) { morphInto(root, expiredView()); setMeta("Sign in again", "Your session ended. Sign in to carry on."); afterRender(); return; }
+  if (startGateOn()) { morphInto(root, startGateView()); setMeta("Sign in", "Sign in to Whole Life Hub with Google or email."); afterRender(); return; }
   if (UI.guestPrompt) { morphInto(root, guestView()); setMeta("Your guest data", "Import or discard what this device held before you signed in."); afterRender(); return; }
   if (SB.user && sbActive() && !SB.firstDone && !SB.err && !P()?.onboarded && S.profiles.length === 0) { morphInto(root, syncingView()); setMeta("Syncing", "Getting your data from your account."); afterRender(); return; }
   const p = P();
@@ -11987,20 +12016,25 @@ function ageGateSubmit(){
   if (!S.profiles.length && sbClient() && !SB.user) { UI.obAuth = true; UI.acct = "up"; UI.sbMsg = null; UI.sbAgree = false; } else UI.obStep = 1;
   render(); window.scrollTo(0, 0);
 }
+// Shuffle-style headline: each letter slides in from the side (odd letters from the other side), staggered. Words stay unbroken.
+function wlShuffle(text, from){
+  let i = from;
+  const words = text.split(" ").map(w => `<span class="wl-w">${[...w].map(c => `<i style="--i:${i++}">${esc(c)}</i>`).join("")}</span>`).join(" ");
+  return `<span class="wl-sh" aria-label="${esc(text)}"><span aria-hidden="true">${words}</span></span>`;
+}
 function welcomeView(){
   const adding = S.profiles.length > 0;
   return `<main class="wl" aria-labelledby="wl-h">
     <div class="wl-top"><span class="wl-dot" aria-hidden="true"></span>Whole Life Hub</div>
     <div class="wl-main">
       <div class="wl-copy">
-        <h1 id="wl-h"><span>Meals from your culture.</span><span>Workouts that fit your day.</span></h1>
+        <h1 id="wl-h">${wlShuffle("Meals from your culture.", 0)}${wlShuffle("Workouts that fit your day.", 24)}</h1>
         <p class="wl-lede">Plan meals, track calories, and get coaching based on what you actually eat and the equipment you have.</p>
         <div class="wl-actions">
           <button type="button" class="wl-cta" data-act="ob-next">Set up my hub</button>
           <button type="button" class="wl-link" data-act="ob-skip">Skip setup and start empty</button>
           ${adding ? `<button type="button" class="wl-link" data-act="ob-cancel">Cancel</button>` : ""}
         </div>
-        <p class="wl-note">${adding ? "Adding a new profile. Your other profiles stay as they are." : "Every question is optional, and everyone in your household gets their own profile."}</p>
       </div>
       <div class="wl-art">${wlRing(true)}<div class="wl-mark">${logoSVG(120)}</div></div>
     </div>
@@ -13220,6 +13254,7 @@ document.addEventListener("click", async e => {
     case "ob-goto": { const to = +t.dataset.v; if (to >= 1 && to < UI.obStep) { readOnboardingStep(); UI.obStep = to; render(); window.scrollTo(0,0); } break; }
     case "ob-cancel": UI.obAuth = false; UI.obDraft = null; UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; UI.agErr = null; S.activeId = UI.lastActive && S.profiles.some(x=>x.id===UI.lastActive) ? UI.lastActive : S.profiles[0]?.id; render(); break;
     case "ob-skip": UI.obDraft = UI.obDraft || newProfile(""); if (!UI.obGateOk || ageBlocked()) { UI.obGateOk = false; UI.obGate = "skip"; UI.agErr = null; render(); window.scrollTo(0,0); break; } finishOnboarding("fresh"); break;
+    case "start-skip": try { localStorage.setItem(START_SKIP_KEY, "1"); } catch {} UI.sbMsg = null; render(); window.scrollTo(0,0); break;
     case "ob-auth-go": UI.obAuth = false; UI.obStep = 1; render(); window.scrollTo(0,0); break;
     case "ag-back": UI.obGate = null; UI.agErr = null; render(); break;
     case "ob-units": readOnboardingStep(); UI.obDraft.units = t.dataset.v; render(); break;
@@ -16898,6 +16933,7 @@ function privacyPolicyView(){
         <tr><td><code>wlh.signedout</code></td><td>Your account id and a time, written when you sign out, so other open tabs of this app know to drop their copy of your data instead of saving it again.</td></tr>
         <tr><td><code>wlh.history</code></td><td>A short list (up to 50) of your consent and data choices with the date: for example that you turned a camera permission on, downloaded your data or deleted it. No health data and no names. It stays when you delete your data, so you can see that you did; Settings › Privacy &amp; security › Clear history removes it.</td></tr>
         <tr><td><code>wlh.consent</code></td><td>The version of the Terms you agreed to at sign-up and when, so the app can tell if they have changed. Removed only by clearing this site's data in your browser.</td></tr>
+        <tr><td><code>wlh.startskip</code></td><td>Only if you chose Continue without an account on the first screen: a flag so that screen is not shown again. It holds no personal data.</td></tr>
         <tr><td><code>wlh.ageblock</code></td><td>Only if the age screen turned you away: the time until you can try again (24 hours). It holds no birth date.</td></tr>
         <tr><td><code>wlh.flash</code>, <code>wlh.reloadAt</code>, <code>wlh.recovery</code></td><td>Short-lived, this tab only (session storage): a one-line message to show after signing in or out, and a guard against reloading in a loop.</td></tr>
       </tbody>

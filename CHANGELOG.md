@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.33, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.34, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.34 · Sign-in: Sign in with Google or email when the app opens
+
+- **Problem:** Sign-in was only offered inside Settings, or once during first-time setup after the age question. Someone opening the app signed out went straight in, and had to know to look in Settings to save their hub to an account.
+- **Change:** A signed-out person now sees the sign-in card first, before the welcome screen or the app: Continue with Google, or email and password (with Create an account and Forgot password), using the same card as Settings and setup. Under it, Continue without an account goes on into the app exactly as before, and that choice is remembered on this device (`wlh.startskip`). It is never shown to someone signed in, when sign-in could not load, on the Terms, Privacy Policy, Refunds, Contact and Credits pages (so their links open), or while the 24-hour under-13 block is active. The setup stop after the age question is unchanged. The welcome headline now slides in letter by letter (Shuffle style, plain CSS, off with reduced motion), the helper line under the buttons is gone, and Skip setup and Cancel are plain text with no underline.
+- **Where:** index.html: wlShuffle(), welcomeView(), the .wl-sh/.wl-w/.wl-link CSS, authScreen() (shared by obAuthView()), START_SKIP_KEY, START_OPEN, startGateOn(), startGateView(), render(), the start-skip case, the privacy storage-key table, APP_VERSION, WLH.changelog. tests/browser/startgate.mjs (new), fake-supabase.js (skips the screen unless a test asks for it), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. Nothing under supabase/ changed.
+- **How to test:** Open the app in a private window: the sign-in card shows first. Choose Continue without an account: the welcome screen or your hub opens, and a reload goes straight in. Sign in with email or Google: you land in the app signed in and the screen does not return. Open `#/terms` in a fresh private window: the page opens, not the sign-in card. `node tests/browser/startgate.mjs`.
+- **Known limits:** Sign-in is optional: Continue without an account is always offered. Signing out does not bring the screen back on that browser if Continue without an account was chosen earlier. Google sign-in still depends on the Google provider being on in Supabase. Creating an account here happens before the age question (the age question still comes first for setting up a profile), so an under-13 who has not yet been asked could create an account; say if you want the age question moved ahead of this screen.
 
 ## 8.3.33 · Sign-in: Sign-in library served from our own site, with a Reload button
 
