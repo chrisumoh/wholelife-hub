@@ -3132,6 +3132,8 @@ html .side .nav a .si-tile svg{color:#fff}
   display:grid;grid-template-rows:auto 1fr;padding:clamp(18px,4vw,40px) clamp(20px,6vw,72px) clamp(24px,5vh,48px)}
 .wl-top{display:flex;align-items:center;gap:10px;font-family:var(--wl-display);font-weight:700;font-size:calc((18px) * var(--text-scale,1));letter-spacing:-.01em;
   animation:wlFade var(--dur-page) var(--ease-smooth) both}
+.wl-tech{position:relative;width:clamp(260px,34vw,440px);height:104px;margin:-30px 0 -30px -6px;color:var(--wl-ink);--tt-accent:var(--wl-gold);font-family:var(--wl-display);touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.wl-tech .tt-cv{display:block;width:100%;height:100%}
 .wl-top .wl-dot{width:10px;height:10px;border-radius:50%;background:var(--wl-gold)}
 .wl-main{display:grid;align-items:center;gap:clamp(24px,5vw,72px);grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
   max-width:1180px;width:100%;margin-inline:auto}
@@ -23272,10 +23274,6 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .btn.hold .hold-fill{position:absolute;inset:0;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);clip-path:inset(0 calc((1 - var(--hp)) * 100%) 0 0)}
 .btn.hold.holding{transform:scale(.97)}
 .btn.hold:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-
-/* tech text wordmark (8.3.36) */
-.wl-tech{position:relative;width:clamp(260px,34vw,440px);height:104px;margin:-30px 0 -30px -6px;color:var(--wl-ink);--tt-accent:var(--wl-gold);font-family:var(--wl-display);touch-action:pan-y;user-select:none;-webkit-user-select:none}
-.wl-tech .tt-cv{display:block;width:100%;height:100%}
 </style>
 <script>
 (() => {
