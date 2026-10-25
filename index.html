@@ -10,7 +10,7 @@
 @media (prefers-reduced-motion:reduce){#boot i:after{animation:none;width:100%}}
 </style></head><body><div id="boot" role="status"><span>Whole Life Hub</span><i></i><small>Still loading. Check your connection, then reload the page.</small></div>
 <script>document.documentElement.lang = "en";</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
+<script src="/vendor/supabase-js-2.117.2.umd.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"></script>
 <!-- Task 7.8 fix: the page is served as a bare head/body fragment (no <html> tag of its own —
      see build.sh and the Artifact publish note above wholelife-hub.html), so there is nowhere to
      write lang="en" as a static attribute. Setting it here, first, works whether the browser's
@@ -3795,7 +3795,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.32", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.33", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3809,6 +3809,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.32", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.33",
+      area:"Sign-in",
+      title:"Sign-in library served from our own site, with a Reload button",
+      bug:"On a preview link the Account card showed \"Sign-in couldn't load. Check your connection and reload.\" even though the rest of the app had loaded. The sign-in library (supabase-js) came from a third-party site (cdn.jsdelivr.net), so any hiccup there, a blocker, or a stale cached copy took sign-in down while everything else worked. A hard reload fixed it, and the first cause could not be proved.",
+      fix:"supabase-js 2.117.2 is now a file in this repo (vendor/supabase-js-2.117.2.umd.js, the same bytes as before, still checked against the same fingerprint) and the page loads it from this site. The Content-Security-Policy no longer allows any outside script host. The service worker precaches the file, so a cold offline start still has sign-in, and its special case for the jsdelivr address is removed. The Privacy Policy no longer lists jsDelivr. When the library still cannot load, the Account card now says to reload and has a Reload button.",
+      where:"vendor/supabase-js-2.117.2.umd.js (new), index.html (script tag, accountCard(), the sb-reload case, Privacy Policy third-party list, APP_VERSION, WLH.changelog), sw.js (precache list, removed the jsdelivr special case), vercel.json (script-src), tests/pwa-kit.cjs, tests/browser/headers.mjs and the browser tests that block the sign-in library, docs/SECURITY.md, docs/PERFORMANCE.md, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. Nothing under supabase/ changed.",
+      test:"Open the preview, go to Settings > Profile: the Account card shows Sign in, not the could-not-load message. In DevTools > Network, supabase-js-2.117.2.umd.js is served from the app's own address (200) and nothing is requested from cdn.jsdelivr.net. Run node --test tests/pwa-kit.cjs and node tests/browser/headers.mjs.",
+      limits:"This removes the third-party dependency, but the first failure could not be reproduced, so it is not proved to have been the cause. If the message ever shows again, tell us whether a normal reload clears it. The library file adds about 218 KB to the repo and is cached by the service worker after the first visit. The Privacy Policy changed (a service was removed) but TERMS_VERSION was already bumped today, so it was not bumped again." },
     { id:"8.3.32",
       area:"Privacy",
       title:"Delete my account: real in-app account deletion",
@@ -9578,7 +9586,7 @@ async function chAct(act, id){
 function accountCard(inline){
   const row = (title, sub, act) => `<div class="acct-row"><span class="acct-ic">${icon("user","",18)}</span>
       <div class="acct-txt"><div class="acct-t">${title}</div>${sub}</div><div class="acct-act">${act}</div></div>`;
-  if (!sbClient()) return `<section class="card" id="sb-account">${row("Account", `<div class="acct-s">${location.protocol === "file:" ? "Sign-in needs the app served over http (python3 -m http.server 8080)." : "Sign-in couldn't load. Check your connection and reload."}</div>`, "")}</section>`;
+  if (!sbClient()) return `<section class="card" id="sb-account">${row("Account", `<div class="acct-s">${location.protocol === "file:" ? "Sign-in needs the app served over http (python3 -m http.server 8080)." : "Sign-in couldn't load. Reload the page; if it keeps happening, clear this site's data in your browser."}</div>`, location.protocol === "file:" ? "" : `<button class="btn" data-act="sb-reload">Reload</button>`)}</section>`;
   if (SB.user) return `<${inline ? 'div class="acct-in"' : 'section class="card"'} id="sb-account">${row(inline ? "Saved to your account" : esc(SB.user.email || "your account"),
       `<div class="acct-s" id="sb-status" role="status">${esc(sbStatusText())}</div>`,
       `<button type="button" class="pop-x" data-act="sb-info" aria-label="What is saved to my account">${icon("info","",18)}</button>${UI.sbConfirmOut ? "" : `<button class="btn sm" data-act="sb-out"${SB.busy ? " disabled" : ""}>${SB.busy ? "Signing out…" : "Sign out"}</button>`}`)}
@@ -13338,6 +13346,7 @@ document.addEventListener("click", async e => {
     // Task 7.10: the same erase, reachable from Settings > Privacy and security rather than only
     // from the locked-out "forgot passcode" screen, with a confirmation that lists what's deleted.
     case "acct-del-ask": UI.delAcct = {}; render(); break;
+    case "sb-reload": location.reload(); break;
     case "acct-del-no": UI.delAcct = null; render(); break;
     case "acct-del-yes": await deleteAccount(); break;
     case "erase-all-ask": UI.confirmEraseAll = true; render(); break;
@@ -16899,7 +16908,6 @@ function privacyPolicyView(){
     <ul class="clean small">
       <li><b>Vercel</b>, which hosts this page. When you load it, Vercel receives and keeps standard web-request logs (for example your IP address, browser details and the page requested). It is not sent anything from your hub.</li>
       <li><b>Supabase</b>, our database and sign-in service. Your email, password and the items listed in section 4, photos included, go there when you create an account, sign in, or are signed in. Without an account, none of your health data is sent to it. It also stores the crash reports described in section 1: no account id, no health data.</li>
-      <li><b>jsDelivr</b>, a public content delivery network. Every time the page loads, the browser fetches the supabase-js library from it (a fixed version, checked against a fingerprint before it runs). Like any web server it can see your IP address and browser details. It is not sent anything from your hub.</li>
       <li><b>Claude</b>, the AI, answers coach questions, meal suggestions and the photo estimates described in section 3, but only when the app is opened inside Claude and you start the feature (for the photo ones, only after you've allowed them once). Outside Claude those features show as unavailable and nothing is sent.</li>
       <li><b>Lemon Squeezy</b>, our payment provider, only if you choose a Premium plan. Its checkout page opens inside this app (or in a new tab, if you pick that) and you type your email and payment details into Lemon Squeezy's page, not ours: this app never sees them. When you paste your licence key, the key is sent through our Supabase function to Lemon Squeezy to check it, and checked again about once a day. None of your health data is sent.</li>
       <li><b>Your own downloads</b> when you export your data, which stay on your device.</li>

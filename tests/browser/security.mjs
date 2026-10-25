@@ -40,7 +40,7 @@ let pass = 0, fail = 0;
 const ok = (name, cond, extra = "") => { cond ? pass++ : fail++; console.log(`${cond ? "PASS" : "FAIL"}  ${name}${cond ? "" : "  " + extra}`); };
 
 await send("Runtime.enable"); await send("Page.enable"); await send("Network.enable");
-await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
+await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*", "*/vendor/supabase*"] });
 await send("Page.addScriptToEvaluateOnNewDocument", { source: FAKE });
 const ready = "typeof S !== 'undefined' && typeof SB !== 'undefined' && SB.booted === true && UI.loading === false";
 const boot = async (hash = "") => { await send("Page.navigate", { url: "http://127.0.0.1:8766/index.html" + hash }); await sleep(500); return waitFor(ready, 15000); };
@@ -244,7 +244,7 @@ const waitFor2 = async (expr, ms = 15000) => { const t0 = Date.now(); while (Dat
 const SPY = `(() => { window.__prevWrites = []; try { window.__prevWrites = JSON.parse(window.name || "[]"); } catch {} const log = []; window.__spyReset = () => { log.length = 0; window.name = "[]"; };
   for (const m of ["setItem", "removeItem", "clear"]) { const o = Storage.prototype[m]; Storage.prototype[m] = function (k, ...r) { if (this === localStorage && !String(k).startsWith("__fake")) { log.push(m + ":" + k); window.name = JSON.stringify(log); } return o.call(this, k, ...r); }; } })();`;
 await send2("Runtime.enable"); await send2("Page.enable"); await send2("Network.enable");
-await send2("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
+await send2("Network.setBlockedURLs", { urls: ["*jsdelivr.net*", "*/vendor/supabase*"] });
 await send2("Page.addScriptToEvaluateOnNewDocument", { source: FAKE + SPY });
 await send2("Page.navigate", { url: "http://127.0.0.1:8766/index.html" });
 ok("second tab boots signed in as A with A's data", await waitFor2(`${ready} && STORE_UID === "u_axcom" && Object.values(S.logs).some(m => Object.values(m).some(l => l.snacks.some(x => x.name === "Dialog snack")))`));

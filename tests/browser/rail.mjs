@@ -37,7 +37,7 @@ const view = (w, h = 900) => send("Emulation.setDeviceMetricsOverride", { width:
 const shot = async name => { if (!process.env.SHOTS) return; const r = await send("Page.captureScreenshot", { format: "png" }); writeFileSync(join(process.env.SHOTS, name + ".png"), Buffer.from(r.data, "base64")); };
 const goto = async h => { await ev(`location.hash = ${JSON.stringify(h)}; true`); await sleep(500); await ev(`document.querySelectorAll(".spark, .chart-svg").forEach(e => e.classList.add("drawn")); true`); };
 await send("Runtime.enable"); await send("Page.enable"); await send("Network.enable");
-await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
+await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*", "*/vendor/supabase*"] });
 await send("Page.addScriptToEvaluateOnNewDocument", { source: FAKE });
 await send("Page.addScriptToEvaluateOnNewDocument", { source: `try { localStorage.setItem("wlh.rail", "1"); } catch {}` });
 const READY = "typeof S !== 'undefined' && typeof SB !== 'undefined' && SB.booted === true && UI.loading === false";

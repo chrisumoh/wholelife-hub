@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.32, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.33, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.33 · Sign-in: Sign-in library served from our own site, with a Reload button
+
+- **Problem:** On a preview link the Account card showed "Sign-in couldn't load. Check your connection and reload." even though the rest of the app had loaded. The sign-in library (supabase-js) came from a third-party site (cdn.jsdelivr.net), so any hiccup there, a blocker, or a stale cached copy took sign-in down while everything else worked. A hard reload fixed it, and the first cause could not be proved.
+- **Change:** supabase-js 2.117.2 is now a file in this repo (vendor/supabase-js-2.117.2.umd.js, the same bytes as before, still checked against the same fingerprint) and the page loads it from this site. The Content-Security-Policy no longer allows any outside script host. The service worker precaches the file, so a cold offline start still has sign-in, and its special case for the jsdelivr address is removed. The Privacy Policy no longer lists jsDelivr. When the library still cannot load, the Account card now says to reload and has a Reload button.
+- **Where:** vendor/supabase-js-2.117.2.umd.js (new), index.html (script tag, accountCard(), the sb-reload case, Privacy Policy third-party list, APP_VERSION, WLH.changelog), sw.js (precache list, removed the jsdelivr special case), vercel.json (script-src), tests/pwa-kit.cjs, tests/browser/headers.mjs and the browser tests that block the sign-in library, docs/SECURITY.md, docs/PERFORMANCE.md, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. Nothing under supabase/ changed.
+- **How to test:** Open the preview, go to Settings > Profile: the Account card shows Sign in, not the could-not-load message. In DevTools > Network, supabase-js-2.117.2.umd.js is served from the app's own address (200) and nothing is requested from cdn.jsdelivr.net. Run node --test tests/pwa-kit.cjs and node tests/browser/headers.mjs.
+- **Known limits:** This removes the third-party dependency, but the first failure could not be reproduced, so it is not proved to have been the cause. If the message ever shows again, tell us whether a normal reload clears it. The library file adds about 218 KB to the repo and is cached by the service worker after the first visit. The Privacy Policy changed (a service was removed) but TERMS_VERSION was already bumped today, so it was not bumped again.
 
 ## 8.3.32 · Privacy: Delete my account: real in-app account deletion
 

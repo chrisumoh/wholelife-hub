@@ -23,7 +23,8 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
-| 8.3.32 | Privacy: Delete my account (in-app account deletion through a new delete-account edge function; function not deployed until CJ says go) | IN PROGRESS: claude/project-thread-ft2z7b |
+| 8.3.33 | Sign-in: supabase-js served from our own site (vendor/), Reload button on the Account card | IN PROGRESS: claude/project-thread-ft2z7b |
+| 8.3.32 | Privacy: Delete my account (in-app account deletion through a new delete-account edge function) | MERGED: PR #78 |
 | 8.3.31 | Legal: Refunds page states the full 14-day refund policy; real contact email and mailing address | MERGED: PR #76 |
 | 8.3.30 | Install and errors: error reports reach the database (new `error_reports` migration) and the privacy policy names them; Legal: the Refunds page states the 14-day policy; docs: the build plan matches main again | MERGED: PR #75 |
 | 8.3.29 | Premium: View invoice button on the receipt opens an invoice in the Modern style with download as PDF; real provider data only | MERGED: PR #74 |
