@@ -6,13 +6,13 @@ Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changel
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
 
-## 8.3.36 · Welcome: Animated Whole Life Hub wordmark (TechText) on the welcome screen
+## 8.3.36 · Welcome: True Focus brackets on the Whole Life Hub name and the ring labels
 
-- **Problem:** The small Whole Life Hub name in the top left of the welcome screen was plain, small text.
-- **Change:** It is now bigger and drawn on a canvas (the TechText effect, rebuilt in plain JS): hover a letter, or let the slow sweep pick one, and it turns into a dashed outline inside a selection frame with drifting specks and a size label. Letters can be dragged and spring back, and a click kicks the whole word. Reduced motion turns off the sweep and the kick. The animation runs only while the wordmark is on screen.
-- **Where:** index.html: techText(), the afterRender() mount line, welcomeView() (.wl-tech, data-tech), CSS block 8.3.36. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
-- **How to test:** Open the app (private window, Continue without an account): the wordmark top left is large; move the mouse over it, drag a letter, click a letter. With Reduce motion on, it stays still until you touch it.
-- **Known limits:** Only the welcome screen wordmark so far; the sidebar name and lists are not changed. It is a canvas, so its text is not selectable (it has an accessible label). Touch dragging uses the same code but was not tried on a phone.
+- **Problem:** The Whole Life Hub name in the top left of the welcome screen was plain text, and the Eat, Move and Recover labels around the ring just faded in.
+- **Change:** Both now use the True Focus effect, rebuilt in plain JS and CSS: four corner brackets glide from word to word every 1.5 seconds while the other words blur a little. On the name the brackets move through Whole, Life and Hub. On the ring they move through Eat, Move and Recover, take the colour of that label's arc, and the other two arcs dim. Reduced motion keeps the first word focused and still. The timer pauses off screen and when the tab is hidden.
+- **Where:** index.html: trueFocus(), the afterRender() mount line, wlRing() labels, welcomeView() (.wl-brand, data-tf), the .tf-* CSS next to .wl-top. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open the app (private window, Continue without an account): brackets move across the three words top left and across Eat, Move and Recover around the ring, each in its arc's colour. Turn on Reduce motion: they stand still on the first word.
+- **Known limits:** Unfocused words blur by 2px, not the 5px in the sample, so the name stays readable. Only the welcome screen so far. Not tried on a phone or in Safari.
 
 ## 8.3.35 · Sign-in: Sign in with Google or email when the app opens, plus hold to delete a profile
 
