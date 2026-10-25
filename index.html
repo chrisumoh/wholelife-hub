@@ -24410,4 +24410,164 @@ if ("serviceWorker" in navigator) {
   #subscription .setrow > span.small{ flex:1 1 auto; min-width:0; }
 }
 </style>
+<style>
+/* ================================================================
+   WL MAKEOVER - 25 Oct 2026 - Ultron, at CJ's request
+   The visual pass: Premium stops looking plain, the Summary rings
+   go Apple-clean, Friends rows take the sharing shape, and Trends
+   becomes two-column tiles on phones. All in the app's own gold
+   family and its existing variables - no new colours, no images,
+   no markup or script touched. Placed last so it wins cascade
+   ties over the NEAT and COMPACT blocks. Revert: delete this
+   one block.
+   ================================================================ */
+
+/* 1 - Premium store: a warm gold wash behind the hero, so the
+   screen reads as a shop window instead of a plain card */
+.prem-store{
+  background-image:
+    radial-gradient(ellipse 95% 44% at 50% -8%, color-mix(in srgb, var(--gold) 24%, transparent), transparent 70%),
+    radial-gradient(ellipse 55% 30% at 92% 2%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 70%);
+  background-repeat:no-repeat;
+}
+
+/* 2 - What's included: the feature list becomes one tinted panel;
+   each row keeps its two-tone category gradient tile, now with a
+   lit top edge and a soft warm shadow so the tiles sit IN the
+   panel rather than floating on it */
+.prem-feat-list{
+  background:color-mix(in srgb, var(--gold) 6%, var(--raise));
+  border:1px solid color-mix(in srgb, var(--gold) 20%, var(--line));
+  border-radius:var(--r-sm);
+  padding:12px 12px 8px;
+}
+.prem-feat-row{ padding:11px 6px; border-radius:0; }
+.prem-feat-row + .prem-feat-row{ border-top:1px solid color-mix(in srgb, var(--gold) 13%, var(--line)); }
+.prem-feat-ic{
+  border-radius:13px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.38),
+    inset 0 -10px 16px -12px rgba(60,38,0,.55),
+    0 6px 14px -8px rgba(122,79,0,.55);
+}
+.prem-feat-row .go{ color:color-mix(in srgb, var(--gold) 55%, var(--faint)); }
+
+/* 3 - Plan selector: the chosen plan gets the gold wash and a
+   soft glow, so the recommended choice is the obvious one */
+.plansel{
+  background:linear-gradient(165deg, color-mix(in srgb, var(--gold) 8%, var(--raise)), var(--raise) 60%);
+}
+.plansel-row.on{
+  background:linear-gradient(120deg,
+    color-mix(in srgb, var(--gold) 19%, var(--surface)),
+    color-mix(in srgb, var(--accent) 9%, var(--surface)));
+  border-color:color-mix(in srgb, var(--gold) 55%, var(--line));
+  box-shadow:0 8px 20px -12px color-mix(in srgb, var(--gold) 70%, transparent);
+}
+.plansel-row.on .ps-check{ box-shadow:0 0 0 4px color-mix(in srgb, var(--gold) 22%, transparent); }
+
+/* 4 - Plan cards (Settings > Premium): every card gets the warm
+   wash; Best value gets a gold edge and glow to match its flag,
+   and the flag itself becomes a gold gradient pill */
+.plancard{ background-image:linear-gradient(165deg, color-mix(in srgb, var(--gold) 7%, transparent), transparent 55%); }
+.plancard.best{
+  border:1.5px solid var(--gold);
+  background-image:linear-gradient(165deg,
+    color-mix(in srgb, var(--gold) 14%, transparent),
+    color-mix(in srgb, var(--accent) 5%, transparent) 60%, transparent);
+  box-shadow:
+    0 12px 28px -14px color-mix(in srgb, var(--gold) 65%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--gold) 22%, transparent);
+}
+.planflag{
+  background:linear-gradient(120deg, var(--gold), color-mix(in srgb, var(--gold) 58%, var(--accent)));
+  color:var(--gold-ink);
+}
+
+/* 5 - The buy controls go gold: the slide-to-pay inside the
+   Premium CTA bar, and the shared .prem-cta pill (its old blue
+   gradient clashed with the rest of the brand) */
+.prem-cta-bar .sc-track{
+  background:linear-gradient(120deg,
+    color-mix(in srgb, var(--gold) 22%, var(--raise)),
+    color-mix(in srgb, var(--accent) 13%, var(--raise)));
+  border:1px solid color-mix(in srgb, var(--gold) 32%, var(--line));
+}
+.prem-cta-bar .sc-fill{
+  background:linear-gradient(90deg,
+    color-mix(in srgb, var(--gold) 48%, transparent),
+    color-mix(in srgb, var(--accent) 36%, transparent));
+}
+.prem-cta-bar .sc-handle{
+  background:linear-gradient(135deg, var(--gold), color-mix(in srgb, var(--gold) 55%, var(--accent)));
+  color:var(--gold-ink);
+  box-shadow:0 4px 12px -4px color-mix(in srgb, var(--gold) 70%, transparent);
+}
+.prem-cta{
+  background:linear-gradient(92deg, var(--gold), color-mix(in srgb, var(--gold) 58%, var(--accent)));
+  color:var(--gold-ink);
+  box-shadow:0 10px 22px -8px color-mix(in srgb, var(--gold) 60%, transparent);
+}
+
+/* 6 - Premium popup (the dialogue): feature icons become gradient
+   tiles in the same family as the store list */
+.pop-row .pr-ic{
+  width:42px; height:42px; border-radius:13px;
+  background:linear-gradient(135deg,
+    color-mix(in srgb, var(--gold) 32%, transparent),
+    color-mix(in srgb, var(--accent) 18%, transparent));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.32),
+    0 5px 12px -7px rgba(122,79,0,.5);
+}
+
+/* 7 - Summary rings, Apple-clean: rings on the left, the three
+   values on the right in their own ring colours, nothing else.
+   The legend drops its boxes and mini bars, and the repeated
+   "N of 3 closed" head goes (the card title already says it);
+   the per-ring percent line stays, under its value. */
+.rings-card .rleg-head{ display:none; }
+.rings-card .rings svg{ filter:drop-shadow(0 8px 20px color-mix(in srgb, var(--gold) 14%, transparent)); }
+.rings-legend{ gap:2px; }
+.rings-card .rleg{ background:transparent; border-color:transparent; padding:9px 8px; }
+.rings-card .rleg-bar{ display:none; }
+.rings-card .rleg-num b{ color:var(--rc); font-size:calc((17px) * var(--text-scale,1)); }
+@media (max-width:600px){
+  .rings-card .rleg{ border-bottom:1px solid var(--line); border-radius:0; }
+  .rings-card .rleg:last-child{ border-bottom:0; }
+}
+
+/* 8 - Friends rows take the sharing shape: a round gold-wash
+   avatar disc on the left, the name and its Online/Offline pill
+   together on one line, actions on the right. The disc is a
+   plain person glyph - real photos need the friends data to
+   carry one (flagged in the PR). */
+#friends .fr-row{ align-items:center; padding:12px 0; }
+#friends .fr-row::before,
+#friends #fr-res .li::before{
+  content:""; width:42px; height:42px; flex:none; border-radius:50%;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='8' r='3.8' fill='%23A97B12'/%3E%3Cpath d='M4.6 20c1.5-3.9 4.2-5.6 7.4-5.6s5.9 1.7 7.4 5.6z' fill='%23A97B12'/%3E%3C/svg%3E"),
+    radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--gold) 32%, var(--surface)), color-mix(in srgb, var(--gold) 12%, var(--surface)) 72%);
+  background-size:24px 24px, cover;
+  background-position:center, center;
+  background-repeat:no-repeat;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--gold) 30%, transparent);
+}
+#friends .fr-row .grow{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+#friends .fr-row .tag, #friends .fr-row .neon, #friends .fr-row .fr-off{ margin-top:0; }
+
+/* 9 - Trends: the two charts become compact tiles - two columns
+   on phones, a round tinted disc behind each metric's icon,
+   the section's own adjacency (h2.sec-title + .mgrid) is the
+   hook trendsSection() actually renders. */
+h2.sec-title + .mgrid .mhead svg.ci{
+  background:color-mix(in srgb, currentColor 13%, transparent);
+  border-radius:999px; padding:6px; width:32px; height:32px;
+}
+@media (max-width:640px){
+  h2.sec-title + .mgrid{ grid-template-columns:1fr 1fr; gap:10px; }
+  h2.sec-title + .mgrid .mcard{ padding:14px; gap:10px; min-height:0; border-radius:var(--r-sm); }
+}
+</style>
 </body></html>
