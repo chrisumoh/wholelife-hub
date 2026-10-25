@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.35, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.36, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.36 · Welcome: Animated Whole Life Hub wordmark (TechText) on the welcome screen
+
+- **Problem:** The small Whole Life Hub name in the top left of the welcome screen was plain, small text.
+- **Change:** It is now bigger and drawn on a canvas (the TechText effect, rebuilt in plain JS): hover a letter, or let the slow sweep pick one, and it turns into a dashed outline inside a selection frame with drifting specks and a size label. Letters can be dragged and spring back, and a click kicks the whole word. Reduced motion turns off the sweep and the kick. The animation runs only while the wordmark is on screen.
+- **Where:** index.html: techText(), the afterRender() mount line, welcomeView() (.wl-tech, data-tech), CSS block 8.3.36. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open the app (private window, Continue without an account): the wordmark top left is large; move the mouse over it, drag a letter, click a letter. With Reduce motion on, it stays still until you touch it.
+- **Known limits:** Only the welcome screen wordmark so far; the sidebar name and lists are not changed. It is a canvas, so its text is not selectable (it has an accessible label). Touch dragging uses the same code but was not tried on a phone.
 
 ## 8.3.35 · Sign-in: Sign in with Google or email when the app opens, plus hold to delete a profile
 

@@ -3800,7 +3800,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.35", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.36", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3814,6 +3814,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.35", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.36",
+      area:"Welcome",
+      title:"Animated Whole Life Hub wordmark (TechText) on the welcome screen",
+      bug:"The small Whole Life Hub name in the top left of the welcome screen was plain, small text.",
+      fix:"It is now bigger and drawn on a canvas (the TechText effect, rebuilt in plain JS): hover a letter, or let the slow sweep pick one, and it turns into a dashed outline inside a selection frame with drifting specks and a size label. Letters can be dragged and spring back, and a click kicks the whole word. Reduced motion turns off the sweep and the kick. The animation runs only while the wordmark is on screen.",
+      where:"index.html: techText(), the afterRender() mount line, welcomeView() (.wl-tech, data-tech), CSS block 8.3.36. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app (private window, Continue without an account): the wordmark top left is large; move the mouse over it, drag a letter, click a letter. With Reduce motion on, it stays still until you touch it.",
+      limits:"Only the welcome screen wordmark so far; the sidebar name and lists are not changed. It is a canvas, so its text is not selectable (it has an accessible label). Touch dragging uses the same code but was not tried on a phone." },
     { id:"8.3.35",
       area:"Sign-in",
       title:"Sign in with Google or email when the app opens, plus hold to delete a profile",
@@ -11813,6 +11821,7 @@ document.addEventListener("keydown", e => {
   e.preventDefault(); UI.tabFocus = true; next.click();
 });
 function afterRender(){
+  document.querySelectorAll("[data-tech]").forEach(b => { if (b.querySelector("canvas")) return; b._tstop?.(); b._tstop = techText(b, b.dataset.tech); });
   fitHeadTitle();
   initFx();
   UI.lastNav = UI.route + "/" + (UI.param || "");
@@ -12022,10 +12031,160 @@ function wlShuffle(text, from){
   const words = text.split(" ").map(w => `<span class="wl-w">${[...w].map(c => `<i style="--i:${i++}">${esc(c)}</i>`).join("")}</span>`).join(" ");
   return `<span class="wl-sh"><span class="sr-only">${esc(text)}</span><span aria-hidden="true">${words}</span></span>`;
 }
+// ---- tech text wordmark (8.3.36) ----
+// The welcome screen's "Whole Life Hub": letters on a canvas. Hovering (or the slow sweep) picks a letter, which turns into a dashed outline
+// inside a selection frame with drifting specks; letters can be dragged and spring back; a click kicks the word. Reduced motion stops the
+// sweep and the kick. The loop runs only while the box is on screen and connected, and the returned function stops it.
+function techText(box, text){
+  const cv = document.createElement("canvas"); cv.className = "tt-cv"; box.appendChild(cv);
+  const ctx = cv.getContext("2d"); if (!ctx) return () => {};
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const WEIGHT = 600, LS = -0.05, DASH = [4, 2], SW = 1.5, SPRING = 320, DAMP = 2 * Math.sqrt(SPRING) * (1 - 0.4 * 0.96), SPECKS = 15;
+  const clamp01 = v => Math.min(1, Math.max(0, v)), appr = (c, t, dt, s) => c + (t - c) * (1 - Math.exp(-dt / s));
+  const noise = (...v) => { let h = 2166136261; for (const x of v) { h = Math.imul(h ^ (x | 0), 16777619); h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); h ^= h >>> 15; } return (h >>> 0) / 4294967296; };
+  const st = { w:1, h:1, dpr:1, raf:0, last:0, vis:false, alive:true, key:"", fam:"", word:null, glyphs:[], clock:0, pulse:0, drag:-1, cur:"", kicks:[] };
+  const ptr = { x:0, y:0, inside:false }, grab = { x:0, y:0 }, lens = { x:0, y:0, on:false }, fr = { x1:0, y1:0, x2:0, y2:0, a:0, i:-1 }, press = { x:0, y:0, t:0, i:-1 };
+  const setF = (c, sz) => { c.font = `${WEIGHT} ${sz}px ${st.fam}`; c.letterSpacing = `${LS * sz}px`; c.textAlign = "left"; c.textBaseline = "alphabetic"; };
+  const sprite = (g, stroke) => {
+    const pad = Math.ceil(SW * 2 + 4), left = g.x1 - pad, top = g.y1 - pad, dpr = st.dpr;
+    const im = document.createElement("canvas"); im.width = Math.max(1, Math.ceil((g.x2 - g.x1 + pad * 2) * dpr)); im.height = Math.max(1, Math.ceil((g.y2 - g.y1 + pad * 2) * dpr));
+    const c = im.getContext("2d"); if (!c) return { im, left, top };
+    c.setTransform(dpr, 0, 0, dpr, -left * dpr, -top * dpr); setF(c, st.word.size);
+    if (stroke) {
+      c.lineJoin = "round"; c.lineWidth = SW * 2; c.strokeStyle = st.ink; c.setLineDash(DASH);
+      c.strokeText(g.ch, g.x, st.word.base); c.setLineDash([]);
+      c.globalCompositeOperation = "destination-out"; c.fillStyle = "#000"; c.fillText(g.ch, g.x, st.word.base);
+    } else { c.fillStyle = st.ink; c.fillText(g.ch, g.x, st.word.base); }
+    return { im, left, top };
+  };
+  const layout = () => {
+    const cs = getComputedStyle(box), ink = cs.color, accent = cs.getPropertyValue("--tt-accent").trim() || ink, fam = cs.fontFamily || "sans-serif";
+    const key = [st.w, st.h, st.dpr, ink, fam].join("|"); if (key === st.key && st.word) return;
+    st.key = key; st.ink = ink; st.accent = accent;
+    if (fam !== st.fam) { st.fam = fam; document.fonts?.load(`${WEIGHT} 64px ${fam}`, text).then(() => { st.key = ""; wake(); }, () => {}); }
+    setF(ctx, 150); let m = ctx.measureText(text);
+    const size = 150 * Math.min(1, st.w * 0.9 / Math.max(m.actualBoundingBoxLeft + m.actualBoundingBoxRight, 1), st.h * 0.66 / Math.max(m.actualBoundingBoxAscent + m.actualBoundingBoxDescent, 1));
+    setF(ctx, size); m = ctx.measureText(text);
+    const x = st.w * 0.05 + m.actualBoundingBoxLeft, base = (st.h - m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2 + m.actualBoundingBoxAscent;
+    const prev = st.glyphs; st.glyphs = [];
+    st.word = { size, base, left:x - m.actualBoundingBoxLeft, right:x + m.actualBoundingBoxRight, top:base - m.actualBoundingBoxAscent, bottom:base + m.actualBoundingBoxDescent };
+    let pre = "";
+    [...text].forEach(ch => {
+      pre += ch; const own = ctx.measureText(ch), gx = x + ctx.measureText(pre).width - own.width; if (!ch.trim()) return;
+      const g = { ch, x:gx, x1:gx - own.actualBoundingBoxLeft, y1:base - own.actualBoundingBoxAscent, x2:gx + own.actualBoundingBoxRight, y2:base + own.actualBoundingBoxDescent, off:prev[st.glyphs.length]?.ch === ch ? prev[st.glyphs.length].off : { x:0, y:0 }, v:{ x:0, y:0 }, out:0 };
+      g.fill = sprite(g, false); g.dash = sprite(g, true); st.glyphs.push(g);
+    });
+    st.drag = -1; fr.i = -1;
+  };
+  const glyphAt = (x, y) => {
+    const w = st.word; if (!w || y < w.top - 24 || y > w.bottom + 24) return -1;
+    let best = -1, bd = 28;
+    st.glyphs.forEach((g, i) => { const d = x < g.x1 + g.off.x ? g.x1 + g.off.x - x : x > g.x2 + g.off.x ? x - g.x2 - g.off.x : 0; if (d < bd) { bd = d; best = i; } });
+    return best;
+  };
+  const blit = (a, dx, dy) => ctx.drawImage(a.im, Math.round((a.left + dx) * st.dpr), Math.round((a.top + dy) * st.dpr));
+  const crisp = v => (Math.round(v * st.dpr) + 0.5) / st.dpr;
+  const edge = (d, w, h) => {
+    const p = 2 * (w + h); d = ((d % p) + p) % p;
+    if (d < w) return [fr.x1 + d, fr.y1, 0, -1]; d -= w;
+    if (d < h) return [fr.x2, fr.y1 + d, 1, 0]; d -= h;
+    if (d < w) return [fr.x2 - d, fr.y2, 0, 1]; d -= w;
+    return [fr.x1, fr.y2 - d, -1, 0];
+  };
+  const drawFrame = () => {
+    const g = st.glyphs[fr.i]; if (!g || fr.a < 0.01) return;
+    const a = fr.a, ac = st.accent, w = fr.x2 - fr.x1, h = fr.y2 - fr.y1, moved = Math.hypot(g.off.x, g.off.y);
+    ctx.setTransform(st.dpr, 0, 0, st.dpr, 0, 0); ctx.fillStyle = ac; ctx.strokeStyle = ac; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.rect(crisp(fr.x1), crisp(fr.y1), crisp(fr.x2) - crisp(fr.x1), crisp(fr.y2) - crisp(fr.y1)); ctx.globalAlpha = 0.5 * a; ctx.stroke();
+    ctx.beginPath(); for (const [cx, cy] of [[fr.x1, fr.y1], [fr.x2, fr.y1], [fr.x2, fr.y2], [fr.x1, fr.y2]]) ctx.rect(Math.round(cx) - 2, Math.round(cy) - 2, 5, 5);
+    ctx.globalAlpha = 0.95 * a; ctx.fill();
+    if (w > 2 && h > 2) {
+      const per = 2 * (w + h), seed = fr.i + 1;
+      for (let k = 0; k < SPECKS; k++) {
+        const t = st.pulse / (0.5 + noise(seed, k, 11) * 1.2) + noise(seed, k, 17), cy = Math.floor(t), life = t - cy; if (life > 0.7) continue;
+        const [px, py, nx, ny] = edge(noise(seed, k, cy) * per, w, h), pick = noise(seed, k, cy, 2), size = pick < 0.46 ? 2 : pick < 0.7 ? 3 : pick < 0.84 ? 5 : 8, out = 4 + Math.floor(noise(seed, k, cy, 1) * 5) * 3;
+        const tone = noise(seed, k, cy, 3), x = Math.round(px + nx * out), y = Math.round(py + ny * out);
+        ctx.globalAlpha = a * (0.3 + 0.6 * tone) * (life < 0.06 || (life > 0.32 && life < 0.36) ? 0.35 : 1);
+        if (tone < 0.26) ctx.strokeRect(x - size / 2 + 0.5, y - size / 2 + 0.5, size, size); else ctx.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size);
+      }
+    }
+    ctx.font = "10px ui-monospace, Menlo, Consolas, monospace"; ctx.letterSpacing = "0px"; ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.globalAlpha = 0.62 * a;
+    ctx.fillText(moved > 1 ? `${Math.round(g.off.x)}, ${Math.round(-g.off.y)}` : `${g.ch}  ${Math.round(g.x2 - g.x1)} × ${Math.round(g.y2 - g.y1)}`, Math.round(fr.x1), Math.round(fr.y1) - 7);
+    ctx.globalAlpha = 1; ctx.setTransform(1, 0, 0, 1, 0, 0);
+  };
+  const tick = now => {
+    st.raf = 0; if (!box.isConnected) { stop(); return; }
+    const dt = Math.min(0.05, Math.max(0.001, (now - st.last) / 1000)); st.last = now;
+    layout(); const w = st.word, gl = st.glyphs;
+    const sweeping = !reduce && !ptr.inside && st.drag < 0;
+    if (sweeping) st.clock += dt;
+    st.pulse += dt;
+    let tx = ptr.x, ty = ptr.y;
+    if (sweeping) { tx = w.left + (w.right - w.left) * (0.5 - 0.5 * Math.cos(st.clock * 0.45)); ty = w.top + (w.bottom - w.top) * (0.45 + 0.1 * Math.sin(st.clock * 0.8)); }
+    const active = ptr.inside || sweeping || st.drag >= 0;
+    if (active && !lens.on) { lens.x = tx; lens.y = ty; }
+    if (active) { lens.x = appr(lens.x, tx, dt, ptr.inside ? 0.05 : 0.22); lens.y = appr(lens.y, ty, dt, ptr.inside ? 0.05 : 0.22); }
+    lens.on = active;
+    for (let k = st.kicks.length - 1; k >= 0; k--) { if (st.kicks[k].at > st.pulse) continue; const g = gl[st.kicks[k].i]; if (g) g.v.y -= st.kicks[k].v; st.kicks.splice(k, 1); }
+    let moving = false;
+    gl.forEach((g, i) => {
+      if (i === st.drag) { g.off.x = appr(g.off.x, ptr.x - grab.x, dt, 0.03); g.off.y = appr(g.off.y, ptr.y - grab.y, dt, 0.03); g.v.x = g.v.y = 0; moving = true; return; }
+      if (Math.abs(g.off.x) < 0.05 && Math.abs(g.off.y) < 0.05 && Math.hypot(g.v.x, g.v.y) < 0.5) { g.off.x = g.off.y = g.v.x = g.v.y = 0; return; }
+      g.v.x += (-SPRING * g.off.x - DAMP * g.v.x) * dt; g.v.y += (-SPRING * g.off.y - DAMP * g.v.y) * dt; g.off.x += g.v.x * dt; g.off.y += g.v.y * dt; moving = true;
+    });
+    const focus = st.drag >= 0 ? st.drag : active ? glyphAt(lens.x, lens.y) : -1;
+    if (focus >= 0) {
+      const g = gl[focus], b = [g.x1 + g.off.x - 6, g.y1 + g.off.y - 6, g.x2 + g.off.x + 6, g.y2 + g.off.y + 6];
+      if (fr.i < 0 || fr.a < 0.02) [fr.x1, fr.y1, fr.x2, fr.y2] = b;
+      const gl8 = focus === st.drag ? 0.02 : 0.08;
+      fr.x1 = appr(fr.x1, b[0], dt, gl8); fr.y1 = appr(fr.y1, b[1], dt, gl8); fr.x2 = appr(fr.x2, b[2], dt, gl8); fr.y2 = appr(fr.y2, b[3], dt, gl8); fr.i = focus;
+    }
+    fr.a = appr(fr.a, focus >= 0 ? 1 : 0, dt, 0.1);
+    gl.forEach((g, i) => { const t = i === focus && i !== st.drag ? 1 : 0; g.out = appr(g.out, t, dt, 0.09); if (Math.abs(g.out - t) > 0.002) moving = true; else g.out = t; });
+    const cur = st.drag >= 0 ? "grabbing" : focus >= 0 && ptr.inside ? "grab" : "";
+    if (cur !== st.cur) { st.cur = cur; box.style.cursor = cur; }
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.clearRect(0, 0, cv.width, cv.height);
+    for (const g of gl) { const m = Math.hypot(g.off.x, g.off.y); if (m > 1) { ctx.globalAlpha = Math.min(1, m / 24) * 0.55; blit(g.dash, 0, 0); ctx.globalAlpha = 1; } }
+    for (const g of gl) {
+      if (g.out < 0.999) { ctx.globalAlpha = 1 - g.out; blit(g.fill, g.off.x, g.off.y); }
+      if (g.out > 0.001) { ctx.globalAlpha = g.out; blit(g.dash, g.off.x, g.off.y); }
+      ctx.globalAlpha = 1;
+    }
+    drawFrame();
+    if ((active || moving || st.kicks.length || (fr.a > 0.01 && fr.a < 0.99)) && st.vis && st.alive) st.raf = requestAnimationFrame(tick);
+  };
+  const wake = () => { if (st.raf || !st.vis || !st.alive) return; st.last = performance.now(); st.raf = requestAnimationFrame(tick); };
+  const resize = () => { st.w = Math.max(1, box.clientWidth); st.h = Math.max(1, box.clientHeight); st.dpr = Math.min(devicePixelRatio || 1, 2); cv.width = Math.round(st.w * st.dpr); cv.height = Math.round(st.h * st.dpr); st.key = ""; wake(); };
+  const loc = e => { const r = box.getBoundingClientRect(); ptr.x = e.clientX - r.left; ptr.y = e.clientY - r.top; };
+  const onMove = e => { loc(e); ptr.inside = true; wake(); };
+  const onLeave = () => { if (st.drag >= 0) return; ptr.inside = false; wake(); };
+  const onDown = e => {
+    loc(e); ptr.inside = true;
+    const i = e.pointerType !== "mouse" || e.button === 0 ? glyphAt(ptr.x, ptr.y) : -1;
+    Object.assign(press, { x:ptr.x, y:ptr.y, t:performance.now(), i });
+    if (i >= 0) { st.drag = i; grab.x = ptr.x - st.glyphs[i].off.x; grab.y = ptr.y - st.glyphs[i].off.y; try { box.setPointerCapture(e.pointerId); } catch {} }
+    wake();
+  };
+  const onUp = e => {
+    if (st.drag >= 0) { st.drag = -1; try { box.releasePointerCapture(e.pointerId); } catch {} const r = box.getBoundingClientRect(); ptr.inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; }
+    if (e.type === "pointerup" && press.i >= 0 && !reduce && performance.now() - press.t < 450 && Math.hypot(ptr.x - press.x, ptr.y - press.y) < 6) {
+      const v = (st.word ? st.word.size : 120) * 11; st.kicks.push({ i:press.i, at:st.pulse, v });
+      for (let d = 1; d < st.glyphs.length; d++) { const vv = v * Math.pow(0.62, d); if (vv < 30) break; for (const j of [press.i - d, press.i + d]) if (j >= 0 && j < st.glyphs.length) st.kicks.push({ i:j, at:st.pulse + d * 0.055, v:vv }); }
+    }
+    press.i = -1; wake();
+  };
+  const ev = [["pointermove", onMove], ["pointerenter", onMove], ["pointerdown", onDown], ["pointerup", onUp], ["pointercancel", onUp], ["pointerleave", onLeave]];
+  for (const [n, f] of ev) box.addEventListener(n, f, { passive:true });
+  const ro = new ResizeObserver(resize); ro.observe(box);
+  const io = new IntersectionObserver(([en]) => { st.vis = en.isIntersecting; wake(); }); io.observe(box);
+  function stop(){ st.alive = false; cancelAnimationFrame(st.raf); ro.disconnect(); io.disconnect(); for (const [n, f] of ev) box.removeEventListener(n, f); box.style.cursor = ""; }
+  resize();
+  return stop;
+}
 function welcomeView(){
   const adding = S.profiles.length > 0;
   return `<main class="wl" aria-labelledby="wl-h">
-    <div class="wl-top"><span class="wl-dot" aria-hidden="true"></span>Whole Life Hub</div>
+    <div class="wl-top"><span class="wl-dot" aria-hidden="true"></span><div class="wl-tech" data-tech="Whole Life Hub" role="img" aria-label="Whole Life Hub"></div></div>
     <div class="wl-main">
       <div class="wl-copy">
         <h1 id="wl-h">${wlShuffle("Meals from your culture.", 0)}${wlShuffle("Workouts that fit your day.", 24)}</h1>
@@ -23113,6 +23272,10 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .btn.hold .hold-fill{position:absolute;inset:0;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);clip-path:inset(0 calc((1 - var(--hp)) * 100%) 0 0)}
 .btn.hold.holding{transform:scale(.97)}
 .btn.hold:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* tech text wordmark (8.3.36) */
+.wl-tech{position:relative;width:clamp(260px,34vw,440px);height:104px;margin:-30px 0 -30px -6px;color:var(--wl-ink);--tt-accent:var(--wl-gold);font-family:var(--wl-display);touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.wl-tech .tt-cv{display:block;width:100%;height:100%}
 </style>
 <script>
 (() => {
