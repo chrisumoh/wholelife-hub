@@ -2,9 +2,41 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.38, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.42, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.42 · Tests: Fix the three tests still red on the make-over pass
+
+- **Problem:** After 8.3.41 the Browser tests still failed on PR #83 in controls, slidepay and rail. The Compact pass shrank the profile Edit buttons to 32px (below the 44px touch size the controls test requires). The Make over gold slide-to-pay set its track and handle with a gradient shorthand only, so they had no plain background colour. The rail test looked for an svg logo, but since 8.3.39 the logo is a picture.
+- **Change:** Edit buttons in the Profile group title rows are 44px tall again. The slide-to-pay track and handle keep their gold gradients and now also carry a plain background colour underneath. The rail test finds the logo whether it is an svg or the new picture. Nothing else about the look changes.
+- **Where:** index.html: the WL COMPACT PASS rule for .pgroup > .setrow .btn.sm, and the WL MAKEOVER rules for .prem-cta-bar .sc-track and .sc-handle. tests/browser/rail.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/controls.mjs, slidepay.mjs, rail.mjs and cards.mjs: all pass. In Settings > Profile, the Edit buttons are taller. On the Premium page the slide-to-pay still shows gold.
+- **Known limits:** Edit buttons are 12px taller than the compact demo. Not tried on a real phone.
+
+## 8.3.41 · Tests: Trends tiles allowed by the dashboard card test
+
+- **Problem:** Browser tests failed on PR #83 (37 cards.mjs checks). The Make over pass restyles the two Trends tiles (a 32px round icon disc, and on phones a 12px radius, 14px padding and a 10px gap), but the dashboard card test still demanded the flat 20px / 16px / 18px-icon pattern for them.
+- **Change:** The test now expects the Make over look for the two Trends tiles only (32px icon disc at every width; 12px radius, 14px padding and 10px grid gap on phones). Every other dashboard card is still checked against the flat pattern. No app code or CSS changed.
+- **Where:** tests/browser/cards.mjs: the audit's per-card radius, padding, icon, left/right offset and grid-gap checks. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/cards.mjs: 144 passed, 0 failed. Open Summary on a phone: the Trends tiles show a round icon disc and sit two to a row.
+- **Known limits:** The test finds the Trends tiles by the heading above them. Not tried on a real phone.
+
+## 8.3.40 · Sign-in: Welcome screen first, sign-in after you tap Set up my hub
+
+- **Problem:** A signed-out person saw the sign-in card before the welcome screen, so the welcome screen with the photo grid only showed after they skipped it.
+- **Change:** The sign-in-first screen is gone. A new visitor sees the welcome screen first. Tapping Set up my hub asks the age question and then shows the sign-in card (Continue with Google, or email and password with Create an account and Forgot password), with Skip for now to carry on without an account. People who already have a profile on the device, and those signed in, go straight into the app as before, and Settings > Account still has Sign in. The saved Continue without an account flag is no longer used, so it is no longer written or listed in the privacy table.
+- **Where:** index.html: startGateOn(), startGateView(), START_SKIP_KEY, START_OPEN, the gate line in render() and the start-skip case removed; the wlh.startskip row removed from the storage table; authScreen() comment. tests/browser/startgate.mjs (rewritten for the new order, including the Google checks on the setup card), fake-supabase.js, vendor.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open the app in a private window: the welcome screen with the photo grid shows first. Tap Set up my hub, answer the age question: the sign-in card appears with Google and email and Skip for now. Skip for now goes on to Choose your coach. Reload before finishing setup: still the welcome screen.
+- **Known limits:** The sign-in card only shows in setup for the first profile on a device, as before. Not tried on a real phone. Google still needs the provider and redirect URL switched on in Supabase.
+
+## 8.3.39 · Branding: New Whole Life Hub app icon, used on the home screen, browser tab and inside the app
+
+- **Problem:** The app icon was the old green tile, and a hand-drawn copy of it was used as the in-app logo and the browser tab icon.
+- **Change:** CJ's new artwork (the glass tile with the leaf and heartbeat ring on navy) is now the app icon everywhere. The install icons img/icon-192.png, img/icon-512.png and img/apple-touch-icon.png are cut from it, a new maskable icon (img/icon-maskable-512.png, with room around the tile for Android's round and squircle masks) is added to the manifest, the browser tab uses img/favicon-32.png, favicon-48.png and icon-192.png instead of the old inline picture, and the iOS app project gets its 1024 px icon (AppIcon-1024.png). Inside the app, logoSVG() now shows the same picture (img/logo-320.webp) on the welcome, loading, sign-in, setup and tour screens, so the home screen icon and the in-app logo match. The manifest start colour is the icon's navy so the install splash matches. The service worker cache name moves to wlh-v2 so devices stop serving the old icons. The page colour for the browser bar stays the app green.
+- **Where:** img/icon-192.png, icon-512.png, apple-touch-icon.png, icon-maskable-512.png (new), favicon-32.png and favicon-48.png (new), logo-320.webp (new); manifest.webmanifest; sw.js (VERSION, precache list); ios/WholeLife/Assets.xcassets/AppIcon.appiconset (AppIcon-1024.png, Contents.json); index.html: the icon links in <head>, logoSVG(), the .logo-svg and .wl-mark CSS. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open the app: the tab icon is the new tile, and the welcome, loading and sign-in screens show it as the logo. Add the app to a phone home screen (iPhone: Share > Add to Home Screen; Android: Install app): the new tile appears. An already-installed app may keep its old icon until you remove it and add it again.
+- **Known limits:** The artwork was supplied as one JPEG inside an SVG, so every size is cut from that picture rather than redrawn as vector; the 1024 px icon is sharp but the tile edge is a photo-style glass edge. Store listings (Lemon Squeezy, Google Play, App Store) are separate uploads: 1024 and 512 px copies are in the project's brand folder. Not tried on a real phone.
 
 ## 8.3.38 · Sign-in: Continue with Google works on the startup and setup sign-in screens
 

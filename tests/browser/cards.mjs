@@ -8,7 +8,8 @@ import { join, extname } from "node:path";
 // Run from the repo root:  node tests/browser/cards.mjs   (needs Node 22+ and Chrome; set CHROME to its path, CI=1 as root)
 // The 8.2.6 dashboard card: every Summary pin, the cards on Nutrition and Health data, and the Trends cards must follow one flat pattern
 // (solid surface, 20px radius, 16px padding, no border, shadow, blur or gradient; header, 48px of space, value bottom left, optional
-// chart bottom right; "No Data" when empty; one link to the detail page). Checked at 375, 820 and 1440px in light, dark and OLED, in every theme.
+// chart bottom right; "No Data" when empty; one link to the detail page). The two Trends tiles are the one exception (Make over, 8.3.39):
+// a 32px round icon disc, and on phones 12px radius and 14px padding. Checked at 375, 820 and 1440px in light, dark and OLED, in every theme.
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const NO_SANDBOX = process.env.CI || process.env.NO_SANDBOX ? ["--no-sandbox"] : [];
@@ -59,20 +60,20 @@ const AUDIT = `((want) => { const out = [], lum = c => { const [r, g, b] = c.mat
   const cards = [...document.querySelectorAll(".app .dcard")];
   if (cards.length < want.min) out.push("only " + cards.length + " dashboard cards");
   const bg = getComputedStyle(document.body).backgroundColor; if (bg !== want.ground) out.push("page background " + bg + " not " + want.ground);
-  for (const el of cards) { const sz = el.classList.contains("ws-s") ? "s" : el.classList.contains("ws-l") ? "l" : "m"; const name = (el.querySelector(".mhead b")?.textContent || "?"), tag = "[" + name + "] ", c = getComputedStyle(el), r = el.getBoundingClientRect();
+  for (const el of cards) { const tr = el.parentElement?.previousElementSibling?.matches("h2.sec-title") && el.parentElement.previousElementSibling.textContent.trim() === "Trends", tile = tr && innerWidth <= 640, pad = tile ? "14px" : "16px", pn = tile ? 14 : 16; const sz = el.classList.contains("ws-s") ? "s" : el.classList.contains("ws-l") ? "l" : "m"; const name = (el.querySelector(".mhead b")?.textContent || "?"), tag = "[" + name + "] ", c = getComputedStyle(el), r = el.getBoundingClientRect();
     if (c.backgroundColor !== want.card) out.push(tag + "surface " + c.backgroundColor + " not " + want.card);
     if (c.borderTopWidth !== "0px" || c.borderLeftWidth !== "0px") out.push(tag + "has a border");
     if (c.boxShadow !== "none") out.push(tag + "has a shadow");
     if (c.backdropFilter !== "none") out.push(tag + "is blurred");
     if (c.backgroundImage !== "none") out.push(tag + "has a gradient or image");
-    if (c.borderRadius !== "20px") out.push(tag + "radius " + c.borderRadius);
-    if (c.paddingTop !== "16px" || c.paddingLeft !== "16px" || c.paddingRight !== "16px" || c.paddingBottom !== "16px") out.push(tag + "padding " + c.padding);
+    if (c.borderRadius !== (tile ? "12px" : "20px")) out.push(tag + "radius " + c.borderRadius);
+    if (c.paddingTop !== pad || c.paddingLeft !== pad || c.paddingRight !== pad || c.paddingBottom !== pad) out.push(tag + "padding " + c.padding);
     for (const ps of ["::before", "::after"]) if (getComputedStyle(el, ps).display !== "none") out.push(tag + ps + " layer");
     if (!want.editing && !(el.tagName === "A" && el.getAttribute("href")) && !(el.tagName === "DIV" && sz === "l" && el.querySelector(":scope > a.cover[href]"))) out.push(tag + "is not one link");
     if (el.querySelector("button, input, select, textarea, .btn, .chip, .tag, .mcard, .card, .dcard") && !want.editing) out.push(tag + "has a control or an inner card");
     const head = el.querySelector(":scope > .mhead"), ic = head?.querySelector("svg"), b = head?.querySelector("b"), when = head?.querySelector(".when");
     if (!head || !ic || !b || (sz !== "s" && !when) || (sz === "s" && when)) { out.push(tag + "no header row"); continue; }
-    if (Math.round(ic.getBoundingClientRect().width) !== 18) out.push(tag + "icon " + ic.getBoundingClientRect().width + "px");
+    if (Math.round(ic.getBoundingClientRect().width) !== (tr ? 32 : 18)) out.push(tag + "icon " + ic.getBoundingClientRect().width + "px");
     const bs = getComputedStyle(b); if (bs.fontSize !== (sz === "s" ? "15px" : "17px") || bs.fontWeight !== "600") out.push(tag + "name " + bs.fontSize + " " + bs.fontWeight);
     if (ratio(bs.color, c.backgroundColor) < 4.5) out.push(tag + "name contrast " + ratio(bs.color, c.backgroundColor).toFixed(2));
     if (when) { const ws_ = getComputedStyle(when); if (ws_.fontSize !== "15px") out.push(tag + "when " + ws_.fontSize);
@@ -86,14 +87,14 @@ const AUDIT = `((want) => { const out = [], lum = c => { const [r, g, b] = c.mat
     const sub = el.querySelector(".msub"); if (sub && getComputedStyle(sub).fontSize !== "15px") out.push(tag + "sub-line " + getComputedStyle(sub).fontSize);
     if (nodata && el.querySelector(".spark")) out.push(tag + "chart on an empty card");
     const gap = val.getBoundingClientRect().top - head.getBoundingClientRect().bottom; if (gap < (sz === "s" ? 11.5 : 47.5)) out.push(tag + "only " + Math.round(gap) + "px under the header");
-    const mm = el.querySelector(".mmain").getBoundingClientRect(); if (Math.abs(mm.left - (r.left + 16)) > 1) out.push(tag + "value not at the left");
+    const mm = el.querySelector(".mmain").getBoundingClientRect(); if (Math.abs(mm.left - (r.left + pn)) > 1) out.push(tag + "value not at the left");
     if (r.bottom - Math.max(mm.bottom, ...[...el.querySelectorAll(".mbody > *")].map(x => x.getBoundingClientRect().bottom)) > 17 && !want.editing && sz !== "l") out.push(tag + "value not at the bottom");
-    const sp = el.querySelector(".spark"); if (sp) { const sr = sp.getBoundingClientRect(); if (sr.width > 120.5 || sr.height > 64.5) out.push(tag + "chart " + Math.round(sr.width) + "x" + Math.round(sr.height)); if (Math.abs(sr.right - (r.right - 16)) > 1) out.push(tag + "chart not bottom right");
+    const sp = el.querySelector(".spark"); if (sp) { const sr = sp.getBoundingClientRect(); if (sr.width > 120.5 || sr.height > 64.5) out.push(tag + "chart " + Math.round(sr.width) + "x" + Math.round(sr.height)); if (Math.abs(sr.right - (r.right - pn)) > 1) out.push(tag + "chart not bottom right");
       const rects = [...sp.querySelectorAll("rect")], last = rects[rects.length - 1], fill = e => e.getAttribute("fill");
       if (!(fill(last) !== "var(--chart-gray)" && rects.slice(0, -1).every(x => fill(x) === "var(--chart-gray)"))) out.push(tag + "chart bars: gray bars, latest in the category colour"); }
     if (r.width < 100) out.push(tag + "card is only " + Math.round(r.width) + "px wide");
   }
-  for (const g of document.querySelectorAll(".app .mgrid")) { const s = getComputedStyle(g); if (s.columnGap !== "12px" || s.rowGap !== "12px") out.push("grid gap " + s.rowGap + " " + s.columnGap); }
+  for (const g of document.querySelectorAll(".app .mgrid")) { const s = getComputedStyle(g), gp = innerWidth <= 640 && g.previousElementSibling?.matches("h2.sec-title") && g.previousElementSibling.textContent.trim() === "Trends" ? "10px" : "12px"; if (s.columnGap !== gp || s.rowGap !== gp) out.push("grid gap " + s.rowGap + " " + s.columnGap); }
   const under = [...document.querySelectorAll(".app a")].filter(a => !a.closest(".legal") && getComputedStyle(a).textDecorationLine !== "none"); if (under.length) out.push(under.length + " underlined links, e.g. " + under[0].textContent.trim().slice(0, 30));
   if (document.documentElement.scrollWidth > innerWidth) out.push("horizontal scroll");
   return out; })`;
