@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.33, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.34, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.34 · Settings: Settings tabs get a sliding pill, and a wheel picker for short lists (first on Log a meal > Portion)
+
+- **Problem:** The Settings tabs marked the open section with a thin underline that jumped from tab to tab. CJ asked for the springy sliding pill from their snippet on this switcher, and for a wheel-style picker (the chosen row full size, the others faded and smaller) for lists across the app.
+- **Change:** Settings tabs: one pill now sits behind the open tab and slides to the next one with the bouncy curve from CJ's snippet (.45s, cubic-bezier(.34,1.56,.64,1)). It is measured from the tab itself instead of being one equal third, so it works for all 8 Settings tabs and any label length, and it scrolls with the strip on a phone. With a mouse it also follows the pointer across the strip and slides back to the open tab when the pointer leaves; touch does not move it. The underline is gone. Tabs share the spare width when there is room. Wheel picker: any select marked data-wheel now shows as a short wheel (.picker-track from CJ's snippet: the track moves 38px a row over .58s with the same curve, the chosen row is full size and the others are at 32% opacity and 88% size). Tap or click a row, drag up or down, or use the arrow keys, Home and End. The select stays in the page and keeps the value, so saving works as before. It is used in one place for now, Log a meal > Portion; other lists are proposed, not converted. Reduced motion stops both slides.
+- **Where:** index.html: tabPlace(), tabSync() and the pointer and resize listeners (just above ringSync's resize listener), afterRender() (calls tabSync), the 8.3.34 CSS lines after .focus-ring.still (.tabs, .tab-pill, .wl-wheel, .picker-track), the form-controls script (wheelSet(), wheelSync(), enhanceWheel(), enhanceSelect() skips data-wheel, pass()), the Portion select in nutritionView(), APP_VERSION, WLH.changelog. tests/browser/pickers.mjs (new), tests/browser/run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/pickers.mjs (18 checks); motion.mjs (44) and controls.mjs (56) still pass. By hand: Settings, tap Coach then Privacy & security and watch the pill slide; on a computer, move the mouse along the tabs and away. Meals > Log a meal > Portion: tap Half portion, drag the list, or Tab to it and press the arrow keys. Turn Settings > Appearance > Motion to Reduced and both should snap.
+- **Known limits:** Only Log a meal > Portion uses the wheel so far; the Meal select beside it stays a dropdown. Mouse-wheel scrolling over the picker is not caught, so it scrolls the page. Lists longer than about 8 options (countries, birth year) should stay dropdowns. Checked in headless Chrome only, not on a real phone.
 
 ## 8.3.33 · Sign-in: Sign-in library served from our own site, with a Reload button
 
