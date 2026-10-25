@@ -77,17 +77,18 @@ async function getFile(url, response, cached) {
   let res; h.fetch({ request: { method: "GET", url, mode: "no-cors" }, respondWith: p => { res = p; } });
   return { out: res ? await res : undefined, handled: !!res, kept };
 }
-const LIB = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js";
+const LIB_PATH = "/vendor/supabase-js-2.117.2.umd.js";
 
-test("the page's pinned supabase-js is kept for offline starts, and only that file from another site", async () => {
-  assert.ok(read("index.html").includes(LIB), "the worker's prefix matches the script tag the page loads");
-  const ok = await getFile(LIB, { ok: true, status: 200, type: "cors" });
-  assert.equal(ok.handled, true); await ok.out; await settle(); assert.equal(ok.kept.length, 1, "a good CORS copy is stored");
-  assert.equal((await getFile(LIB, null, "COPY")).out, "COPY", "offline, the stored copy answers");
-  const opaque = await getFile(LIB, { ok: true, status: 200, type: "opaque" }); await opaque.out; await settle();
-  assert.equal(opaque.kept.length, 0, "an opaque answer is never stored");
-  assert.equal((await getFile("https://cdn.jsdelivr.net/npm/evil@1/x.js", { ok: true, status: 200, type: "cors" })).handled, false, "other jsdelivr files pass straight through");
-  assert.equal((await getFile("https://example.com/supabase.js", { ok: true, status: 200, type: "cors" })).handled, false);
+test("supabase-js is our own file: the page loads it from this site, checked against its fingerprint, and the worker precaches it", async () => {
+  const html = read("index.html"), tag = /<script src="([^"]+supabase[^"]*)" integrity="sha384-([^"]+)"/.exec(html) || [];
+  assert.equal(tag[1], LIB_PATH, "the script tag points at the vendored file");
+  assert.ok(!/jsdelivr/i.test(html.split("<style")[0]), "no third-party script host in the page head");
+  const bytes = require("node:fs").readFileSync(path.join(__dirname, "..", "vendor", "supabase-js-2.117.2.umd.js"));
+  assert.equal(require("node:crypto").createHash("sha384").update(bytes).digest("base64"), tag[2], "the fingerprint matches the file");
+  assert.ok(read("sw.js").includes("'" + LIB_PATH + "'"), "the worker precaches it for a cold offline start");
+  const own = await getFile("https://app.test" + LIB_PATH, { ok: true, status: 200, type: "basic" });
+  assert.equal(own.handled, true, "same-site file goes through the worker like other static files");
+  assert.equal((await getFile("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js", { ok: true, status: 200, type: "cors" })).handled, false, "other sites still pass straight through");
 });
 
 function loadReporter(configured, status = 200, href = "https://app.test/#/coach?token=SECRET") {

@@ -58,7 +58,7 @@ Anything a person types, imports or uploads (profile name, meal name, custom foo
 
 - No health data in `console.*`. That means meal names, weights, vitals, calories, profile details and row contents. Log an event name or a code, not the record. Error objects can echo the failing row, so log `e.message` or a fixed string, not the whole error.
 - The developer log (`WLH`) records errors, routes and timings. It must not record user data. `WLH.dump()` and `WLH.copy()` are meant to be pasted into bug reports.
-- The only network destinations are Supabase (account data) and jsDelivr (supabase-js). No analytics, ads, tracking pixels, fonts from a CDN or social widgets. Fonts are self-hosted in `fonts/`.
+- The only network destinations are Supabase (account data). supabase-js is served from this site (`vendor/`). No analytics, ads, tracking pixels, fonts from a CDN or social widgets. Fonts are self-hosted in `fonts/`.
 - Don't send health data to any other service (including an AI or search API) unless the person has turned on a setting for it that says exactly what is sent and where. Consent is per feature, off by default, and can be withdrawn.
 - Links that carry text to another site (for example the recipe search links) open only when the person clicks them, and carry a dish name from the catalog, never anything from their own log.
 - Keep the in-app privacy text true. If a change adds a network request or a place data is stored, update the privacy text in the same build.
@@ -88,7 +88,7 @@ Sign-up confirmation and password reset emails send the person to a URL the app 
 
 The site sends its own security headers on every response, set in `vercel.json`. They limit where the page can load code from and send data to, so a mistake elsewhere does less harm.
 
-- `Content-Security-Policy`: scripts only from this site and `cdn.jsdelivr.net`; network requests only to this site and the Supabase project; images, media and fonts only from places the app uses; no plugins, no `<base>`, forms post only to this site, and the app cannot be framed.
+- `Content-Security-Policy`: scripts only from this site (supabase-js is our own file in `vendor/`, still checked against its fingerprint); network requests only to this site and the Supabase project; images, media and fonts only from places the app uses; no plugins, no `<base>`, forms post only to this site, and the app cannot be framed.
 - `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and a `Permissions-Policy` that allows the camera and microphone for this site only.
 - The policy still allows inline scripts and styles, because the app is one file built from inline blocks. It limits where code loads from and where data goes, but it does not stop an injected inline script. Section 4 is still the main defence.
 - A change that adds a network destination, an external script, a font from another site, a worker, or an embedded frame must update `vercel.json` in the same build, and the privacy text (section 5). Don't loosen the policy to make something work; allow only the exact host.

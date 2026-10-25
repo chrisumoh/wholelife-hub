@@ -40,7 +40,7 @@ const shot = async name => { if (!process.env.SHOTS) return; const r = await sen
 const goto = async h => { await ev(`location.hash = ${JSON.stringify(h)}; true`); await sleep(500); await ev(`document.querySelectorAll(".spark, .chart-svg").forEach(e => e.classList.add("drawn")); true`); };
 
 await send("Runtime.enable"); await send("Page.enable"); await send("Network.enable");
-await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
+await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*", "*/vendor/supabase*"] });
 await send("Page.addScriptToEvaluateOnNewDocument", { source: FAKE });
 const READY = "typeof S !== 'undefined' && typeof SB !== 'undefined' && SB.booted === true && UI.loading === false";
 await view(1200);
