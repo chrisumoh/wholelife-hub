@@ -3833,7 +3833,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.39", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.40", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3847,6 +3847,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.39", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.40",
+      area:"Sign-in",
+      title:"Welcome screen first, sign-in after you tap Set up my hub",
+      bug:"A signed-out person saw the sign-in card before the welcome screen, so the welcome screen with the photo grid only showed after they skipped it.",
+      fix:"The sign-in-first screen is gone. A new visitor sees the welcome screen first. Tapping Set up my hub asks the age question and then shows the sign-in card (Continue with Google, or email and password with Create an account and Forgot password), with Skip for now to carry on without an account. People who already have a profile on the device, and those signed in, go straight into the app as before, and Settings > Account still has Sign in. The saved Continue without an account flag is no longer used, so it is no longer written or listed in the privacy table.",
+      where:"index.html: startGateOn(), startGateView(), START_SKIP_KEY, START_OPEN, the gate line in render() and the start-skip case removed; the wlh.startskip row removed from the storage table; authScreen() comment. tests/browser/startgate.mjs (rewritten for the new order, including the Google checks on the setup card), fake-supabase.js, vendor.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app in a private window: the welcome screen with the photo grid shows first. Tap Set up my hub, answer the age question: the sign-in card appears with Google and email and Skip for now. Skip for now goes on to Choose your coach. Reload before finishing setup: still the welcome screen.",
+      limits:"The sign-in card only shows in setup for the first profile on a device, as before. Not tried on a real phone. Google still needs the provider and redirect URL switched on in Supabase." },
     { id:"8.3.39",
       area:"Branding",
       title:"New Whole Life Hub app icon, used on the home screen, browser tab and inside the app",
@@ -9401,6 +9409,7 @@ function authFormHTML(){
 }
 // Onboarding stop after the age question and before the coach: Google or email, or skip. Signing in reloads the page (sbReload), so a person
 // who signs in here lands on the welcome screen signed in, and this stop is skipped the next time.
+// The sign-in card as a full screen. Setup shows it after the age question (first profile, signed out); the welcome screen comes first.
 function authScreen(foot){
   return `<main class="ob obg">${obGround()}<div class="panel st-panel auth-ob">
     <div class="row">${logoSVG(46)}<div class="eyebrow">Your account</div></div>
@@ -9412,18 +9421,6 @@ function authScreen(foot){
 function obAuthView(){
   return authScreen(`<div class="foot-left"><span class="tiny muted">You can sign in later in Settings.</span></div>
       <div class="foot-right"><button class="btn ghost" data-act="ob-auth-go">Skip for now</button></div>`);
-}
-// ---- startup sign-in (8.3.35) ----
-// Shown before anything else to a signed-out person until they sign in or choose to carry on without an account.
-// The choice is remembered on this device; the legal pages and the under-13 block are never gated.
-const START_SKIP_KEY = "wlh.startskip", START_OPEN = ["terms", "privacy-policy", "refunds", "contact", "credits"];
-function startGateOn(){
-  if (!SB.booted || SB.user || !sbClient() || START_OPEN.includes(UI.route) || ageBlocked()) return false;
-  try { return !localStorage.getItem(START_SKIP_KEY); } catch { return false; }
-}
-function startGateView(){
-  return authScreen(`<div class="foot-left"><span class="tiny muted">Without an account everything stays on this device.</span></div>
-      <div class="foot-right"><button class="btn ghost" data-act="start-skip">Continue without an account</button></div>`);
 }
 function openAuthPopup(mode, triggerEl){
   UI.acct = mode; UI.sbMsg = null; UI.sbAgree = false; // each new form asks again
@@ -11633,7 +11630,6 @@ function render(){
   if (SB.recovery) { morphInto(root, recoveryView()); setMeta("New password", "Choose a new Whole Life Hub password."); afterRender(); return; }
   if (UI.locked) { morphInto(root, lockView()); setMeta("Locked", "Whole Life Hub is locked."); afterRender(); return; }
   if (UI.sessionExpired && !SB.user) { morphInto(root, expiredView()); setMeta("Sign in again", "Your session ended. Sign in to carry on."); afterRender(); return; }
-  if (startGateOn()) { morphInto(root, startGateView()); setMeta("Sign in", "Sign in to Whole Life Hub with Google or email."); afterRender(); return; }
   if (UI.guestPrompt) { morphInto(root, guestView()); setMeta("Your guest data", "Import or discard what this device held before you signed in."); afterRender(); return; }
   if (SB.user && sbActive() && !SB.firstDone && !SB.err && !P()?.onboarded && S.profiles.length === 0) { morphInto(root, syncingView()); setMeta("Syncing", "Getting your data from your account."); afterRender(); return; }
   const p = P();
@@ -13428,7 +13424,6 @@ document.addEventListener("click", async e => {
     case "ob-goto": { const to = +t.dataset.v; if (to >= 1 && to < UI.obStep) { readOnboardingStep(); UI.obStep = to; render(); window.scrollTo(0,0); } break; }
     case "ob-cancel": UI.obAuth = false; UI.obDraft = null; UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; UI.agErr = null; S.activeId = UI.lastActive && S.profiles.some(x=>x.id===UI.lastActive) ? UI.lastActive : S.profiles[0]?.id; render(); break;
     case "ob-skip": UI.obDraft = UI.obDraft || newProfile(""); if (!UI.obGateOk || ageBlocked()) { UI.obGateOk = false; UI.obGate = "skip"; UI.agErr = null; render(); window.scrollTo(0,0); break; } finishOnboarding("fresh"); break;
-    case "start-skip": try { localStorage.setItem(START_SKIP_KEY, "1"); } catch {} UI.sbMsg = null; render(); window.scrollTo(0,0); break;
     case "ob-auth-go": UI.obAuth = false; UI.obStep = 1; render(); window.scrollTo(0,0); break;
     case "ag-back": UI.obGate = null; UI.agErr = null; render(); break;
     case "ob-units": readOnboardingStep(); UI.obDraft.units = t.dataset.v; render(); break;
@@ -17167,7 +17162,6 @@ function privacyPolicyView(){
         <tr><td><code>wlh.signedout</code></td><td>Your account id and a time, written when you sign out, so other open tabs of this app know to drop their copy of your data instead of saving it again.</td></tr>
         <tr><td><code>wlh.history</code></td><td>A short list (up to 50) of your consent and data choices with the date: for example that you turned a camera permission on, downloaded your data or deleted it. No health data and no names. It stays when you delete your data, so you can see that you did; Settings › Privacy &amp; security › Clear history removes it.</td></tr>
         <tr><td><code>wlh.consent</code></td><td>The version of the Terms you agreed to at sign-up and when, so the app can tell if they have changed. Removed only by clearing this site's data in your browser.</td></tr>
-        <tr><td><code>wlh.startskip</code></td><td>Only if you chose Continue without an account on the first screen: a flag so that screen is not shown again. It holds no personal data.</td></tr>
         <tr><td><code>wlh.ageblock</code></td><td>Only if the age screen turned you away: the time until you can try again (24 hours). It holds no birth date.</td></tr>
         <tr><td><code>wlh.flash</code>, <code>wlh.reloadAt</code>, <code>wlh.recovery</code></td><td>Short-lived, this tab only (session storage): a one-line message to show after signing in or out, and a guard against reloading in a loop.</td></tr>
       </tbody>

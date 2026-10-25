@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.39, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.40, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.40 · Sign-in: Welcome screen first, sign-in after you tap Set up my hub
+
+- **Problem:** A signed-out person saw the sign-in card before the welcome screen, so the welcome screen with the photo grid only showed after they skipped it.
+- **Change:** The sign-in-first screen is gone. A new visitor sees the welcome screen first. Tapping Set up my hub asks the age question and then shows the sign-in card (Continue with Google, or email and password with Create an account and Forgot password), with Skip for now to carry on without an account. People who already have a profile on the device, and those signed in, go straight into the app as before, and Settings > Account still has Sign in. The saved Continue without an account flag is no longer used, so it is no longer written or listed in the privacy table.
+- **Where:** index.html: startGateOn(), startGateView(), START_SKIP_KEY, START_OPEN, the gate line in render() and the start-skip case removed; the wlh.startskip row removed from the storage table; authScreen() comment. tests/browser/startgate.mjs (rewritten for the new order, including the Google checks on the setup card), fake-supabase.js, vendor.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open the app in a private window: the welcome screen with the photo grid shows first. Tap Set up my hub, answer the age question: the sign-in card appears with Google and email and Skip for now. Skip for now goes on to Choose your coach. Reload before finishing setup: still the welcome screen.
+- **Known limits:** The sign-in card only shows in setup for the first profile on a device, as before. Not tried on a real phone. Google still needs the provider and redirect URL switched on in Supabase.
 
 ## 8.3.39 · Branding: New Whole Life Hub app icon, used on the home screen, browser tab and inside the app
 

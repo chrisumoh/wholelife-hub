@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join, extname } from "node:path";
 
 // Run from the repo root:  node tests/browser/startgate.mjs   (needs Node 22+ and Chrome; set CHROME to its path, CI=1 as root)
-// Build 8.3.35: the sign-in screen shown at startup. Faked Supabase.
+// Build 8.3.40: the welcome screen comes first and the sign-in card shows after Set up my hub and the age question (plus hold-to-delete). Faked Supabase.
 // The app is served with a faked Supabase, so no real account is touched.
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
@@ -51,50 +51,51 @@ const fresh = async () => { await ev(`(() => { localStorage.clear(); sessionStor
 const CY = await ev(`new Date().getFullYear()`);
 
 
-const gate = `!!document.getElementById("sb-email") && !!document.querySelector('[data-act="start-skip"]') && !!document.querySelector('[data-act="sb-google"]')`;
+const welcome = `!!document.querySelector('[data-act="ob-next"]') && !document.getElementById("sb-email")`;
+const card = `!!document.getElementById("sb-email") && !!document.querySelector('[data-act="ob-auth-go"]') && !!document.querySelector('[data-act="sb-google"]')`;
 const reload = async () => { await send("Page.reload"); await sleep(500); return waitFor(READY, 15000); };
+const toCard = async () => { await click('[data-act="ob-next"]'); await sleep(250); await pick(6, CY - 30); await submitGate(); };
 
-console.log("--- first visit");
+console.log("--- first visit: the welcome screen comes first");
 await fresh();
-console.log("--- Google from the startup screen");
+ok("signed out: the welcome screen shows, not the sign-in card", await ev(welcome));
+ok("the welcome screen has the photo grid", await waitFor(`document.querySelectorAll(".wl-gt").length > 0`, 6000));
+await reload();
+ok("a reload still shows the welcome screen", await ev(welcome));
+
+console.log("--- the sign-in card after Set up my hub");
+await toCard();
+ok("after the age question the sign-in card shows, with Google, email and Skip for now", await ev(card));
+ok("it offers Google and email", await ev(`/Continue with Google/.test(document.body.textContent) && !!document.getElementById("sb-pass")`));
+ok("it opens on Create an account, and Sign in switches the card in place", await ev(`!!document.getElementById("sb-agree")`) && await (async () => { await click('.auth-ob [data-act="sb-mode"][data-v="in"]'); await sleep(200); return ev(`!document.getElementById("sb-agree") && ${card}`); })());
+
+console.log("--- Google from the setup card");
 const GOOGLE_OFF = `window.fetch = async () => ({ ok: true, json: async () => ({ external: { google: false } }) }); true`;
 const GOOGLE_ON = `window.fetch = async () => ({ ok: true, json: async () => ({ external: { google: true } }) }); true`;
 await ev(GOOGLE_OFF); await click('[data-act="sb-google"]'); await sleep(400);
-ok("Google switched off: the startup screen says so instead of doing nothing", await ev(`/isn't switched on/.test(document.getElementById("auth-g-msg")?.textContent || "") && !(window.__oauth || []).length`));
+ok("Google switched off: the card says so instead of doing nothing", await ev(`/isn't switched on/.test(document.getElementById("auth-g-msg")?.textContent || "") && !(window.__oauth || []).length`));
 await ev(GOOGLE_ON); await click('[data-act="sb-google"]'); await sleep(400);
-ok("Google switched on: the startup screen starts the Google sign-in, returning to this app", await ev(`(() => { const o = (window.__oauth || [])[0]; return !!o && o.provider === "google" && o.options.redirectTo === location.origin + location.pathname; })()`));
+ok("Google switched on: the card starts the Google sign-in, returning to this app", await ev(`(() => { const o = (window.__oauth || [])[0]; return !!o && o.provider === "google" && o.options.redirectTo === location.origin + location.pathname; })()`));
 ok("the Google button is usable again afterwards", await ev(`!document.querySelector('[data-act="sb-google"]').disabled`));
-await fresh();
-ok("signed out: the sign-in card shows before the welcome screen", await ev(gate) && await ev(`!document.querySelector('[data-act="ob-next"]')`));
-ok("it offers Google and email, and continuing without an account", await ev(`/Continue with Google/.test(document.body.textContent) && /Continue without an account/.test(document.body.textContent)`));
-ok("Create an account switches the card in place", await (async () => { await click('[data-act="sb-mode"][data-v="up"]'); await sleep(200); return ev(`!!document.getElementById("sb-agree") && ${gate}`); })());
-ok("the page title is Sign in", await ev(`/Sign in/.test(document.title)`));
 
-console.log("--- continue without an account");
-await click('[data-act="start-skip"]'); await sleep(300);
-ok("the welcome screen opens", await ev(`!!document.querySelector('[data-act="ob-next"]') && !document.getElementById("sb-email")`));
-ok("the choice is remembered", await ev(`localStorage.getItem("wlh.startskip") === "1"`));
-await reload();
-ok("a reload goes straight to the welcome screen", await ev(`!!document.querySelector('[data-act="ob-next"]') && !document.getElementById("sb-email")`));
+console.log("--- skipping");
+await click('[data-act="ob-auth-go"]'); await sleep(300);
+ok("Skip for now goes on to the next step", await ev(`UI.obStep === 1 && !document.getElementById("sb-email")`));
 
 console.log("--- exceptions");
 await fresh();
 await ev(`location.hash = "#/terms"; true`); await sleep(400);
 ok("the Terms page opens, not the sign-in card", await ev(`!document.getElementById("sb-email") && /Terms/.test(document.body.textContent)`));
-await fresh();
-await ev(`localStorage.setItem("wlh.ageblock", String(Date.now() + 3600000)); true`); await reload();
-ok("no sign-in card while the under-13 block is active", await ev(`!document.getElementById("sb-email")`));
 
 console.log("--- signed in");
 await fresh();
 await ev(`SB.client.auth.signInWithPassword({ email: "a@b.co", password: "password1" }).then(() => true)`); await sleep(500);
-await ev(`localStorage.removeItem("wlh.startskip"); true`);
 await reload();
-ok("a signed-in person never sees it", await ev(`!!SB.user && !document.getElementById("sb-email")`));
+ok("a signed-in person never sees the sign-in card first", await ev(`!!SB.user && !document.getElementById("sb-email")`));
 
 console.log("--- hold to delete a profile");
 await fresh();
-await ev(`localStorage.setItem("wlh.startskip", "1"); (async () => { const mk = n => { const p = newProfile(n); Object.assign(p, { onboarded: true, coachPrompted: true, tourSeen: "dismissed" }); return p; }; S.profiles = [mk("Ada"), mk("Bo")]; S.activeId = S.profiles[0].id; saveProfile(); await flush(); location.hash = "#/settings/household"; render(); return true; })()`); await sleep(500);
+await ev(`(async () => { const mk = n => { const p = newProfile(n); Object.assign(p, { onboarded: true, coachPrompted: true, tourSeen: "dismissed" }); return p; }; S.profiles = [mk("Ada"), mk("Bo")]; S.activeId = S.profiles[0].id; saveProfile(); await flush(); location.hash = "#/settings/household"; render(); return true; })()`); await sleep(500);
 const bo = `S.profiles[1].id`;
 await ev(`document.querySelector('[data-act="del-profile"][data-id="' + ${bo} + '"]').click(); true`); await sleep(200);
 const ptr = (t, id = 1) => ev(`(() => { const b = document.querySelector("[data-hold]"); b.dispatchEvent(new PointerEvent(${JSON.stringify(t)}, { bubbles: true, pointerId: ${id}, isPrimary: true, button: 0, clientX: b.getBoundingClientRect().left + 5, clientY: b.getBoundingClientRect().top + 5 })); return true; })()`);

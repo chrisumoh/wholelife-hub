@@ -43,7 +43,7 @@ await send("Page.navigate", { url: "http://127.0.0.1:8792/index.html" }); await 
 ok("app boots", await waitFor(READY, 15000), errors.join(" | "));
 await ev(`(async () => { const p = newProfile("Ada"); Object.assign(p, { onboarded: true, coachPrompted: true, tourSeen: "dismissed", calorieGoal: 2000, workoutGoal: 4, weightKg: 70, heightCm: 170, age: 30, sex: "female", culture: "Ghana" }); S.profiles = [p]; S.activeId = p.id; saveProfile(); await flush(); return true; })()`);
 // 8.3.33: the real sign-in library (nothing faked, nothing blocked) loads from this site, and no outside script host is asked for.
-await ev(`localStorage.setItem("wlh.startskip", "1"); location.hash = "#/settings"; true`); await sleep(600); await ev(`render(); true`); await sleep(300);
+await ev(`location.hash = "#/settings"; true`); await sleep(600); await ev(`render(); true`); await sleep(300);
 ok("the sign-in library is loaded", await ev(`typeof window.supabase?.createClient === "function"`));
 ok("it came from this site", urls.some(u => u.endsWith("/vendor/supabase-js-2.117.2.umd.js")));
 ok("nothing was requested from jsDelivr", !urls.some(u => /jsdelivr/.test(u)), urls.filter(u => /jsdelivr/.test(u)).join(","));

@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.40 | Sign-in: welcome screen first, sign-in card after Set up my hub | IN PROGRESS: ultron/settings-compact-pass (PR #83) |
 | 8.3.39 | Branding: new app icon on home screen, tab, manifest, iOS and in the app | IN PROGRESS: claude/project-thread-8bev7j |
 | 8.3.38 | Sign-in: Continue with Google works on the startup and setup screens | IN PROGRESS: ultron/neatening-pass (PR #82) |
 | 8.3.37 | Welcome: drifting photo grid, phone and iPad layout | IN PROGRESS: claude/project-thread-8bev7j |
