@@ -3831,7 +3831,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.37", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.38", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3845,6 +3845,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.37", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.38",
+      area:"Sign-in",
+      title:"Continue with Google works on the startup and setup sign-in screens",
+      bug:"Tapping Continue with Google on the sign-in screen shown when the app opens did nothing, with no message. The same happened on the sign-in step of first-time setup.",
+      fix:"The Google sign-in only carried on if the sign-in popup was open, and those two screens show the form in the page instead of in a popup, so it quietly stopped before reaching Google. It now looks for the form wherever it is (popup or page), shows its messages there, and still cancels if you leave that screen or start an email sign-in while it waits.",
+      where:"index.html: sbGoogle() (scope(), here()). tests/browser/startgate.mjs (3 new checks: Google switched off shows the message, switched on calls signInWithOAuth for google with this app as the return address, and the button works again). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app signed out in a private window: tap Continue with Google. You should be taken to Google (or told Google sign-in isn't switched on yet), never nothing. Also try the sign-in step in first-time setup, and Settings > Account > Sign in.",
+      limits:"Needs the Google provider switched on in Supabase and the redirect URL allowed there, as before; this fix does not change either. Not tried against real Google." },
     { id:"8.3.37",
       area:"Welcome",
       title:"Drifting photo grid behind the welcome screen, better on phones and iPads",
@@ -9311,9 +9319,11 @@ async function sbGoogle(){
   const c = sbClient(); if (!c || SB.busy || SB.gbusy) return;
   // Not SB.busy and no sbRender(): a re-render would empty the typed email and password, and the person may switch to another form while
   // this waits. So the button and message are looked up again when it ends, in whichever form is showing.
-  const btn = () => document.querySelector('#auth-pop-body [data-act="sb-google"]');
-  const say = t => { const m = document.getElementById("auth-g-msg"); if (m) m.textContent = t; };
-  const pop = POPOVERS.auth; // closing the popup removes this entry at once (its element lingers 200 ms), and reopening makes a new one
+  const pop = POPOVERS.auth; // closing the popup removes this entry at once (its element lingers 200 ms), and reopening makes a new one. None on the startup and setup screens, where the form sits in the page.
+  const scope = () => (pop ? document.getElementById("auth-pop-body") : document.querySelector(".auth-ob")) || document;
+  const btn = () => scope().querySelector('[data-act="sb-google"]');
+  const say = t => { const m = scope().querySelector("#auth-g-msg"); if (m) m.textContent = t; };
+  const here = () => pop ? POPOVERS.auth === pop : !POPOVERS.auth && !!document.querySelector(".auth-ob"); // still the same surface
   const tok = SB.gtok = (SB.gtok || 0) + 1; // sbAuth() bumps it, so starting an email sign-in cancels a Google attempt still waiting
   say(""); SB.gbusy = true; if (btn()) btn().disabled = true;
   try {
@@ -9323,7 +9333,7 @@ async function sbGoogle(){
       on = r.ok && (await r.json())?.external?.google === true;
       if (!on) say("Google sign-in isn't switched on yet. Use your email for now.");
     } catch { say(navigator.onLine === false ? "You're offline. Connect and try again." : "Couldn't reach sign-in. Try again in a moment."); }
-    if (on && (tok !== SB.gtok || SB.user || !pop || POPOVERS.auth !== pop)) on = false; // another sign-in started, it finished, or this popup was closed
+    if (on && (tok !== SB.gtok || SB.user || !here())) on = false; // another sign-in started, it finished, or this popup or screen was left
     if (on) { const r = await c.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: sbRedirect() } }); if (r.error) throw r.error; }
   } catch (e) { say(sbErrText(e)); }
   SB.gbusy = false; if (btn()) btn().disabled = false;

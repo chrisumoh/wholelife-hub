@@ -56,6 +56,15 @@ const reload = async () => { await send("Page.reload"); await sleep(500); return
 
 console.log("--- first visit");
 await fresh();
+console.log("--- Google from the startup screen");
+const GOOGLE_OFF = `window.fetch = async () => ({ ok: true, json: async () => ({ external: { google: false } }) }); true`;
+const GOOGLE_ON = `window.fetch = async () => ({ ok: true, json: async () => ({ external: { google: true } }) }); true`;
+await ev(GOOGLE_OFF); await click('[data-act="sb-google"]'); await sleep(400);
+ok("Google switched off: the startup screen says so instead of doing nothing", await ev(`/isn't switched on/.test(document.getElementById("auth-g-msg")?.textContent || "") && !(window.__oauth || []).length`));
+await ev(GOOGLE_ON); await click('[data-act="sb-google"]'); await sleep(400);
+ok("Google switched on: the startup screen starts the Google sign-in, returning to this app", await ev(`(() => { const o = (window.__oauth || [])[0]; return !!o && o.provider === "google" && o.options.redirectTo === location.origin + location.pathname; })()`));
+ok("the Google button is usable again afterwards", await ev(`!document.querySelector('[data-act="sb-google"]').disabled`));
+await fresh();
 ok("signed out: the sign-in card shows before the welcome screen", await ev(gate) && await ev(`!document.querySelector('[data-act="ob-next"]')`));
 ok("it offers Google and email, and continuing without an account", await ev(`/Continue with Google/.test(document.body.textContent) && /Continue without an account/.test(document.body.textContent)`));
 ok("Create an account switches the card in place", await (async () => { await click('[data-act="sb-mode"][data-v="up"]'); await sleep(200); return ev(`!!document.getElementById("sb-agree") && ${gate}`); })());

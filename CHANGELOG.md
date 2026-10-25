@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.37, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.38, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.38 · Sign-in: Continue with Google works on the startup and setup sign-in screens
+
+- **Problem:** Tapping Continue with Google on the sign-in screen shown when the app opens did nothing, with no message. The same happened on the sign-in step of first-time setup.
+- **Change:** The Google sign-in only carried on if the sign-in popup was open, and those two screens show the form in the page instead of in a popup, so it quietly stopped before reaching Google. It now looks for the form wherever it is (popup or page), shows its messages there, and still cancels if you leave that screen or start an email sign-in while it waits.
+- **Where:** index.html: sbGoogle() (scope(), here()). tests/browser/startgate.mjs (3 new checks: Google switched off shows the message, switched on calls signInWithOAuth for google with this app as the return address, and the button works again). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open the app signed out in a private window: tap Continue with Google. You should be taken to Google (or told Google sign-in isn't switched on yet), never nothing. Also try the sign-in step in first-time setup, and Settings > Account > Sign in.
+- **Known limits:** Needs the Google provider switched on in Supabase and the redirect URL allowed there, as before; this fix does not change either. Not tried against real Google.
 
 ## 8.3.37 · Welcome: Drifting photo grid behind the welcome screen, better on phones and iPads
 
