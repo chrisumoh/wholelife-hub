@@ -3132,13 +3132,16 @@ html .side .nav a .si-tile svg{color:#fff}
   display:grid;grid-template-rows:auto 1fr;padding:clamp(18px,4vw,40px) clamp(20px,6vw,72px) clamp(24px,5vh,48px)}
 .wl > :not(.wl-bg){position:relative;z-index:1}
 .wl-bg{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
-.wl-bgi{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.06);transition:opacity 1s ease,transform 6s linear}
-.wl-bgi.on{opacity:1;transform:none}
+.wl-gm{position:absolute;inset:0;overflow:hidden;isolation:isolate;--gm-dim:.35}
+.wl-gp{position:absolute;top:50%;left:50%;opacity:0}
+.wl-gr{position:absolute;left:0;display:flex;gap:var(--gm-gap);will-change:transform}
+.wl-gt{position:relative;flex:none;width:var(--gm-tile-w);height:var(--gm-tile-h);overflow:hidden;border-radius:14px;background:#1b1922;opacity:calc(1 - var(--gm-dim) * (1 - var(--spot,0)))}
+.wl-gt::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);pointer-events:none}
+.wl-gt img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none;user-select:none}
 .wl-bg::after{content:"";position:absolute;inset:0;z-index:0;
   background:linear-gradient(90deg,rgba(7,32,24,.9),rgba(7,32,24,.66) 55%,rgba(7,32,24,.5)),linear-gradient(180deg,rgba(7,32,24,.5),transparent 30%,rgba(7,32,24,.55))}
 .wl-rays{position:absolute;inset:0;z-index:1;width:100%;height:100%}
-@media (max-width:820px){.wl-bg::after{background:rgba(7,32,24,.74)}}
-@media (prefers-reduced-motion:reduce){.wl-bgi{transform:none;transition:opacity .01s}}
+@media (max-width:820px){.wl-bg::after{background:rgba(7,32,24,.7)}}
 .wl-top{display:flex;align-items:center;gap:10px;font-family:var(--wl-display);font-weight:700;font-size:calc((18px) * var(--text-scale,1));letter-spacing:-.01em;
   animation:wlFade var(--dur-page) var(--ease-smooth) both}
 .wl-brand{position:relative;display:inline-flex;gap:.4em;padding:5px 0}
@@ -3177,10 +3180,11 @@ html .side .nav a .si-tile svg{color:#fff}
 .wl-cta:focus-visible,.wl-link:focus-visible{outline:3px solid var(--wl-mint);outline-offset:3px}
 .wl-note{font-size:calc((14px) * var(--text-scale,1));line-height:1.5;color:var(--wl-faint);margin:0;animation:wlFade var(--dur-page) .8s var(--ease-smooth) both}
 .wl-art{position:relative;justify-self:center;width:min(100%,460px);aspect-ratio:1}
-.wl-art::before{content:"";position:absolute;inset:14%;border-radius:50%;background:radial-gradient(circle,rgba(242,179,61,.28),transparent 68%);
+.wl-art::before{content:"";position:absolute;inset:14%;border-radius:50%;background:radial-gradient(circle,rgba(242,179,61,.28),rgba(242,179,61,0) 68%);
   animation:wlFade var(--dur-page) .9s var(--ease-smooth) both,wlGlow 6s 2.2s ease-in-out infinite}
 .wl-ring{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .wl-ring text{paint-order:stroke;stroke:rgba(7,32,24,.6);stroke-width:3px;stroke-linejoin:round}
+.wl-ring circle{fill:none}
 .wl-ring .trk{fill:none;stroke:rgba(247,244,236,.08);stroke-width:16}
 .wl-ring .arc{fill:none;stroke-width:16;stroke-linecap:round;stroke-dasharray:167.55 603.19;animation:wlDraw var(--dur-page) var(--ease-spring) both}
 .wl-ring .a1{stroke:var(--wl-gold);animation-delay:.2s}.wl-ring .a2{stroke:var(--wl-coral);animation-delay:.55s}.wl-ring .a3{stroke:var(--wl-mint);animation-delay:.9s}
@@ -3202,6 +3206,14 @@ html .side .nav a .si-tile svg{color:#fff}
   .wl-cta{width:100%}
   .wl-link{align-self:center}
   .wl-ring text{font-size:calc((15px) * var(--text-scale,1))}
+}
+@media (min-width:600px) and (max-width:820px){
+  .wl-main{max-width:560px;align-content:center;gap:32px}
+  .wl-art{width:min(54vw,360px)}
+  .wl-actions{align-items:flex-start}
+  .wl-cta{width:auto;min-width:300px}
+  .wl-link{align-self:flex-start}
+  .wl-ring text{font-size:calc((13px) * var(--text-scale,1))}
 }
 @media (max-height:640px) and (max-width:820px){.wl-art{width:min(46vw,200px)}}
 
@@ -3836,12 +3848,12 @@ const APP_VERSION = { update: "8.3", build: "8.3.37", channel: "Dev Testing", da
   const CHANGELOG = [
     { id:"8.3.37",
       area:"Welcome",
-      title:"Photos change every 3 seconds behind the welcome screen, with moving rays of light",
-      bug:"The welcome screen sat on a flat green background.",
-      fix:"Behind the text and rings, twelve photos now cross-fade every 3 seconds under a dark green wash that keeps the words readable, with a layer of soft gold and blue light rays (WebGL2, rebuilt from the SideRays sample) drifting from the top right that leans slightly towards the mouse. The headline, text, buttons and rings are unchanged, apart from a thin dark outline on the ring labels so Eat, Move and Recover stay readable on a bright photo. Photos are 1024 px WebP files in img/welcome/ (about 67 KB each), fetched one at a time, never inlined. The cycle and the rays pause in a hidden tab or off screen. Reduce motion keeps the first photo still and draws no animated rays; Data Saver skips the photos and rays.",
-      where:"index.html: WL_PHOTOS, WL_RAYS_FS, wlRays(), wlBackdrop(), the afterRender() mount line, welcomeView() (.wl-bg), the .wl-bg/.wl-bgi/.wl-rays CSS next to .wl. img/welcome/w01-w12.webp. tests/browser/welcomebg.mjs and run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
-      test:"Open the app in a private window and choose Continue without an account: a photo shows behind the welcome text and changes about every 3 seconds, with light rays from the top right. Turn on Reduce motion: the first photo stays still.",
-      limits:"The rays need WebGL2; without it you still get the photos. The photos are not cached for offline use. Only on the welcome screen, not the loading screen. Not tried on a real phone or in Safari." },
+      title:"Drifting photo grid and light rays behind the welcome screen, better on phones and iPads",
+      bug:"The welcome screen sat on a flat green background, and on an iPad the ring and button looked like a stretched phone layout.",
+      fix:"Behind the text and rings, your 12 photos now drift across the screen in slanted rows (GridMotion, rebuilt in plain JS): rows move in opposite directions, the tiles near your finger or mouse light up, and the rows lean slightly towards the pointer. A dark green wash keeps the words readable, and soft gold and blue light rays (WebGL2, rebuilt from the SideRays sample) fall from the top right. The headline, text, buttons and rings are unchanged, apart from a thin dark outline on the ring labels so Eat, Move and Recover stay readable on a bright photo. On phones the grid has 5 smaller rows and a lighter edge fade; on iPad portrait the ring is larger and the button is no longer stretched across the screen. The photos are 840 px WebP files in img/welcome/ (about 61 KB each), never inlined. Everything pauses in a hidden tab or off screen. Reduce motion keeps the rows still; Data Saver skips the photos and rays. The ring glow now fades to a transparent version of its own colour, in case Safari showed it as a dark edge.",
+      where:"index.html: WL_PHOTOS, GM, wlGrid(), WL_RAYS_FS, wlRays(), wlBackdrop(), the afterRender() mount line, welcomeView() (.wl-bg), the .wl-bg/.wl-gm/.wl-gt/.wl-rays CSS and a 600-820 px media query next to .wl. img/welcome/w01-w12.webp. tests/browser/welcomebg.mjs and run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app in a private window and choose Continue without an account: rows of photos drift behind the welcome text and light rays fall from the top right. Move the mouse (or drag a finger) over it: tiles near the pointer brighten. Turn on Reduce motion: the rows stand still. Try a phone and an iPad in portrait and landscape.",
+      limits:"The rays need WebGL2; without it you still get the photos. The photos load all together (about 730 KB) and are not cached for offline use. Only on the welcome screen, not the loading screen. Not tried on a real phone, an iPad or in Safari; a gold disc inside the ring seen on an iPhone could not be reproduced in Chrome, so the glow fix is a guess." },
     { id:"8.3.36",
       area:"Welcome",
       title:"True Focus brackets on the Whole Life Hub name and the ring labels",
@@ -12097,7 +12109,7 @@ function trueFocus(host, items, g, k){
   return stop;
 }
 // ---- welcome backdrop: cycling photos plus a WebGL2 light-ray layer ----
-// Photos load one at a time (never inlined), the rays are one small fragment shader. Both stop
+// The photos are files in img/welcome (never inlined); the rays are one small fragment shader. Both stop
 // off screen and in a hidden tab; reduced motion keeps the first photo still and draws no rays.
 const WL_PHOTOS = Array.from({ length: 12 }, (_, i) => `img/welcome/w${String(i + 1).padStart(2, "0")}.webp`);
 const WL_RAYS_FS = `#version 300 es
@@ -12188,37 +12200,104 @@ function wlRays(cv, still){
   if (still) draw(0); else { addEventListener("pointermove", onMove, { passive: true }); raf = requestAnimationFrame(loop); }
   return stop;
 }
+// Drifting rows of the photos (GridMotion, rebuilt in plain JS). Rows are built once per size and
+// moved with transforms only; the pointer lights the tiles near it and nudges the rows.
+const GM = { rows: 4, aspect: 1.33, gap: 16, angle: -12, speed: 24, parallax: .5, spotlight: .6, fade: .5 };
+const GM_INERTIA = [.42, .32, .26, .22], GM_PACE = [1, .86, 1.12, .94];
+const gmSmooth = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
+const gmFeather = (side, zone) => {
+  const a = t => t * t * t * (t * (t * 6 - 15) + 10), s = [], m = [];
+  for (let i = 0; i <= 12; i++) { const t = i / 12; s.push(`rgba(0,0,0,${a(t).toFixed(4)}) ${(t * zone).toFixed(2)}%`); m.push(`rgba(0,0,0,${a(1 - t).toFixed(4)}) ${(100 - (1 - t) * zone).toFixed(2)}%`); }
+  return `linear-gradient(${side},${s.join(",")},${m.join(",")})`;
+};
+function wlGrid(root, alive, calm){
+  const fadeTo = narrow => {
+    const mask = `${gmFeather("to right", narrow ? 6 : GM.fade * 34)},${gmFeather("to bottom", GM.fade * 44)}`;
+    root.style.maskImage = root.style.webkitMaskImage = mask;
+    root.style.maskComposite = "intersect"; root.style.webkitMaskComposite = "source-in";
+  };
+  const st = { offsets: [], shifts: [], intro: 0, px: 0, py: 0, on: false };
+  let L = null, plane = null, rows = [], spots = [], marks = [], raf = 0, last = performance.now(), vis = true, w = 0, h = 0;
+  const build = () => {
+    const turn = GM.angle * Math.PI / 180, cos = Math.abs(Math.cos(turn)), sin = Math.abs(Math.sin(turn));
+    fadeTo(w < 700);
+    const rn = w < 700 ? 5 : GM.rows, pH = (w * sin + h * cos) * 1.12, pW = (w * cos + h * sin) * 1.12;
+    const tH = Math.max(16, (pH - GM.gap * (rn - 1)) / rn), tW = tH * GM.aspect, step = tW + GM.gap, per = Math.ceil(pW / step) + 1, period = per * step;
+    L = { pW, pH, tW, tH, step, per, period, rn, copies: Math.ceil(pW / period) + 2, top: (pH - rn * tH - (rn - 1) * GM.gap) / 2 };
+    plane?.remove();
+    plane = document.createElement("div"); plane.className = "wl-gp"; plane.setAttribute("aria-hidden", "true");
+    plane.style.cssText = `width:${pW}px;height:${pH}px;transform:translate(-50%,-50%) rotateZ(${GM.angle}deg);--gm-gap:${GM.gap}px;--gm-tile-w:${tW}px;--gm-tile-h:${tH}px;opacity:${st.intro >= 1 ? 1 : 0}`;
+    rows = []; spots = []; marks = [];
+    for (let r = 0; r < rn; r++) {
+      const row = document.createElement("div"); row.className = "wl-gr"; row.style.top = `${L.top + r * (tH + GM.gap)}px`;
+      for (let k = 0; k < L.copies * per; k++) {
+        const t = document.createElement("div"), im = new Image(); t.className = "wl-gt";
+        im.alt = ""; im.draggable = false; im.decoding = "async"; im.src = WL_PHOTOS[(r * per + (k % per)) % WL_PHOTOS.length]; t.append(im); row.append(t);
+      }
+      plane.append(row); rows.push(row); spots.push(new Float32Array(row.children.length)); marks.push(new Float32Array(row.children.length));
+    }
+    root.append(plane);
+  };
+  const frame = now => {
+    raf = 0; if (!alive()) return stop();
+    const dt = Math.min(.05, Math.max(.001, (now - last) / 1000)); last = now;
+    if (st.intro < 1) { st.intro = Math.min(1, st.intro + dt / .9); plane.style.opacity = String(1 - (1 - st.intro) ** 3); }
+    const rect = root.getBoundingClientRect(), hw = w / 2, hh = h / 2;
+    const px = st.px - rect.left - hw, py = st.py - rect.top - hh, inside = st.on && Math.abs(px) <= hw && Math.abs(py) <= hh;
+    const turn = GM.angle * Math.PI / 180, planeX = px * Math.cos(turn) + py * Math.sin(turn), planeY = -px * Math.sin(turn) + py * Math.cos(turn);
+    const nudge = st.on ? Math.max(-1, Math.min(1, px / hw)) : 0, reach = (.6 + 2.2 * GM.spotlight) * Math.max(L.tW, L.tH), settle = 1 - Math.exp(-dt / .22);
+    rows.forEach((row, r) => {
+      const drift = r % 2 ? 1 : -1;
+      if (st.offsets[r] === undefined) { st.offsets[r] = r * L.step * .37; st.shifts[r] = 0; }
+      if (!calm) st.offsets[r] += GM.speed * drift * GM_PACE[r % 4] * dt;
+      const target = calm ? 0 : GM.parallax * L.tW * 1.2 * nudge * (r % 2 ? -1 : 1);
+      st.shifts[r] += (target - st.shifts[r]) * (1 - Math.exp(-dt / GM_INERTIA[r % 4]));
+      const x = -L.period + (((st.offsets[r] + st.shifts[r]) % L.period) + L.period) % L.period;
+      row.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`;
+      const rowY = L.top + r * (L.tH + GM.gap) + L.tH / 2 - L.pH / 2, left = x - L.pW / 2 + L.tW / 2, list = row.children, v = spots[r], mk = marks[r];
+      for (let k = 0; k < list.length; k++) {
+        const want = inside ? 1 - gmSmooth(.25, 1, Math.hypot(left + k * L.step - planeX, rowY - planeY) / reach) : 0;
+        v[k] += (want - v[k]) * settle;
+        if (Math.abs(v[k] - mk[k]) > .004 || (want === 0 && v[k] < .004 && mk[k] !== 0)) { mk[k] = v[k] < .004 ? 0 : v[k]; list[k].style.setProperty("--spot", mk[k].toFixed(3)); }
+      }
+    });
+    if (vis && !document.hidden) raf = requestAnimationFrame(frame);
+  };
+  const kick = () => { if (!raf && vis && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); } };
+  const move = e => { st.px = e.clientX; st.py = e.clientY; st.on = true; };
+  const up = e => { if (e.pointerType === "touch") st.on = false; };
+  const off = () => { st.on = false; };
+  const io = new IntersectionObserver(es => { vis = es[es.length - 1].isIntersecting; kick(); });
+  const ro = new ResizeObserver(() => {
+    const nw = Math.round(root.clientWidth), nh = Math.round(root.clientHeight);
+    if (!nw || !nh || (nw === w && nh === h)) return;
+    w = nw; h = nh; build(); kick();
+  });
+  const vc = () => kick();
+  function stop(){ cancelAnimationFrame(raf); io.disconnect(); ro.disconnect(); removeEventListener("pointermove", move); removeEventListener("pointerdown", move); removeEventListener("pointerup", up); removeEventListener("blur", off); document.removeEventListener("visibilitychange", vc); document.documentElement.removeEventListener("pointerleave", off); }
+  addEventListener("pointermove", move, { passive: true }); addEventListener("pointerdown", move, { passive: true }); addEventListener("pointerup", up);
+  addEventListener("blur", off); document.addEventListener("visibilitychange", vc); document.documentElement.addEventListener("pointerleave", off);
+  io.observe(root); ro.observe(root);
+  return stop;
+}
 function wlBackdrop(host){
-  const imgs = [...host.querySelectorAll(".wl-bgi")], cv = host.querySelector(".wl-rays");
+  const root = host.querySelector(".wl-gm"), cv = host.querySelector(".wl-rays");
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (navigator.connection?.saveData) return () => {};
-  const alive = () => host.isConnected && host.hasAttribute("data-wlbg") && imgs[0]?.isConnected; // the diff can reuse this node for another view
-  let n = 0, front = 0, timer = 0, vis = true, busy = false, stopRays = null;
-  const show = k => {
-    if (busy) return; busy = true;
-    const m = new Image();
-    m.onload = m.onerror = () => {
-      busy = false; if (!alive() || m.naturalWidth === 0) return;
-      const back = imgs[1 - front]; back.src = m.src; back.classList.add("on"); imgs[front].classList.remove("on"); front = 1 - front; n = k;
-    };
-    m.src = WL_PHOTOS[k];
-  };
-  const stop = () => { clearInterval(timer); io.disconnect(); stopRays?.(); };
-  const io = new IntersectionObserver(es => { vis = es[es.length - 1].isIntersecting; });
-  io.observe(host);
-  const go = () => {
-    if (!alive()) return stop();
-    show(0);
-    if (!calm) timer = setInterval(() => { if (!alive()) stop(); else if (vis && !document.hidden) show((n + 1) % WL_PHOTOS.length); }, 3000);
+  const alive = () => host.isConnected && host.hasAttribute("data-wlbg") && !!root?.isConnected; // the diff can reuse this node for another view
+  let stopGrid = null, stopRays = null;
+  const stop = () => { stopGrid?.(); stopRays?.(); };
+  setTimeout(() => {
+    if (!alive()) return;
+    stopGrid = wlGrid(root, alive, calm);
     if (cv) stopRays = wlRays(cv, calm);
-  };
-  setTimeout(go, 300);
+  }, 300);
   return stop;
 }
 function welcomeView(){
   const adding = S.profiles.length > 0;
   return `<main class="wl" aria-labelledby="wl-h">
-    <div class="wl-bg" data-wlbg data-morph-skip aria-hidden="true"><img class="wl-bgi" alt="" decoding="async"><img class="wl-bgi" alt="" decoding="async"><canvas class="wl-rays"></canvas></div>
+    <div class="wl-bg" data-wlbg data-morph-skip aria-hidden="true"><div class="wl-gm"></div><canvas class="wl-rays"></canvas></div>
     <div class="wl-top"><span class="wl-dot" aria-hidden="true"></span><span class="wl-brand" data-tf="word" role="img" aria-label="Whole Life Hub"><span class="tf-it" aria-hidden="true">Whole</span><span class="tf-it" aria-hidden="true">Life</span><span class="tf-it" aria-hidden="true">Hub</span></span></div>
     <div class="wl-main">
       <div class="wl-copy">

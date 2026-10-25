@@ -50,20 +50,29 @@ const emulate = v => send("Emulation.setEmulatedMedia", { features: [{ name: "pr
 const photo = `(document.querySelector(".wl-bgi.on") || {}).src || ""`;
 
 await ev(`localStorage.clear(); true`); await reload();
-ok("the welcome screen has a backdrop behind the text", await ev(`!!document.querySelector(".wl > .wl-bg .wl-bgi") && !!document.querySelector(".wl-bg .wl-rays") && document.querySelector(".wl-bg").getAttribute("aria-hidden") === "true"`));
+ok("the welcome screen has a backdrop behind the text", await ev(`!!document.querySelector(".wl > .wl-bg .wl-gm") && !!document.querySelector(".wl-bg .wl-rays") && document.querySelector(".wl-bg").getAttribute("aria-hidden") === "true"`));
 ok("the headline, text and rings are unchanged", await ev(`/Meals from your culture/.test(document.querySelector("h1").textContent) && !!document.querySelector('[data-act="ob-next"]') && document.querySelectorAll(".wl-ring .arc").length === 3`));
-ok("the first photo fades in", await waitFor(`/img\\/welcome\\/w\\d+\\.webp/.test(${photo})`, 6000));
-const first = await ev(photo);
-ok("a different photo shows within about 4 seconds", await waitFor(`${photo} !== ${JSON.stringify(first)} && ${photo} !== ""`, 5000));
-ok("only one photo is showing at a time", await ev(`document.querySelectorAll(".wl-bgi.on").length === 1`));
-ok("the photos are files, not inlined in the page", await ev(`!/data:image/.test(document.querySelector(".wl-bg").outerHTML)`));
+ok("rows of photos are built", await waitFor(`document.querySelectorAll(".wl-gr").length === 4 && document.querySelectorAll(".wl-gt img").length > 12`, 6000));
+ok("the photos are files, not inlined in the page", await ev(`[...document.querySelectorAll(".wl-gt img")].every(i => /img\\/welcome\\/w\\d+\\.webp$/.test(i.src)) && !/data:image/.test(document.querySelector(".wl-bg").outerHTML)`));
+const xs = () => ev(`[...document.querySelectorAll(".wl-gr")].map(r => r.style.transform).join("|")`);
+const x1 = await xs(); await sleep(700);
+ok("the rows drift", (await xs()) !== x1);
+ok("the grid fades in", await waitFor(`+document.querySelector(".wl-gp").style.opacity > .9`, 3000));
+await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 900, y: 450 }); await sleep(900);
+ok("tiles near the pointer light up", await ev(`[...document.querySelectorAll(".wl-gt")].some(t => +t.style.getPropertyValue("--spot") > .2)`));
 ok("the buttons still work over the backdrop", await ev(`(() => { const b = document.querySelector('[data-act="ob-next"]').getBoundingClientRect(); return document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2).closest('[data-act="ob-next"]') !== null; })()`));
-ok("a re-render keeps the running backdrop (no restart)", await ev(`(() => { const el = document.querySelector(".wl-bg"); el._mark = 1; render(); return document.querySelector(".wl-bg")._mark === 1; })()`));
+ok("a re-render keeps the running backdrop (no restart)", await ev(`(() => { const el = document.querySelector(".wl-gp"); el._mark = 1; render(); return document.querySelector(".wl-gp")._mark === 1; })()`));
+await view(390, 800); await sleep(600);
+ok("a phone gets five smaller rows", await waitFor(`document.querySelectorAll(".wl-gr").length === 5`, 4000));
+ok("a phone has no sideways scroll", await ev(`document.documentElement.scrollWidth <= innerWidth`));
+await view(820, 1180); await sleep(600);
+ok("an iPad has no sideways scroll and a bigger ring", await ev(`document.documentElement.scrollWidth <= innerWidth && document.querySelector(".wl-art").getBoundingClientRect().width > 300`));
+await view(1440);
 
 await emulate("reduce"); await reload();
-await waitFor(`/img\\/welcome\\/w01\\.webp/.test(${photo})`, 6000);
-await sleep(4000);
-ok("reduced motion: the first photo stays still", await ev(`/w01\\.webp/.test(${photo})`));
+await waitFor(`document.querySelectorAll(".wl-gr").length === 4`, 6000);
+const r1 = await xs(); await sleep(1200);
+ok("reduced motion: the rows stand still", (await xs()) === r1);
 await emulate("no-preference");
 
 ok("no page errors", errors.length === 0, errors.join(" | "));
