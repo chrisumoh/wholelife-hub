@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.40, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.41, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.41 · Tests: Trends tiles allowed by the dashboard card test
+
+- **Problem:** Browser tests failed on PR #83 (37 cards.mjs checks). The Make over pass restyles the two Trends tiles (a 32px round icon disc, and on phones a 12px radius, 14px padding and a 10px gap), but the dashboard card test still demanded the flat 20px / 16px / 18px-icon pattern for them.
+- **Change:** The test now expects the Make over look for the two Trends tiles only (32px icon disc at every width; 12px radius, 14px padding and 10px grid gap on phones). Every other dashboard card is still checked against the flat pattern. No app code or CSS changed.
+- **Where:** tests/browser/cards.mjs: the audit's per-card radius, padding, icon, left/right offset and grid-gap checks. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/cards.mjs: 144 passed, 0 failed. Open Summary on a phone: the Trends tiles show a round icon disc and sit two to a row.
+- **Known limits:** The test finds the Trends tiles by the heading above them. Not tried on a real phone.
 
 ## 8.3.40 · Sign-in: Welcome screen first, sign-in after you tap Set up my hub
 

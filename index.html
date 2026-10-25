@@ -3833,7 +3833,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.40", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.41", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3847,6 +3847,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.40", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.41",
+      area:"Tests",
+      title:"Trends tiles allowed by the dashboard card test",
+      bug:"Browser tests failed on PR #83 (37 cards.mjs checks). The Make over pass restyles the two Trends tiles (a 32px round icon disc, and on phones a 12px radius, 14px padding and a 10px gap), but the dashboard card test still demanded the flat 20px / 16px / 18px-icon pattern for them.",
+      fix:"The test now expects the Make over look for the two Trends tiles only (32px icon disc at every width; 12px radius, 14px padding and 10px grid gap on phones). Every other dashboard card is still checked against the flat pattern. No app code or CSS changed.",
+      where:"tests/browser/cards.mjs: the audit's per-card radius, padding, icon, left/right offset and grid-gap checks. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/cards.mjs: 144 passed, 0 failed. Open Summary on a phone: the Trends tiles show a round icon disc and sit two to a row.",
+      limits:"The test finds the Trends tiles by the heading above them. Not tried on a real phone." },
     { id:"8.3.40",
       area:"Sign-in",
       title:"Welcome screen first, sign-in after you tap Set up my hub",
