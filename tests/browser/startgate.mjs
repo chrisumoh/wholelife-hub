@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join, extname } from "node:path";
 
 // Run from the repo root:  node tests/browser/startgate.mjs   (needs Node 22+ and Chrome; set CHROME to its path, CI=1 as root)
-// Build 8.3.34: the sign-in screen shown at startup. Faked Supabase.
+// Build 8.3.35: the sign-in screen shown at startup. Faked Supabase.
 // The app is served with a faked Supabase, so no real account is touched.
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
@@ -82,6 +82,21 @@ await ev(`SB.client.auth.signInWithPassword({ email: "a@b.co", password: "passwo
 await ev(`localStorage.removeItem("wlh.startskip"); true`);
 await reload();
 ok("a signed-in person never sees it", await ev(`!!SB.user && !document.getElementById("sb-email")`));
+
+console.log("--- hold to delete a profile");
+await fresh();
+await ev(`localStorage.setItem("wlh.startskip", "1"); (async () => { const mk = n => { const p = newProfile(n); Object.assign(p, { onboarded: true, coachPrompted: true, tourSeen: "dismissed" }); return p; }; S.profiles = [mk("Ada"), mk("Bo")]; S.activeId = S.profiles[0].id; saveProfile(); await flush(); location.hash = "#/settings/household"; render(); return true; })()`); await sleep(500);
+const bo = `S.profiles[1].id`;
+await ev(`document.querySelector('[data-act="del-profile"][data-id="' + ${bo} + '"]').click(); true`); await sleep(200);
+const ptr = (t, id = 1) => ev(`(() => { const b = document.querySelector("[data-hold]"); b.dispatchEvent(new PointerEvent(${JSON.stringify(t)}, { bubbles: true, pointerId: ${id}, isPrimary: true, button: 0, clientX: b.getBoundingClientRect().left + 5, clientY: b.getBoundingClientRect().top + 5 })); return true; })()`);
+ok("the confirm shows a hold button, not a plain Delete", await ev(`!!document.querySelector("[data-hold=del-profile-yes]") && !document.querySelector('[data-act="del-profile-yes"]')`));
+ok("a plain click deletes nothing", await ev(`document.querySelector("[data-hold]").click(); S.profiles.length === 2`));
+await ptr("pointerdown"); await sleep(600); await ptr("pointerup"); await sleep(500);
+ok("an early release deletes nothing and drains the fill", await ev(`S.profiles.length === 2 && +document.querySelector("[data-hold]").style.getPropertyValue("--hp") === 0`));
+await ptr("pointerdown"); await sleep(900);
+ok("halfway the fill is part full", await ev(`(() => { const v = +document.querySelector("[data-hold]").style.getPropertyValue("--hp"); return v > .3 && v < .9; })()`));
+await sleep(1000);
+ok("holding it through deletes the profile", await ev(`S.profiles.length === 1 && S.profiles[0].name === "Ada"`));
 
 ok("no page errors", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);

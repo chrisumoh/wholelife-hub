@@ -23,7 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
-| 8.3.34 | Sign-in: Google or email sign-in screen at startup, with Continue without an account | IN PROGRESS: claude/project-thread-8bev7j |
+| 8.3.35 | Sign-in: Google or email sign-in screen at startup, with Continue without an account | IN PROGRESS: claude/project-thread-8bev7j |
 | 8.3.33 | Sign-in: supabase-js served from our own site (vendor/), Reload button on the Account card | IN PROGRESS: claude/project-thread-ft2z7b |
 | 8.3.32 | Privacy: Delete my account (in-app account deletion through a new delete-account edge function) | MERGED: PR #78 |
 | 8.3.31 | Legal: Refunds page states the full 14-day refund policy; real contact email and mailing address | MERGED: PR #76 |

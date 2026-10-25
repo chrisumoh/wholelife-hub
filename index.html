@@ -3800,7 +3800,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.34", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.35", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3814,12 +3814,12 @@ const APP_VERSION = { update: "8.3", build: "8.3.34", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
-    { id:"8.3.34",
+    { id:"8.3.35",
       area:"Sign-in",
-      title:"Sign in with Google or email when the app opens",
+      title:"Sign in with Google or email when the app opens, plus hold to delete a profile",
       bug:"Sign-in was only offered inside Settings, or once during first-time setup after the age question. Someone opening the app signed out went straight in, and had to know to look in Settings to save their hub to an account.",
-      fix:"A signed-out person now sees the sign-in card first, before the welcome screen or the app: Continue with Google, or email and password (with Create an account and Forgot password), using the same card as Settings and setup. Under it, Continue without an account goes on into the app exactly as before, and that choice is remembered on this device (wlh.startskip), so the screen is not shown again until the person signs in and later signs out of a cleared browser. It is never shown to someone signed in, when sign-in could not load, on the Terms, Privacy Policy, Refunds, Contact and Credits pages (so their links open), or while the 24-hour under-13 block is active. The setup stop after the age question is unchanged. The welcome headline now slides in letter by letter (Shuffle style, plain CSS, off with reduced motion), the helper line under the buttons is gone, and Skip setup and Cancel are plain text with no underline.",
-      where:"index.html: wlShuffle(), welcomeView(), the .wl-sh/.wl-w/.wl-link CSS, authScreen() (shared by obAuthView()), START_SKIP_KEY, START_OPEN, startGateOn(), startGateView(), render(), the start-skip case, the privacy storage-key table, APP_VERSION, WLH.changelog. tests/browser/startgate.mjs (new), fake-supabase.js (skips the screen unless a test asks for it), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. Nothing under supabase/ changed.",
+      fix:"A signed-out person now sees the sign-in card first, before the welcome screen or the app: Continue with Google, or email and password (with Create an account and Forgot password), using the same card as Settings and setup. Under it, Continue without an account goes on into the app exactly as before, and that choice is remembered on this device (wlh.startskip), so the screen is not shown again until the person signs in and later signs out of a cleared browser. It is never shown to someone signed in, when sign-in could not load, on the Terms, Privacy Policy, Refunds, Contact and Credits pages (so their links open), or while the 24-hour under-13 block is active. The setup stop after the age question is unchanged. The welcome headline now slides in letter by letter (Shuffle style, plain CSS, off with reduced motion), the helper line under the buttons is gone, and Skip setup and Cancel are plain text with no underline. Deleting a profile (Settings > Household) now asks you to press and hold the button for 1.5 seconds; the fill uses the chosen theme colour, and a tap, early release, Escape or leaving the button cancels.",
+      where:"index.html: holdStart(), holdStop(), holdDrive() and the .hold CSS, the Delete button in the household list, wlShuffle(), welcomeView(), the .wl-sh/.wl-w/.wl-link CSS, authScreen() (shared by obAuthView()), START_SKIP_KEY, START_OPEN, startGateOn(), startGateView(), render(), the start-skip case, the privacy storage-key table, APP_VERSION, WLH.changelog. tests/browser/startgate.mjs (new), fake-supabase.js (skips the screen unless a test asks for it), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. Nothing under supabase/ changed.",
       test:"Open the app in a private window: the sign-in card shows first. Choose Continue without an account: the welcome screen or your hub opens, and a reload goes straight in. Sign in with email or Google: you land in the app signed in and the screen does not return. Open #/terms in a fresh private window: the page opens, not the sign-in card. node tests/browser/startgate.mjs.",
       limits:"Sign-in is optional: Continue without an account is always offered. Signing out does not bring the screen back on that browser if Continue without an account was chosen earlier. Google sign-in still depends on the Google provider being on in Supabase. Creating an account here happens before the age question (the age question still comes first for setting up a profile), so an under-13 who has not yet been asked could create an account; say if you want the age question moved ahead of this screen." },
     { id:"8.3.33",
@@ -9338,7 +9338,7 @@ function obAuthView(){
   return authScreen(`<div class="foot-left"><span class="tiny muted">You can sign in later in Settings.</span></div>
       <div class="foot-right"><button class="btn ghost" data-act="ob-auth-go">Skip for now</button></div>`);
 }
-// ---- startup sign-in (8.3.34) ----
+// ---- startup sign-in (8.3.35) ----
 // Shown before anything else to a signed-out person until they sign in or choose to carry on without an account.
 // The choice is remembered on this device; the legal pages and the under-13 block are never gated.
 const START_SKIP_KEY = "wlh.startskip", START_OPEN = ["terms", "privacy-policy", "refunds", "contact", "credits"];
@@ -13123,7 +13123,7 @@ function settingsView(p){
     <p class="small muted">Each profile has its own goals, logs and plans. Switch any time from the menu.</p>
     <div class="list">${S.profiles.map(x => `<div class="li"><div class="grow"><b>${esc(x.name || "Unnamed")}</b>${x.id === p.id ? ` <span class="tag good">Active</span>` : ""}<div class="small muted">${esc(GOALS.find(g=>g[0]===x.goal)?.[1] || "No goal")} · since ${fmtDay(x.created)}</div></div>
       <div class="row" style="gap:6px">${x.id !== p.id ? `<button class="btn sm" data-act="switch" data-id="${x.id}">Switch</button>` : ""}
-      ${UI.confirmDel === x.id ? `<span class="small">Delete ${esc(x.name || "this profile")} and all its logs?</span><button class="btn sm danger" data-act="del-profile-yes" data-id="${x.id}">Delete</button><button class="btn sm" data-act="del-profile-no">Keep</button>` : S.profiles.length > 1 ? `<button class="btn sm ghost" data-act="del-profile" data-id="${x.id}">Delete</button>` : ""}</div></div>`).join("")}</div>
+      ${UI.confirmDel === x.id ? `<span class="small">Delete ${esc(x.name || "this profile")} and all its logs?</span><button class="btn sm hold" data-hold="del-profile-yes" data-id="${x.id}" aria-describedby="hold-hint"><span class="hold-fill" aria-hidden="true">Hold to delete</span><span class="hold-l">Hold to delete</span></button><span id="hold-hint" class="sr-only">Press and hold for 1.5 seconds to confirm</span><button class="btn sm" data-act="del-profile-no">Keep</button>` : S.profiles.length > 1 ? `<button class="btn sm ghost" data-act="del-profile" data-id="${x.id}">Delete</button>` : ""}</div></div>`).join("")}</div>
   </section>${friendsCard()}`,
     privacy: `${privacyGlance(p)}${photoSyncCard()}${mediaCard()}<section class="card" id="security">
     <div class="row" style="gap:12px"><div class="shield">${icon("lock")}</div><h2>Privacy and security</h2></div>
@@ -13547,6 +13547,38 @@ document.addEventListener("input", e => {
 });
 
 // =================== BOOT ===================
+// ---- hold to confirm (8.3.35) ----
+// A press-and-hold button: the fill follows the accent colour and the action runs only when it reaches the end. A tap, an early
+// release, leaving the button, Escape or losing focus cancels and the fill drains back. The action name sits in data-hold, not
+// data-act, so a stray click does nothing; on completion it is copied to data-act and the normal click handler takes over.
+const HOLD_MS = 1500, HOLD = { el:null, p:0, raf:0, t0:0, from:0, dir:0, pid:null };
+function holdDrive(){
+  const h = HOLD, el = h.el; if (!el) return;
+  const now = performance.now(), d = h.dir > 0 ? HOLD_MS * (1 - h.from) : 200 * h.from + 1;
+  const k = Math.min(1, (now - h.t0) / d);
+  h.p = h.dir > 0 ? h.from + (1 - h.from) * k : h.from * (1 - k);
+  el.style.setProperty("--hp", h.p.toFixed(4));
+  if (h.dir > 0 && k >= 1) { h.raf = 0; h.dir = 0; el.dataset.act = el.dataset.hold; el.classList.add("held"); el.click(); return; }
+  if (h.dir < 0 && k >= 1) { h.raf = 0; h.dir = 0; h.el = null; return; }
+  h.raf = requestAnimationFrame(holdDrive);
+}
+function holdStart(el, pid){
+  if (HOLD.el && HOLD.el !== el) holdStop();
+  Object.assign(HOLD, { el, pid, from:HOLD.el === el ? HOLD.p : 0, dir:1, t0:performance.now() });
+  el.classList.add("holding"); cancelAnimationFrame(HOLD.raf); HOLD.raf = requestAnimationFrame(holdDrive);
+}
+function holdStop(){
+  const h = HOLD; if (!h.el || h.dir < 0) return;
+  h.el.classList.remove("holding"); h.pid = null;
+  Object.assign(h, { from:h.p, dir:-1, t0:performance.now() }); cancelAnimationFrame(h.raf); h.raf = requestAnimationFrame(holdDrive);
+}
+document.addEventListener("pointerdown", e => { const el = e.target.closest?.("[data-hold]"); if (el && e.button === 0 && e.isPrimary && !HOLD.pid) { holdStart(el, e.pointerId); try { el.setPointerCapture(e.pointerId); } catch {} } });
+for (const ev of ["pointerup", "pointercancel", "lostpointercapture", "contextmenu"]) document.addEventListener(ev, e => { if (HOLD.el && (ev === "contextmenu" || e.pointerId === HOLD.pid)) holdStop(); });
+document.addEventListener("pointermove", e => { const el = HOLD.el; if (!el || e.pointerId !== HOLD.pid) return; const r = el.getBoundingClientRect(); if (e.clientX < r.left - 10 || e.clientX > r.right + 10 || e.clientY < r.top - 10 || e.clientY > r.bottom + 10) holdStop(); });
+document.addEventListener("keydown", e => { const el = e.target.closest?.("[data-hold]"); if (e.key === "Escape") holdStop(); else if (el && (e.key === " " || e.key === "Enter")) { e.preventDefault(); if (!e.repeat && !HOLD.pid) holdStart(el, "key"); } });
+document.addEventListener("keyup", e => { if (HOLD.pid === "key" && (e.key === " " || e.key === "Enter")) { e.preventDefault(); holdStop(); } });
+window.addEventListener("blur", holdStop);
+document.addEventListener("visibilitychange", () => { if (document.hidden) holdStop(); });
 (async function boot(){
   readRoute();
   UI.loading = "boot"; render();
@@ -23075,6 +23107,12 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .auth-links{align-items:center;gap:0 6px;color:var(--muted);font-size:calc((13px) * var(--text-scale,1))}
 .auth-pop .auth-links{margin-top:12px}
 .auth-ob{width:min(400px,calc(100vw - 32px));margin-inline:auto}
+
+/* hold to confirm (8.3.35): the fill uses the accent colour of the chosen theme */
+.btn.hold{position:relative;overflow:hidden;isolation:isolate;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;--hp:0}
+.btn.hold .hold-fill{position:absolute;inset:0;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);clip-path:inset(0 calc((1 - var(--hp)) * 100%) 0 0)}
+.btn.hold.holding{transform:scale(.97)}
+.btn.hold:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 </style>
 <script>
 (() => {
