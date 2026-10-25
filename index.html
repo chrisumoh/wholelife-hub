@@ -3840,6 +3840,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.36", channel: "Dev Testing", da
       where:"index.html: holdStart(), holdStop(), holdDrive() and the .hold CSS, the Delete button in the household list, wlShuffle(), welcomeView(), the .wl-sh/.wl-w/.wl-link CSS, authScreen() (shared by obAuthView()), START_SKIP_KEY, START_OPEN, startGateOn(), startGateView(), render(), the start-skip case, the privacy storage-key table, APP_VERSION, WLH.changelog. tests/browser/startgate.mjs (new), fake-supabase.js (skips the screen unless a test asks for it), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. Nothing under supabase/ changed.",
       test:"Open the app in a private window: the sign-in card shows first. Choose Continue without an account: the welcome screen or your hub opens, and a reload goes straight in. Sign in with email or Google: you land in the app signed in and the screen does not return. Open #/terms in a fresh private window: the page opens, not the sign-in card. node tests/browser/startgate.mjs.",
       limits:"Sign-in is optional: Continue without an account is always offered. Signing out does not bring the screen back on that browser if Continue without an account was chosen earlier. Google sign-in still depends on the Google provider being on in Supabase. Creating an account here happens before the age question (the age question still comes first for setting up a profile), so an under-13 who has not yet been asked could create an account; say if you want the age question moved ahead of this screen." },
+    { id:"8.3.34",
+      area:"Settings",
+      title:"Settings tabs get a sliding pill, and a wheel picker for short lists (first on Log a meal > Portion)",
+      bug:"The Settings tabs marked the open section with a thin underline that jumped from tab to tab. CJ asked for the springy sliding pill from their snippet on this switcher, and for a wheel-style picker (the chosen row full size, the others faded and smaller) for lists across the app.",
+      fix:"Settings tabs: one pill now sits behind the open tab and slides to the next one with the bouncy curve from CJ's snippet (.45s, cubic-bezier(.34,1.56,.64,1)). It is measured from the tab itself instead of being one equal third, so it works for all 8 Settings tabs and any label length, and it scrolls with the strip on a phone. With a mouse it also follows the pointer across the strip and slides back to the open tab when the pointer leaves; touch does not move it. The underline is gone. Tabs share the spare width when there is room. Wheel picker: any select marked data-wheel now shows as a short wheel (.picker-track from CJ's snippet: the track moves 38px a row over .58s with the same curve, the chosen row is full size and the others are at 32% opacity and 88% size). Tap or click a row, drag up or down, or use the arrow keys, Home and End. The select stays in the page and keeps the value, so saving works as before. It is used in one place for now, Log a meal > Portion; other lists are proposed, not converted. Reduced motion stops both slides.",
+      where:"index.html: tabPlace(), tabSync() and the pointer and resize listeners (just above ringSync's resize listener), afterRender() (calls tabSync), the 8.3.34 CSS lines after .focus-ring.still (.tabs, .tab-pill, .wl-wheel, .picker-track), the form-controls script (wheelSet(), wheelSync(), enhanceWheel(), enhanceSelect() skips data-wheel, pass()), the Portion select in nutritionView(), APP_VERSION, WLH.changelog. tests/browser/pickers.mjs (new), tests/browser/run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/pickers.mjs (18 checks); motion.mjs (44) and controls.mjs (56) still pass. By hand: Settings, tap Coach then Privacy & security and watch the pill slide; on a computer, move the mouse along the tabs and away. Meals > Log a meal > Portion: tap Half portion, drag the list, or Tab to it and press the arrow keys. Turn Settings > Appearance > Motion to Reduced and both should snap.",
+      limits:"Only Log a meal > Portion uses the wheel so far; the Meal select beside it stays a dropdown. Mouse-wheel scrolling over the picker is not caught, so it scrolls the page. Lists longer than about 8 options (countries, birth year) should stay dropdowns. Checked in headless Chrome only, not on a real phone." },
     { id:"8.3.33",
       area:"Sign-in",
       title:"Sign-in library served from our own site, with a Reload button",
@@ -11844,6 +11852,7 @@ function afterRender(){
   if (typeof stepperAfterRender === "function") stepperAfterRender(); // 8.1.9 stepper motion
   if (typeof wluScan === "function") wluScan(); // 8.3.26 file upload widgets
   ringSync(); flipSync(); // 8.2.20: sliding selection ring, widget flip state
+  tabSync(); // 8.3.34: sliding pill on the Settings tabs
   if (typeof applyCanonical === "function") applyCanonical();
   if (typeof applyTheme === "function") applyTheme(P());
   if (typeof applyOpacity === "function") applyOpacity(P());
@@ -12384,7 +12393,7 @@ function nutritionView(p){
         <label class="f">Date<input type="date" id="m-date" value="${date}" max="${today()}"></label>
         <label class="f full">What did you eat?<input type="text" id="m-name" list="dishlist" value="${esc(UI.prefill?.name || "")}" placeholder="Start typing: jollof, waakye, egusi…"></label>
         <label class="f">Calories<input type="number" id="m-cal" min="0" max="5000" value="${UI.prefill?.cal ?? ""}" placeholder="Filled from the catalog"></label>
-        <label class="f">Portion<select id="m-portion">${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
+        <label class="f">Portion<select id="m-portion" data-wheel>${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
       </div>
       <datalist id="dishlist">${DISHES.concat(dishAltOptions()).map(d => `<option value="${esc(d.n)}">${d.cal} cal</option>`).join("")}</datalist>
       ${quickLogBlock(date)}
@@ -16469,6 +16478,34 @@ function ringSync(){
     if (first) { void ring.offsetWidth; ring.classList.remove("still"); }
   });
 }
+// Settings tabs: one pill slides to the active tab, and (mouse only) follows the pointer while it is over the strip.
+// Measured from the tab itself, so any number of tabs and any label width works, and it scrolls with the strip.
+function tabPlace(box, a, still){
+  const pill = box.querySelector(":scope > .tab-pill"); if (!pill || !a?.offsetWidth) return;
+  if (still) pill.classList.add("still");
+  pill.style.setProperty("--x", `${a.offsetLeft}px`); pill.style.setProperty("--w", `${a.offsetWidth}px`);
+  if (still) { void pill.offsetWidth; pill.classList.remove("still"); }
+}
+function tabSync(){
+  document.querySelectorAll(".tabs").forEach(box => {
+    const on = box.querySelector('a[aria-current="page"]');
+    let pill = box.querySelector(":scope > .tab-pill");
+    if (!on || !on.offsetWidth) { pill?.remove(); return; }
+    const first = !pill;
+    if (first) { pill = document.createElement("span"); pill.className = "tab-pill"; pill.setAttribute("aria-hidden", "true"); pill._keep = true; box.prepend(pill); }
+    tabPlace(box, on, first);
+  });
+}
+document.addEventListener("pointerover", e => {
+  if (e.pointerType !== "mouse") return;
+  const a = e.target.closest?.(".tabs a"); if (a) tabPlace(a.closest(".tabs"), a);
+});
+document.addEventListener("pointerout", e => {
+  if (e.pointerType !== "mouse") return;
+  const box = e.target.closest?.(".tabs"); if (!box || e.relatedTarget?.closest?.(".tabs a")) return;
+  tabPlace(box, box.querySelector('a[aria-current="page"]'));
+});
+window.addEventListener("resize", () => document.querySelectorAll(".tabs").forEach(b => tabPlace(b, b.querySelector('a[aria-current="page"]'), true)));
 let ringTimer = 0;
 window.addEventListener("resize", () => { clearTimeout(ringTimer); ringTimer = setTimeout(() => { document.querySelectorAll(".focus-ring").forEach(r => r.classList.add("still")); ringSync(); requestAnimationFrame(() => document.querySelectorAll(".focus-ring").forEach(r => r.classList.remove("still"))); }, 120); });
 // Click actions. Widgets are found by key, never by position, so a hidden widget in the saved list cannot shift the target.
@@ -22975,6 +23012,27 @@ input[type=date]::-webkit-calendar-picker-indicator{opacity:.6}
 .focus-ring{position:absolute;left:0;top:0;width:var(--w);height:var(--h);translate:var(--x) var(--y);border:1.5px solid var(--gold);pointer-events:none;z-index:1;
   transition:translate .48s cubic-bezier(.34,1.56,.64,1),width .48s cubic-bezier(.34,1.56,.64,1),height .48s cubic-bezier(.34,1.56,.64,1)}
 .focus-ring.still{transition:none}
+/* 8.3.34: Settings tabs get a sliding pill (replaces the underline); wheel pickers for short lists */
+.tabs{position:relative}
+.tabs a{z-index:1;flex:1 1 0;min-width:max-content;padding-inline:14px}
+.tabs{gap:4px;padding:6px}
+.tabs a[aria-current="page"]>span::after{content:none}
+.tab-pill{position:absolute;top:6px;bottom:6px;left:0;width:var(--w,0);transform:translateX(var(--x,0));z-index:0;pointer-events:none;
+  border-radius:var(--r-xs);background:var(--surface);box-shadow:var(--shadow);
+  transition:transform .45s cubic-bezier(.34,1.56,.64,1),width .45s cubic-bezier(.34,1.56,.64,1)}
+.tab-pill.still{transition:none}
+.wl-wheel{position:relative;height:114px;overflow:hidden;border:1px solid var(--line2);border-radius:var(--r-sm);background:var(--raise);outline-offset:2px;
+  touch-action:none;user-select:none;-webkit-user-select:none;
+  -webkit-mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent);mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent)}
+.wl-wheel::before{content:"";position:absolute;left:6px;right:6px;top:38px;height:38px;border-radius:var(--r-xs);background:var(--surface);box-shadow:var(--shadow)}
+.picker-track{position:relative;padding-top:38px;--i:0;transform:translateY(calc(var(--i) * -38px));transition:transform .58s cubic-bezier(.34,1.56,.64,1)}
+.picker-track.still{transition:none}
+.picker-track [role="option"]{height:38px;display:flex;align-items:center;justify-content:center;padding:0 12px;cursor:pointer;color:var(--text);font-weight:600;
+  font-size:calc((14px) * var(--text-scale,1));white-space:nowrap;transition:opacity .3s var(--ease-smooth),transform .3s var(--ease-spring)}
+.picker-track [role="option"]:not(.active){opacity:.32;transform:scale(.88)}
+.wl-wheeled{display:none}
+:root[data-motion="reduced"] .tab-pill,:root[data-motion="reduced"] .picker-track,:root[data-motion="reduced"] .picker-track [role="option"]{transition:none}
+@media (prefers-reduced-motion:reduce){.tab-pill,.picker-track,.picker-track [role="option"]{transition:none}}
 .stk>b,.stk>.tiny{display:block}
 a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not(.links a){position:relative;text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 38%,transparent);text-underline-offset:3px}
 a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not(.links a)::after{content:"";position:absolute;left:0;bottom:-4px;width:100%;height:2px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.65,0,.35,1)}
@@ -23739,7 +23797,7 @@ function tourGuideCard(){
     if (t.disabled !== sel.disabled) t.disabled = sel.disabled;
   }
   function enhanceSelect(sel){
-    if (sel.multiple || sel.size > 1) return;
+    if (sel.multiple || sel.size > 1 || sel.hasAttribute("data-wheel")) return;
     if (coarse()) {
       if (sel._wl) { sel._wl.remove(); sel._wl = null; sel.classList.remove("wl-native"); sel.removeAttribute("aria-hidden"); sel.removeAttribute("tabindex"); }
       return;
@@ -23760,6 +23818,63 @@ function tourGuideCard(){
     if (sel.getAttribute("aria-hidden") !== "true") sel.setAttribute("aria-hidden", "true");
     if (sel.tabIndex !== -1) sel.tabIndex = -1;
     syncSelect(sel);
+  }
+  // ---- wheel picker: <select data-wheel> shown as a short list; the chosen row is full size, the rest fade ----
+  // The select stays in the page and keeps the value, so its change handlers still run. Click or tap a row,
+  // drag, or use the arrow keys, Home and End. Meant for short lists (about 8 rows or fewer).
+  const ROW = 38;
+  function wheelSet(sel, i, fire = true){
+    const w = sel._wheel; if (!w) return;
+    i = Math.max(0, Math.min(sel.options.length - 1, i));
+    const moved = sel.selectedIndex !== i;
+    sel.selectedIndex = i;
+    wheelSync(sel);
+    if (moved && fire) sel.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  function wheelSync(sel){
+    const w = sel._wheel; if (!w) return;
+    const track = w.firstElementChild, rows = [...track.children], i = Math.max(0, sel.selectedIndex);
+    if (rows.length !== sel.options.length || rows.some((r, n) => r.textContent !== sel.options[n].text)) {
+      track.replaceChildren(...[...sel.options].map((o, n) => { const r = document.createElement("div"); r.setAttribute("role", "option"); r.id = `${w.id}-o${n}`; r.dataset.i = n; r.textContent = o.text; return r; }));
+    }
+    [...track.children].forEach((r, n) => { r.classList.toggle("active", n === i); r.setAttribute("aria-selected", n === i); });
+    track.style.setProperty("--i", i);
+    w.setAttribute("aria-activedescendant", `${w.id}-o${i}`);
+    w.setAttribute("aria-disabled", sel.disabled);
+  }
+  function enhanceWheel(sel){
+    if (sel.multiple || sel.size > 1) return;
+    if (!sel._wheel) {
+      const w = document.createElement("div");
+      w.className = "wl-wheel"; w.id = `wl-w${++seq}`; w._for = sel; w.tabIndex = 0; w.setAttribute("role", "listbox");
+      w.setAttribute("aria-label", nameOf(sel) || "Choose an option");
+      const track = document.createElement("div"); track.className = "picker-track still"; w.append(track);
+      w.addEventListener("keydown", e => {
+        const to = { ArrowDown: sel.selectedIndex + 1, ArrowUp: sel.selectedIndex - 1, Home: 0, End: sel.options.length - 1 }[e.key];
+        if (to === undefined || sel.disabled) return;
+        e.preventDefault(); wheelSet(sel, to);
+      });
+      let y0 = null, i0 = 0, dragged = false;
+      w.addEventListener("pointerdown", e => { if (sel.disabled || e.button) return; y0 = e.clientY; i0 = sel.selectedIndex; dragged = false; });
+      w.addEventListener("pointermove", e => {
+        if (y0 === null) return;
+        const n = Math.round((y0 - e.clientY) / ROW);
+        if (Math.abs(e.clientY - y0) > 6 && !dragged) { dragged = true; w.setPointerCapture?.(e.pointerId); }
+        if (dragged) wheelSet(sel, i0 + n);
+      });
+      const end = () => { y0 = null; };
+      w.addEventListener("pointerup", end); w.addEventListener("pointercancel", end);
+      w.addEventListener("click", e => {
+        if (dragged) { dragged = false; return; }
+        const r = e.target.closest("[role=option]"); if (r && !sel.disabled) { wheelSet(sel, +r.dataset.i); w.focus({ preventScroll: true }); }
+      });
+      add(null, w, sel, "before"); sel._wheel = w; sel.classList.add("wl-wheeled");
+      sel.setAttribute("aria-hidden", "true"); sel.tabIndex = -1;
+      wheelSync(sel);
+      // the first paint sits in place; later changes spring
+      requestAnimationFrame(() => w.firstElementChild.classList.remove("still"));
+    }
+    wheelSync(sel);
   }
   const optItems = () => [...LB.el.querySelectorAll(".wl-opt")];
   function setAct(i, scroll = true){
@@ -23994,12 +24109,13 @@ function tourGuideCard(){
   // ---- one pass after every change to the page ----
   function pass(){
     q = 0;
-    for (const t of document.querySelectorAll(".wl-sel,.wl-date,.in-btn,.wl-count")) {
+    for (const t of document.querySelectorAll(".wl-sel,.wl-date,.in-btn,.wl-count,.wl-wheel")) {
       const f = t._for; if (f && !f.isConnected) t.remove();
     }
     if (LB.el && !LB.sel?.isConnected) closeList(false);
     if (CD.el && !CD.inp?.isConnected) closeCal(false);
     document.querySelectorAll("select").forEach(enhanceSelect);
+    document.querySelectorAll("select[data-wheel]").forEach(enhanceWheel);
     document.querySelectorAll("input[type=date],input[data-wl-date]").forEach(enhanceDate);
     document.querySelectorAll("input[type=password]").forEach(enhancePassword);
     document.querySelectorAll("textarea").forEach(ta => {
