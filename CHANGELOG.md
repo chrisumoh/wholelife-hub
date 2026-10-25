@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.38, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.39, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.39 · Branding: New Whole Life Hub app icon, used on the home screen, browser tab and inside the app
+
+- **Problem:** The app icon was the old green tile, and a hand-drawn copy of it was used as the in-app logo and the browser tab icon.
+- **Change:** CJ's new artwork (the glass tile with the leaf and heartbeat ring on navy) is now the app icon everywhere. The install icons img/icon-192.png, img/icon-512.png and img/apple-touch-icon.png are cut from it, a new maskable icon (img/icon-maskable-512.png, with room around the tile for Android's round and squircle masks) is added to the manifest, the browser tab uses img/favicon-32.png, favicon-48.png and icon-192.png instead of the old inline picture, and the iOS app project gets its 1024 px icon (AppIcon-1024.png). Inside the app, logoSVG() now shows the same picture (img/logo-320.webp) on the welcome, loading, sign-in, setup and tour screens, so the home screen icon and the in-app logo match. The manifest start colour is the icon's navy so the install splash matches. The service worker cache name moves to wlh-v2 so devices stop serving the old icons. The page colour for the browser bar stays the app green.
+- **Where:** img/icon-192.png, icon-512.png, apple-touch-icon.png, icon-maskable-512.png (new), favicon-32.png and favicon-48.png (new), logo-320.webp (new); manifest.webmanifest; sw.js (VERSION, precache list); ios/WholeLife/Assets.xcassets/AppIcon.appiconset (AppIcon-1024.png, Contents.json); index.html: the icon links in <head>, logoSVG(), the .logo-svg and .wl-mark CSS. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open the app: the tab icon is the new tile, and the welcome, loading and sign-in screens show it as the logo. Add the app to a phone home screen (iPhone: Share > Add to Home Screen; Android: Install app): the new tile appears. An already-installed app may keep its old icon until you remove it and add it again.
+- **Known limits:** The artwork was supplied as one JPEG inside an SVG, so every size is cut from that picture rather than redrawn as vector; the 1024 px icon is sharp but the tile edge is a photo-style glass edge. Store listings (Lemon Squeezy, Google Play, App Store) are separate uploads: 1024 and 512 px copies are in the project's brand folder. Not tried on a real phone.
 
 ## 8.3.38 · Sign-in: Continue with Google works on the startup and setup sign-in screens
 
