@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.31, 2026-10-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.32, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.32 · Privacy: Delete my account: real in-app account deletion
+
+- **Problem:** The Delete my account and data button only cleared this device. Everything saved in the account (all synced logs and photos) stayed on the servers and came back at the next sign-in, and the only way to delete it was to email us. Google Play requires an in-app way to delete an account.
+- **Change:** New Delete my account row in Settings > Privacy & security, shown only when signed in. It asks for the word DELETE, then calls a new delete-account edge function with the person's own access token. The function finds the account from the token (never from the request), deletes every file under that account's folder in the photos bucket, then deletes the account; the database removes every row with it because all tables are set to delete along with the user. Only after the server answers deleted does the app wipe this device. If anything fails the account is left whole and the message says nothing was deleted. The device-only erase now points to the new row. The Privacy Policy section on deleting data is rewritten to match, and LEGAL_UPDATED and TERMS_VERSION move to 25 October 2026.
+- **Where:** supabase/functions/delete-account/ (handler.ts, index.ts, new). index.html: acctDeleteRow(), deleteAccount(), the acct-del-ask, acct-del-no and acct-del-yes cases, the Your data card in settingsView(), the Privacy Policy deleting-data paragraph, LEGAL_UPDATED, TERMS_VERSION, APP_VERSION, WLH.changelog. tests/delete-account-handler.test.mjs, tests/browser/acctdel.mjs (run-all.mjs, tests.yml). docs/DATABASE.md, docs/SECURITY.md, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No migration and no table changed.
+- **How to test:** Run node --test tests/delete-account-handler.test.mjs and node tests/browser/acctdel.mjs. After the function is deployed (needs CJ's go): sign in with a throwaway test account on the preview, log a meal with a photo, open Settings > Privacy & security, press Delete my account, type DELETE and confirm. The app returns to a fresh setup; in the Supabase dashboard the account is gone from Authentication, its rows are gone from the tables and its folder is gone from the photos bucket. Signing in with the same email then fails. Never test with a real account.
+- **Known limits:** The function is in the repo but NOT deployed yet: until CJ says go, pressing Delete my account shows the could-not-delete message and deletes nothing. It deletes the sign-in account only, not a Premium subscription at Lemon Squeezy (cancel that first; the screen says so). It cannot be undone and there is no grace period. A friend who has this person in a challenge or chat simply no longer sees them. The browser test fakes the function, so the real deletion has not been run end to end.
 
 ## 8.3.31 · Legal: The Refunds page states the full refund policy, with real contact details
 

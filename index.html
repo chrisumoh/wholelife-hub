@@ -3795,7 +3795,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.31", channel: "Dev Testing", date: "2026-10-24", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.32", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3809,6 +3809,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.31", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.32",
+      area:"Privacy",
+      title:"Delete my account: real in-app account deletion",
+      bug:"The Delete my account and data button only cleared this device. Everything saved in the account (all synced logs and photos) stayed on the servers and came back at the next sign-in, and the only way to delete it was to email us. Google Play requires an in-app way to delete an account.",
+      fix:"New Delete my account row in Settings > Privacy & security, shown only when signed in. It asks for the word DELETE, then calls a new delete-account edge function with the person's own access token. The function finds the account from the token (never from the request), deletes every file under that account's folder in the photos bucket, then deletes the account; the database removes every row with it because all tables are set to delete along with the user. Only after the server answers deleted does the app wipe this device. If anything fails the account is left whole and the message says nothing was deleted. The device-only erase now points to the new row. The Privacy Policy section on deleting data is rewritten to match, and LEGAL_UPDATED and TERMS_VERSION move to 25 October 2026.",
+      where:"supabase/functions/delete-account/ (handler.ts, index.ts, new). index.html: acctDeleteRow(), deleteAccount(), the acct-del-ask, acct-del-no and acct-del-yes cases, the Your data card in settingsView(), the Privacy Policy deleting-data paragraph, LEGAL_UPDATED, TERMS_VERSION, APP_VERSION, WLH.changelog. tests/delete-account-handler.test.mjs, tests/browser/acctdel.mjs (run-all.mjs, tests.yml). docs/DATABASE.md, docs/SECURITY.md, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No migration and no table changed.",
+      test:"Run node --test tests/delete-account-handler.test.mjs and node tests/browser/acctdel.mjs. After the function is deployed (needs CJ's go): sign in with a throwaway test account on the preview, log a meal with a photo, open Settings > Privacy & security, press Delete my account, type DELETE and confirm. The app returns to a fresh setup; in the Supabase dashboard the account is gone from Authentication, its rows are gone from the tables and its folder is gone from the photos bucket. Signing in with the same email then fails. Never test with a real account.",
+      limits:"The function is in the repo but NOT deployed yet: until CJ says go, pressing Delete my account shows the could-not-delete message and deletes nothing. It deletes the sign-in account only, not a Premium subscription at Lemon Squeezy (cancel that first; the screen says so). It cannot be undone and there is no grace period. A friend who has this person in a challenge or chat simply no longer sees them. The browser test fakes the function, so the real deletion has not been run end to end." },
     { id:"8.3.31",
       area:"Legal",
       title:"The Refunds page states the full refund policy, with real contact details",
@@ -7972,6 +7980,37 @@ function lockNow(){ // forget the key and the decrypted data in this tab
 async function readBack(){
   const local = lsGet(); return { root: local?.root, logs: Object.values(local?.logs || {}) };
 }
+// ---- delete my account ----
+// Calls the delete-account edge function with the person's own access token; it removes their photos and then the account, and the
+// database removes every row with it. Only after the server says "deleted" is this device wiped too.
+function acctDeleteRow(){
+  const d = UI.delAcct;
+  if (!d) return `<div class="setrow"><div class="setlabel"><b>Delete my account</b><span class="small muted">Deletes your account and everything saved in it: every profile, meal, snack, drink, workout, weigh-in, vital and photo, on every device. Also clears this device. Immediate, and cannot be undone. A Premium subscription is separate: cancel it first.</span></div>
+      <button class="btn danger" data-act="acct-del-ask">Delete my account</button></div>`;
+  return `<div class="setrow"><div class="setlabel"><b>Delete my account</b><span class="small muted">This cannot be undone. Type DELETE to confirm.</span>
+      <label class="f">Type DELETE<input type="text" id="acct-del-text" autocomplete="off" autocapitalize="characters" ${d.busy ? "disabled" : ""}></label>
+      ${d.err ? `<span class="small" role="alert" style="color:var(--bad)">${esc(d.err)}</span>` : ""}</div>
+      <span class="row" style="gap:6px"><button class="btn sm" data-act="acct-del-no" ${d.busy ? "disabled" : ""}>Cancel</button><button class="btn sm danger" data-act="acct-del-yes" ${d.busy ? "disabled" : ""}>${d.busy ? "Deleting…" : "Delete my account"}</button></span></div>`;
+}
+async function deleteAccount(){
+  const d = UI.delAcct, box = document.getElementById("acct-del-text");
+  if (!d || d.busy) return;
+  if (!box || box.value.trim() !== "DELETE") { UI.delAcct = { err: "Type DELETE (capital letters) to confirm." }; render(); return; }
+  const c = sbClient(); if (!c || !SB.user) { UI.delAcct = { err: "Sign in first." }; render(); return; }
+  if (navigator.onLine === false) { UI.delAcct = { err: "You are offline. Try again when you are connected." }; render(); return; }
+  UI.delAcct = { busy: true }; render();
+  let state = "error";
+  try {
+    const { data } = await c.auth.getSession(), token = data?.session?.access_token;
+    if (token) {
+      const r = await fetch(`${SB_URL}/functions/v1/delete-account`, { method:"POST", headers:{ "content-type":"application/json", apikey:SB_KEY, authorization:`Bearer ${token}` }, body: JSON.stringify({ confirm:"DELETE" }) });
+      state = (await r.json().catch(() => ({}))).state || "error";
+    } else state = "unauthorized";
+  } catch { console.warn("account deletion request failed"); }
+  if (state !== "deleted") { UI.delAcct = { err: state === "unauthorized" ? "Your sign-in has expired. Sign out, sign in again, then retry." : "Could not delete the account. Nothing was deleted. Try again in a moment, or email the address in the Privacy Policy." }; render(); return; }
+  UI.delAcct = null; historyAdd("erase"); await eraseEverything(); UI.locked = false; UI.confirmEraseAll = false; resetUI(); render(); toast("Your account was deleted.");
+}
+
 async function eraseEverything(){
   lsRemoveUserData(); // profiles and logs for every account and the guest, plus wlh.notif.* and wlh.rem.*
   Object.assign(S, { profiles:[], activeId:null, logs:{} }); CRY.key = null; CRY.lock = null; CRY.raw = null; dirty.clear();
@@ -11901,7 +11940,7 @@ function obGround(){ return `<div class="obg-bg" aria-hidden="true"><i></i><i></
 // is kept, never the birth date. Someone under 13 gets a plain "can't set up" screen, and the device refuses another try for 24 hours
 // (a flag in this browser; clearing site data removes it, so it deters a retry rather than guaranteeing one).
 const AGE_BLOCK_KEY = "wlh.ageblock", AGE_BLOCK_MS = 24 * 3600 * 1000, CONSENT_KEY = "wlh.consent";
-const TERMS_VERSION = "2026-10-24"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
+const TERMS_VERSION = "2026-10-25"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
 const ageBlocked = () => { try { return +localStorage.getItem(AGE_BLOCK_KEY) > Date.now(); } catch { return false; } };
 const blockAge = () => { try { localStorage.setItem(AGE_BLOCK_KEY, String(Date.now() + AGE_BLOCK_MS)); } catch {} };
 // Whole years old. The birth day is not asked, so a birthday this month counts as not reached yet.
@@ -13074,7 +13113,8 @@ function settingsView(p){
     <h2>Your data</h2>
     <div class="setrow"><div class="setlabel"><b>Export my data</b><span class="small muted">A JSON file with your logs, plans and settings.</span></div>
       <button class="btn" data-act="export">Download (JSON)</button></div>
-    <div class="setrow"><div class="setlabel"><b>Delete my account and data</b><span class="small muted">Every profile and everything logged under it, on this device. What is saved in your account (everything that syncs, photos included) is not deleted by this, and comes back when you sign in: to delete the account and all synced data, email the contact address in the Privacy Policy. Immediate, and cannot be undone.</span></div>
+    ${SB.user ? acctDeleteRow() : ""}
+    <div class="setrow"><div class="setlabel"><b>Delete my account and data</b><span class="small muted">Every profile and everything logged under it, on this device. What is saved in your account (everything that syncs, photos included) is not deleted by this, and comes back when you sign in: ${SB.user ? "to delete the account and all synced data, use Delete my account below." : "to delete an account and all synced data, sign in and use Delete my account."} Immediate, and cannot be undone.</span></div>
       ${UI.confirmEraseAll
         ? `<span class="row" style="gap:6px"><button class="btn sm" data-act="erase-all-no">Cancel</button><button class="btn sm danger" data-act="erase-all-yes">Confirm delete</button></span>`
         : `<button class="btn danger" data-act="erase-all-ask">Delete everything</button>`}
@@ -13297,6 +13337,9 @@ document.addEventListener("click", async e => {
     case "erase-yes": await eraseEverything(); UI.locked = false; UI.confirmErase = false; UI.unlockErr = null; resetUI(); render(); toast("Erased. Starting fresh."); break;
     // Task 7.10: the same erase, reachable from Settings > Privacy and security rather than only
     // from the locked-out "forgot passcode" screen, with a confirmation that lists what's deleted.
+    case "acct-del-ask": UI.delAcct = {}; render(); break;
+    case "acct-del-no": UI.delAcct = null; render(); break;
+    case "acct-del-yes": await deleteAccount(); break;
     case "erase-all-ask": UI.confirmEraseAll = true; render(); break;
     case "erase-all-no": UI.confirmEraseAll = false; render(); break;
     case "erase-all-yes": historyAdd("erase"); await eraseEverything(); UI.locked = false; UI.confirmEraseAll = false; resetUI(); render(); toast("Deleted. Starting fresh."); break;
@@ -16720,7 +16763,7 @@ const CONTACT_EMAIL = "wholelifehub@hotmail.com";
 const LEGAL_BUSINESS_NAME = "Whole Life Hub";
 const MAILING_ADDRESS = "13022 Thunderhead Drive, Germantown, MD 20874";
 const REFUND_POLICY_TEXT = "Every charge has 14 days. Contact us within 14 days of any charge, the first one or a renewal, and we refund it in full, whether or not you have used Premium in that time, and you do not need a reason. After those 14 days the charge for that period is not refundable, but you can cancel at any time to stop the next one. Cancelling part way through a period leaves Premium running until the period you paid for ends, and we do not refund the unused part. Refunds go back to the card you paid with, through Lemon Squeezy, and can take up to 10 days to appear. If you were charged after cancelling, charged twice, charged the wrong amount, or charged without your permission, tell us and we refund it in full. Ending Premium never deletes anything: every meal, workout, weigh-in and photo stays exactly where it is. Nothing here reduces any right the law gives you where you live.";
-const LEGAL_UPDATED = "24 October 2026";
+const LEGAL_UPDATED = "25 October 2026";
 
 function applyCanonical(){
   if (/\[YOUR-DOMAIN\]/.test(SITE_URL)) return;              // nothing to point at yet
@@ -16864,7 +16907,7 @@ function privacyPolicyView(){
     <p>Fonts are bundled with the app, not loaded from a font service. The app makes no other requests: no analytics, no advertising networks, no social media widgets, no ad identifiers.</p>
 
     <h3>7. Your choices</h3>
-    <p>You can export everything you have stored as a file from <a href="#/settings/about">Data &amp; about</a>, and you can delete the data this browser holds, or export it, from <a href="#/settings/privacy">Privacy &amp; security</a>. Deleting is immediate and cannot be undone. It does not delete what is stored in your account (section 4), photos included, and signing in again brings it back. To delete your account and all the data synced to it, email the address in section 9; that deletes the account and all synced data. You can also delete any single meal, workout, drink or weigh-in from the page it lives on, remove a profile photo, and turn any of the section 3 permissions back off — each stops that feature immediately.</p>
+    <p>You can export everything you have stored as a file from <a href="#/settings/about">Data &amp; about</a>, and you can delete the data this browser holds, or export it, from <a href="#/settings/privacy">Privacy &amp; security</a>. Deleting is immediate and cannot be undone. It does not delete what is stored in your account (section 4), photos included, and signing in again brings it back. To delete your account and all the data synced to it, sign in and use Delete my account in <a href="#/settings/privacy">Privacy &amp; security</a>: it removes the account, every row saved under it and your photos from our servers. If you cannot sign in, email the address in section 9 and we will delete it for you. You can also delete any single meal, workout, drink or weigh-in from the page it lives on, remove a profile photo, and turn any of the section 3 permissions back off — each stops that feature immediately.</p>
 
     <h3>8. Children</h3>
     <p>This app is not intended for anyone under 13, and it is not designed to be used by children. Setting up a profile starts by asking for your birth month and year. Only your age is kept, never your birth date. If the answer shows someone is under 13, no profile is created, nothing is kept, and this browser declines another attempt for 24 hours.</p>

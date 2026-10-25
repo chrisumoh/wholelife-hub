@@ -38,7 +38,7 @@ All foreign keys are `on delete cascade`:
 - Delete a row in `auth.users` and every `people` row and log row with that `owner_id` goes with it.
 - Delete a `people` row and every log row with that `person_id` goes with it.
 
-The app itself only soft-deletes (`deleted_at`). A hard delete happens only when an account is removed from Supabase Auth. Photos in the `photos` bucket are files, not rows, so the cascade does not remove them.
+The app itself only soft-deletes (`deleted_at`). A hard delete happens only when an account is removed from Supabase Auth, which the `delete-account` edge function (8.3.32) does for the signed-in person. Photos in the `photos` bucket are files, not rows, so the cascade does not remove them; that function deletes the account's folder first.
 
 ## Security
 
@@ -107,6 +107,13 @@ Everything a person logs syncs, signed in, through the tables above. No migratio
 | `20261022030000` | `wlh_8_3_10_workout_challenges` | Challenges: `challenges`, `challenge_members` (RLS on, no direct grants), functions `create_challenge`, `respond_challenge`, `leave_challenge`, `my_challenges`, `challenge_board`. **Not applied until the owner runs it.** |
 | `20261022060000` | `wlh_8_3_17_friend_messages` | Friend messages: `friend_messages` with RLS and an accepted-friends trigger. Applied to the live project. |
 | `20261024120000` | `wlh_8_3_28_error_reports` | Crash reports: `error_reports`, insert-only for `anon` and `authenticated`, no read path. **Not applied until the owner runs it.** |
+
+## Delete my account (8.3.32)
+
+- Edge function `delete-account` (`supabase/functions/delete-account/`). The app sends `{ "confirm": "DELETE" }` with the person's own access token in `Authorization`. The function finds the account from the token only, lists and removes every file under `photos/<account id>/` (any depth, up to 5,000 files), then calls `auth.admin.deleteUser`. All 16 foreign keys to `auth.users` are `on delete cascade`, so every row goes with it (checked on the live project 2026-10-24).
+- Order matters: files first, user last. If a step fails the account is left whole and the person can retry. The function answers `deleted`, `unauthorized` (401), or `error`.
+- Deployed with `--no-verify-jwt` because the handler verifies the token itself. Supabase supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to every edge function: nothing to set, and the key is never in the repo or the app.
+- Not deployed until the owner says go. No migration.
 
 ## Friends and online status (8.3.7)
 
