@@ -12020,7 +12020,7 @@ function ageGateSubmit(){
 function wlShuffle(text, from){
   let i = from;
   const words = text.split(" ").map(w => `<span class="wl-w">${[...w].map(c => `<i style="--i:${i++}">${esc(c)}</i>`).join("")}</span>`).join(" ");
-  return `<span class="wl-sh" aria-label="${esc(text)}"><span aria-hidden="true">${words}</span></span>`;
+  return `<span class="wl-sh"><span class="sr-only">${esc(text)}</span><span aria-hidden="true">${words}</span></span>`;
 }
 function welcomeView(){
   const adding = S.profiles.length > 0;
