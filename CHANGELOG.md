@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.41, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.42, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.42 · Tests: Fix the three tests still red on the make-over pass
+
+- **Problem:** After 8.3.41 the Browser tests still failed on PR #83 in controls, slidepay and rail. The Compact pass shrank the profile Edit buttons to 32px (below the 44px touch size the controls test requires). The Make over gold slide-to-pay set its track and handle with a gradient shorthand only, so they had no plain background colour. The rail test looked for an svg logo, but since 8.3.39 the logo is a picture.
+- **Change:** Edit buttons in the Profile group title rows are 44px tall again. The slide-to-pay track and handle keep their gold gradients and now also carry a plain background colour underneath. The rail test finds the logo whether it is an svg or the new picture. Nothing else about the look changes.
+- **Where:** index.html: the WL COMPACT PASS rule for .pgroup > .setrow .btn.sm, and the WL MAKEOVER rules for .prem-cta-bar .sc-track and .sc-handle. tests/browser/rail.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/controls.mjs, slidepay.mjs, rail.mjs and cards.mjs: all pass. In Settings > Profile, the Edit buttons are taller. On the Premium page the slide-to-pay still shows gold.
+- **Known limits:** Edit buttons are 12px taller than the compact demo. Not tried on a real phone.
 
 ## 8.3.41 · Tests: Trends tiles allowed by the dashboard card test
 

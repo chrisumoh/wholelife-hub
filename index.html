@@ -3833,7 +3833,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.41", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.3", build: "8.3.42", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3847,6 +3847,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.41", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.3.42",
+      area:"Tests",
+      title:"Fix the three tests still red on the make-over pass",
+      bug:"After 8.3.41 the Browser tests still failed on PR #83 in controls, slidepay and rail. The Compact pass shrank the profile Edit buttons to 32px (below the 44px touch size the controls test requires). The Make over gold slide-to-pay set its track and handle with a gradient shorthand only, so they had no plain background colour. The rail test looked for an svg logo, but since 8.3.39 the logo is a picture.",
+      fix:"Edit buttons in the Profile group title rows are 44px tall again. The slide-to-pay track and handle keep their gold gradients and now also carry a plain background colour underneath. The rail test finds the logo whether it is an svg or the new picture. Nothing else about the look changes.",
+      where:"index.html: the WL COMPACT PASS rule for .pgroup > .setrow .btn.sm, and the WL MAKEOVER rules for .prem-cta-bar .sc-track and .sc-handle. tests/browser/rail.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/controls.mjs, slidepay.mjs, rail.mjs and cards.mjs: all pass. In Settings > Profile, the Edit buttons are taller. On the Premium page the slide-to-pay still shows gold.",
+      limits:"Edit buttons are 12px taller than the compact demo. Not tried on a real phone." },
     { id:"8.3.41",
       area:"Tests",
       title:"Trends tiles allowed by the dashboard card test",
@@ -24344,7 +24352,7 @@ if ("serviceWorker" in navigator) {
 @media (max-width:560px){
   .pgroup > .setrow{ flex-direction:row; align-items:center; flex-wrap:nowrap; }
 }
-.pgroup > .setrow .btn.sm{ min-height:32px; }
+.pgroup > .setrow .btn.sm{ min-height:44px; }
 
 /* 3 - Key/value rows on one aligned grid: fixed label column,
    semibold values, a hairline under each row */
@@ -24469,7 +24477,8 @@ if ("serviceWorker" in navigator) {
    Premium CTA bar, and the shared .prem-cta pill (its old blue
    gradient clashed with the rest of the brand) */
 .prem-cta-bar .sc-track{
-  background:linear-gradient(120deg,
+  background-color:var(--raise);
+  background-image:linear-gradient(120deg,
     color-mix(in srgb, var(--gold) 22%, var(--raise)),
     color-mix(in srgb, var(--accent) 13%, var(--raise)));
   border:1px solid color-mix(in srgb, var(--gold) 32%, var(--line));
@@ -24480,7 +24489,8 @@ if ("serviceWorker" in navigator) {
     color-mix(in srgb, var(--accent) 36%, transparent));
 }
 .prem-cta-bar .sc-handle{
-  background:linear-gradient(135deg, var(--gold), color-mix(in srgb, var(--gold) 55%, var(--accent)));
+  background-color:var(--gold);
+  background-image:linear-gradient(135deg, var(--gold), color-mix(in srgb, var(--gold) 55%, var(--accent)));
   color:var(--gold-ink);
   box-shadow:0 4px 12px -4px color-mix(in srgb, var(--gold) 70%, transparent);
 }

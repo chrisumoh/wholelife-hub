@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.42 | Tests: fix controls, slidepay and rail on the make-over pass | IN PROGRESS: ultron/settings-compact-pass (PR #83) |
 | 8.3.41 | Tests: Trends tiles allowed by the dashboard card test | IN PROGRESS: ultron/settings-compact-pass (PR #83) |
 | 8.3.40 | Sign-in: welcome screen first, sign-in card after Set up my hub | IN PROGRESS: ultron/settings-compact-pass (PR #83) |
 | 8.3.39 | Branding: new app icon on home screen, tab, manifest, iOS and in the app | IN PROGRESS: claude/project-thread-8bev7j |
