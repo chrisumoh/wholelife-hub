@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.3.38 | Sign-in: Continue with Google works on the startup and setup screens | IN PROGRESS: ultron/neatening-pass (PR #82) |
 | 8.3.37 | Welcome: drifting photo grid, phone and iPad layout | IN PROGRESS: claude/project-thread-8bev7j |
 | 8.3.36 | Welcome: True Focus brackets on the name and ring labels | IN PROGRESS: claude/project-thread-8bev7j |
 | 8.3.35 | Sign-in: Google or email sign-in screen at startup, with Continue without an account | IN PROGRESS: claude/project-thread-8bev7j |
