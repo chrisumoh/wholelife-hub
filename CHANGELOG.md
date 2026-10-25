@@ -2,9 +2,33 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.34, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.37, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.37 · Welcome: Drifting photo grid behind the welcome screen, better on phones and iPads
+
+- **Problem:** The welcome screen sat on a flat green background, and on an iPad the ring and button looked like a stretched phone layout.
+- **Change:** Behind the text and rings, your 12 photos now drift across the screen in slanted rows (GridMotion, rebuilt in plain JS): rows move in opposite directions, the tiles near your finger or mouse light up, and the rows lean slightly towards the pointer. A dark green wash keeps the words readable. The headline, text, buttons and rings are unchanged, apart from a thin dark outline on the ring labels so Eat, Move and Recover stay readable on a bright photo. On phones the grid has 5 smaller rows and a lighter edge fade; on iPad portrait the ring is larger and the button is no longer stretched across the screen. The photos are 840 px WebP files in img/welcome/ (about 61 KB each), never inlined. The grid pauses in a hidden tab or off screen. Reduce motion keeps the rows still; Data Saver skips the photos. The ring glow now fades to a transparent version of its own colour, in case Safari showed it as a dark edge.
+- **Where:** index.html: WL_PHOTOS, GM, wlGrid(), wlBackdrop(), the afterRender() mount line, welcomeView() (.wl-bg), the .wl-bg/.wl-gm/.wl-gt CSS and a 600-820 px media query next to .wl. img/welcome/w01-w12.webp. tests/browser/welcomebg.mjs and run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open the app in a private window and choose Continue without an account: rows of photos drift behind the welcome text. Move the mouse (or drag a finger) over it: tiles near the pointer brighten. Turn on Reduce motion: the rows stand still. Try a phone and an iPad in portrait and landscape.
+- **Known limits:** The photos load all together (about 730 KB) and are not cached for offline use. Only on the welcome screen, not the loading screen. Not tried on a real phone, an iPad or in Safari; a gold disc inside the ring seen on an iPhone could not be reproduced in Chrome, so the glow fix is a guess.
+
+## 8.3.36 · Welcome: True Focus brackets on the Whole Life Hub name and the ring labels
+
+- **Problem:** The Whole Life Hub name in the top left of the welcome screen was plain text, and the Eat, Move and Recover labels around the ring just faded in.
+- **Change:** Both now use the True Focus effect, rebuilt in plain JS and CSS: four corner brackets glide from word to word every 1.5 seconds while the other words blur a little. On the name the brackets move through Whole, Life and Hub. On the ring they move through Eat, Move and Recover, take the colour of that label's arc, and the other two arcs dim. Reduced motion keeps the first word focused and still. The timer pauses off screen and when the tab is hidden.
+- **Where:** index.html: trueFocus(), the afterRender() mount line, wlRing() labels, welcomeView() (.wl-brand, data-tf), the .tf-* CSS next to .wl-top. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open the app (private window, Continue without an account): brackets move across the three words top left and across Eat, Move and Recover around the ring, each in its arc's colour. Turn on Reduce motion: they stand still on the first word.
+- **Known limits:** Unfocused words blur by 2px, not the 5px in the sample, so the name stays readable. Only the welcome screen so far. Not tried on a phone or in Safari.
+
+## 8.3.35 · Sign-in: Sign in with Google or email when the app opens, plus hold to delete a profile
+
+- **Problem:** Sign-in was only offered inside Settings, or once during first-time setup after the age question. Someone opening the app signed out went straight in, and had to know to look in Settings to save their hub to an account.
+- **Change:** A signed-out person now sees the sign-in card first, before the welcome screen or the app: Continue with Google, or email and password (with Create an account and Forgot password), using the same card as Settings and setup. Under it, Continue without an account goes on into the app exactly as before, and that choice is remembered on this device (`wlh.startskip`). It is never shown to someone signed in, when sign-in could not load, on the Terms, Privacy Policy, Refunds, Contact and Credits pages (so their links open), or while the 24-hour under-13 block is active. The setup stop after the age question is unchanged. The welcome headline now slides in letter by letter (Shuffle style, plain CSS, off with reduced motion), the helper line under the buttons is gone, and Skip setup and Cancel are plain text with no underline. Deleting a profile (Settings > Household) now asks you to press and hold the button for 1.5 seconds; the fill uses the chosen theme colour, and a tap, early release, Escape or leaving the button cancels.
+- **Where:** index.html: holdStart(), holdStop(), holdDrive() and the .hold CSS, the Delete button in the household list, wlShuffle(), welcomeView(), the .wl-sh/.wl-w/.wl-link CSS, authScreen() (shared by obAuthView()), START_SKIP_KEY, START_OPEN, startGateOn(), startGateView(), render(), the start-skip case, the privacy storage-key table, APP_VERSION, WLH.changelog. tests/browser/startgate.mjs (new), fake-supabase.js (skips the screen unless a test asks for it), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. Nothing under supabase/ changed.
+- **How to test:** Open the app in a private window: the sign-in card shows first. Choose Continue without an account: the welcome screen or your hub opens, and a reload goes straight in. Sign in with email or Google: you land in the app signed in and the screen does not return. Open `#/terms` in a fresh private window: the page opens, not the sign-in card. `node tests/browser/startgate.mjs`.
+- **Known limits:** Sign-in is optional: Continue without an account is always offered. Signing out does not bring the screen back on that browser if Continue without an account was chosen earlier. Google sign-in still depends on the Google provider being on in Supabase. Creating an account here happens before the age question (the age question still comes first for setting up a profile), so an under-13 who has not yet been asked could create an account; say if you want the age question moved ahead of this screen.
 
 ## 8.3.34 · Settings: Settings tabs get a sliding pill, and a wheel picker for short lists (first on Log a meal > Portion)
 

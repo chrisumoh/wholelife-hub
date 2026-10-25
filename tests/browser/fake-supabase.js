@@ -5,6 +5,8 @@
 // (account-sync.mjs does, with one Node-side database shared by several browser contexts), every operation locks, loads and
 // saves that shared database instead.
 (() => {
+  // The startup sign-in screen (8.3.35) would hide the app from every other test; startgate.mjs sets this to see it.
+  try { if (!sessionStorage.getItem("__startgate")) localStorage.setItem("wlh.startskip", "1"); } catch {}
   const K = "__fakedb", KS = "__fakesess", REMOTE = typeof window.__rpcCall === "function";
   const load = () => { try { return JSON.parse(localStorage.getItem(K)) || { people: [], meal_logs: [] }; } catch { return { people: [], meal_logs: [] }; } };
   const LOCAL = REMOTE ? { people: [], meal_logs: [] } : load(); const saveLocal = () => localStorage.setItem(K, JSON.stringify(LOCAL));
