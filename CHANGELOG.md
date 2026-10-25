@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.36, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.3 (Dev Testing), build 8.3.37, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.3.37 · Welcome: Photos change every 3 seconds behind the welcome screen, with moving rays of light
+
+- **Problem:** The welcome screen sat on a flat green background.
+- **Change:** Behind the text and rings, twelve photos now cross-fade every 3 seconds under a dark green wash that keeps the words readable, with a layer of soft gold and blue light rays (WebGL2, rebuilt from the SideRays sample) drifting from the top right that leans slightly towards the mouse. The headline, text, buttons and rings are unchanged, apart from a thin dark outline on the ring labels so Eat, Move and Recover stay readable on a bright photo. Photos are 1024 px WebP files in img/welcome/ (about 67 KB each), fetched one at a time, never inlined. The cycle and the rays pause in a hidden tab or off screen. Reduce motion keeps the first photo still and draws no animated rays; Data Saver skips the photos and rays.
+- **Where:** index.html: WL_PHOTOS, WL_RAYS_FS, wlRays(), wlBackdrop(), the afterRender() mount line, welcomeView() (.wl-bg), the .wl-bg/.wl-bgi/.wl-rays CSS next to .wl. img/welcome/w01-w12.webp. tests/browser/welcomebg.mjs and run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open the app in a private window and choose Continue without an account: a photo shows behind the welcome text and changes about every 3 seconds, with light rays from the top right. Turn on Reduce motion: the first photo stays still.
+- **Known limits:** The rays need WebGL2; without it you still get the photos. The photos are not cached for offline use. Only on the welcome screen, not the loading screen. Not tried on a real phone or in Safari.
 
 ## 8.3.36 · Welcome: True Focus brackets on the Whole Life Hub name and the ring labels
 
