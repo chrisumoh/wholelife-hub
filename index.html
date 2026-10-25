@@ -24335,4 +24335,79 @@ if ("serviceWorker" in navigator) {
 /* 8 - One calm selection highlight everywhere */
 ::selection{ background:var(--accent-soft); }
 </style>
+<style>
+/* ================================================================
+   WL COMPACT PASS - 25 Oct 2026 - Ultron, at CJ's request
+   The compact Settings design CJ approved from the demo, applied
+   as CSS only over the existing markup: one 44px control height
+   for form rows, key/value rows on one aligned grid, Edit kept in
+   the group title row on phones instead of a full-width bar,
+   Friends switches beside their labels, and the licence key as a
+   single 44px row. Captions that only repeated their control's
+   own value are hidden. Placed after the NEAT PASS so it wins
+   cascade ties. Revert: delete this one block.
+   ================================================================ */
+
+/* 1 - Profile hero: smaller avatar, slimmer progress bar, and the
+   units switch and the progress line keep their rows on phones */
+.card.hero .avatar{ width:58px !important; height:58px !important; font-size:22px !important; }
+.card.hero .photo-edit{ gap:4px; }
+.card.hero .seg{ width:auto; }
+.card.hero .seg button{ flex:0 0 auto; }
+.card.hero .bar{ height:6px; }
+@media (max-width:560px){
+  .card.hero .setrow{ flex-direction:row; align-items:center; }
+}
+
+/* 2 - Profile groups: Edit stays in the title row on phones */
+@media (max-width:560px){
+  .pgroup > .setrow{ flex-direction:row; align-items:center; flex-wrap:nowrap; }
+}
+.pgroup > .setrow .btn.sm{ min-height:32px; }
+
+/* 3 - Key/value rows on one aligned grid: fixed label column,
+   semibold values, a hairline under each row */
+.pgroup .kv, #subscription .kv{ grid-template-columns:118px 1fr; gap:0 14px; }
+.pgroup .kv dt, .pgroup .kv dd,
+#subscription .kv dt, #subscription .kv dd{ padding:7px 0; border-bottom:1px solid var(--line); }
+.pgroup .kv dd, #subscription .kv dd{ font-weight:600; }
+.pgroup .kv dt:last-of-type, .pgroup .kv dd:last-of-type,
+#subscription .kv dt:last-of-type, #subscription .kv dd:last-of-type{ border-bottom:0; }
+
+/* 4 - Appearance: segmented labels never wrap; captions that only
+   repeat the chosen value are hidden (the Display caption stays
+   when a dark-only theme overrules the choice; the Accent one
+   stays for the Dynamic accent, where it explains the colours);
+   theme chips form a tidy two-column grid */
+#appearance .seg-display button{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px; }
+#appearance .setgroup:has(> .seg-display):not(:has(> .seg-display button.overruled)) > span.tiny.muted{ display:none; }
+#appearance .setgroup:has(> .accent-trigger .ct-dot:not([style*="conic-gradient"])) > span.tiny.muted{ display:none; }
+#appearance .theme-chip{ flex:1 1 140px; width:auto; height:44px; }
+#appearance .setgroup{ gap:6px; }
+@media (max-width:560px){
+  #appearance .setrow{ flex-direction:row; align-items:center; }
+}
+
+/* 5 - Friends: switches sit beside their labels at every width,
+   and each input + button pair is one 44px row */
+#friends .fr-opt{ flex-direction:row; align-items:center; flex-wrap:nowrap; }
+#friends .fr-opt > .setlabel{ flex:1 1 auto; }
+#friends .fr-line{ align-items:stretch; }
+#friends .fr-line input, #friends .fr-line .btn{ height:44px; min-height:44px; }
+#friends .fr-sec{ gap:6px; margin-top:12px; }
+
+/* 6 - Premium licence key: the duplicate inner label goes (the
+   group label already asks the question) and the input and the
+   Activate button form a single 44px row; the Debugging row
+   keeps its button beside its text */
+#subscription form[data-form="license"]{ flex-wrap:nowrap !important; }
+#subscription form[data-form="license"] label.f > span{ display:none; }
+#subscription form[data-form="license"] label.f{ min-width:0 !important; }
+#subscription form[data-form="license"] input,
+#subscription form[data-form="license"] .btn{ height:44px; min-height:44px; }
+@media (max-width:560px){
+  #subscription .setrow{ flex-direction:row; align-items:center; }
+  #subscription .setrow > span.small{ flex:1 1 auto; min-width:0; }
+}
+</style>
 </body></html>
