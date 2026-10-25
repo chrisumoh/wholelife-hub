@@ -12287,11 +12287,13 @@ function wlBackdrop(host){
   const alive = () => host.isConnected && host.hasAttribute("data-wlbg") && !!root?.isConnected; // the diff can reuse this node for another view
   let stopGrid = null, stopRays = null;
   const stop = () => { stopGrid?.(); stopRays?.(); };
-  setTimeout(() => {
+  // Wait until the page has loaded and settled, so building the tiles and compiling the shader never counts as blocking time.
+  const go = () => setTimeout(() => {
     if (!alive()) return;
     stopGrid = wlGrid(root, alive, calm);
     if (cv) stopRays = wlRays(cv, calm);
-  }, 300);
+  }, 1500);
+  if (document.readyState === "complete") go(); else addEventListener("load", go, { once: true });
   return stop;
 }
 function welcomeView(){
