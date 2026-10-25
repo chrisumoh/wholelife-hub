@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join, extname } from "node:path";
 
 // Run from the repo root:  node tests/browser/welcomebg.mjs   (needs Node 22+ and Chrome; set CHROME to its path, CI=1 as root)
-// Build 8.3.37: the welcome backdrop (cycling photos and light rays). Faked Supabase.
+// Build 8.3.37: the welcome backdrop (drifting photo grid). Faked Supabase.
 // The app is served with a faked Supabase, so no real account is touched.
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
@@ -50,7 +50,7 @@ const emulate = v => send("Emulation.setEmulatedMedia", { features: [{ name: "pr
 const photo = `(document.querySelector(".wl-bgi.on") || {}).src || ""`;
 
 await ev(`localStorage.clear(); true`); await reload();
-ok("the welcome screen has a backdrop behind the text", await ev(`!!document.querySelector(".wl > .wl-bg .wl-gm") && !!document.querySelector(".wl-bg .wl-rays") && document.querySelector(".wl-bg").getAttribute("aria-hidden") === "true"`));
+ok("the welcome screen has a photo backdrop and no light rays", await ev(`!!document.querySelector(".wl > .wl-bg .wl-gm") && !document.querySelector(".wl-rays") && document.querySelector(".wl-bg").getAttribute("aria-hidden") === "true"`));
 ok("the headline, text and rings are unchanged", await ev(`/Meals from your culture/.test(document.querySelector("h1").textContent) && !!document.querySelector('[data-act="ob-next"]') && document.querySelectorAll(".wl-ring .arc").length === 3`));
 ok("rows of photos are built", await waitFor(`document.querySelectorAll(".wl-gr").length === 4 && document.querySelectorAll(".wl-gt img").length > 12`, 6000));
 ok("the photos are files, not inlined in the page", await ev(`[...document.querySelectorAll(".wl-gt img")].every(i => /img\\/welcome\\/w\\d+\\.webp$/.test(i.src)) && !/data:image/.test(document.querySelector(".wl-bg").outerHTML)`));

@@ -3140,7 +3140,6 @@ html .side .nav a .si-tile svg{color:#fff}
 .wl-gt img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none;user-select:none}
 .wl-bg::after{content:"";position:absolute;inset:0;z-index:0;
   background:linear-gradient(90deg,rgba(7,32,24,.9),rgba(7,32,24,.66) 55%,rgba(7,32,24,.5)),linear-gradient(180deg,rgba(7,32,24,.5),transparent 30%,rgba(7,32,24,.55))}
-.wl-rays{position:absolute;inset:0;z-index:1;width:100%;height:100%}
 @media (max-width:820px){.wl-bg::after{background:rgba(7,32,24,.7)}}
 .wl-top{display:flex;align-items:center;gap:10px;font-family:var(--wl-display);font-weight:700;font-size:calc((18px) * var(--text-scale,1));letter-spacing:-.01em;
   animation:wlFade var(--dur-page) var(--ease-smooth) both}
@@ -3848,12 +3847,12 @@ const APP_VERSION = { update: "8.3", build: "8.3.37", channel: "Dev Testing", da
   const CHANGELOG = [
     { id:"8.3.37",
       area:"Welcome",
-      title:"Drifting photo grid and light rays behind the welcome screen, better on phones and iPads",
+      title:"Drifting photo grid behind the welcome screen, better on phones and iPads",
       bug:"The welcome screen sat on a flat green background, and on an iPad the ring and button looked like a stretched phone layout.",
-      fix:"Behind the text and rings, your 12 photos now drift across the screen in slanted rows (GridMotion, rebuilt in plain JS): rows move in opposite directions, the tiles near your finger or mouse light up, and the rows lean slightly towards the pointer. A dark green wash keeps the words readable, and soft gold and blue light rays (WebGL2, rebuilt from the SideRays sample) fall from the top right. The headline, text, buttons and rings are unchanged, apart from a thin dark outline on the ring labels so Eat, Move and Recover stay readable on a bright photo. On phones the grid has 5 smaller rows and a lighter edge fade; on iPad portrait the ring is larger and the button is no longer stretched across the screen. The photos are 840 px WebP files in img/welcome/ (about 61 KB each), never inlined. Everything pauses in a hidden tab or off screen. Reduce motion keeps the rows still; Data Saver skips the photos and rays. The ring glow now fades to a transparent version of its own colour, in case Safari showed it as a dark edge.",
-      where:"index.html: WL_PHOTOS, GM, wlGrid(), WL_RAYS_FS, wlRays(), wlBackdrop(), the afterRender() mount line, welcomeView() (.wl-bg), the .wl-bg/.wl-gm/.wl-gt/.wl-rays CSS and a 600-820 px media query next to .wl. img/welcome/w01-w12.webp. tests/browser/welcomebg.mjs and run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
-      test:"Open the app in a private window and choose Continue without an account: rows of photos drift behind the welcome text and light rays fall from the top right. Move the mouse (or drag a finger) over it: tiles near the pointer brighten. Turn on Reduce motion: the rows stand still. Try a phone and an iPad in portrait and landscape.",
-      limits:"The rays need WebGL2; without it you still get the photos. The photos load all together (about 730 KB) and are not cached for offline use. Only on the welcome screen, not the loading screen. Not tried on a real phone, an iPad or in Safari; a gold disc inside the ring seen on an iPhone could not be reproduced in Chrome, so the glow fix is a guess." },
+      fix:"Behind the text and rings, your 12 photos now drift across the screen in slanted rows (GridMotion, rebuilt in plain JS): rows move in opposite directions, the tiles near your finger or mouse light up, and the rows lean slightly towards the pointer. A dark green wash keeps the words readable. The headline, text, buttons and rings are unchanged, apart from a thin dark outline on the ring labels so Eat, Move and Recover stay readable on a bright photo. On phones the grid has 5 smaller rows and a lighter edge fade; on iPad portrait the ring is larger and the button is no longer stretched across the screen. The photos are 840 px WebP files in img/welcome/ (about 61 KB each), never inlined. The grid pauses in a hidden tab or off screen. Reduce motion keeps the rows still; Data Saver skips the photos. The ring glow now fades to a transparent version of its own colour, in case Safari showed it as a dark edge.",
+      where:"index.html: WL_PHOTOS, GM, wlGrid(), wlBackdrop(), the afterRender() mount line, welcomeView() (.wl-bg), the .wl-bg/.wl-gm/.wl-gt CSS and a 600-820 px media query next to .wl. img/welcome/w01-w12.webp. tests/browser/welcomebg.mjs and run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app in a private window and choose Continue without an account: rows of photos drift behind the welcome text. Move the mouse (or drag a finger) over it: tiles near the pointer brighten. Turn on Reduce motion: the rows stand still. Try a phone and an iPad in portrait and landscape.",
+      limits:"The photos load all together (about 730 KB) and are not cached for offline use. Only on the welcome screen, not the loading screen. Not tried on a real phone, an iPad or in Safari; a gold disc inside the ring seen on an iPhone could not be reproduced in Chrome, so the glow fix is a guess." },
     { id:"8.3.36",
       area:"Welcome",
       title:"True Focus brackets on the Whole Life Hub name and the ring labels",
@@ -12108,98 +12107,10 @@ function trueFocus(host, items, g, k){
   if (!matchMedia("(prefers-reduced-motion: reduce)").matches && items.length > 1) timer = setInterval(() => { if (!host.isConnected) stop(); else if (vis && !document.hidden) show((cur + 1) % items.length); }, 1500);
   return stop;
 }
-// ---- welcome backdrop: cycling photos plus a WebGL2 light-ray layer ----
-// The photos are files in img/welcome (never inlined); the rays are one small fragment shader. Both stop
-// off screen and in a hidden tab; reduced motion keeps the first photo still and draws no rays.
+// ---- welcome backdrop: drifting photo grid ----
+// The photos are files in img/welcome (never inlined). The grid stops off screen and in a hidden tab;
+// reduced motion keeps the rows still.
 const WL_PHOTOS = Array.from({ length: 12 }, (_, i) => `img/welcome/w${String(i + 1).padStart(2, "0")}.webp`);
-const WL_RAYS_FS = `#version 300 es
-precision highp float;
-uniform vec2 uResolution;uniform float uTime;uniform vec3 uColorA;uniform vec3 uColorB;uniform float uAim;
-const float uBlend=.6,uIntensity=1.9,uSpread=2.,uDensity=5.,uSharpness=.5,uFalloff=2.,uGlow=.3,uDust=.4,uSway=1.;
-out vec4 fragColor;
-float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
-float noise(vec2 p){vec2 i=floor(p);vec2 f=p-i;vec2 w=f*f*f*(f*(f*6.-15.)+10.);
-  return mix(mix(hash(i),hash(i+vec2(1,0)),w.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),w.x),w.y);}
-float shafts(float u,float t,float seed,float aa){
-  float sway=(.4*sin(t*.31+seed)+.24*sin(t*.17+seed*2.3))*uSway;
-  float n=.7*noise(vec2(u+sway+seed,t*.3))+.3*noise(vec2(u*2.4+sway*1.5+seed*1.7,t*.45+3.));
-  float width=mix(.5,.1,uSharpness);
-  return mix(.05,1.,mix(smoothstep(.5-width,.5+width,n),.5,aa));}
-float motes(vec2 p,float cell,float t,float seed){
-  p+=vec2(t*.021,-t*.013)+seed*7.31;vec2 grid=p/cell;vec2 id=floor(grid);vec2 f=grid-id;
-  float h=hash(id+seed);if(h>.5)return 0.;
-  vec2 c=.25+.5*vec2(hash(id+1.7+seed),hash(id+3.1+seed));
-  c+=.1*vec2(sin(t*.7+h*31.),cos(t*.6+h*23.));
-  float size=mix(.035,.09,hash(id+5.3+seed));float edge=length(fwidth(grid))*.7;
-  return (1.-smoothstep(size-edge,size+edge,length(f-c)))*(.55+.45*sin(t*1.9+h*41.));}
-void main(){
-  float aspect=uResolution.x/uResolution.y;
-  vec2 q=(gl_FragCoord.xy-.5*uResolution)/uResolution.y;
-  vec2 source=vec2(aspect*.5+.1,.62);
-  float heading=-2.48+uAim+.035*sin(uTime*.21)*uSway;
-  vec2 v=q-source;float r=length(v);
-  float angle=mod(atan(v.y,v.x)-heading+3.14159265,6.28318531)-3.14159265;
-  float t=uTime;float u=angle*uDensity;float aa=smoothstep(.12,.45,fwidth(u));
-  float off=uSpread*.22;
-  float fanA=exp(-pow((angle+off)/uSpread,2.)*1.4);
-  float fanB=exp(-pow((angle-off)/(uSpread*1.15),2.)*1.4);
-  float lightA=fanA*shafts(u,t,0.,aa);float lightB=fanB*shafts(u*.83,t*.6,17.,aa);
-  float reach=1./(1.+pow(r/.4,uFalloff));
-  vec3 glowColor=mix(uColorA,uColorB,uBlend);
-  vec3 light=(uColorA*lightA*(1.-uBlend)+uColorB*lightB*uBlend)*2.*reach;
-  light+=glowColor*uGlow*exp(-pow(r/.4,2.));
-  float sparkle=motes(q,.06,t,0.)+.7*motes(q,.038,t*.8,9.);
-  light+=mix(glowColor,vec3(1.),.6)*sparkle*(lightA+lightB)*reach*uDust*2.5;
-  light*=uIntensity*(1.-smoothstep(2.15,2.6,r));
-  float peak=max(light.r,max(light.g,light.b));
-  float grain=(fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(.06711056,.00583715))))-.5)/255.;
-  float mapped=1.-exp(-peak);
-  vec3 tone=light*(mapped/max(peak,1e-4));
-  tone=mix(tone,vec3(mapped),smoothstep(.7,1.,mapped)*.55);
-  vec3 shown=clamp(tone,0.,1.);float alpha=max(shown.r,max(shown.g,shown.b));
-  fragColor=vec4(min(clamp(shown*alpha+grain,0.,1.),vec3(alpha)),alpha);
-}`;
-function wlRays(cv, still){
-  const gl = cv.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: false, powerPreference: "low-power" });
-  if (!gl) return null;
-  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; };
-  const vs = sh(gl.VERTEX_SHADER, "#version 300 es\nvoid main(){vec2 c[3]=vec2[3](vec2(-1,-1),vec2(3,-1),vec2(-1,3));gl_Position=vec4(c[gl_VertexID],0,1);}");
-  const fs = sh(gl.FRAGMENT_SHADER, WL_RAYS_FS);
-  if (!vs || !fs) return null;
-  const pg = gl.createProgram(); gl.attachShader(pg, vs); gl.attachShader(pg, fs); gl.linkProgram(pg);
-  if (!gl.getProgramParameter(pg, gl.LINK_STATUS)) return null;
-  gl.useProgram(pg); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-  const U = n => gl.getUniformLocation(pg, n);
-  const uRes = U("uResolution"), uTime = U("uTime"), uAim = U("uAim");
-  gl.uniform3f(U("uColorA"), 1, .769, .42); gl.uniform3f(U("uColorB"), .588, .784, 1); // #FFC46B, #96C8FF
-  let raf = 0, last = 0, vis = true, aim = 0, aimTo = 0, dead = false;
-  const t0 = performance.now();
-  const fit = () => {
-    const r = cv.getBoundingClientRect(), s = Math.min(devicePixelRatio || 1, 1.5, Math.sqrt(1.2e6 / Math.max(1, r.width * r.height)));
-    cv.width = Math.max(1, Math.round(r.width * s)); cv.height = Math.max(1, Math.round(r.height * s)); gl.viewport(0, 0, cv.width, cv.height);
-  };
-  const draw = now => {
-    gl.uniform2f(uRes, cv.width, cv.height);
-    gl.uniform1f(uTime, still ? 6 : (now - t0) / 1000 * 2.5 * .35);
-    aim += (aimTo - aim) * .06; gl.uniform1f(uAim, aim);
-    gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLES, 0, 3);
-  };
-  const loop = now => {
-    raf = 0; if (dead) return;
-    if (!cv.isConnected) return stop();
-    if (vis && !document.hidden && now - last > 32) { last = now; draw(now); }
-    raf = requestAnimationFrame(loop);
-  };
-  const onMove = e => { aimTo = (e.clientX / innerWidth - .5) * .3; };
-  const io = new IntersectionObserver(es => { vis = es[es.length - 1].isIntersecting; });
-  const ro = new ResizeObserver(() => { fit(); if (still) draw(0); });
-  const lost = e => { e.preventDefault(); stop(); };
-  function stop(){ dead = true; cancelAnimationFrame(raf); io.disconnect(); ro.disconnect(); removeEventListener("pointermove", onMove); cv.removeEventListener("webglcontextlost", lost); }
-  cv.addEventListener("webglcontextlost", lost);
-  io.observe(cv); ro.observe(cv); fit();
-  if (still) draw(0); else { addEventListener("pointermove", onMove, { passive: true }); raf = requestAnimationFrame(loop); }
-  return stop;
-}
 // Drifting rows of the photos (GridMotion, rebuilt in plain JS). Rows are built once per size and
 // moved with transforms only; the pointer lights the tiles near it and nudges the rows.
 const GM = { rows: 4, aspect: 1.33, gap: 16, angle: -12, speed: 24, parallax: .5, spotlight: .6, fade: .5 };
@@ -12281,17 +12192,16 @@ function wlGrid(root, alive, calm){
   return stop;
 }
 function wlBackdrop(host){
-  const root = host.querySelector(".wl-gm"), cv = host.querySelector(".wl-rays");
+  const root = host.querySelector(".wl-gm");
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (navigator.connection?.saveData) return () => {};
   const alive = () => host.isConnected && host.hasAttribute("data-wlbg") && !!root?.isConnected; // the diff can reuse this node for another view
-  let stopGrid = null, stopRays = null;
-  const stop = () => { stopGrid?.(); stopRays?.(); };
-  // Wait until the page has loaded and settled, so building the tiles and compiling the shader never counts as blocking time.
+  let stopGrid = null;
+  const stop = () => stopGrid?.();
+  // Wait until the page has loaded and settled, so building the tiles never counts as blocking time.
   const go = () => setTimeout(() => {
     if (!alive()) return;
     stopGrid = wlGrid(root, alive, calm);
-    if (cv) stopRays = wlRays(cv, calm);
   }, 1500);
   if (document.readyState === "complete") go(); else addEventListener("load", go, { once: true });
   return stop;
@@ -12299,7 +12209,7 @@ function wlBackdrop(host){
 function welcomeView(){
   const adding = S.profiles.length > 0;
   return `<main class="wl" aria-labelledby="wl-h">
-    <div class="wl-bg" data-wlbg data-morph-skip aria-hidden="true"><div class="wl-gm"></div><canvas class="wl-rays"></canvas></div>
+    <div class="wl-bg" data-wlbg data-morph-skip aria-hidden="true"><div class="wl-gm"></div></div>
     <div class="wl-top"><span class="wl-dot" aria-hidden="true"></span><span class="wl-brand" data-tf="word" role="img" aria-label="Whole Life Hub"><span class="tf-it" aria-hidden="true">Whole</span><span class="tf-it" aria-hidden="true">Life</span><span class="tf-it" aria-hidden="true">Hub</span></span></div>
     <div class="wl-main">
       <div class="wl-copy">

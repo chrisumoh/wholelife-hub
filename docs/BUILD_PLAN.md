@@ -23,7 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
-| 8.3.37 | Welcome: drifting photo grid with light rays, phone and iPad layout | IN PROGRESS: claude/project-thread-8bev7j |
+| 8.3.37 | Welcome: drifting photo grid, phone and iPad layout | IN PROGRESS: claude/project-thread-8bev7j |
 | 8.3.36 | Welcome: True Focus brackets on the name and ring labels | IN PROGRESS: claude/project-thread-8bev7j |
 | 8.3.35 | Sign-in: Google or email sign-in screen at startup, with Continue without an account | IN PROGRESS: claude/project-thread-8bev7j |
 | 8.3.34 | Settings: sliding pill on the Settings tabs; wheel picker (select[data-wheel]) first used on Log a meal > Portion | IN PROGRESS: claude/project-thread-mdjqhl |
