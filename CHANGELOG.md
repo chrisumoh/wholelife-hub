@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.3 (Dev Testing), build 8.3.42, 2026-10-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.4 (Dev Testing), build 8.4, 2026-10-30. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.4 · Settings: Appearance: circular dark mode, Rounded or Crisp, English or Spanish, and a review bar
+
+- **Problem:** Settings > Appearance saved every tap straight away, so there was no way to try a look and then drop it. There was no square-cornered style and the app only spoke English.
+- **Change:** Dark and Light open as a circle growing from the tapped button (the header Light/Dark button too; browsers without it, and Reduced motion, change at once). A new UI style choice, Rounded or Crisp, squares the corners across cards, buttons, chips and fields. A new Language choice, English or Español, changes the sidebar, Settings tabs and Appearance card instantly with no reload. Display, Accent colour, Text size, UI style and Language apply live but are held for review: a Review changes bar lists each as label: old → new, Save keeps them, Discard puts them back, and changing one back removes its row. The existing Display, Accent and Text size controls were wired in, not duplicated. Saved choices are mirrored to the `wl-appearance` key so the right style and language paint before the app loads.
+- **Where:** index.html: the head script, the appearance block above `darkMQ` (`WLA`, `tr()`, `WL_ES`, `wlaSetLook()`, `wlaSave()`, `wlaDiscard()`, `wlaReveal()`, `reviewBar()`), `applyLook()`, `toggleTheme()`, the look-mode / look-accent / ui-style / ui-lang / look-save / look-discard / ts-reset / ts-ax-toggle cases and the `#ui-ts` handler, `sideNav()`, the Settings tabs, the appearance card, the WL THEME + LANGUAGE PASS CSS, the privacy storage-key table, `APP_VERSION`, `WLH.changelog`. tests/browser/appearance.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md, docs/VERSIONING.md. Nothing under supabase/ changed.
+- **How to test:** Run `node tests/browser/appearance.mjs` (16 checks). In Settings > Appearance: tap Dark and watch the circle grow; tap Crisp and see the corners square off; tap Español and see Ajustes and Apariencia; make two or three changes and read the Review changes bar; Save, reload, they stay; Discard puts them back.
+- **Known limits:** Spanish covers the sidebar, Settings tabs and Appearance card only. UI style and language are per device (not synced); Display, Accent and Text size still follow the profile. The header Light/Dark button saves at once and is not held for review. Unsaved changes live in memory only. Not tried on a real phone.
 
 ## 8.3.42 · Tests: Fix the three tests still red on the make-over pass
 
