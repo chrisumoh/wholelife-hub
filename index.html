@@ -9,7 +9,10 @@
 @media (prefers-color-scheme:dark){#boot{background:#111113;color:#f2f2f2}}
 @media (prefers-reduced-motion:reduce){#boot i:after{animation:none;width:100%}}
 </style></head><body><div id="boot" role="status"><span>Whole Life Hub</span><i></i><small>Still loading. Check your connection, then reload the page.</small></div>
-<script>document.documentElement.lang = "en";</script>
+<script>document.documentElement.lang = "en";
+try { const a = JSON.parse(localStorage.getItem("wl-appearance") || "{}"), d = document.documentElement;
+  if (a.uistyle === "crisp") d.dataset.uistyle = "crisp";
+  if (a.lang === "es") d.lang = "es"; } catch {}</script>
 <script src="/vendor/supabase-js-2.117.2.umd.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"></script>
 <!-- Task 7.8 fix: the page is served as a bare head/body fragment (no <html> tag of its own —
      see build.sh and the Artifact publish note above wholelife-hub.html), so there is nowhere to
@@ -3833,7 +3836,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.42", channel: "Dev Testing", date: "2026-10-25", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.4", build: "8.4", channel: "Dev Testing", date: "2026-10-30", week: "Sun 25 Oct – Sat 31 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3847,6 +3850,14 @@ const APP_VERSION = { update: "8.3", build: "8.3.42", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.4",
+      area:"Settings",
+      title:"Appearance: circular dark mode, Rounded or Crisp, English or Spanish, and a review bar",
+      bug:"Settings > Appearance saved every tap straight away, so there was no way to try a look and then drop it. There was no square-cornered style and the app only spoke English.",
+      fix:"Dark and Light now open as a circle growing from the button you tapped (the header Light/Dark button does the same; browsers without it, and Reduced motion, change at once). A new UI style choice, Rounded or Crisp, squares the corners across cards, buttons, chips and fields. A new Language choice, English or Español, changes the sidebar, the Settings tabs and the Appearance card instantly with no reload; anything you type is never translated. Display, Accent colour, Text size, UI style and Language now apply live but are held for review: a Review changes bar lists each as label: old → new, Save keeps them and Discard puts them back, and changing one back removes its row. The existing Display, Accent and Text size controls were wired in, not duplicated. Saved choices are mirrored to the wl-appearance key so the right style and language paint before the app loads.",
+      where:"index.html: the head script (reads wl-appearance), the appearance block above darkMQ (WLA, tr(), WL_ES, wlaSetLook(), wlaSave(), wlaDiscard(), wlaReveal(), reviewBar()), applyLook() (mirrors), toggleTheme(), the look-mode/look-accent/ui-style/ui-lang/look-save/look-discard/ts-reset/ts-ax-toggle cases and the #ui-ts handler, sideNav(), settingsView() tabs, the appearance card, the WL THEME + LANGUAGE PASS CSS at the end of the file, the privacy storage-key table, APP_VERSION, WLH.changelog. tests/browser/appearance.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md, docs/VERSIONING.md. Nothing under supabase/ changed.",
+      test:"node tests/browser/appearance.mjs (16 checks). By hand: Settings > Appearance, tap Dark and watch the circle grow from the button; tap Crisp and see the corners square off; tap Español and see Ajustes and Apariencia appear; make two or three changes and read the Review changes bar; tap Save, reload, and they stay; tap Discard and they go back.",
+      limits:"Spanish covers the sidebar, Settings tabs and Appearance card only; other pages stay in English until their strings are added to WL_ES. UI style and language are per device (not synced to your account); Display, Accent and Text size still follow the profile. The header Light/Dark button saves at once and is not held for review. Unsaved changes are kept in memory only, so closing the tab drops them. Not tried on a real phone." },
     { id:"8.3.42",
       area:"Tests",
       title:"Fix the three tests still red on the make-over pass",
@@ -11477,6 +11488,115 @@ function textSizeStep(p){
 function applyTextScale(p = P()){
   document.documentElement.style.setProperty("--text-scale", String(TEXT_SIZES[textSizeStep(p)][2]));
 }
+// ---- appearance: UI style, language and review before saving (8.4) ----
+// Display, accent and text size stay in the profile (p.look) as before; they are now held for
+// review. UI style and language are per device. "wl-appearance" mirrors all five so the page can
+// paint the right look before the app script runs.
+const WL_APPEARANCE_KEY = "wl-appearance";
+const WL_STYLES = [["rounded","Rounded"],["crisp","Crisp"]];
+const WL_LANGS = [["en","English"],["es","Español"]];
+const WL_ES = {
+  "Summary":"Resumen", "Log":"Registrar", "Plan":"Planificar", "Progress":"Progreso", "Meals":"Comidas", "Snacks":"Bocadillos",
+  "Workouts & imports":"Entrenamientos e importaciones", "Recipes & meal plans":"Recetas y planes de comidas",
+  "Food culture":"Cultura gastronómica", "Personal coach":"Entrenador personal", "Health data":"Datos de salud",
+  "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Go Premium":"Hazte Premium",
+  "Profile":"Perfil", "Coach":"Entrenador", "Appearance":"Apariencia", "Goals & food":"Metas y comida", "Household":"Hogar",
+  "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información",
+  "Display":"Pantalla", "Automatic":"Automático", "Light":"Claro", "Dark":"Oscuro", "OLED black":"Negro OLED",
+  "Accent color":"Color de acento", "Text size":"Tamaño del texto", "Motion":"Movimiento", "UI style":"Estilo de interfaz",
+  "Rounded":"Redondeado", "Crisp":"Nítido", "Language":"Idioma", "Review changes":"Revisar cambios",
+  "Save":"Guardar", "Discard":"Descartar", "Saved":"Guardado"
+};
+const WLA = { uistyle:"rounded", lang:"en", base:null, last:"" };
+try {
+  const a = JSON.parse(localStorage.getItem(WL_APPEARANCE_KEY) || "{}");
+  if (WL_STYLES.some(x => x[0] === a.uistyle)) WLA.uistyle = a.uistyle;
+  if (WL_LANGS.some(x => x[0] === a.lang)) WLA.lang = a.lang;
+} catch {}
+const tr = s => (WLA.lang === "es" && WL_ES[s]) || s;
+function wlaApplyDom(){
+  const el = document.documentElement;
+  el.dataset.uistyle = WLA.uistyle; el.lang = WLA.lang;
+}
+function wlaMirror(p){
+  wlaApplyDom();
+  if (!p || WLA.base) return; // unsaved changes are not written until Save
+  const l = p.look || {};
+  const v = JSON.stringify({ theme:l.mode || "auto", accent:l.accent || "blue", textsize:l.textSize || "l", uistyle:WLA.uistyle, lang:WLA.lang });
+  if (v === WLA.last) return;
+  WLA.last = v;
+  try { localStorage.setItem(WL_APPEARANCE_KEY, v); } catch {}
+}
+function wlaSnap(p){
+  if (WLA.base && WLA.base.pid !== p.id) WLA.base = null; // a different profile: start again
+  if (WLA.base) return;
+  const l = p.look || {};
+  WLA.base = { pid:p.id, mode:l.mode || "auto", accent:l.accent || "blue", textSize:l.textSize || "l", largerAX:!!l.largerAX, uistyle:WLA.uistyle, lang:WLA.lang };
+}
+function wlaSetLook(p, patch){
+  wlaSnap(p);
+  p.look = { mode:"auto", accent:"blue", motion:"full", font:"system", ...(p.look || {}), ...patch };
+  render();
+}
+function wlaSetStyle(v){ const p = P(); if (!p || !WL_STYLES.some(x => x[0] === v)) return; wlaSnap(p); WLA.uistyle = v; render(); }
+function wlaSetLang(v){ const p = P(); if (!p || !WL_LANGS.some(x => x[0] === v)) return; wlaSnap(p); WLA.lang = v; render(); }
+function wlaRows(p){
+  const b = WLA.base; if (!b || b.pid !== p.id) return [];
+  const l = p.look || {};
+  const nm = (list, k) => list.find(x => x[0] === k)?.[1] ?? k;
+  const rows = [];
+  if ((l.mode || "auto") !== b.mode) rows.push(["Display", nm(MODES, b.mode), nm(MODES, l.mode || "auto")]);
+  if ((l.accent || "blue") !== b.accent) rows.push(["Accent color", nm(ACCENTS, b.accent), nm(ACCENTS, l.accent || "blue")]);
+  if ((l.textSize || "l") !== b.textSize) rows.push(["Text size", nm(TEXT_SIZES, b.textSize), nm(TEXT_SIZES, l.textSize || "l")]);
+  if (WLA.uistyle !== b.uistyle) rows.push(["UI style", nm(WL_STYLES, b.uistyle), nm(WL_STYLES, WLA.uistyle)]);
+  if (WLA.lang !== b.lang) rows.push(["Language", nm(WL_LANGS, b.lang), nm(WL_LANGS, WLA.lang)]);
+  return rows;
+}
+function reviewInner(rows){
+  return `<strong>${esc(tr("Review changes"))} (${rows.length})</strong>
+    ${rows.map(([k, a, b]) => `<div class="small">${esc(tr(k))}: ${esc(tr(a))} → ${esc(tr(b))}</div>`).join("")}
+    <div class="row"><button class="btn primary" data-act="look-save">${esc(tr("Save"))}</button><button class="btn" data-act="look-discard">${esc(tr("Discard"))}</button></div>`;
+}
+function reviewBar(p){
+  const rows = wlaRows(p);
+  return `<div class="wl-review-bar${rows.length ? " show" : ""}" id="wl-review" role="region" aria-label="${esc(tr("Review changes"))}" aria-live="polite">${rows.length ? reviewInner(rows) : ""}</div>`;
+}
+// The text-size slider changes the page without a render, so the review list is repainted here.
+function wlaRefreshBar(p){
+  const bar = document.getElementById("wl-review"); if (!bar) return;
+  const rows = wlaRows(p);
+  bar.innerHTML = rows.length ? reviewInner(rows) : ""; bar.classList.toggle("show", rows.length > 0);
+}
+function wlaChoice(label, act, list, cur){
+  return `<div class="setgroup"><div class="setlabel">${esc(tr(label))}</div>
+    <div class="seg wl-seg" role="group" aria-label="${esc(tr(label))}">${list.map(([k, l]) => `<button data-act="${act}" data-v="${k}" aria-pressed="${cur === k}">${esc(tr(l))}</button>`).join("")}</div></div>`;
+}
+const uiStyleRow = () => wlaChoice("UI style", "ui-style", WL_STYLES, WLA.uistyle);
+const languageRow = () => wlaChoice("Language", "ui-lang", WL_LANGS, WLA.lang);
+function wlaSave(p){
+  saveProfile(); WLA.base = null; wlaMirror(p); toast(tr("Saved")); render();
+}
+function wlaDiscard(p){
+  const b = WLA.base;
+  if (b && b.pid === p.id) {
+    p.look = { ...(p.look || {}), mode:b.mode, accent:b.accent, textSize:b.textSize, largerAX:b.largerAX };
+    WLA.uistyle = b.uistyle; WLA.lang = b.lang;
+  }
+  WLA.base = null; render();
+}
+// Dark and light open as a circle growing from the tapped button; browsers without View
+// Transitions, and Reduced motion, change at once.
+function wlaReveal(from, change){
+  if (!document.startViewTransition || UI.motionOk === false || !from) return change();
+  const r = from.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+  const end = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  try {
+    const vt = document.startViewTransition(change);
+    vt.ready.then(() => document.documentElement.animate(
+      { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${end}px at ${x}px ${y}px)`] },
+      { duration: 600, easing: "ease-in-out", pseudoElement: "::view-transition-new(root)" })).catch(() => {});
+  } catch { change(); }
+}
 const darkMQ = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
 function timeAccent(){ const h = new Date().getHours(); return h >= 5 && h < 11 ? "gold" : h < 17 ? "blue" : h < 21 ? "hibiscus" : "violet"; }
 function applyLook(p = P()){
@@ -11497,6 +11617,7 @@ function applyLook(p = P()){
   el.dataset.font = FONTS.some(f => f[0] === look.font) ? look.font : "system";
   el.style.colorScheme = scheme === "light" ? "light" : "dark";
   applyTextScale(p);
+  wlaMirror(p);
 }
 darkMQ?.addEventListener?.("change", () => applyLook());
 new MutationObserver(() => applyLook()).observe(document.documentElement, { attributes:true, attributeFilter:["data-theme"] });
@@ -11969,7 +12090,7 @@ function toggleNavGroup(id){
   render();
 }
 function sideNav(){
-  const link = (href, on, ic, grad, label) => `<a href="${href}" data-anim="${ic}" data-label="${esc(label)}" title="${esc(label)}"${on ? ' aria-current="page"' : ""}>${siTile(grad, cicon(ic, "#fff", 22, UI.animIcon === ic && UI.motionOk !== false ? "zap" : ""))}<span>${label}</span></a>`;
+  const link = (href, on, ic, grad, label0, label = tr(label0)) => `<a href="${href}" data-anim="${ic}" data-label="${esc(label)}" title="${esc(label)}"${on ? ' aria-current="page"' : ""}>${siTile(grad, cicon(ic, "#fff", 22, UI.animIcon === ic && UI.motionOk !== false ? "zap" : ""))}<span>${label}</span></a>`;
   const premOn = typeof isPremium === "function" && isPremium();
   const here = UI.route + "/" + (UI.param || "");
   // v11.0 TASK 7: readiness badge, same green/neutral pill the Premium popup shows, driven by
@@ -11990,8 +12111,8 @@ function sideNav(){
   // this task describes.
   const premHub = premOn
     ? `<button type="button" class="prem-trigger" data-act="premium-popup" data-label="Premium" title="Premium"
-        aria-haspopup="dialog" aria-expanded="false"${UI.route === "premium" ? ' aria-current="page"' : ""}>${siTile(SI_GRAD.awards, icon("crown","",22))}<span>Premium</span></button>`
-    : `<a class="upsell" href="#/premium" data-act="paywall" data-label="Go Premium" title="Go Premium">${siTile(SI_GRAD.awards, icon("crown","up-crown",20))}<span>Go Premium</span></a>`;
+        aria-haspopup="dialog" aria-expanded="false"${UI.route === "premium" ? ' aria-current="page"' : ""}>${siTile(SI_GRAD.awards, icon("crown","",22))}<span>${tr("Premium")}</span></button>`
+    : `<a class="upsell" href="#/premium" data-act="paywall" data-label="${tr("Go Premium")}" title="${tr("Go Premium")}">${siTile(SI_GRAD.awards, icon("crown","up-crown",20))}<span>${tr("Go Premium")}</span></a>`;
 
   // 8.1.6: the drawer had grown to ~30 rows (11 core destinations + all 19 Premium features as
   // their own rows, 7 of them unfinished), across five collapsible groups. Testers found it hard
@@ -12003,7 +12124,7 @@ function sideNav(){
   void prow; void inGroup;
   const inHealth = ["health","browse","cat","metric"].includes(UI.route);
   const group = (id, label, itemsHTML) => `<div class="navgrp navgrp-static" role="group" aria-labelledby="ngl-${id}" data-grp="${id}">
-      <span class="grp grp-static" id="ngl-${id}">${esc(label)}</span>
+      <span class="grp grp-static" id="ngl-${id}">${esc(tr(label))}</span>
       <div class="navgrp-items">${itemsHTML}</div>
     </div>`;
   const groupsHTML =
@@ -13132,7 +13253,7 @@ function swatchCheckCls(hex){ return hexLuminance(hex) > 0.42 ? "dk" : "lt"; }
 function accentPicker(p){
   const cur = (p.look?.accent) || "blue";
   const curA = ACCENTS.find(a => a[0] === cur) || ACCENTS[0];
-  return `<div class="setgroup"><div class="setlabel">Accent color</div>
+  return `<div class="setgroup"><div class="setlabel">${tr("Accent color")}</div>
     <button type="button" class="compact-trigger accent-trigger" data-act="accent-pop" aria-haspopup="dialog" aria-expanded="false">
       ${icon("palette","",18)}<span class="ct-dot" style="background:${curA[0]==="dynamic" ? "conic-gradient(#F0B429,#0A6CFF,#C0265F,#00808A,#F0B429)" : curA[2]}"></span><span class="ct-label">${esc(curA[1])}</span>
     </button>
@@ -13219,7 +13340,7 @@ function textSizeRow(p){
   const idx = textSizeStep(p);
   const step = TEXT_SIZES[idx];
   const label = idx === 3 ? `${step[1]} (Default)` : step[1];
-  return `<div class="setgroup"><div class="setlabel">Text size</div>
+  return `<div class="setgroup"><div class="setlabel">${tr("Text size")}</div>
     <div class="tsrow">
       <span class="ts-a sm" aria-hidden="true">Aa</span>
       <input type="range" id="ui-ts" min="0" max="${maxIdx}" step="1" value="${Math.min(idx, maxIdx)}" aria-label="Text size" aria-valuemin="0" aria-valuemax="${maxIdx}" aria-valuenow="${Math.min(idx, maxIdx)}" aria-valuetext="${esc(label)}">
@@ -13242,13 +13363,13 @@ function settingsView(p){
   // One row, always. The active tab is bold and a shade larger with no pill behind it, and a
   // hidden bold copy of the label (::after, from data-label) holds the width so nothing shifts.
   const tabs = `<div class="tabwrap"><nav class="tabs" role="tablist" aria-label="Settings sections">${SET_TABS.map(([k,l]) =>
-    `<a role="tab" href="#/settings${k === "profile" ? "" : "/" + k}" data-label="${esc(l)}" aria-selected="${k === tab}"${k === tab ? ' aria-current="page"' : ' tabindex="-1"'}><span>${esc(l)}</span></a>`).join("")}</nav></div>`;
+    `<a role="tab" href="#/settings${k === "profile" ? "" : "/" + k}" data-label="${esc(tr(l))}" aria-selected="${k === tab}"${k === tab ? ' aria-current="page"' : ' tabindex="-1"'}><span>${esc(tr(l))}</span></a>`).join("")}</nav></div>`;
   const sections = {
     profile: (SB.user && sbClient() ? "" : accountCard()) + profileTab(p),
     premium: typeof subscriptionPanel === "function" ? premiumTab(p) : "",
     coach: typeof coachSettingsView === "function" ? coachSettingsView(p) : "",
     appearance: `<section class="card" id="appearance">
-    <h2>Appearance</h2>
+    <h2>${tr("Appearance")}</h2>
     ${(() => {
       // A dark-only theme overrules Light, so the button says so instead of looking chosen and
       // doing nothing. It stays clickable: picking Light then switching theme does what you meant.
@@ -13260,21 +13381,24 @@ function settingsView(p){
       const curMode = MODES.find(m => m[0] === mode) || MODES[0];
       const curOverruled = darkOnly && (mode === "light" || mode === "auto");
       const caption = curOverruled ? `${curMode[1]} — stays dark while your theme is dark-only` : curMode[2];
-      return `<div class="setgroup"><div class="setlabel">Display</div>
+      return `<div class="setgroup"><div class="setlabel">${tr("Display")}</div>
       <div class="seg-display" role="radiogroup" aria-label="Color mode">${MODES.map(([k,l]) => {
         const overruled = darkOnly && (k === "light" || k === "auto");
-        return `<button class="${overruled ? "overruled" : ""}" data-act="look-mode" data-v="${k}" aria-pressed="${mode===k}" title="${overruled ? `${l} — stays dark` : l}">${l}</button>`; }).join("")}</div>
+        return `<button class="${overruled ? "overruled" : ""}" data-act="look-mode" data-v="${k}" aria-pressed="${mode===k}" title="${overruled ? `${l} — stays dark` : l}">${tr(l)}</button>`; }).join("")}</div>
       <span class="tiny muted">${esc(caption)}</span>
       ${darkOnly ? `<span class="tiny muted">${esc(THEMES.find(t => t[0] === themeOf(p))?.[1] || "This theme")} is dark whichever mode you pick. Choose another theme to use Light.</span>` : ""}</div>`;
     })()}
     ${accentPicker(p)}
     ${fontPicker(p)}
     ${textSizeRow(p)}
+    ${uiStyleRow()}
+    ${languageRow()}
     ${typeof themePicker === "function" ? themePicker(p) : ""}
     ${opacityRow(p)}
-    <div class="setgroup"><div class="setlabel">Motion</div>
+    <div class="setgroup"><div class="setlabel">${tr("Motion")}</div>
       <div class="seg" role="group" aria-label="Motion"><button data-act="look-motion" data-v="full" aria-pressed="${(p.look?.motion||"full")==="full"}">Bouncy</button><button data-act="look-motion" data-v="reduced" aria-pressed="${p.look?.motion==="reduced"}">Reduced</button></div>
       <span class="tiny muted">Bouncy adds the spring animations. Reduced turns them off, and your device's own "reduce motion" setting always wins.</span></div>
+    ${reviewBar(p)}
   </section>`,
     goals: `<section class="card">
     <h2>Targets</h2>
@@ -13538,7 +13662,19 @@ document.addEventListener("click", async e => {
     case "photo-remove": p.photo = null; saveProfile(); render(); toast("Photo removed"); break;
     case "edit-group": UI.editGroup = t.dataset.v; UI.groupErr = null; render(); document.querySelector(`#pg-${t.dataset.v} input, #pg-${t.dataset.v} select`)?.focus(); break;
     case "cancel-group": UI.editGroup = null; UI.groupErr = null; render(); break;
-    case "look-scene": case "look-mode": case "look-accent": case "look-motion": case "look-font": {
+    case "look-mode": case "look-accent": {
+      // Mode and accent are held for review (Save / Discard in Settings > Appearance); a mode
+      // change opens as a circle from the tapped button.
+      const key = a.slice(5), v = t.dataset.v;
+      if (key === "mode") wlaReveal(t, () => wlaSetLook(p, { mode:v })); else wlaSetLook(p, { accent:v });
+      if (a === "look-accent") repaintAccentPopup();
+      break;
+    }
+    case "ui-style": wlaSetStyle(t.dataset.v); break;
+    case "ui-lang": wlaSetLang(t.dataset.v); break;
+    case "look-save": wlaSave(p); break;
+    case "look-discard": wlaDiscard(p); break;
+    case "look-scene": case "look-motion": case "look-font": {
       p.look = { mode:"auto", accent:"blue", motion:"full", font:"system", ...(p.look||{}) }; p.look[a.slice(5)] = t.dataset.v; saveProfile(); render();
       // The accent popup lives outside #app (so render() above never touches it); repaint its
       // own swatches right away so the tapped one shows selected in well under 100ms.
@@ -13547,14 +13683,14 @@ document.addEventListener("click", async e => {
     }
     case "accent-pop": e.preventDefault(); openAccentPopup(t); break;
     case "font-pop": e.preventDefault(); openFontPopup(t); break;
-    case "ts-reset": p.look = { ...(p.look || {}), textSize:"l", largerAX:false }; applyTextScale(p); saveProfile(); render(); break;
+    case "ts-reset": wlaSetLook(p, { textSize:"l", largerAX:false }); break;
     case "ts-ax-toggle": {
-      p.look = { ...(p.look || {}), largerAX: t.checked };
+      wlaSnap(p); p.look = { ...(p.look || {}), largerAX: t.checked };
       // Turning the range back down to "Standard" while sitting on an AX step drops back to
       // xxxLarge (the top of the standard range) rather than silently keeping an AX scale that
       // the UI no longer shows a step for -- same clamp textSizeStep() already applies on read.
       if (!t.checked && TEXT_SIZES.findIndex(s => s[0] === p.look.textSize) > TEXT_SIZE_STD_MAX) p.look.textSize = TEXT_SIZES[TEXT_SIZE_STD_MAX][0];
-      applyTextScale(p); saveProfile(); render();
+      applyTextScale(p); render();
       break;
     }
     case "pick-act": { wSaveDraft(); UI.pickAct = t.dataset.v; UI.actOpen = false; const sel = document.getElementById("w-type"); if (sel) sel.value = t.dataset.v; render(); break; }
@@ -13721,13 +13857,14 @@ document.addEventListener("input", e => {
     const raw = +t.value; // NOT "+t.value || 3": value 0 (xSmall) is falsy and must not fall back to Large
     const idx = Math.max(0, Math.min(maxIdx, Number.isFinite(raw) ? raw : 3));
     const step = TEXT_SIZES[idx];
+    wlaSnap(p);
     p.look = { ...(p.look || {}), textSize: step[0] };
     applyTextScale(p);
     const label = idx === 3 ? `${step[1]} (Default)` : step[1];
     t.setAttribute("aria-valuenow", String(idx)); t.setAttribute("aria-valuetext", label);
     const lbl = document.getElementById("ui-ts-label"); if (lbl) lbl.textContent = label;
     const prev = document.getElementById("ui-ts-preview"); if (prev) prev.style.fontSize = `calc(17px * ${step[2]})`;
-    clearTimeout(applyTextScale._t); applyTextScale._t = setTimeout(() => saveProfile(), 400);
+    wlaRefreshBar(p); // the review list follows the slider; the profile is written on Save
   }
 });
 
@@ -14123,9 +14260,12 @@ document.addEventListener("keydown", e => {
 function toggleTheme(){
   const p = P(); if (!p) return;
   const now = document.documentElement.dataset.scheme === "light" ? "dark" : "light";
-  p.look = { ...(p.look || {}), mode: now };
-  try { localStorage.setItem("wlh.mode", now); } catch {}
-  saveProfile(); render();
+  wlaReveal(document.querySelector('[data-act="theme-toggle"]'), () => {
+    p.look = { ...(p.look || {}), mode: now };
+    if (WLA.base) WLA.base.mode = now; // the header button saves at once, so it is not a pending change
+    try { localStorage.setItem("wlh.mode", now); } catch {}
+    saveProfile(); render();
+  });
 }
 (function bootTheme(){ // applied before any data loads so there's no flash
   try { const m = localStorage.getItem("wlh.mode"); if (m === "light" || m === "dark" || m === "oled") { document.documentElement.dataset.scheme = m; document.documentElement.style.colorScheme = m === "light" ? "light" : "dark"; } } catch {}
@@ -17170,6 +17310,7 @@ function privacyPolicyView(){
         <tr><td><code>wlh.sb.auth</code></td><td>Your sign-in session (set by the sign-in library). Anyone who can run a script on this page could read it.</td></tr>
         <tr><td><code>wlh.meals.v1</code></td><td>Signed in, no passcode only: a copy of your meals, and any meal changes not uploaded yet, so the app works offline. Removed when you sign out. (With a passcode on, meals stay in the encrypted copy instead, and this entry is not written.)</td></tr>
         <tr><td><code>wlh.mode</code></td><td>Your light, dark or OLED display choice.</td></tr>
+        <tr><td><code>wl-appearance</code></td><td>A copy of your saved display, accent, text size, UI style (Rounded or Crisp) and language, so the page paints the right look before it loads.</td></tr>
         <tr><td><code>wlh.navgrp</code></td><td>Which sidebar groups you left expanded or collapsed (older builds; no longer written since the sidebar stopped collapsing).</td></tr>
         <tr><td><code>wlh.showtesting</code></td><td>Whether this device shows Premium features that are still being built (Settings › Data &amp; about › Diagnostics).</td></tr>
         <tr><td><code>wlh.rail</code></td><td>Whether you collapsed the sidebar to icons on a wide screen.</td></tr>
@@ -24560,5 +24701,21 @@ h2.sec-title + .mgrid .mhead svg.ci{
   h2.sec-title + .mgrid{ grid-template-columns:1fr 1fr; gap:10px; }
   h2.sec-title + .mgrid .mcard{ padding:14px; gap:10px; min-height:0; border-radius:var(--r-sm); }
 }
+</style>
+<style>
+/* =====================================================================
+   WL THEME + LANGUAGE PASS - 30 Oct 2026
+   UI style (Rounded / Crisp), the circular reveal and the review bar.
+   Colours, accents and text size already run off the existing tokens.
+   ===================================================================== */
+::view-transition-old(root),::view-transition-new(root){ animation:none; mix-blend-mode:normal; }
+::view-transition-old(root){ z-index:1; }
+::view-transition-new(root){ z-index:2; }
+:root[data-uistyle="crisp"]{ --r:6px; --r-lg:8px; --r-sm:4px; --r-xs:3px; }
+:root[data-uistyle="crisp"] :is(.btn,.btn.sm,.chip,.tag,.well,.note,.dish,.choice button,.logo,.avatar,input[type=text],input[type=number],input[type=date],input[type=time],input[type=search],select,textarea,.seg,.seg button,.seg-display,.seg-display button,.tabs a){ border-radius:var(--r-sm); }
+.wl-seg button{ min-height:44px; }
+.wl-review-bar{ display:none; position:sticky; bottom:calc(12px + env(safe-area-inset-bottom,0px)); z-index:5; margin-top:14px; padding:14px; background:var(--surface); border:1px solid var(--line2); border-radius:var(--r-sm); box-shadow:0 8px 24px rgba(0,0,0,.18); }
+.wl-review-bar.show{ display:flex; flex-direction:column; gap:6px; }
+.wl-review-bar .btn{ min-height:44px; }
 </style>
 </body></html>
