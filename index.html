@@ -3836,7 +3836,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.4", build: "8.4", channel: "Dev Testing", date: "2026-10-30", week: "Sun 25 Oct – Sat 31 Oct 2026" };
+const APP_VERSION = { update: "8.4", build: "8.4.1", channel: "Dev Testing", date: "2026-10-30", week: "Sun 25 Oct – Sat 31 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3850,6 +3850,14 @@ const APP_VERSION = { update: "8.4", build: "8.4", channel: "Dev Testing", date:
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.4.1",
+      area:"Coach",
+      title:"WL Coach chat on the Coach page: signed-in people can ask training and food questions",
+      bug:"The Coach page's Ask box needs Claude's own sample permission and is not available to most people, so there was no coach chat that worked for everyone who is signed in. An AI call cannot safely run in the browser because the API key would be exposed.",
+      fix:"A new Chat with your coach card sits above Ask your coach. A signed-in person types a question; the app sends it with their own token to a new wl-coach edge function. The function checks the token, refuses empty or over-1,000-character messages and more than 30 questions an hour, answers red-flag medical topics (chest pain, trouble breathing, fainting, self-harm, eating-disorder behaviour, blood) with a fixed safe reply without calling the model, sends planning questions to Sonnet 5.5 and everything else to Haiku 5.5 with the WL Coach system prompt (West African food first, no diagnosis, no extreme diets, no invented numbers about the person), and writes every exchange to a new ai_coach_logs table that each person can read only for themselves. The Anthropic key lives only in the function's secrets. Signed out, the card says to sign in. The chat is not saved on the device. Nothing else on the page changed.",
+      where:"supabase/functions/wl-coach/handler.ts and index.ts (new), supabase/migrations/20261030120000_wlh_8_4_1_ai_coach_logs.sql (new, not applied), index.html: coachChatCard(), wlCoachSend(), the wlc-send case, coachView(), APP_VERSION, WLH.changelog. tests/wl-coach-handler.test.mjs (new), .github/workflows/tests.yml. CHANGELOG.md, README.md, docs/BUILD_PLAN.md, docs/DATABASE.md, docs/AI_COACH.md (new).",
+      test:"node --test tests/wl-coach-handler.test.mjs (11 checks). After the owner runs the SQL, sets ANTHROPIC_API_KEY and deploys (steps in docs/AI_COACH.md): sign in, open Coach, ask What is a good high-protein breakfast?, and see one row in ai_coach_logs; ask My chest hurts when I bench and see the fixed safe reply with route redflag and no model.",
+      limits:"Until the SQL is run, the key is set and the function is deployed, the card shows a try-again message. Phase 1 has no memory of the conversation (each question stands alone) and no access to the person's logs, so it says it can't see them. Red-flag matching is a keyword list, so it can miss unusual wording or catch a harmless phrase. The 30-an-hour limit is per account. Questions are stored in the account, which the Privacy Policy does not yet say (see the PR). The old Ask your coach card is unchanged. Not tried against the live model." },
     { id:"8.4",
       area:"Settings",
       title:"Appearance: circular dark mode, Rounded or Crisp, English or Spanish, and a review bar",
@@ -13153,6 +13161,8 @@ function coachView(p){
       <p class="small muted">Rebuild your weekly plan and these sessions replace some of the general ones.</p>` : `<p class="small muted">Soccer, basketball, running, American football, swimming or tennis: get conditioning and skill sessions for it.</p>`}
   </section>
 
+  ${coachChatCard()}
+
   <section class="card"${UI.sampleOk === false ? " hidden" : ""}>
     <div class="eyebrow">Ask your coach</div><h2>Questions about training or food</h2>
     <p class="small muted">Claude answers using your profile and this week's logs. It uses your own Claude usage and asks permission the first time.</p>
@@ -13178,6 +13188,45 @@ function buildICS(p){
   out.push(ev(`meal-${p.id}`, today(), r.mealTime, "RRULE:FREQ=DAILY", "PT5M", "Log today's meals (Whole Life Hub)", "Take a minute to log meals, snacks and extras."));
   out.push("END:VCALENDAR");
   return out.join("\r\n");
+}
+// ---- WL Coach chat (build 8.4.1) ----
+// The question goes to the wl-coach edge function with the person's own token. The Anthropic key never reaches the browser, the chat is
+// not saved on the device, and the function logs each exchange to ai_coach_logs (readable only by that person).
+function coachChatCard(){
+  const C = UI.wlc || {};
+  if (!SB.user || !sbClient()) return `<section class="card" id="wlc"><div class="eyebrow">Chat with your coach</div><h2>Ask WL Coach</h2><p class="small muted">Sign in to chat with WL Coach. Your questions go to your account, not to anyone else.</p></section>`;
+  const msgs = (C.msgs || []).map(m => `<div class="well" style="margin:6px 0"><span class="tiny muted">${m.me ? "You" : "WL Coach"}</span><div class="small" style="white-space:pre-wrap">${esc(m.t)}</div></div>`).join("");
+  return `<section class="card" id="wlc">
+    <div class="eyebrow">Chat with your coach</div><h2>Ask WL Coach</h2>
+    <p class="small muted">Training and food questions. WL Coach can't see your logs yet, so tell it what it needs to know. It is not medical advice. Questions are kept in your account so we can check answers are safe.</p>
+    <div id="wlc-log" aria-live="polite">${msgs}</div>
+    <label class="f">Your question<textarea id="wlc-q" maxlength="1000" placeholder="For example: what should I eat after a workout?">${esc(C.q || "")}</textarea></label>
+    <div class="row"><button class="btn primary" data-act="wlc-send"${C.busy ? " disabled" : ""}>${C.busy ? "Thinking…" : "Send"}</button></div>
+    ${C.err ? `<div class="note">${esc(C.err)}</div>` : ""}
+  </section>`;
+}
+async function wlCoachSend(){
+  const C = UI.wlc = { ...(UI.wlc || {}), err: null };
+  const q = val("wlc-q").trim();
+  if (C.busy || !q) return;
+  const c = sbClient(); if (!c || !SB.user) { C.err = "Sign in first."; render(); return; }
+  if (navigator.onLine === false) { C.err = "You are offline. Try again when you are connected."; C.q = q; render(); return; }
+  C.q = q; C.busy = true; render();
+  let out = null, state = "error";
+  try {
+    const { data } = await c.auth.getSession(), token = data?.session?.access_token;
+    if (token) {
+      const r = await fetch(`${SB_URL}/functions/v1/wl-coach`, { method:"POST", headers:{ "content-type":"application/json", apikey:SB_KEY, authorization:`Bearer ${token}` }, body: JSON.stringify({ message:q }) });
+      out = await r.json().catch(() => ({})); state = out.state || "error";
+    } else state = "unauthorized";
+  } catch { console.warn("coach request failed"); }
+  C.busy = false;
+  if (state === "ok" && typeof out.reply === "string") { C.msgs = [...(C.msgs || []), { me:true, t:q }, { me:false, t:out.reply }].slice(-12); C.q = ""; }
+  else C.err = state === "unauthorized" ? "Your sign-in has expired. Sign out, sign in again, then retry."
+    : state === "rate_limited" ? "You've asked a lot this hour. Try again later."
+    : state === "bad_message" ? "Write a question under 1,000 characters."
+    : "The coach couldn't answer just now. Try again in a moment.";
+  render();
 }
 async function askClaude(kind){
   const sample = await window.claude?.use?.("sample");
@@ -13644,6 +13693,7 @@ document.addEventListener("click", async e => {
     case "build-wplan": p.freq = Math.max(1, Math.min(6, numv("c-freq") || p.freq || 3)); p.level = val("c-level") || p.level; if (!p.workoutGoal) p.workoutGoal = p.freq; p.workoutPlan = { created: today(), days: buildWorkoutPlan(p) }; saveProfile(); render(); toast("Workout plan ready"); break;
     case "mark-done": { const d = p.workoutPlan.days.find(x => x.dow === +t.dataset.dow); const date = addDays(weekStart(today()), (d.dow + 6) % 7); addEntry("workouts", { id: uid(), date, type: d.type, minutes: d.minutes, note: d.title, src: "Plan" }); render(); toast("Nice work. Logged.", "success"); checkCelebrations(); checkAwards(); break; }
     case "coach-q": UI.askCoach = { ...(UI.askCoach||{}), q: t.dataset.q }; render(); document.getElementById("coach-q")?.focus(); break;
+    case "wlc-send": wlCoachSend(); break;
     case "ask-coach": UI.askCoach = { ...(UI.askCoach||{}), q: val("coach-q") }; askClaude("coach"); break;
     case "rem-day": { const d = +t.dataset.v; const r = p.reminders; r.days = r.days.includes(d) ? r.days.filter(x => x !== d) : [...r.days, d].sort(); saveProfile(); render(); break; }
     case "rem-ics": case "export": {
