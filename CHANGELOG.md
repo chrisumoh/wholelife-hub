@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.4 (Dev Testing), build 8.4, 2026-10-30. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.4 (Dev Testing), build 8.4.1, 2026-10-30. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.4.1 · Coach: WL Coach chat on the Coach page: signed-in people can ask training and food questions
+
+- **Problem:** The Coach page's Ask box needs Claude's own sample permission and is not available to most people, so there was no coach chat that worked for everyone who is signed in. An AI call cannot safely run in the browser because the API key would be exposed.
+- **Change:** A new Chat with your coach card sits above Ask your coach. A signed-in person types a question; the app sends it with their own token to a new wl-coach edge function. The function checks the token, refuses empty or over-1,000-character messages and more than 30 questions an hour, answers red-flag medical topics (chest pain, trouble breathing, fainting, self-harm, eating-disorder behaviour, blood) with a fixed safe reply without calling the model, sends planning questions to Sonnet 5.5 and everything else to Haiku 5.5 with the WL Coach system prompt (West African food first, no diagnosis, no extreme diets, no invented numbers about the person), and writes every exchange to a new ai_coach_logs table that each person can read only for themselves. The Anthropic key lives only in the function's secrets. Signed out, the card says to sign in. The chat is not saved on the device. Nothing else on the page changed.
+- **Where:** supabase/functions/wl-coach/handler.ts and index.ts (new), supabase/migrations/20261030120000_wlh_8_4_1_ai_coach_logs.sql (new, not applied), index.html: coachChatCard(), wlCoachSend(), the wlc-send case, coachView(), APP_VERSION, WLH.changelog. tests/wl-coach-handler.test.mjs (new), .github/workflows/tests.yml. CHANGELOG.md, README.md, docs/BUILD_PLAN.md, docs/DATABASE.md, docs/AI_COACH.md (new).
+- **How to test:** node --test tests/wl-coach-handler.test.mjs (11 checks). After the owner runs the SQL, sets ANTHROPIC_API_KEY and deploys (steps in docs/AI_COACH.md): sign in, open Coach, ask What is a good high-protein breakfast?, and see one row in ai_coach_logs; ask My chest hurts when I bench and see the fixed safe reply with route redflag and no model.
+- **Known limits:** Until the SQL is run, the key is set and the function is deployed, the card shows a try-again message. Phase 1 has no memory of the conversation (each question stands alone) and no access to the person's logs, so it says it can't see them. Red-flag matching is a keyword list, so it can miss unusual wording or catch a harmless phrase. The 30-an-hour limit is per account. Questions are stored in the account, which the Privacy Policy does not yet say (see the PR). The old Ask your coach card is unchanged. Not tried against the live model.
 
 ## 8.4 · Settings: Appearance: circular dark mode, Rounded or Crisp, English or Spanish, and a review bar
 
