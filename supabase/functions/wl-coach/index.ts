@@ -8,10 +8,10 @@ const KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
 
 const deps: Deps = {
   getUser: async (token) => { const { data, error } = await sb.auth.getUser(token); return error || !data.user ? null : { id: data.user.id }; },
-  recentCount: async (id) => {
-    const since = new Date(Date.now() - 3600_000).toISOString();
-    const { count, error } = await sb.from("ai_coach_logs").select("id", { count: "exact", head: true }).eq("user_id", id).gte("created_at", since);
-    return error ? null : count ?? 0;
+  reserve: async (id, message, limit) => {
+    const { data, error } = await sb.rpc("coach_reserve", { p_user: id, p_message: message, p_limit: limit });
+    if (error) throw error;
+    return typeof data === "string" ? data : null;
   },
   ask: async (model, system, message, signal) => {
     if (!KEY) throw new Error("ANTHROPIC_API_KEY is not set");
@@ -25,7 +25,7 @@ const deps: Deps = {
     const text = (j.content || []).filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("\n");
     return { text, inputTokens: j.usage?.input_tokens ?? 0, outputTokens: j.usage?.output_tokens ?? 0 };
   },
-  log: async (row) => { const { error } = await sb.from("ai_coach_logs").insert(row); if (error) throw error; },
+  finish: async (id, row) => { const { error } = await sb.from("ai_coach_logs").update(row).eq("id", id); if (error) throw error; },
 };
 
 Deno.serve((req) => handle(req, deps));

@@ -1,5 +1,6 @@
 // WL Coach, phase 1: answers one question from a signed-in person. The Anthropic key lives only in the function's secrets.
-// Order of work: check the person, check the message, answer red-flag medical topics with a fixed reply (no model call),
+// Order of work: check the person, check the message and consent, reserve a slot of the hourly quota (atomically, in the database),
+// answer red-flag medical topics with a fixed reply (no model call),
 // pick a model, call it, log the exchange. The system prompt lives here and nowhere else: after any edit to it, run the eval
 // set in docs/AI_COACH.md and read ai_coach_logs for a day. Deploy with --no-verify-jwt (the token is checked here).
 
@@ -43,14 +44,15 @@ const cors = (req: Request) => {
 const reply = (req: Request, body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", ...cors(req) } });
 
-export type Log = { user_id: string; message: string; reply: string; route: "redflag" | "small" | "big"; model: string | null; input_tokens: number | null; output_tokens: number | null; latency_ms: number; error: string | null };
+export type Log = { reply: string; route: "redflag" | "small" | "big"; model: string | null; input_tokens: number | null; output_tokens: number | null; latency_ms: number; error: string | null };
 export type Model = { text: string; inputTokens: number; outputTokens: number };
 // What index.ts wraps the real Supabase and Anthropic calls into, so tests can pass pretend ones.
 export type Deps = {
   getUser: (token: string) => Promise<{ id: string } | null>;
-  recentCount: (userId: string) => Promise<number | null>;
+  // Counts and records the question in one locked step. Resolves to the new log row's id, or null when the hourly limit is used up; throws when it cannot say.
+  reserve: (userId: string, message: string, limit: number) => Promise<string | null>;
   ask: (model: string, system: string, message: string, signal: AbortSignal) => Promise<Model>;
-  log: (row: Log) => Promise<void>;
+  finish: (id: string, row: Log) => Promise<void>;
 };
 
 export async function handle(req: Request, d: Deps): Promise<Response> {
@@ -59,24 +61,27 @@ export async function handle(req: Request, d: Deps): Promise<Response> {
 
   const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
   if (!token) return reply(req, { state: "unauthorized" }, 401);
-  let body: { message?: unknown } = {};
+  let body: { message?: unknown; consent?: unknown } = {};
   try { body = await req.json(); } catch { return reply(req, { state: "error" }, 400); }
   const message = typeof body.message === "string" ? body.message.trim() : "";
   if (!message || message.length > MAX_MESSAGE) return reply(req, { state: "bad_message" }, 400);
+
+  // The app sends this only after the person turned on coach chat; the server refuses without it so a direct call cannot skip the step.
+  if (body.consent !== true) return reply(req, { state: "consent_required" }, 403);
 
   let user: { id: string } | null = null;
   try { user = await d.getUser(token); } catch { user = null; }
   if (!user || !/^[0-9a-f-]{36}$/i.test(user.id)) return reply(req, { state: "unauthorized" }, 401);
 
-  // A failed count blocks the call rather than allowing an unmetered one.
-  let used: number | null = null;
-  try { used = await d.recentCount(user.id); } catch { used = null; }
-  if (used === null) return reply(req, { state: "error" }, 500);
-  if (used >= HOURLY_LIMIT) return reply(req, { state: "rate_limited" }, 429);
+  // The slot is taken before any model call, so simultaneous requests cannot slip past the limit, and a failure to reserve blocks the call.
+  let id: string | null = null;
+  try { id = await d.reserve(user.id, message, HOURLY_LIMIT); } catch { return reply(req, { state: "error" }, 500); }
+  if (!id) return reply(req, { state: "rate_limited" }, 429);
 
   const t0 = Date.now();
-  const row = (r: Partial<Log>): Log => ({ user_id: user!.id, message, reply: "", route: "small", model: null, input_tokens: null, output_tokens: null, latency_ms: Date.now() - t0, error: null, ...r });
-  const save = async (r: Log) => { try { await d.log(r); } catch { console.warn("coach log write failed"); } };
+  const row = (r: Partial<Log>): Log => ({ reply: "", route: "small", model: null, input_tokens: null, output_tokens: null, latency_ms: Date.now() - t0, error: null, ...r });
+  // The reserved row already counts toward the limit, so a failed update loses the log detail but never the metering.
+  const save = async (r: Log) => { try { await d.finish(id!, r); } catch { console.warn("coach log write failed"); } };
 
   if (flagged(message)) {
     await save(row({ reply: SAFE_REPLY, route: "redflag" }));

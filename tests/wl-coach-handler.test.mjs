@@ -5,14 +5,17 @@ import { handle, SAFE_REPLY, SMALL_MODEL, BIG_MODEL, SYSTEM_PROMPT } from "../su
 // Run from the repo root:  node --test tests/wl-coach-handler.test.mjs
 // Build 8.4.1: drives the real wl-coach handler with a pretend Supabase and a pretend model (no network, no key).
 const UID = "11111111-2222-3333-4444-555555555555";
-const post = (body, token = "tok") => new Request("https://x.test/functions/v1/wl-coach", { method: "POST", headers: { origin: "https://wholelife-hub.vercel.app", ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(body) });
+const withConsent = body => (body && typeof body === "object" && !("consent" in body) ? { consent: true, ...body } : body);
+const post = (body, token = "tok") => new Request("https://x.test/functions/v1/wl-coach", { method: "POST", headers: { origin: "https://wholelife-hub.vercel.app", ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(withConsent(body)) });
 function fake(over = {}) {
-  const calls = { ask: [], log: [] };
+  const calls = { ask: [], log: [], reserved: [] };
+  let used = over.used ?? 0; delete over.used;
   const deps = {
     getUser: async t => (t === "tok" ? { id: UID } : null),
-    recentCount: async () => 0,
+    // Like the database function: the check and the count change happen in one step, with no gap between them.
+    reserve: async (user, message, limit) => { if (used >= limit) return null; used++; calls.reserved.push({ user, message }); return "row-" + used; },
     ask: async (model, system, message) => { calls.ask.push({ model, system, message }); return { text: "Try eggs and plantain.", inputTokens: 50, outputTokens: 20 }; },
-    log: async row => { calls.log.push(row); },
+    finish: async (id, row) => { calls.log.push({ id, ...row }); },
     ...over,
   };
   return { deps, calls };
@@ -24,7 +27,8 @@ test("a normal question goes to the small model with the system prompt and is lo
   assert.equal(r.status, 200); assert.equal(r.body.reply, "Try eggs and plantain."); assert.equal(r.body.flagged, false);
   assert.equal(f.calls.ask[0].model, SMALL_MODEL); assert.equal(f.calls.ask[0].system, SYSTEM_PROMPT);
   assert.equal(f.calls.log.length, 1);
-  assert.deepEqual([f.calls.log[0].user_id, f.calls.log[0].route, f.calls.log[0].model, f.calls.log[0].input_tokens, f.calls.log[0].output_tokens], [UID, "small", SMALL_MODEL, 50, 20]);
+  assert.deepEqual([f.calls.reserved[0].user, f.calls.log[0].route, f.calls.log[0].model, f.calls.log[0].input_tokens, f.calls.log[0].output_tokens], [UID, "small", SMALL_MODEL, 50, 20]);
+  assert.equal(f.calls.log[0].id, "row-1"); assert.equal(f.calls.reserved[0].message, "What is a good high-protein breakfast?");
 });
 
 test("planning questions use the big model", async () => {
@@ -56,14 +60,27 @@ test("no token, a bad token, or a bad body is refused before anything else runs"
 
 test("the person is the one the token names, whatever the body says", async () => {
   const f = fake(); await run({ message: "hi", user_id: "99999999-2222-3333-4444-555555555555" }, f);
-  assert.equal(f.calls.log[0].user_id, UID);
+  assert.equal(f.calls.reserved[0].user, UID);
 });
 
-test("the hourly limit stops the model call, and a failed count does too", async () => {
-  let f = fake({ recentCount: async () => 30 }); let r = await run({ message: "hi" }, f);
+test("the hourly limit stops the model call, and a failed reservation does too", async () => {
+  let f = fake({ used: 30 }); let r = await run({ message: "hi" }, f);
   assert.equal(r.status, 429); assert.equal(r.body.state, "rate_limited"); assert.equal(f.calls.ask.length, 0);
-  f = fake({ recentCount: async () => null }); r = await run({ message: "hi" }, f);
+  f = fake({ reserve: async () => { throw new Error("db down"); } }); r = await run({ message: "hi" }, f);
   assert.equal(r.status, 500); assert.equal(f.calls.ask.length, 0);
+});
+
+test("ten simultaneous requests with one slot left make exactly one model call", async () => {
+  const f = fake({ used: 29, ask: async () => { await new Promise(r => setTimeout(r, 20)); return { text: "ok", inputTokens: 1, outputTokens: 1 }; } });
+  const rs = await Promise.all(Array.from({ length: 10 }, () => run({ message: "hi" }, f)));
+  assert.equal(rs.filter(r => r.status === 200).length, 1); assert.equal(rs.filter(r => r.status === 429).length, 9);
+});
+
+test("without the consent flag nothing is reserved or sent", async () => {
+  for (const consent of [undefined, false, "true", 1]) {
+    const f = fake(); const r = await run({ message: "hi", consent }, f);
+    assert.equal(r.status, 403); assert.equal(r.body.state, "consent_required"); assert.equal(f.calls.reserved.length, 0); assert.equal(f.calls.ask.length, 0);
+  }
 });
 
 test("a model failure returns a plain error, logs it, and leaks no detail", async () => {
@@ -72,9 +89,11 @@ test("a model failure returns a plain error, logs it, and leaks no detail", asyn
   assert.match(f.calls.log[0].error, /529/); assert.equal(f.calls.log[0].reply, "");
 });
 
-test("a log write failure does not lose the answer", async () => {
-  const f = fake({ log: async () => { throw new Error("db down"); } }); const r = await run({ message: "hi" }, f);
-  assert.equal(r.status, 200); assert.equal(r.body.reply, "Try eggs and plantain.");
+test("a log update failure keeps the answer, and the reserved slot still counts", async () => {
+  const f = fake({ used: 28, finish: async () => { throw new Error("db down"); } });
+  let r = await run({ message: "hi" }, f); assert.equal(r.status, 200); assert.equal(r.body.reply, "Try eggs and plantain.");
+  r = await run({ message: "hi" }, f); assert.equal(r.status, 200);
+  r = await run({ message: "hi" }, f); assert.equal(r.status, 429); assert.equal(f.calls.ask.length, 2);
 });
 
 test("the system prompt covers the starter evals: scope, no invented numbers, extreme diets, West African food", () => {
@@ -83,6 +102,6 @@ test("the system prompt covers the starter evals: scope, no invented numbers, ex
 
 test("CORS is only allowed for the app's own origins", async () => {
   const f = fake(); const ok = await handle(post({ message: "hi" }), f.deps); assert.equal(ok.headers.get("access-control-allow-origin"), "https://wholelife-hub.vercel.app");
-  const bad = await handle(new Request("https://x.test/", { method: "POST", headers: { origin: "https://evil.example", authorization: "Bearer tok" }, body: JSON.stringify({ message: "hi" }) }), f.deps);
+  const bad = await handle(new Request("https://x.test/", { method: "POST", headers: { origin: "https://evil.example", authorization: "Bearer tok" }, body: JSON.stringify({ message: "hi", consent: true }) }), f.deps);
   assert.equal(bad.headers.get("access-control-allow-origin"), null);
 });

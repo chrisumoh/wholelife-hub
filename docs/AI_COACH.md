@@ -2,11 +2,11 @@
 
 A signed-in person asks a question on `#/coach` ("Chat with your coach"). The page posts it with their own access token to the `wl-coach` edge function. The browser never sees the Anthropic key.
 
-Function order (`supabase/functions/wl-coach/handler.ts`): check the token, check the message (1 to 1,000 characters), check the limit (30 questions an hour per person), answer red-flag medical topics with a fixed reply and **no model call**, pick a model (Sonnet 5.5 for plans and long questions, otherwise Haiku 5.5), call Claude with the system prompt, log the exchange to `ai_coach_logs`.
+Function order (`supabase/functions/wl-coach/handler.ts`): check the token, check the message (1 to 1,000 characters), check the person turned on coach chat (the app sends `consent: true`; the app asks first on an opt-in screen naming Anthropic), reserve a slot of the limit (30 questions an hour per person) in the database before any model call, answer red-flag medical topics with a fixed reply and **no model call**, pick a model (Sonnet 5.5 for plans and long questions, otherwise Haiku 5.5), call Claude with the system prompt, log the exchange to `ai_coach_logs`.
 
 ## Setup (the owner runs these; they need dashboard or key access)
 
-1. Run `supabase/migrations/20261030120000_wlh_8_4_1_ai_coach_logs.sql` in the Supabase SQL editor.
+1. Run `supabase/migrations/20261030120000_wlh_8_4_1_ai_coach_logs.sql` in the Supabase SQL editor (it also creates `coach_reserve`). On a non-production project first, fire ten parallel calls at the last slot and confirm one model call.
 2. Set the secret (never commit it): `supabase secrets set ANTHROPIC_API_KEY=<key>`
 3. Deploy: `supabase functions deploy wl-coach --no-verify-jwt` (the handler checks the token itself, like `delete-account`).
 4. Sign in to the app, open Coach, ask a question, and confirm one row in `ai_coach_logs`.
@@ -27,4 +27,4 @@ The prompt lives only in `handler.ts`. After any edit, even "make it friendlier"
 
 ## Not in phase 1
 
-Memory of earlier messages, the person's logs as context, tools that log meals, answer caching, premium gating, and any mention of AI chat in the Privacy Policy (questions are stored in the account; decide the wording before this ships to testers).
+Memory of earlier messages, the person's logs as context, tools that log meals, answer caching, premium gating, and 
