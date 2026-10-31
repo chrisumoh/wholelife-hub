@@ -9,8 +9,11 @@
 @media (prefers-color-scheme:dark){#boot{background:#111113;color:#f2f2f2}}
 @media (prefers-reduced-motion:reduce){#boot i:after{animation:none;width:100%}}
 </style></head><body><div id="boot" role="status"><span>Whole Life Hub</span><i></i><small>Still loading. Check your connection, then reload the page.</small></div>
-<script>document.documentElement.lang = "en";</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
+<script>document.documentElement.lang = "en";
+try { const a = JSON.parse(localStorage.getItem("wl-appearance") || "{}"), d = document.documentElement;
+  if (a.uistyle === "crisp") d.dataset.uistyle = "crisp";
+  if (a.lang === "es") d.lang = "es"; } catch {}</script>
+<script src="/vendor/supabase-js-2.117.2.umd.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"></script>
 <!-- Task 7.8 fix: the page is served as a bare head/body fragment (no <html> tag of its own —
      see build.sh and the Artifact publish note above wholelife-hub.html), so there is nowhere to
      write lang="en" as a static attribute. Setting it here, first, works whether the browser's
@@ -27,12 +30,15 @@
 <meta name="theme-color" content="#1FA36B">
 <meta property="og:title" content="Whole Life Hub">
 <meta property="og:description" content="Private meal, snack and workout tracking built around West African cooking.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2096%2096%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27b%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270.35%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%230E8397%27%2F%3E%3Cstop%20offset%3D%2748%25%27%20stop-color%3D%27%231FA36B%27%2F%3E%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%2363C832%27%2F%3E%3C%2FlinearGradient%3E%3CradialGradient%20id%3D%27o%27%20cx%3D%2738%25%27%20cy%3D%2730%25%27%20r%3D%2778%25%27%3E%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%23EAFBFF%27%20stop-opacity%3D%27.95%27%2F%3E%3Cstop%20offset%3D%2745%25%27%20stop-color%3D%27%239FE2F0%27%20stop-opacity%3D%27.55%27%2F%3E%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%232FA7C4%27%20stop-opacity%3D%27.28%27%2F%3E%3C%2FradialGradient%3E%3ClinearGradient%20id%3D%27l%27%20x1%3D%270%27%20y1%3D%271%27%20x2%3D%271%27%20y2%3D%270%27%3E%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%233FA83C%27%2F%3E%3Cstop%20offset%3D%2755%25%27%20stop-color%3D%27%238FE06A%27%2F%3E%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%23D8F7A8%27%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%27s%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%23BFF0FF%27%20stop-opacity%3D%27.95%27%2F%3E%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%235FC7DE%27%20stop-opacity%3D%27.55%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2796%27%20height%3D%2796%27%20rx%3D%2727%27%20fill%3D%27url%28%23b%29%27%2F%3E%3Ccircle%20cx%3D%2748%27%20cy%3D%2750%27%20r%3D%2733%27%20fill%3D%27url%28%23o%29%27%2F%3E%3Cpath%20d%3D%27M21%2046c4.5.4%207-1%209.5-6.5S35%2026%2037.5%2026s4%206%206%2012%203.5%209%206%209%204.5-3%206.5-7%27%20fill%3D%27none%27%20stroke%3D%27%23EAFBFF%27%20stroke-opacity%3D%27.92%27%20stroke-width%3D%274%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%2F%3E%3Cpath%20d%3D%27M56%2055c2-13%2011-21%2024-22%201%2013-8%2023-21%2023.5z%27%20fill%3D%27url%28%23l%29%27%2F%3E%3Cpath%20d%3D%27M28%2064c5.5-7%2014-9.5%2021-6.5%206.5%202.8%209%209.5%2016.5%209.5%205%200%208.5-2.2%2011-6-1.5%2012-11%2020.5-23%2020.5-14%200-24-9.5-25.5-17.5z%27%20fill%3D%27url%28%23s%29%27%20opacity%3D%27.85%27%2F%3E%3Ccircle%20cx%3D%2748%27%20cy%3D%2750%27%20r%3D%278%27%20fill%3D%27%23EAFDFF%27%2F%3E%3C%2Fsvg%3E">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="img/favicon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-<!-- The PWA manifest used to be inlined here as a data: URL. It was the only embedded file
-     that was not an image, and an inlined manifest cannot be reviewed for public sharing, which
-     blocked an open link. iOS home-screen install still works from the apple-* meta tags and the
-     touch icon below; Chrome's "install app" prompt is what this costs. -->
+<!-- The manifest is a real file (manifest.webmanifest), not an inlined data: URL, so it can be
+     reviewed for public sharing. observability.js comes before the main scripts so startup errors
+     are caught. The theme-color meta above is the only one: the manifest uses the same colour. -->
+<link rel="manifest" href="/manifest.webmanifest">
+<script src="/observability.js"></script>
 <meta name="apple-mobile-web-app-title" content="WholeLife">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Whole Life Hub","applicationCategory":"HealthApplication","operatingSystem":"Any web browser","description":"Private meal, snack and workout tracker built around West African cooking, with weight estimates, meal plans and a personal coach."}</script>
@@ -371,6 +377,19 @@ input::placeholder,textarea::placeholder{color:var(--faint)}
 .bar{height:10px;border-radius:999px;background:var(--raise);overflow:hidden}
 .bar>i{display:block;height:100%;border-radius:999px;background:var(--accent);transition:width var(--dur-page) var(--ease-spring)}
 .bar.over>i{background:var(--warn)}
+/* 8.3.26 WLUpload: a file button whose fill follows real progress */
+.wlu{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.wlu-btn{position:relative;overflow:hidden;isolation:isolate;min-width:190px}
+.wlu-fill{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleX(var(--p,0));transform-origin:left;transition:transform var(--dur-page) var(--ease-smooth)}
+.wlu-t.on{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:var(--accent-ink);clip-path:inset(0 calc((1 - var(--p,0)) * 100%) 0 0);transition:clip-path var(--dur-page) var(--ease-smooth);pointer-events:none}
+.wlu-in{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.wlu-btn:has(.wlu-in:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.wlu[data-state="busy"] .wlu-btn{background:var(--accent-soft);cursor:progress}
+.wlu[data-state="busy"] .wlu-t.on{display:flex}
+.wlu[data-state="done"] .wlu-btn{background:var(--good-soft);color:var(--good)}
+.wlu[data-state="error"] .wlu-btn{background:var(--bad-soft);color:var(--bad)}
+.wlu[data-state="done"] .wlu-fill,.wlu[data-state="error"] .wlu-fill{opacity:0}
+.wlu[data-state="error"] .wlu-msg{color:var(--bad)}
 .note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:12px 14px;border-radius:var(--r-xs);font-size:calc((14px) * var(--text-scale,1))}
 .note.info{border-color:var(--accent);background:var(--accent-soft)}
 .big{font-size:calc((44px) * var(--text-scale,1));font-weight:800;line-height:1}
@@ -463,7 +482,7 @@ table.tbl-storage code{font-size:calc((12px) * var(--text-scale,1));background:v
 .shield svg{width:28px;height:28px}
 .sec-list li{margin-bottom:6px}
 
-.logo-svg{display:block;flex:none;border-radius:28%;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 35%,transparent)}
+.logo-svg{display:block;flex:none;border-radius:17%;box-shadow:0 4px 14px rgba(8,14,32,.45)}
 .brand .hub{font-weight:600;color:var(--muted)}
 .brand-home{color:inherit;text-decoration:none;border-radius:var(--r-xs);cursor:pointer}
 .brand-home:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
@@ -3116,16 +3135,42 @@ html .side .nav a .si-tile svg{color:#fff}
 .wl{position:relative;min-height:100svh;box-sizing:border-box;overflow:hidden;color:var(--wl-ink);
   background:radial-gradient(120% 80% at 85% 10%,var(--wl-ground2) 0%,var(--wl-ground) 60%);
   display:grid;grid-template-rows:auto 1fr;padding:clamp(18px,4vw,40px) clamp(20px,6vw,72px) clamp(24px,5vh,48px)}
+.wl > :not(.wl-bg){position:relative;z-index:1}
+.wl-bg{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.wl-gm{position:absolute;inset:0;overflow:hidden;isolation:isolate;--gm-dim:.35}
+.wl-gp{position:absolute;top:50%;left:50%;opacity:0}
+.wl-gr{position:absolute;left:0;display:flex;gap:var(--gm-gap);will-change:transform}
+.wl-gt{position:relative;flex:none;width:var(--gm-tile-w);height:var(--gm-tile-h);overflow:hidden;border-radius:14px;background:#1b1922;opacity:calc(1 - var(--gm-dim) * (1 - var(--spot,0)))}
+.wl-gt::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);pointer-events:none}
+.wl-gt img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none;user-select:none}
+.wl-bg::after{content:"";position:absolute;inset:0;z-index:0;
+  background:linear-gradient(90deg,rgba(7,32,24,.9),rgba(7,32,24,.66) 55%,rgba(7,32,24,.5)),linear-gradient(180deg,rgba(7,32,24,.5),transparent 30%,rgba(7,32,24,.55))}
+@media (max-width:820px){.wl-bg::after{background:rgba(7,32,24,.7)}}
 .wl-top{display:flex;align-items:center;gap:10px;font-family:var(--wl-display);font-weight:700;font-size:calc((18px) * var(--text-scale,1));letter-spacing:-.01em;
   animation:wlFade var(--dur-page) var(--ease-smooth) both}
+.wl-brand{position:relative;display:inline-flex;gap:.4em;padding:5px 0}
+[data-tf]{--tf-color:var(--wl-gold)}
+.tf-it{transition:filter .5s cubic-bezier(.65,0,.35,1)}
+.tf-it.tf-off{filter:blur(2px)}
+.tf-c{position:absolute;top:0;left:0;width:7px;height:7px;border:2px solid var(--tf-color);border-radius:2px;opacity:0;pointer-events:none;box-sizing:border-box}
+[data-tf="ring"] .tf-c{width:13px;height:13px;border-width:2.5px}
+.tf-ready .tf-c{opacity:1;transition:transform .5s cubic-bezier(.65,0,.35,1),opacity .4s ease,border-color .5s ease}
+.tf-tl{border-right:0;border-bottom:0}.tf-tr{border-left:0;border-bottom:0}.tf-bl{border-right:0;border-top:0}.tf-br{border-left:0;border-top:0}
+.wl-ring .arc{transition:stroke-opacity .5s ease}.wl-ring .arc.tf-dim{stroke-opacity:.35}
+@media (prefers-reduced-motion:reduce){.tf-it,.tf-ready .tf-c,.wl-ring .arc{transition:none}}
 .wl-top .wl-dot{width:10px;height:10px;border-radius:50%;background:var(--wl-gold)}
 .wl-main{display:grid;align-items:center;gap:clamp(24px,5vw,72px);grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
   max-width:1180px;width:100%;margin-inline:auto}
 .wl-copy{display:flex;flex-direction:column;gap:22px;max-width:34rem}
 .wl h1{font-family:var(--wl-display);font-weight:700;font-size:calc((clamp(40px,6.4vw,76px)) * var(--text-scale,1));line-height:.98;letter-spacing:-.025em;margin:0;
   color:var(--wl-ink);text-wrap:balance}
-.wl h1 span{display:block;animation:wlRise var(--dur-page) var(--ease-spring) both}
-.wl h1 span:nth-child(1){animation-delay:.25s}.wl h1 span:nth-child(2){animation-delay:.38s}
+.wl h1 .wl-sh{display:block;overflow:hidden;padding-bottom:.08em}
+.wl-w{display:inline-block;white-space:nowrap}
+.wl-w i{display:inline-block;font-style:normal;animation:wlShuf .5s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(.2s + var(--i) * 30ms)}
+.wl-w:nth-child(even) i:nth-child(even),.wl-w i:nth-child(odd){--sx:110%}
+.wl-w i:nth-child(even){--sx:-110%}
+@keyframes wlShuf{from{opacity:0;transform:translateX(var(--sx,110%))}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.wl-w i{animation:none}}
 .wl-lede{font-size:calc((clamp(16px,1.6vw,19px)) * var(--text-scale,1));line-height:1.5;color:var(--wl-muted);margin:0;max-width:44ch;animation:wlRise var(--dur-page) .5s var(--ease-spring) both}
 .wl-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;animation:wlRise var(--dur-page) .62s var(--ease-spring) both}
 .wl-cta{appearance:none;border:0;cursor:pointer;font:inherit;font-family:var(--wl-display);font-weight:700;font-size:calc((18px) * var(--text-scale,1));
@@ -3134,21 +3179,23 @@ html .side .nav a .si-tile svg{color:#fff}
 @media (hover:hover) and (pointer:fine){.wl-cta:hover{background:#F6C25A}}
 .wl-cta:active{transform:scale(.96);box-shadow:0 4px 14px -6px rgba(242,179,61,.6);transition-duration:var(--dur-tap)}
 .wl-link{appearance:none;background:none;border:0;cursor:pointer;font:inherit;font-size:calc((15px) * var(--text-scale,1));font-weight:600;color:var(--wl-muted);
-  padding:12px 4px;text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgba(247,244,236,.35)}
-@media (hover:hover) and (pointer:fine){.wl-link:hover{color:var(--wl-ink);text-decoration-color:var(--wl-ink)}}
+  padding:12px 4px;text-decoration:none}
+@media (hover:hover) and (pointer:fine){.wl-link:hover{color:var(--wl-ink)}}
 .wl-cta:focus-visible,.wl-link:focus-visible{outline:3px solid var(--wl-mint);outline-offset:3px}
 .wl-note{font-size:calc((14px) * var(--text-scale,1));line-height:1.5;color:var(--wl-faint);margin:0;animation:wlFade var(--dur-page) .8s var(--ease-smooth) both}
 .wl-art{position:relative;justify-self:center;width:min(100%,460px);aspect-ratio:1}
-.wl-art::before{content:"";position:absolute;inset:14%;border-radius:50%;background:radial-gradient(circle,rgba(242,179,61,.28),transparent 68%);
+.wl-art::before{content:"";position:absolute;inset:14%;border-radius:50%;background:radial-gradient(circle,rgba(242,179,61,.28),rgba(242,179,61,0) 68%);
   animation:wlFade var(--dur-page) .9s var(--ease-smooth) both,wlGlow 6s 2.2s ease-in-out infinite}
 .wl-ring{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.wl-ring text{paint-order:stroke;stroke:rgba(7,32,24,.6);stroke-width:3px;stroke-linejoin:round}
+.wl-ring circle{fill:none}
 .wl-ring .trk{fill:none;stroke:rgba(247,244,236,.08);stroke-width:16}
 .wl-ring .arc{fill:none;stroke-width:16;stroke-linecap:round;stroke-dasharray:167.55 603.19;animation:wlDraw var(--dur-page) var(--ease-spring) both}
 .wl-ring .a1{stroke:var(--wl-gold);animation-delay:.2s}.wl-ring .a2{stroke:var(--wl-coral);animation-delay:.55s}.wl-ring .a3{stroke:var(--wl-mint);animation-delay:.9s}
 .wl-ring text{font-family:var(--wl-display);font-weight:700;font-size:calc((12px) * var(--text-scale,1));letter-spacing:.01em;fill:var(--wl-ink);text-anchor:middle;dominant-baseline:middle;animation:wlFade var(--dur-page) both}
 .wl-ring .t1{animation-delay:.9s}.wl-ring .t2{animation-delay:1.25s}.wl-ring .t3{animation-delay:1.6s}
 .wl-mark{position:absolute;left:50%;top:50%;width:30%;transform:translate(-50%,-50%);animation:wlPop var(--dur-page) 1.3s var(--ease-spring) both}
-.wl-mark svg{width:100%;height:auto;display:block;filter:drop-shadow(0 14px 30px rgba(0,0,0,.35))}
+.wl-mark .logo-svg{width:100%;height:auto;aspect-ratio:1;display:block;box-shadow:0 14px 30px rgba(0,0,0,.35)}
 @keyframes wlDraw{from{stroke-dashoffset:167.55}to{stroke-dashoffset:0}}
 @keyframes wlRise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 @keyframes wlFade{from{opacity:0}to{opacity:1}}
@@ -3163,6 +3210,14 @@ html .side .nav a .si-tile svg{color:#fff}
   .wl-cta{width:100%}
   .wl-link{align-self:center}
   .wl-ring text{font-size:calc((15px) * var(--text-scale,1))}
+}
+@media (min-width:600px) and (max-width:820px){
+  .wl-main{max-width:560px;align-content:center;gap:32px}
+  .wl-art{width:min(54vw,360px)}
+  .wl-actions{align-items:flex-start}
+  .wl-cta{width:auto;min-width:300px}
+  .wl-link{align-self:flex-start}
+  .wl-ring text{font-size:calc((13px) * var(--text-scale,1))}
 }
 @media (max-height:640px) and (max-width:820px){.wl-art{width:min(46vw,200px)}}
 
@@ -3781,7 +3836,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.3", build: "8.3.26", channel: "Dev Testing", date: "2026-10-23", week: "Sun 18 Oct – Sat 24 Oct 2026" };
+const APP_VERSION = { update: "8.4", build: "8.4.1", channel: "Dev Testing", date: "2026-10-31", week: "Sun 25 Oct – Sat 31 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3795,7 +3850,7 @@ const APP_VERSION = { update: "8.3", build: "8.3.26", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
-    { id:"8.3.26",
+    { id:"8.4.1",
       area:"Legal",
       title:"EULA and Copyright / DMCA pages",
       bug:"The app had Terms and a Privacy Policy but no End User License Agreement and no copyright (DMCA) policy, which a copyright owner needs in order to report a problem and which the safe harbour under 17 U.S.C. 512 relies on.",
@@ -3803,6 +3858,166 @@ const APP_VERSION = { update: "8.3", build: "8.3.26", channel: "Dev Testing", da
       where:"index.html: eulaView(), dmcaView() and the LEGAL_PAGES_UPDATED, LEGAL_GOVERNING_LAW, LEGAL_LIABILITY_CAP, DMCA_AGENT_* and DMCA_DISTRICT constants (after termsView), NAV, TITLES, DESCS, the route table, siteFooter(), the end of termsView(). tests/browser/legal.mjs (section 6). APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
       test:"Run node tests/browser/legal.mjs. By hand: open #/eula and #/dmca (or Legal > EULA and Copyright / DMCA in the menu, or the footer links), press Read more on a section, and check the text against the app.",
       limits:"Drafts, not legal advice: a lawyer should review them. The bracketed placeholders show on the live page until filled in, so do not merge until they are. The DMCA agent must also be registered with the U.S. Copyright Office. The Privacy Policy is not changed, so it still lacks the friends messages paragraph. The sign-up agreement still points only to the Terms and the Privacy Policy, and TERMS_VERSION is not bumped, so nobody is asked to agree again." },
+    { id:"8.4",
+      area:"Settings",
+      title:"Appearance: circular dark mode, Rounded or Crisp, English or Spanish, and a review bar",
+      bug:"Settings > Appearance saved every tap straight away, so there was no way to try a look and then drop it. There was no square-cornered style and the app only spoke English.",
+      fix:"Dark and Light now open as a circle growing from the button you tapped (the header Light/Dark button does the same; browsers without it, and Reduced motion, change at once). A new UI style choice, Rounded or Crisp, squares the corners across cards, buttons, chips and fields. A new Language choice, English or Español, changes the sidebar, the Settings tabs and the Appearance card instantly with no reload; anything you type is never translated. Display, Accent colour, Text size, UI style and Language now apply live but are held for review: a Review changes bar lists each as label: old → new, Save keeps them and Discard puts them back, and changing one back removes its row. The existing Display, Accent and Text size controls were wired in, not duplicated. Saved choices are mirrored to the wl-appearance key so the right style and language paint before the app loads.",
+      where:"index.html: the head script (reads wl-appearance), the appearance block above darkMQ (WLA, tr(), WL_ES, wlaSetLook(), wlaSave(), wlaDiscard(), wlaReveal(), reviewBar()), applyLook() (mirrors), toggleTheme(), the look-mode/look-accent/ui-style/ui-lang/look-save/look-discard/ts-reset/ts-ax-toggle cases and the #ui-ts handler, sideNav(), settingsView() tabs, the appearance card, the WL THEME + LANGUAGE PASS CSS at the end of the file, the privacy storage-key table, APP_VERSION, WLH.changelog. tests/browser/appearance.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md, docs/VERSIONING.md. Nothing under supabase/ changed.",
+      test:"node tests/browser/appearance.mjs (16 checks). By hand: Settings > Appearance, tap Dark and watch the circle grow from the button; tap Crisp and see the corners square off; tap Español and see Ajustes and Apariencia appear; make two or three changes and read the Review changes bar; tap Save, reload, and they stay; tap Discard and they go back.",
+      limits:"Spanish covers the sidebar, Settings tabs and Appearance card only; other pages stay in English until their strings are added to WL_ES. UI style and language are per device (not synced to your account); Display, Accent and Text size still follow the profile. The header Light/Dark button saves at once and is not held for review. Unsaved changes are kept in memory only, so closing the tab drops them. Not tried on a real phone." },
+    { id:"8.3.42",
+      area:"Tests",
+      title:"Fix the three tests still red on the make-over pass",
+      bug:"After 8.3.41 the Browser tests still failed on PR #83 in controls, slidepay and rail. The Compact pass shrank the profile Edit buttons to 32px (below the 44px touch size the controls test requires). The Make over gold slide-to-pay set its track and handle with a gradient shorthand only, so they had no plain background colour. The rail test looked for an svg logo, but since 8.3.39 the logo is a picture.",
+      fix:"Edit buttons in the Profile group title rows are 44px tall again. The slide-to-pay track and handle keep their gold gradients and now also carry a plain background colour underneath. The rail test finds the logo whether it is an svg or the new picture. Nothing else about the look changes.",
+      where:"index.html: the WL COMPACT PASS rule for .pgroup > .setrow .btn.sm, and the WL MAKEOVER rules for .prem-cta-bar .sc-track and .sc-handle. tests/browser/rail.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/controls.mjs, slidepay.mjs, rail.mjs and cards.mjs: all pass. In Settings > Profile, the Edit buttons are taller. On the Premium page the slide-to-pay still shows gold.",
+      limits:"Edit buttons are 12px taller than the compact demo. Not tried on a real phone." },
+    { id:"8.3.41",
+      area:"Tests",
+      title:"Trends tiles allowed by the dashboard card test",
+      bug:"Browser tests failed on PR #83 (37 cards.mjs checks). The Make over pass restyles the two Trends tiles (a 32px round icon disc, and on phones a 12px radius, 14px padding and a 10px gap), but the dashboard card test still demanded the flat 20px / 16px / 18px-icon pattern for them.",
+      fix:"The test now expects the Make over look for the two Trends tiles only (32px icon disc at every width; 12px radius, 14px padding and 10px grid gap on phones). Every other dashboard card is still checked against the flat pattern. No app code or CSS changed.",
+      where:"tests/browser/cards.mjs: the audit's per-card radius, padding, icon, left/right offset and grid-gap checks. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/cards.mjs: 144 passed, 0 failed. Open Summary on a phone: the Trends tiles show a round icon disc and sit two to a row.",
+      limits:"The test finds the Trends tiles by the heading above them. Not tried on a real phone." },
+    { id:"8.3.40",
+      area:"Sign-in",
+      title:"Welcome screen first, sign-in after you tap Set up my hub",
+      bug:"A signed-out person saw the sign-in card before the welcome screen, so the welcome screen with the photo grid only showed after they skipped it.",
+      fix:"The sign-in-first screen is gone. A new visitor sees the welcome screen first. Tapping Set up my hub asks the age question and then shows the sign-in card (Continue with Google, or email and password with Create an account and Forgot password), with Skip for now to carry on without an account. People who already have a profile on the device, and those signed in, go straight into the app as before, and Settings > Account still has Sign in. The saved Continue without an account flag is no longer used, so it is no longer written or listed in the privacy table.",
+      where:"index.html: startGateOn(), startGateView(), START_SKIP_KEY, START_OPEN, the gate line in render() and the start-skip case removed; the wlh.startskip row removed from the storage table; authScreen() comment. tests/browser/startgate.mjs (rewritten for the new order, including the Google checks on the setup card), fake-supabase.js, vendor.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app in a private window: the welcome screen with the photo grid shows first. Tap Set up my hub, answer the age question: the sign-in card appears with Google and email and Skip for now. Skip for now goes on to Choose your coach. Reload before finishing setup: still the welcome screen.",
+      limits:"The sign-in card only shows in setup for the first profile on a device, as before. Not tried on a real phone. Google still needs the provider and redirect URL switched on in Supabase." },
+    { id:"8.3.39",
+      area:"Branding",
+      title:"New Whole Life Hub app icon, used on the home screen, browser tab and inside the app",
+      bug:"The app icon was the old green tile, and a hand-drawn copy of it was used as the in-app logo and the browser tab icon.",
+      fix:"CJ's new artwork (the glass tile with the leaf and heartbeat ring on navy) is now the app icon everywhere. The install icons img/icon-192.png, img/icon-512.png and img/apple-touch-icon.png are cut from it, a new maskable icon (img/icon-maskable-512.png, with room around the tile for Android's round and squircle masks) is added to the manifest, the browser tab uses img/favicon-32.png, favicon-48.png and icon-192.png instead of the old inline picture, and the iOS app project gets its 1024 px icon (AppIcon-1024.png). Inside the app, logoSVG() now shows the same picture (img/logo-320.webp) on the welcome, loading, sign-in, setup and tour screens, so the home screen icon and the in-app logo match. The manifest start colour is the icon's navy so the install splash matches. The service worker cache name moves to wlh-v2 so devices stop serving the old icons. The page colour for the browser bar stays the app green.",
+      where:"img/icon-192.png, icon-512.png, apple-touch-icon.png, icon-maskable-512.png (new), favicon-32.png and favicon-48.png (new), logo-320.webp (new); manifest.webmanifest; sw.js (VERSION, precache list); ios/WholeLife/Assets.xcassets/AppIcon.appiconset (AppIcon-1024.png, Contents.json); index.html: the icon links in <head>, logoSVG(), the .logo-svg and .wl-mark CSS. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app: the tab icon is the new tile, and the welcome, loading and sign-in screens show it as the logo. Add the app to a phone home screen (iPhone: Share > Add to Home Screen; Android: Install app): the new tile appears. An already-installed app may keep its old icon until you remove it and add it again.",
+      limits:"The artwork was supplied as one JPEG inside an SVG, so every size is cut from that picture rather than redrawn as vector; the 1024 px icon is sharp but the tile edge is a photo-style glass edge. Store listings (Lemon Squeezy, Google Play, App Store) are separate uploads: 1024 and 512 px copies are in the project's brand folder. Not tried on a real phone." },
+    { id:"8.3.38",
+      area:"Sign-in",
+      title:"Continue with Google works on the startup and setup sign-in screens",
+      bug:"Tapping Continue with Google on the sign-in screen shown when the app opens did nothing, with no message. The same happened on the sign-in step of first-time setup.",
+      fix:"The Google sign-in only carried on if the sign-in popup was open, and those two screens show the form in the page instead of in a popup, so it quietly stopped before reaching Google. It now looks for the form wherever it is (popup or page), shows its messages there, and still cancels if you leave that screen or start an email sign-in while it waits.",
+      where:"index.html: sbGoogle() (scope(), here()). tests/browser/startgate.mjs (3 new checks: Google switched off shows the message, switched on calls signInWithOAuth for google with this app as the return address, and the button works again). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app signed out in a private window: tap Continue with Google. You should be taken to Google (or told Google sign-in isn't switched on yet), never nothing. Also try the sign-in step in first-time setup, and Settings > Account > Sign in.",
+      limits:"Needs the Google provider switched on in Supabase and the redirect URL allowed there, as before; this fix does not change either. Not tried against real Google." },
+    { id:"8.3.37",
+      area:"Welcome",
+      title:"Drifting photo grid behind the welcome screen, better on phones and iPads",
+      bug:"The welcome screen sat on a flat green background, and on an iPad the ring and button looked like a stretched phone layout.",
+      fix:"Behind the text and rings, your 12 photos now drift across the screen in slanted rows (GridMotion, rebuilt in plain JS): rows move in opposite directions, the tiles near your finger or mouse light up, and the rows lean slightly towards the pointer. A dark green wash keeps the words readable. The headline, text, buttons and rings are unchanged, apart from a thin dark outline on the ring labels so Eat, Move and Recover stay readable on a bright photo. On phones the grid has 5 smaller rows and a lighter edge fade; on iPad portrait the ring is larger and the button is no longer stretched across the screen. The photos are 840 px WebP files in img/welcome/ (about 61 KB each), never inlined. The grid pauses in a hidden tab or off screen. Reduce motion keeps the rows still; Data Saver skips the photos. The ring glow now fades to a transparent version of its own colour, in case Safari showed it as a dark edge.",
+      where:"index.html: WL_PHOTOS, GM, wlGrid(), wlBackdrop(), the afterRender() mount line, welcomeView() (.wl-bg), the .wl-bg/.wl-gm/.wl-gt CSS and a 600-820 px media query next to .wl. img/welcome/w01-w12.webp. tests/browser/welcomebg.mjs and run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app in a private window and choose Continue without an account: rows of photos drift behind the welcome text. Move the mouse (or drag a finger) over it: tiles near the pointer brighten. Turn on Reduce motion: the rows stand still. Try a phone and an iPad in portrait and landscape.",
+      limits:"The photos load all together (about 730 KB) and are not cached for offline use. Only on the welcome screen, not the loading screen. Not tried on a real phone, an iPad or in Safari; a gold disc inside the ring seen on an iPhone could not be reproduced in Chrome, so the glow fix is a guess." },
+    { id:"8.3.36",
+      area:"Welcome",
+      title:"True Focus brackets on the Whole Life Hub name and the ring labels",
+      bug:"The Whole Life Hub name in the top left of the welcome screen was plain text, and the Eat, Move and Recover labels around the ring just faded in.",
+      fix:"Both now use the True Focus effect, rebuilt in plain JS and CSS: four corner brackets glide from word to word every 1.5 seconds while the other words blur a little. On the name the brackets move through Whole, Life and Hub. On the ring they move through Eat, Move and Recover, take the colour of that label's arc, and the other two arcs dim. Reduced motion keeps the first word focused and still. The timer pauses off screen and when the tab is hidden.",
+      where:"index.html: trueFocus(), the afterRender() mount line, wlRing() labels, welcomeView() (.wl-brand, data-tf), the .tf-* CSS next to .wl-top. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app (private window, Continue without an account): brackets move across the three words top left and across Eat, Move and Recover around the ring, each in its arc's colour. Turn on Reduce motion: they stand still on the first word.",
+      limits:"Unfocused words blur by 2px, not the 5px in the sample, so the name stays readable. Only the welcome screen so far. Not tried on a phone or in Safari." },
+    { id:"8.3.35",
+      area:"Sign-in",
+      title:"Sign in with Google or email when the app opens, plus hold to delete a profile",
+      bug:"Sign-in was only offered inside Settings, or once during first-time setup after the age question. Someone opening the app signed out went straight in, and had to know to look in Settings to save their hub to an account.",
+      fix:"A signed-out person now sees the sign-in card first, before the welcome screen or the app: Continue with Google, or email and password (with Create an account and Forgot password), using the same card as Settings and setup. Under it, Continue without an account goes on into the app exactly as before, and that choice is remembered on this device (wlh.startskip), so the screen is not shown again until the person signs in and later signs out of a cleared browser. It is never shown to someone signed in, when sign-in could not load, on the Terms, Privacy Policy, Refunds, Contact and Credits pages (so their links open), or while the 24-hour under-13 block is active. The setup stop after the age question is unchanged. The welcome headline now slides in letter by letter (Shuffle style, plain CSS, off with reduced motion), the helper line under the buttons is gone, and Skip setup and Cancel are plain text with no underline. Deleting a profile (Settings > Household) now asks you to press and hold the button for 1.5 seconds; the fill uses the chosen theme colour, and a tap, early release, Escape or leaving the button cancels.",
+      where:"index.html: holdStart(), holdStop(), holdDrive() and the .hold CSS, the Delete button in the household list, wlShuffle(), welcomeView(), the .wl-sh/.wl-w/.wl-link CSS, authScreen() (shared by obAuthView()), START_SKIP_KEY, START_OPEN, startGateOn(), startGateView(), render(), the start-skip case, the privacy storage-key table, APP_VERSION, WLH.changelog. tests/browser/startgate.mjs (new), fake-supabase.js (skips the screen unless a test asks for it), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. Nothing under supabase/ changed.",
+      test:"Open the app in a private window: the sign-in card shows first. Choose Continue without an account: the welcome screen or your hub opens, and a reload goes straight in. Sign in with email or Google: you land in the app signed in and the screen does not return. Open #/terms in a fresh private window: the page opens, not the sign-in card. node tests/browser/startgate.mjs.",
+      limits:"Sign-in is optional: Continue without an account is always offered. Signing out does not bring the screen back on that browser if Continue without an account was chosen earlier. Google sign-in still depends on the Google provider being on in Supabase. Creating an account here happens before the age question (the age question still comes first for setting up a profile), so an under-13 who has not yet been asked could create an account; say if you want the age question moved ahead of this screen." },
+    { id:"8.3.34",
+      area:"Settings",
+      title:"Settings tabs get a sliding pill, and a wheel picker for short lists (first on Log a meal > Portion)",
+      bug:"The Settings tabs marked the open section with a thin underline that jumped from tab to tab. CJ asked for the springy sliding pill from their snippet on this switcher, and for a wheel-style picker (the chosen row full size, the others faded and smaller) for lists across the app.",
+      fix:"Settings tabs: one pill now sits behind the open tab and slides to the next one with the bouncy curve from CJ's snippet (.45s, cubic-bezier(.34,1.56,.64,1)). It is measured from the tab itself instead of being one equal third, so it works for all 8 Settings tabs and any label length, and it scrolls with the strip on a phone. With a mouse it also follows the pointer across the strip and slides back to the open tab when the pointer leaves; touch does not move it. The underline is gone. Tabs share the spare width when there is room. Wheel picker: any select marked data-wheel now shows as a short wheel (.picker-track from CJ's snippet: the track moves 38px a row over .58s with the same curve, the chosen row is full size and the others are at 32% opacity and 88% size). Tap or click a row, drag up or down, or use the arrow keys, Home and End. The select stays in the page and keeps the value, so saving works as before. It is used in one place for now, Log a meal > Portion; other lists are proposed, not converted. Reduced motion stops both slides.",
+      where:"index.html: tabPlace(), tabSync() and the pointer and resize listeners (just above ringSync's resize listener), afterRender() (calls tabSync), the 8.3.34 CSS lines after .focus-ring.still (.tabs, .tab-pill, .wl-wheel, .picker-track), the form-controls script (wheelSet(), wheelSync(), enhanceWheel(), enhanceSelect() skips data-wheel, pass()), the Portion select in nutritionView(), APP_VERSION, WLH.changelog. tests/browser/pickers.mjs (new), tests/browser/run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/pickers.mjs (18 checks); motion.mjs (44) and controls.mjs (56) still pass. By hand: Settings, tap Coach then Privacy & security and watch the pill slide; on a computer, move the mouse along the tabs and away. Meals > Log a meal > Portion: tap Half portion, drag the list, or Tab to it and press the arrow keys. Turn Settings > Appearance > Motion to Reduced and both should snap.",
+      limits:"Only Log a meal > Portion uses the wheel so far; the Meal select beside it stays a dropdown. Mouse-wheel scrolling over the picker is not caught, so it scrolls the page. Lists longer than about 8 options (countries, birth year) should stay dropdowns. Checked in headless Chrome only, not on a real phone." },
+    { id:"8.3.33",
+      area:"Sign-in",
+      title:"Sign-in library served from our own site, with a Reload button",
+      bug:"On a preview link the Account card showed \"Sign-in couldn't load. Check your connection and reload.\" even though the rest of the app had loaded. The sign-in library (supabase-js) came from a third-party site (cdn.jsdelivr.net), so any hiccup there, a blocker, or a stale cached copy took sign-in down while everything else worked. A hard reload fixed it, and the first cause could not be proved.",
+      fix:"supabase-js 2.117.2 is now a file in this repo (vendor/supabase-js-2.117.2.umd.js, the same bytes as before, still checked against the same fingerprint) and the page loads it from this site. The Content-Security-Policy no longer allows any outside script host. The service worker precaches the file, so a cold offline start still has sign-in, and its special case for the jsdelivr address is removed. The Privacy Policy no longer lists jsDelivr. When the library still cannot load, the Account card now says to reload and has a Reload button.",
+      where:"vendor/supabase-js-2.117.2.umd.js (new), index.html (script tag, accountCard(), the sb-reload case, Privacy Policy third-party list, APP_VERSION, WLH.changelog), sw.js (precache list, removed the jsdelivr special case), vercel.json (script-src), tests/pwa-kit.cjs, tests/browser/headers.mjs and the browser tests that block the sign-in library, docs/SECURITY.md, docs/PERFORMANCE.md, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. Nothing under supabase/ changed.",
+      test:"Open the preview, go to Settings > Profile: the Account card shows Sign in, not the could-not-load message. In DevTools > Network, supabase-js-2.117.2.umd.js is served from the app's own address (200) and nothing is requested from cdn.jsdelivr.net. Run node --test tests/pwa-kit.cjs and node tests/browser/headers.mjs.",
+      limits:"This removes the third-party dependency, but the first failure could not be reproduced, so it is not proved to have been the cause. If the message ever shows again, tell us whether a normal reload clears it. The library file adds about 218 KB to the repo and is cached by the service worker after the first visit. The Privacy Policy changed (a service was removed) but TERMS_VERSION was already bumped today, so it was not bumped again." },
+    { id:"8.3.32",
+      area:"Privacy",
+      title:"Delete my account: real in-app account deletion",
+      bug:"The Delete my account and data button only cleared this device. Everything saved in the account (all synced logs and photos) stayed on the servers and came back at the next sign-in, and the only way to delete it was to email us. Google Play requires an in-app way to delete an account.",
+      fix:"New Delete my account row in Settings > Privacy & security, shown only when signed in. It asks for the word DELETE, then calls a new delete-account edge function with the person's own access token. The function finds the account from the token (never from the request), deletes every file under that account's folder in the photos bucket, then deletes the account; the database removes every row with it because all tables are set to delete along with the user. Only after the server answers deleted does the app wipe this device. If anything fails the account is left whole and the message says nothing was deleted. The device-only erase now points to the new row. The Privacy Policy section on deleting data is rewritten to match, and LEGAL_UPDATED and TERMS_VERSION move to 25 October 2026.",
+      where:"supabase/functions/delete-account/ (handler.ts, index.ts, new). index.html: acctDeleteRow(), deleteAccount(), the acct-del-ask, acct-del-no and acct-del-yes cases, the Your data card in settingsView(), the Privacy Policy deleting-data paragraph, LEGAL_UPDATED, TERMS_VERSION, APP_VERSION, WLH.changelog. tests/delete-account-handler.test.mjs, tests/browser/acctdel.mjs (run-all.mjs, tests.yml). docs/DATABASE.md, docs/SECURITY.md, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No migration and no table changed.",
+      test:"Run node --test tests/delete-account-handler.test.mjs and node tests/browser/acctdel.mjs. After the function is deployed (needs CJ's go): sign in with a throwaway test account on the preview, log a meal with a photo, open Settings > Privacy & security, press Delete my account, type DELETE and confirm. The app returns to a fresh setup; in the Supabase dashboard the account is gone from Authentication, its rows are gone from the tables and its folder is gone from the photos bucket. Signing in with the same email then fails. Never test with a real account.",
+      limits:"The function is in the repo but NOT deployed yet: until CJ says go, pressing Delete my account shows the could-not-delete message and deletes nothing. It deletes the sign-in account only, not a Premium subscription at Lemon Squeezy (cancel that first; the screen says so). It cannot be undone and there is no grace period. A friend who has this person in a challenge or chat simply no longer sees them. The browser test fakes the function, so the real deletion has not been run end to end." },
+    { id:"8.3.31",
+      area:"Legal",
+      title:"The Refunds page states the full refund policy, with real contact details",
+      bug:"The Refunds page carried a one-paragraph placeholder for the policy, and the contact email, business name and mailing address on the legal pages were still placeholder text, so a buyer asking about renewals, duplicate or unauthorised charges, price changes or a removed feature had no answer, and no one could be written to.",
+      fix:"The Refunds page now states the whole policy, approved by CJ: 14 days from the date of any charge (the first one and every renewal), refunded in full for any reason; no refund of the unused part after the 14 days; cancelling kept separate from refunding; the charges always refunded (after cancelling, duplicate, wrong amount or plan, unauthorised); how to cancel and how to request a refund with the 3, 2 and 5 to 10 day timings; what happens on a price change or a removed feature; chargebacks; statutory rights; and that a refund deletes nothing. Sections fold behind Read more like the other legal pages, with the short version always visible. REFUND_POLICY_TEXT is rewritten to match. The contact email is wholelifehub@hotmail.com, the mailing address is 13022 Thunderhead Drive, Germantown, MD 20874 and the business name shows as Whole Life Hub. SITE_URL is left as it was by CJ's choice. LEGAL_UPDATED and TERMS_VERSION move to 24 October 2026.",
+      where:"index.html: REFUND_POLICY_TEXT, refundsView() (now returned through legalFold()), CONTACT_EMAIL, LEGAL_BUSINESS_NAME, MAILING_ADDRESS, LEGAL_UPDATED, TERMS_VERSION, APP_VERSION, WLH.changelog. tests/browser/legal.mjs (12 new checks on #/refunds, one date assertion moved). CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.",
+      test:"Run node tests/check-repo.mjs, node tests/perf/size.mjs and node tests/browser/legal.mjs. Open #/refunds: the short version shows without tapping, each Read more opens its section, and no [YOUR ...] text remains anywhere on the page.",
+      limits:"This is copy, not legal advice; a lawyer's read is still on the checklist. The business name is the product name, not a registered company; change it if you form one. The 3-day reply, 2-day issue and 5 to 10 day bank timings are promises the owner must be able to meet, and refunds are issued by hand in the Lemon Squeezy dashboard. The Lemon Squeezy store's own refund policy field should carry the same text. The page still says there is no free trial; if a free period is added it must exist in Lemon Squeezy first and this page changes with it. It replaces the shorter 14-day wording that build 8.3.30 (PR #75) put in REFUND_POLICY_TEXT." },
+    { id:"8.3.30",
+      area:"Legal",
+      title:"The Refunds page states the refund policy: 14 days, any reason",
+      bug:"The Refunds page carried an instruction to whoever filled it in instead of a policy, so the app had no answer for a buyer who wanted their money back, and Lemon Squeezy's own seller guidance expects a refund policy to exist before a store takes real payments.",
+      fix:"REFUND_POLICY_TEXT now holds the policy the owner chose: contact us within 14 days of a charge and the period is refunded in full, used or not; after 14 days that period is not refundable but cancelling stops the next charge, and cancelling partway leaves Premium running to the end of the paid period with no refund for the unused part. Refunds return to the card used, through Lemon Squeezy, and can take up to 10 days; a charge taken after cancelling, or taken twice, is refunded. The closing line says none of it affects rights the law gives you where you live. The 14 days matches the cooling-off period consumer law in the UK and EU generally gives for online purchases, so the page no longer promises less than that floor. How to request a refund no longer opens with Once payments are live: it points at the contact address and the Contact page.",
+      where:"index.html: REFUND_POLICY_TEXT, the How to request a refund paragraph in refundsView(). APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.",
+      test:"Open #/refunds: the Refund policy section states the 14 days and the rest, with no instruction text, and How to request a refund starts with Contact. Run node tests/check-repo.mjs; the Refunds wording is also covered by node tests/browser/slidepay.mjs (that it names Lemon Squeezy and no longer says payments are not live), which needs Chrome.",
+      limits:"The policy is copy, not legal advice, and the lawyer's review is still on the checklist. The contact address on the page is still the [YOUR CONTACT EMAIL] placeholder, so a request cannot actually reach anyone yet: the four other legal placeholders (SITE_URL, CONTACT_EMAIL, LEGAL_BUSINESS_NAME, MAILING_ADDRESS) still block real sales. Refunds are issued by hand in the Lemon Squeezy dashboard. Not checked in a browser here (no Chrome in this environment)." },
+    { id:"8.3.30",
+      area:"Install and errors",
+      title:"Error reports reach the database, and the privacy policy says so",
+      bug:"8.3.27 loaded the error tracker but left its endpoint and key empty, so every crash was captured and then dropped in the console: a bug in a tester's browser was still invisible unless the tester described it.",
+      fix:"observability.js now posts to the app's own Supabase table, error_reports, with the publishable key the app already uses, and a new migration creates that table: RLS on, one insert-only policy for signed-out and signed-in users, no read path for the browser at all, and a length cap on every text column. A report names the screen as well as the page: the app routes in the hash, so a bare route (#/coach) is kept while a fragment that carries values, such as the sign-in callback's access_token, is dropped whole; the table stamps the time instead of the browser, and an error with no message is sent as (no message) so the insert is not refused. Because reports now leave the device, the Privacy Policy no longer says nothing is collected in the background: section 1 names the crash report and exactly what it carries (the error message, the page path, the browser string and the time, never what was logged, a name or an email), and the Supabase entry in section 6 says the table holds no account id and no health data. LEGAL_UPDATED and TERMS_VERSION move to 24 October 2026.",
+      where:"observability.js: CONFIG.ENDPOINT, CONFIG.ANON_KEY and the header's where-it-goes note. supabase/migrations/20261024120000_wlh_8_3_28_error_reports.sql (new). index.html: privacyPolicyView() sections 1 and 6, LEGAL_UPDATED, TERMS_VERSION. tests/pwa-kit.cjs (the endpoint no longer has to be blank for the reporter tests, plus a check that the endpoint is this project and the key is the publishable one), tests/browser/legal.mjs. docs/APP_READINESS.md, docs/DATABASE.md. APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node --test tests/pwa-kit.cjs and node tests/check-repo.mjs. Apply the new migration on the live project first, then on the preview run WLHLog.error('test', new Error('hello')) in the console: one row appears in error_reports with the page path and no token. Open #/privacy-policy and #/terms: both say Last updated 24 October 2026, and section 1 describes the crash report.",
+      limits:"Nothing is collected until the migration is applied to the live project; before that every report is rejected with a 404 and dropped, with one console warning. There is no consent switch. Write limits: the table refuses a report when 120 have arrived in the last minute and stops at 20,000 rows (a global limit, so a flood can hide real reports for that minute), and the database stamps the time. Treat it as a bug inbox, not a system of record. A report carries no account id, so it cannot be traced back to the person who hit it. The live insert was not checked from here, because the migration is not applied." },
+    { id:"8.3.30",
+      area:"Docs",
+      title:"The build plan matches main again",
+      bug:"docs/BUILD_PLAN.md listed every build from 8.3.2 to 8.3.27 as in progress or open although all of them are merged, had no row for 8.3.13, still called the payment provider Stripe, and still described the Premium prices and checkout as placeholders.",
+      fix:"Every 8.3 row now reads MERGED with the pull request number taken from its merge commit (#43 to #71), 8.3.13 has its row at last (#55), the standing backlog names Lemon Squeezy with the real prices (7.99 monthly, 59.99 yearly) and lists the two things actually blocking a real charge (the legal placeholders in index.html and applying the new error_reports migration), and a note records that the 8.2.x rows are history that all predates main's current build. No app behaviour changed.",
+      where:"docs/BUILD_PLAN.md: the Phases table, the Builds outside the phases table and the Standing backlog. No code changed. APP_VERSION, WLH.changelog. CHANGELOG.md, README.md.",
+      test:"Open docs/BUILD_PLAN.md: no 8.3 row says IN PROGRESS except 8.3.30, 8.3.13 is there, and the backlog no longer says Stripe.",
+      limits:"Rows before 8.3 still show the status they had when they were written; they are flagged above the table instead of being rewritten." },
+    { id:"8.3.29",
+      area:"Premium",
+      title:"Invoice view (Modern style), opened from the receipt",
+      bug:"The receipt printed after a purchase is a till slip. CJ supplied a themed invoice component (three styles, sections that glide into a new order, download as PDF) and asked whether it could be an in-app invoice using the app's colours.",
+      fix:"The payment-successful receipt (and the ?previewreceipt=1 sample) has a new View invoice button. It opens the same order as an invoice in the Modern style (total first, accent-coloured header). CJ chose Modern after seeing all three, so the Classic and Dark styles and the style switcher were removed. Download PDF opens the browser's print dialog with only the invoice, so Save as PDF gives a PDF. Like the receipt it shows only what Lemon Squeezy sent: order number, date, items, subtotal, discount, tax, total and amount paid, never added up here. Quantity, unit price, Billed to and Due are left out because the provider order does not carry them in the app. All text goes through esc(). The header takes its colour from the app accent; the paper itself stays fixed so it prints the same in any app theme. The sample invoice says Sample and that no payment was made.",
+      where:"index.html: RCPT_LAST, invoiceHTML(), showInvoice(), printInvoice(), the rcpt-invoice, inv-print and inv-back click cases, showPurchaseReceipt() (View invoice button, remembers the receipt), CSS block 8.3.29 (.inv-*), .rc-actions wraps. tests/browser/receipt.mjs (new invoice checks). APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.",
+      test:"Run node tests/browser/receipt.mjs. By hand, open the app with ?previewreceipt=1 on the address, press View invoice, then Download PDF and choose Save as PDF. After a test-mode purchase, the receipt that prints after activation has the same button.",
+      limits:"The invoice is only reachable right after activation (or from the sample link) because the app does not store receipts; reopening it later needs the order saved, which is a separate decision. The buyer name and a due date are not shown since the provider data used does not include them. The sample is the only way to see it before a purchase. Payments are still in test mode." },
+    { id:"8.3.28",
+      area:"Install and errors",
+      title:"supabase-js kept for offline starts, and the Android (TWA) plan",
+      bug:"On a cold start with no network, the page could not load supabase-js (a file from another site that the service worker never kept), so a signed-in person could not reach the sign-in layer offline. The service worker only handled files from this site.",
+      fix:"sw.js now also answers the one pinned supabase-js address the page loads (cdn.jsdelivr.net/npm/@supabase/supabase-js@...), stale-while-revalidate like the other static files. Only a normal CORS answer is stored, never an opaque one, and every other file from any other site, including Supabase itself, still passes straight through. Also added docs/ANDROID_TWA_PLAN.md (the plan for packaging the PWA as an Android app, with who owns which files). Nothing under supabase/ changed and no setting was changed.",
+      where:"sw.js: LIBRARY_PREFIX and the fetch handler. tests/pwa-kit.cjs (new test, fails against the old worker). docs/ANDROID_TWA_PLAN.md. APP_VERSION, WLH.changelog, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node --test tests/pwa-kit.cjs and node tests/check-repo.mjs. By hand on the preview in Chrome: load once online, then DevTools > Application > Cache Storage > wlh-v1-assets lists supabase.js; set Network to Offline, hard reload, and the app still starts with its sign-in layer.",
+      limits:"The first visit after this build must be online. The stored library follows the version pinned in index.html; when that pin changes, the new file is fetched once online. Whether offline cold start restores a signed-in account's own data was checked by reading the code, not on a device." },
+    { id:"8.3.27",
+      area:"Install and errors",
+      title:"Install and error tracking switched on",
+      bug:"The install manifest, offline service worker and error tracker from build 8.3.24 were in the repo but not connected to the page, so the app could not be installed from the browser, did not work offline and no error reports were collected.",
+      fix:"The page now links manifest.webmanifest, loads observability.js before the main scripts and registers sw.js after the page loads. The page's existing theme-color (#1FA36B, the app green) is kept and no second one was added, because the manifest uses the same colour and tests/pwa-kit.cjs checks that they match. Error reports stay in the console until a Supabase endpoint is set in observability.js.",
+      where:"index.html: <head> (manifest link, observability.js script), the service worker registration script before </body>, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. No file under supabase/ changed.",
+      test:"Run node --test tests/pwa-kit.cjs and node tests/check-repo.mjs. On the preview in Chrome: DevTools > Application shows the manifest and an activated service worker, and the address bar offers Install. On Android, Add to Home Screen installs the app; on iPhone use Share > Add to Home Screen. With the network off, reload and the app still opens.",
+      limits:"The theme colour stays green, not black; the manifest background is black. Error reports are not sent anywhere until the endpoint and key are filled in (docs/APP_READINESS.md). The first load after this build is online; offline use starts once the worker has installed." },
+    { id:"8.3.26",
+      area:"Workouts",
+      title:"File upload button with a progress fill (WLUpload) on the file imports",
+      bug:"The import spots on the Workouts page were plain Choose file buttons with no feedback while a file was read. CJ supplied a WLUpload.attach call from a component with a progress-fill upload animation and asked to use it for the document upload sections.",
+      fix:"New WLUpload.attach(el, { maxBytes, accept, multiple, label, onUpload(file, report), onDone(file), onStart, onReject, onError, onFinish }), CJ's call shape. The button itself fills left to right as onUpload calls report(0..1), with the file name and percent on it, then shows Done (or Try again with a reason) and goes back to idle. The fill follows only the numbers it is given: it never moves on a timer, never goes backwards and is held at 100%. A file over maxBytes is refused before onUpload runs. Both Workouts imports now use it, and so do the Import a video buttons on Form check and the Import a photo button on Body progress. Apple Health reports bytes read from export.xml. The Google/other-app import reports bytes read for each file (nine tenths), then parsing (the last tenth), and handles several files in a row. What each import does with the data is unchanged, including the 25 MB cap, the summary card and the skipped-file count. The file input is no longer display:none, so it can be reached with the keyboard.",
+      where:"index.html: WLUpload, WLUpload.reg, wluScan() (called from afterRender()), importApple(file, report), importOne(), importSummary(), IMP_TALLY (importFiles() split up), the two import cards in workoutsView(), the video import (three places in formCheckView()/formCheckOptIn()) and the body-photo import in bodyView(), WLUpload.read(), CSS block 8.3.26 (.wlu-*). tests/browser/upload.mjs (new), tests/browser/run-all.mjs. APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/browser/upload.mjs and node tests/browser/compact.mjs. By hand: Settings > turn on Form check and Body progress (Premium), block camera access in the browser, then Import a video / Import a photo show the same button. Workouts, Import from Apple Health or another app, pick a CSV, JSON or TCX file under Google Health, Fitbit and other apps, or export.xml under Apple Health: the button fills while the file is read, then shows Done and the summary card appears. Pick a file over 25 MB there to see it refused. Try Reduce motion on and a 375px phone.",
+      limits:"Nothing in the app sends a document to a server today: these imports read the file on the device, so the fill shows bytes read, not network upload. The only upload to Supabase is the automatic background sync of photos, which has no button and was not touched; supabase-js reports no upload progress, so a fill for it would need an edge function or a different upload call (ask first). The profile photo, meal photo and food/gym photo pickers were left as they are: they open the live camera first, and that behaviour was not touched. The Import a video and Import a photo buttons only show when the camera is unavailable or declined, as before. The look is built from the app's own colours, not CJ's component CSS, which was not supplied. Checked in headless Chrome only." },
     { id:"8.3.25",
       area:"Premium",
       title:"Receipt shows the subtotal, the tax with its rate, the total and the amount paid",
@@ -7902,6 +8117,37 @@ function lockNow(){ // forget the key and the decrypted data in this tab
 async function readBack(){
   const local = lsGet(); return { root: local?.root, logs: Object.values(local?.logs || {}) };
 }
+// ---- delete my account ----
+// Calls the delete-account edge function with the person's own access token; it removes their photos and then the account, and the
+// database removes every row with it. Only after the server says "deleted" is this device wiped too.
+function acctDeleteRow(){
+  const d = UI.delAcct;
+  if (!d) return `<div class="setrow"><div class="setlabel"><b>Delete my account</b><span class="small muted">Deletes your account and everything saved in it: every profile, meal, snack, drink, workout, weigh-in, vital and photo, on every device. Also clears this device. Immediate, and cannot be undone. A Premium subscription is separate: cancel it first.</span></div>
+      <button class="btn danger" data-act="acct-del-ask">Delete my account</button></div>`;
+  return `<div class="setrow"><div class="setlabel"><b>Delete my account</b><span class="small muted">This cannot be undone. Type DELETE to confirm.</span>
+      <label class="f">Type DELETE<input type="text" id="acct-del-text" autocomplete="off" autocapitalize="characters" ${d.busy ? "disabled" : ""}></label>
+      ${d.err ? `<span class="small" role="alert" style="color:var(--bad)">${esc(d.err)}</span>` : ""}</div>
+      <span class="row" style="gap:6px"><button class="btn sm" data-act="acct-del-no" ${d.busy ? "disabled" : ""}>Cancel</button><button class="btn sm danger" data-act="acct-del-yes" ${d.busy ? "disabled" : ""}>${d.busy ? "Deleting…" : "Delete my account"}</button></span></div>`;
+}
+async function deleteAccount(){
+  const d = UI.delAcct, box = document.getElementById("acct-del-text");
+  if (!d || d.busy) return;
+  if (!box || box.value.trim() !== "DELETE") { UI.delAcct = { err: "Type DELETE (capital letters) to confirm." }; render(); return; }
+  const c = sbClient(); if (!c || !SB.user) { UI.delAcct = { err: "Sign in first." }; render(); return; }
+  if (navigator.onLine === false) { UI.delAcct = { err: "You are offline. Try again when you are connected." }; render(); return; }
+  UI.delAcct = { busy: true }; render();
+  let state = "error";
+  try {
+    const { data } = await c.auth.getSession(), token = data?.session?.access_token;
+    if (token) {
+      const r = await fetch(`${SB_URL}/functions/v1/delete-account`, { method:"POST", headers:{ "content-type":"application/json", apikey:SB_KEY, authorization:`Bearer ${token}` }, body: JSON.stringify({ confirm:"DELETE" }) });
+      state = (await r.json().catch(() => ({}))).state || "error";
+    } else state = "unauthorized";
+  } catch { console.warn("account deletion request failed"); }
+  if (state !== "deleted") { UI.delAcct = { err: state === "unauthorized" ? "Your sign-in has expired. Sign out, sign in again, then retry." : "Could not delete the account. Nothing was deleted. Try again in a moment, or email the address in the Privacy Policy." }; render(); return; }
+  UI.delAcct = null; historyAdd("erase"); await eraseEverything(); UI.locked = false; UI.confirmEraseAll = false; resetUI(); render(); toast("Your account was deleted.");
+}
+
 async function eraseEverything(){
   lsRemoveUserData(); // profiles and logs for every account and the guest, plus wlh.notif.* and wlh.rem.*
   Object.assign(S, { profiles:[], activeId:null, logs:{} }); CRY.key = null; CRY.lock = null; CRY.raw = null; dirty.clear();
@@ -9126,9 +9372,11 @@ async function sbGoogle(){
   const c = sbClient(); if (!c || SB.busy || SB.gbusy) return;
   // Not SB.busy and no sbRender(): a re-render would empty the typed email and password, and the person may switch to another form while
   // this waits. So the button and message are looked up again when it ends, in whichever form is showing.
-  const btn = () => document.querySelector('#auth-pop-body [data-act="sb-google"]');
-  const say = t => { const m = document.getElementById("auth-g-msg"); if (m) m.textContent = t; };
-  const pop = POPOVERS.auth; // closing the popup removes this entry at once (its element lingers 200 ms), and reopening makes a new one
+  const pop = POPOVERS.auth; // closing the popup removes this entry at once (its element lingers 200 ms), and reopening makes a new one. None on the startup and setup screens, where the form sits in the page.
+  const scope = () => (pop ? document.getElementById("auth-pop-body") : document.querySelector(".auth-ob")) || document;
+  const btn = () => scope().querySelector('[data-act="sb-google"]');
+  const say = t => { const m = scope().querySelector("#auth-g-msg"); if (m) m.textContent = t; };
+  const here = () => pop ? POPOVERS.auth === pop : !POPOVERS.auth && !!document.querySelector(".auth-ob"); // still the same surface
   const tok = SB.gtok = (SB.gtok || 0) + 1; // sbAuth() bumps it, so starting an email sign-in cancels a Google attempt still waiting
   say(""); SB.gbusy = true; if (btn()) btn().disabled = true;
   try {
@@ -9138,7 +9386,7 @@ async function sbGoogle(){
       on = r.ok && (await r.json())?.external?.google === true;
       if (!on) say("Google sign-in isn't switched on yet. Use your email for now.");
     } catch { say(navigator.onLine === false ? "You're offline. Connect and try again." : "Couldn't reach sign-in. Try again in a moment."); }
-    if (on && (tok !== SB.gtok || SB.user || !pop || POPOVERS.auth !== pop)) on = false; // another sign-in started, it finished, or this popup was closed
+    if (on && (tok !== SB.gtok || SB.user || !here())) on = false; // another sign-in started, it finished, or this popup or screen was left
     if (on) { const r = await c.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: sbRedirect() } }); if (r.error) throw r.error; }
   } catch (e) { say(sbErrText(e)); }
   SB.gbusy = false; if (btn()) btn().disabled = false;
@@ -9196,14 +9444,18 @@ function authFormHTML(){
 }
 // Onboarding stop after the age question and before the coach: Google or email, or skip. Signing in reloads the page (sbReload), so a person
 // who signs in here lands on the welcome screen signed in, and this stop is skipped the next time.
-function obAuthView(){
+// The sign-in card as a full screen. Setup shows it after the age question (first profile, signed out); the welcome screen comes first.
+function authScreen(foot){
   return `<main class="ob obg">${obGround()}<div class="panel st-panel auth-ob">
     <div class="row">${logoSVG(46)}<div class="eyebrow">Your account</div></div>
     <h1 class="ob-h1" tabindex="-1" data-st-focus>${AUTH_TITLE[UI.acct || "up"]}</h1>
     <div class="auth-pop"><div class="pop-body">${authFormHTML()}</div></div>
-    <div class="st-foot modal-foot"><div class="foot-left"><span class="tiny muted">You can sign in later in Settings.</span></div>
-      <div class="foot-right"><button class="btn ghost" data-act="ob-auth-go">Skip for now</button></div></div>
+    <div class="st-foot modal-foot">${foot}</div>
   </div></main>`;
+}
+function obAuthView(){
+  return authScreen(`<div class="foot-left"><span class="tiny muted">You can sign in later in Settings.</span></div>
+      <div class="foot-right"><button class="btn ghost" data-act="ob-auth-go">Skip for now</button></div>`);
 }
 function openAuthPopup(mode, triggerEl){
   UI.acct = mode; UI.sbMsg = null; UI.sbAgree = false; // each new form asks again
@@ -9469,7 +9721,7 @@ async function chAct(act, id){
 function accountCard(inline){
   const row = (title, sub, act) => `<div class="acct-row"><span class="acct-ic">${icon("user","",18)}</span>
       <div class="acct-txt"><div class="acct-t">${title}</div>${sub}</div><div class="acct-act">${act}</div></div>`;
-  if (!sbClient()) return `<section class="card" id="sb-account">${row("Account", `<div class="acct-s">${location.protocol === "file:" ? "Sign-in needs the app served over http (python3 -m http.server 8080)." : "Sign-in couldn't load. Check your connection and reload."}</div>`, "")}</section>`;
+  if (!sbClient()) return `<section class="card" id="sb-account">${row("Account", `<div class="acct-s">${location.protocol === "file:" ? "Sign-in needs the app served over http (python3 -m http.server 8080)." : "Sign-in couldn't load. Reload the page; if it keeps happening, clear this site's data in your browser."}</div>`, location.protocol === "file:" ? "" : `<button class="btn" data-act="sb-reload">Reload</button>`)}</section>`;
   if (SB.user) return `<${inline ? 'div class="acct-in"' : 'section class="card"'} id="sb-account">${row(inline ? "Saved to your account" : esc(SB.user.email || "your account"),
       `<div class="acct-s" id="sb-status" role="status">${esc(sbStatusText())}</div>`,
       `<button type="button" class="pop-x" data-act="sb-info" aria-label="What is saved to my account">${icon("info","",18)}</button>${UI.sbConfirmOut ? "" : `<button class="btn sm" data-act="sb-out"${SB.busy ? " disabled" : ""}>${SB.busy ? "Signing out…" : "Sign out"}</button>`}`)}
@@ -10107,41 +10359,10 @@ function motivation(p = P()){
   return MOTIVATION[hash(today()) % MOTIVATION.length];
 }
 // =================== LOGO ===================
-// A ring (the "whole") opening into a sprouting leaf (life, growth)
-// The WholeLife mark, drawn from the artwork Chris supplied: a teal-to-green rounded tile,
-// a glass sphere, an ECG trace across the top, a leaf on the right and a lit core where the
-// two halves meet. Pure SVG so it stays crisp at every size and can carry the glass gradients.
+// The Whole Life Hub app icon (img/logo-320.webp, cropped from CJ's artwork) is also the in-app mark, so the icon on the home screen and
+// the logo inside the app are the same picture. The name is kept (logoSVG) for the existing call sites; it returns an <img> now.
 function logoSVG(size = 36, label = true){
-  const u = "lg" + (logoSVG._n = (logoSVG._n || 0) + 1);
-  return `<svg class="logo-svg" width="${size}" height="${size}" viewBox="0 0 96 96" ${label ? 'role="img" aria-label="Whole Life Hub"' : 'aria-hidden="true"'}>
-    <defs>
-      <linearGradient id="${u}-bg" x1="0" y1="0" x2="0.35" y2="1">
-        <stop offset="0%" stop-color="#0E8397"/><stop offset="48%" stop-color="#1FA36B"/><stop offset="100%" stop-color="#63C832"/></linearGradient>
-      <radialGradient id="${u}-orb" cx="38%" cy="30%" r="78%">
-        <stop offset="0%" stop-color="#EAFBFF" stop-opacity=".95"/><stop offset="45%" stop-color="#9FE2F0" stop-opacity=".55"/><stop offset="100%" stop-color="#2FA7C4" stop-opacity=".28"/></radialGradient>
-      <linearGradient id="${u}-leaf" x1="0" y1="1" x2="1" y2="0">
-        <stop offset="0%" stop-color="#3FA83C"/><stop offset="55%" stop-color="#8FE06A"/><stop offset="100%" stop-color="#D8F7A8"/></linearGradient>
-      <linearGradient id="${u}-swoosh" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#BFF0FF" stop-opacity=".95"/><stop offset="100%" stop-color="#5FC7DE" stop-opacity=".55"/></linearGradient>
-      <radialGradient id="${u}-core" cx="50%" cy="45%" r="60%">
-        <stop offset="0%" stop-color="#FFFFFF"/><stop offset="55%" stop-color="#D6FBFF"/><stop offset="100%" stop-color="#7FE0D0" stop-opacity=".2"/></radialGradient>
-      <linearGradient id="${u}-gloss" x1="0" y1="0" x2="0.4" y2="1">
-        <stop offset="0%" stop-color="#fff" stop-opacity=".55"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></linearGradient>
-    </defs>
-    <rect width="96" height="96" rx="27" fill="url(#${u}-bg)"/>
-    <path d="M12 30c4-14 18-22 33-21 6 .4 12 2.4 17 6-9-6-22-7-33-3C20 14 14 21 12 30z" fill="url(#${u}-gloss)"/>
-    <circle cx="48" cy="50" r="33" fill="url(#${u}-orb)"/>
-    <circle cx="48" cy="50" r="33" fill="none" stroke="#DFF7FF" stroke-opacity=".55" stroke-width="1.6"/>
-    <path d="M21 46c4.5.4 7-1 9.5-6.5S35 26 37.5 26s4 6 6 12 3.5 9 6 9 4.5-3 6.5-7"
-      fill="none" stroke="#EAFBFF" stroke-opacity=".92" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M56 55c2-13 11-21 24-22 1 13-8 23-21 23.5z" fill="url(#${u}-leaf)"/>
-    <path d="M58.5 54.5C61 45 68 38.5 77 36.5" fill="none" stroke="#2F7A2B" stroke-opacity=".5" stroke-width="1.8" stroke-linecap="round"/>
-    <path d="M28 64c5.5-7 14-9.5 21-6.5 6.5 2.8 9 9.5 16.5 9.5 5 0 8.5-2.2 11-6-1.5 12-11 20.5-23 20.5-14 0-24-9.5-25.5-17.5z"
-      fill="url(#${u}-swoosh)" opacity=".85"/>
-    <circle cx="48" cy="50" r="8" fill="url(#${u}-core)"/>
-    <circle cx="48" cy="50" r="8" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.2"/>
-    <circle cx="45" cy="47" r="2.4" fill="#fff" opacity=".85"/>
-  </svg>`;
+  return `<img class="logo-svg" src="img/logo-320.webp" width="${size}" height="${size}" ${label ? 'alt="Whole Life Hub"' : 'alt="" aria-hidden="true"'} decoding="async" draggable="false">`;
 }
 // home: the sidebar's wordmark is also the link back to Summary; the loading skeleton stays inert.
 const wordmark = (sub = true, home = false) => `<${home ? 'a href="#/home" aria-label="WholeLife Hub, back to Summary" title="Summary"' : "div"} class="brand${home ? " brand-home" : ""}">${logoSVG(38)}<div><b>WholeLife<span class="hub"> Hub</span></b>${sub ? `<span class="tiny muted">Move well. Eat with intention.</span>` : ""}</div></${home ? "a" : "div"}>`;
@@ -11275,6 +11496,115 @@ function textSizeStep(p){
 function applyTextScale(p = P()){
   document.documentElement.style.setProperty("--text-scale", String(TEXT_SIZES[textSizeStep(p)][2]));
 }
+// ---- appearance: UI style, language and review before saving (8.4) ----
+// Display, accent and text size stay in the profile (p.look) as before; they are now held for
+// review. UI style and language are per device. "wl-appearance" mirrors all five so the page can
+// paint the right look before the app script runs.
+const WL_APPEARANCE_KEY = "wl-appearance";
+const WL_STYLES = [["rounded","Rounded"],["crisp","Crisp"]];
+const WL_LANGS = [["en","English"],["es","Español"]];
+const WL_ES = {
+  "Summary":"Resumen", "Log":"Registrar", "Plan":"Planificar", "Progress":"Progreso", "Meals":"Comidas", "Snacks":"Bocadillos",
+  "Workouts & imports":"Entrenamientos e importaciones", "Recipes & meal plans":"Recetas y planes de comidas",
+  "Food culture":"Cultura gastronómica", "Personal coach":"Entrenador personal", "Health data":"Datos de salud",
+  "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Go Premium":"Hazte Premium",
+  "Profile":"Perfil", "Coach":"Entrenador", "Appearance":"Apariencia", "Goals & food":"Metas y comida", "Household":"Hogar",
+  "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información",
+  "Display":"Pantalla", "Automatic":"Automático", "Light":"Claro", "Dark":"Oscuro", "OLED black":"Negro OLED",
+  "Accent color":"Color de acento", "Text size":"Tamaño del texto", "Motion":"Movimiento", "UI style":"Estilo de interfaz",
+  "Rounded":"Redondeado", "Crisp":"Nítido", "Language":"Idioma", "Review changes":"Revisar cambios",
+  "Save":"Guardar", "Discard":"Descartar", "Saved":"Guardado"
+};
+const WLA = { uistyle:"rounded", lang:"en", base:null, last:"" };
+try {
+  const a = JSON.parse(localStorage.getItem(WL_APPEARANCE_KEY) || "{}");
+  if (WL_STYLES.some(x => x[0] === a.uistyle)) WLA.uistyle = a.uistyle;
+  if (WL_LANGS.some(x => x[0] === a.lang)) WLA.lang = a.lang;
+} catch {}
+const tr = s => (WLA.lang === "es" && WL_ES[s]) || s;
+function wlaApplyDom(){
+  const el = document.documentElement;
+  el.dataset.uistyle = WLA.uistyle; el.lang = WLA.lang;
+}
+function wlaMirror(p){
+  wlaApplyDom();
+  if (!p || WLA.base) return; // unsaved changes are not written until Save
+  const l = p.look || {};
+  const v = JSON.stringify({ theme:l.mode || "auto", accent:l.accent || "blue", textsize:l.textSize || "l", uistyle:WLA.uistyle, lang:WLA.lang });
+  if (v === WLA.last) return;
+  WLA.last = v;
+  try { localStorage.setItem(WL_APPEARANCE_KEY, v); } catch {}
+}
+function wlaSnap(p){
+  if (WLA.base && WLA.base.pid !== p.id) WLA.base = null; // a different profile: start again
+  if (WLA.base) return;
+  const l = p.look || {};
+  WLA.base = { pid:p.id, mode:l.mode || "auto", accent:l.accent || "blue", textSize:l.textSize || "l", largerAX:!!l.largerAX, uistyle:WLA.uistyle, lang:WLA.lang };
+}
+function wlaSetLook(p, patch){
+  wlaSnap(p);
+  p.look = { mode:"auto", accent:"blue", motion:"full", font:"system", ...(p.look || {}), ...patch };
+  render();
+}
+function wlaSetStyle(v){ const p = P(); if (!p || !WL_STYLES.some(x => x[0] === v)) return; wlaSnap(p); WLA.uistyle = v; render(); }
+function wlaSetLang(v){ const p = P(); if (!p || !WL_LANGS.some(x => x[0] === v)) return; wlaSnap(p); WLA.lang = v; render(); }
+function wlaRows(p){
+  const b = WLA.base; if (!b || b.pid !== p.id) return [];
+  const l = p.look || {};
+  const nm = (list, k) => list.find(x => x[0] === k)?.[1] ?? k;
+  const rows = [];
+  if ((l.mode || "auto") !== b.mode) rows.push(["Display", nm(MODES, b.mode), nm(MODES, l.mode || "auto")]);
+  if ((l.accent || "blue") !== b.accent) rows.push(["Accent color", nm(ACCENTS, b.accent), nm(ACCENTS, l.accent || "blue")]);
+  if ((l.textSize || "l") !== b.textSize) rows.push(["Text size", nm(TEXT_SIZES, b.textSize), nm(TEXT_SIZES, l.textSize || "l")]);
+  if (WLA.uistyle !== b.uistyle) rows.push(["UI style", nm(WL_STYLES, b.uistyle), nm(WL_STYLES, WLA.uistyle)]);
+  if (WLA.lang !== b.lang) rows.push(["Language", nm(WL_LANGS, b.lang), nm(WL_LANGS, WLA.lang)]);
+  return rows;
+}
+function reviewInner(rows){
+  return `<strong>${esc(tr("Review changes"))} (${rows.length})</strong>
+    ${rows.map(([k, a, b]) => `<div class="small">${esc(tr(k))}: ${esc(tr(a))} → ${esc(tr(b))}</div>`).join("")}
+    <div class="row"><button class="btn primary" data-act="look-save">${esc(tr("Save"))}</button><button class="btn" data-act="look-discard">${esc(tr("Discard"))}</button></div>`;
+}
+function reviewBar(p){
+  const rows = wlaRows(p);
+  return `<div class="wl-review-bar${rows.length ? " show" : ""}" id="wl-review" role="region" aria-label="${esc(tr("Review changes"))}" aria-live="polite">${rows.length ? reviewInner(rows) : ""}</div>`;
+}
+// The text-size slider changes the page without a render, so the review list is repainted here.
+function wlaRefreshBar(p){
+  const bar = document.getElementById("wl-review"); if (!bar) return;
+  const rows = wlaRows(p);
+  bar.innerHTML = rows.length ? reviewInner(rows) : ""; bar.classList.toggle("show", rows.length > 0);
+}
+function wlaChoice(label, act, list, cur){
+  return `<div class="setgroup"><div class="setlabel">${esc(tr(label))}</div>
+    <div class="seg wl-seg" role="group" aria-label="${esc(tr(label))}">${list.map(([k, l]) => `<button data-act="${act}" data-v="${k}" aria-pressed="${cur === k}">${esc(tr(l))}</button>`).join("")}</div></div>`;
+}
+const uiStyleRow = () => wlaChoice("UI style", "ui-style", WL_STYLES, WLA.uistyle);
+const languageRow = () => wlaChoice("Language", "ui-lang", WL_LANGS, WLA.lang);
+function wlaSave(p){
+  saveProfile(); WLA.base = null; wlaMirror(p); toast(tr("Saved")); render();
+}
+function wlaDiscard(p){
+  const b = WLA.base;
+  if (b && b.pid === p.id) {
+    p.look = { ...(p.look || {}), mode:b.mode, accent:b.accent, textSize:b.textSize, largerAX:b.largerAX };
+    WLA.uistyle = b.uistyle; WLA.lang = b.lang;
+  }
+  WLA.base = null; render();
+}
+// Dark and light open as a circle growing from the tapped button; browsers without View
+// Transitions, and Reduced motion, change at once.
+function wlaReveal(from, change){
+  if (!document.startViewTransition || UI.motionOk === false || !from) return change();
+  const r = from.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+  const end = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  try {
+    const vt = document.startViewTransition(change);
+    vt.ready.then(() => document.documentElement.animate(
+      { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${end}px at ${x}px ${y}px)`] },
+      { duration: 600, easing: "ease-in-out", pseudoElement: "::view-transition-new(root)" })).catch(() => {});
+  } catch { change(); }
+}
 const darkMQ = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
 function timeAccent(){ const h = new Date().getHours(); return h >= 5 && h < 11 ? "gold" : h < 17 ? "blue" : h < 21 ? "hibiscus" : "violet"; }
 function applyLook(p = P()){
@@ -11295,6 +11625,7 @@ function applyLook(p = P()){
   el.dataset.font = FONTS.some(f => f[0] === look.font) ? look.font : "system";
   el.style.colorScheme = scheme === "light" ? "light" : "dark";
   applyTextScale(p);
+  wlaMirror(p);
 }
 darkMQ?.addEventListener?.("change", () => applyLook());
 new MutationObserver(() => applyLook()).observe(document.documentElement, { attributes:true, attributeFilter:["data-theme"] });
@@ -11667,6 +11998,8 @@ document.addEventListener("keydown", e => {
   e.preventDefault(); UI.tabFocus = true; next.click();
 });
 function afterRender(){
+  document.querySelectorAll("[data-wlbg]").forEach(h => { if (!h._wlbg) h._wlbg = wlBackdrop(h); });
+  document.querySelectorAll("[data-tf]").forEach(h => { if (h.querySelector(".tf-c")) return; h._tfs?.(); h._tfs = h.dataset.tf === "ring" ? trueFocus(h, [...h.querySelectorAll(".tf-it")], 7, 13) : trueFocus(h, [...h.querySelectorAll(".tf-it")], 5, 7); });
   fitHeadTitle();
   initFx();
   UI.lastNav = UI.route + "/" + (UI.param || "");
@@ -11677,7 +12010,9 @@ function afterRender(){
   revealActive();
   if (typeof tourAfterRender === "function") tourAfterRender(); // 8.1.7 app tour
   if (typeof stepperAfterRender === "function") stepperAfterRender(); // 8.1.9 stepper motion
+  if (typeof wluScan === "function") wluScan(); // 8.3.26 file upload widgets
   ringSync(); flipSync(); // 8.2.20: sliding selection ring, widget flip state
+  tabSync(); // 8.3.34: sliding pill on the Settings tabs
   if (typeof applyCanonical === "function") applyCanonical();
   if (typeof applyTheme === "function") applyTheme(P());
   if (typeof applyOpacity === "function") applyOpacity(P());
@@ -11763,7 +12098,7 @@ function toggleNavGroup(id){
   render();
 }
 function sideNav(){
-  const link = (href, on, ic, grad, label) => `<a href="${href}" data-anim="${ic}" data-label="${esc(label)}" title="${esc(label)}"${on ? ' aria-current="page"' : ""}>${siTile(grad, cicon(ic, "#fff", 22, UI.animIcon === ic && UI.motionOk !== false ? "zap" : ""))}<span>${label}</span></a>`;
+  const link = (href, on, ic, grad, label0, label = tr(label0)) => `<a href="${href}" data-anim="${ic}" data-label="${esc(label)}" title="${esc(label)}"${on ? ' aria-current="page"' : ""}>${siTile(grad, cicon(ic, "#fff", 22, UI.animIcon === ic && UI.motionOk !== false ? "zap" : ""))}<span>${label}</span></a>`;
   const premOn = typeof isPremium === "function" && isPremium();
   const here = UI.route + "/" + (UI.param || "");
   // v11.0 TASK 7: readiness badge, same green/neutral pill the Premium popup shows, driven by
@@ -11784,8 +12119,8 @@ function sideNav(){
   // this task describes.
   const premHub = premOn
     ? `<button type="button" class="prem-trigger" data-act="premium-popup" data-label="Premium" title="Premium"
-        aria-haspopup="dialog" aria-expanded="false"${UI.route === "premium" ? ' aria-current="page"' : ""}>${siTile(SI_GRAD.awards, icon("crown","",22))}<span>Premium</span></button>`
-    : `<a class="upsell" href="#/premium" data-act="paywall" data-label="Go Premium" title="Go Premium">${siTile(SI_GRAD.awards, icon("crown","up-crown",20))}<span>Go Premium</span></a>`;
+        aria-haspopup="dialog" aria-expanded="false"${UI.route === "premium" ? ' aria-current="page"' : ""}>${siTile(SI_GRAD.awards, icon("crown","",22))}<span>${tr("Premium")}</span></button>`
+    : `<a class="upsell" href="#/premium" data-act="paywall" data-label="${tr("Go Premium")}" title="${tr("Go Premium")}">${siTile(SI_GRAD.awards, icon("crown","up-crown",20))}<span>${tr("Go Premium")}</span></a>`;
 
   // 8.1.6: the drawer had grown to ~30 rows (11 core destinations + all 19 Premium features as
   // their own rows, 7 of them unfinished), across five collapsible groups. Testers found it hard
@@ -11797,7 +12132,7 @@ function sideNav(){
   void prow; void inGroup;
   const inHealth = ["health","browse","cat","metric"].includes(UI.route);
   const group = (id, label, itemsHTML) => `<div class="navgrp navgrp-static" role="group" aria-labelledby="ngl-${id}" data-grp="${id}">
-      <span class="grp grp-static" id="ngl-${id}">${esc(label)}</span>
+      <span class="grp grp-static" id="ngl-${id}">${esc(tr(label))}</span>
       <div class="navgrp-items">${itemsHTML}</div>
     </div>`;
   const groupsHTML =
@@ -11820,7 +12155,7 @@ function wlRing(labels){
   const arc = (cls, rot) => `<circle class="arc ${cls}" cx="120" cy="120" r="96" transform="rotate(${rot} 120 120)"/>`;
   return `<svg class="wl-ring" viewBox="0 0 240 240" aria-hidden="true" focusable="false">
     <circle class="trk" cx="120" cy="120" r="96"/>${arc("a1",-80)}${arc("a2",40)}${arc("a3",160)}
-    ${labels ? `<text class="t1" x="236" y="54">Eat</text><text class="t2" x="120" y="246">Move</text><text class="t3" x="2" y="54">Recover</text>` : ""}
+    ${labels ? `<text class="t1 tf-it" data-c="var(--wl-gold)" data-arc=".a1" x="236" y="54">Eat</text><text class="t2 tf-it" data-c="var(--wl-coral)" data-arc=".a2" x="120" y="246">Move</text><text class="t3 tf-it" data-c="var(--wl-mint)" data-arc=".a3" x="2" y="54">Recover</text>` : ""}
   </svg>`;
 }
 function loaderView(msg){ return `<div class="wl wl-load" role="status"><div class="wl-art">${wlRing(false)}<div class="wl-mark">${logoSVG(96, false)}</div></div><div><h2>Whole Life Hub</h2><p>${esc(typeof msg === "string" ? msg : "Loading your hub…")}</p></div></div>`; }
@@ -11830,7 +12165,7 @@ function obGround(){ return `<div class="obg-bg" aria-hidden="true"><i></i><i></
 // is kept, never the birth date. Someone under 13 gets a plain "can't set up" screen, and the device refuses another try for 24 hours
 // (a flag in this browser; clearing site data removes it, so it deters a retry rather than guaranteeing one).
 const AGE_BLOCK_KEY = "wlh.ageblock", AGE_BLOCK_MS = 24 * 3600 * 1000, CONSENT_KEY = "wlh.consent";
-const TERMS_VERSION = "2026-10-23"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
+const TERMS_VERSION = "2026-10-25"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
 const ageBlocked = () => { try { return +localStorage.getItem(AGE_BLOCK_KEY) > Date.now(); } catch { return false; } };
 const blockAge = () => { try { localStorage.setItem(AGE_BLOCK_KEY, String(Date.now() + AGE_BLOCK_MS)); } catch {} };
 // Whole years old. The birth day is not asked, so a birthday this month counts as not reached yet.
@@ -11869,22 +12204,154 @@ function ageGateSubmit(){
   if (!S.profiles.length && sbClient() && !SB.user) { UI.obAuth = true; UI.acct = "up"; UI.sbMsg = null; UI.sbAgree = false; } else UI.obStep = 1;
   render(); window.scrollTo(0, 0);
 }
+// Shuffle-style headline: each letter slides in from the side (odd letters from the other side), staggered. Words stay unbroken.
+function wlShuffle(text, from){
+  let i = from;
+  const words = text.split(" ").map(w => `<span class="wl-w">${[...w].map(c => `<i style="--i:${i++}">${esc(c)}</i>`).join("")}</span>`).join(" ");
+  return `<span class="wl-sh"><span class="sr-only">${esc(text)}</span><span aria-hidden="true">${words}</span></span>`;
+}
+// ---- true focus (8.3.36) ----
+// Four corner brackets glide from word to word while the others blur a little. Used on the welcome name and on the ring labels (the
+// bracket takes the colour of the label's arc and the other arcs dim). Reduced motion keeps the first word focused and stands still.
+// The timer pauses off screen and stops once the host leaves the page; the returned function stops it early.
+function trueFocus(host, items, g, k){
+  if (!items.length) return () => {};
+  const cs = ["tl", "tr", "bl", "br"].map(c => { const e = document.createElement("span"); e.className = "tf-c tf-" + c; e.setAttribute("aria-hidden", "true"); host.appendChild(e); return e; });
+  let cur = 0, vis = true, timer = 0;
+  const place = () => {
+    const h = host.getBoundingClientRect(), r = items[cur].getBoundingClientRect();
+    const x1 = r.left - h.left - g, y1 = r.top - h.top - g, x2 = r.right - h.left + g - k, y2 = r.bottom - h.top + g - k;
+    [[x1, y1], [x2, y1], [x1, y2], [x2, y2]].forEach(([x, y], n) => { cs[n].style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`; });
+    host.style.setProperty("--tf-color", items[cur].dataset.c || "var(--wl-gold)");
+  };
+  const show = n => {
+    cur = n;
+    items.forEach((el, i) => { el.classList.toggle("tf-off", i !== n); if (el.dataset.arc) host.querySelector(el.dataset.arc)?.classList.toggle("tf-dim", i !== n); });
+    place();
+  };
+  show(0); requestAnimationFrame(() => host.classList.add("tf-ready"));
+  const ro = new ResizeObserver(place); ro.observe(host);
+  document.fonts?.ready.then(place);
+  const io = new IntersectionObserver(([e]) => { vis = e.isIntersecting; }); io.observe(host);
+  const stop = () => { clearInterval(timer); ro.disconnect(); io.disconnect(); };
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches && items.length > 1) timer = setInterval(() => { if (!host.isConnected) stop(); else if (vis && !document.hidden) show((cur + 1) % items.length); }, 1500);
+  return stop;
+}
+// ---- welcome backdrop: drifting photo grid ----
+// The photos are files in img/welcome (never inlined). The grid stops off screen and in a hidden tab;
+// reduced motion keeps the rows still.
+const WL_PHOTOS = Array.from({ length: 12 }, (_, i) => `img/welcome/w${String(i + 1).padStart(2, "0")}.webp`);
+// Drifting rows of the photos (GridMotion, rebuilt in plain JS). Rows are built once per size and
+// moved with transforms only; the pointer lights the tiles near it and nudges the rows.
+const GM = { rows: 4, aspect: 1.33, gap: 16, angle: -12, speed: 24, parallax: .5, spotlight: .6, fade: .5 };
+const GM_INERTIA = [.42, .32, .26, .22], GM_PACE = [1, .86, 1.12, .94];
+const gmSmooth = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
+const gmFeather = (side, zone) => {
+  const a = t => t * t * t * (t * (t * 6 - 15) + 10), s = [], m = [];
+  for (let i = 0; i <= 12; i++) { const t = i / 12; s.push(`rgba(0,0,0,${a(t).toFixed(4)}) ${(t * zone).toFixed(2)}%`); m.push(`rgba(0,0,0,${a(1 - t).toFixed(4)}) ${(100 - (1 - t) * zone).toFixed(2)}%`); }
+  return `linear-gradient(${side},${s.join(",")},${m.join(",")})`;
+};
+function wlGrid(root, alive, calm){
+  const fadeTo = narrow => {
+    const mask = `${gmFeather("to right", narrow ? 6 : GM.fade * 34)},${gmFeather("to bottom", GM.fade * 44)}`;
+    root.style.maskImage = root.style.webkitMaskImage = mask;
+    root.style.maskComposite = "intersect"; root.style.webkitMaskComposite = "source-in";
+  };
+  const st = { offsets: [], shifts: [], intro: 0, px: 0, py: 0, on: false };
+  let L = null, plane = null, rows = [], spots = [], marks = [], raf = 0, last = performance.now(), vis = true, w = 0, h = 0;
+  const build = () => {
+    const turn = GM.angle * Math.PI / 180, cos = Math.abs(Math.cos(turn)), sin = Math.abs(Math.sin(turn));
+    fadeTo(w < 700);
+    const rn = w < 700 ? 5 : GM.rows, pH = (w * sin + h * cos) * 1.12, pW = (w * cos + h * sin) * 1.12;
+    const tH = Math.max(16, (pH - GM.gap * (rn - 1)) / rn), tW = tH * GM.aspect, step = tW + GM.gap, per = Math.ceil(pW / step) + 1, period = per * step;
+    L = { pW, pH, tW, tH, step, per, period, rn, copies: Math.ceil(pW / period) + 2, top: (pH - rn * tH - (rn - 1) * GM.gap) / 2 };
+    plane?.remove();
+    plane = document.createElement("div"); plane.className = "wl-gp"; plane.setAttribute("aria-hidden", "true");
+    plane.style.cssText = `width:${pW}px;height:${pH}px;transform:translate(-50%,-50%) rotateZ(${GM.angle}deg);--gm-gap:${GM.gap}px;--gm-tile-w:${tW}px;--gm-tile-h:${tH}px;opacity:${st.intro >= 1 ? 1 : 0}`;
+    rows = []; spots = []; marks = [];
+    for (let r = 0; r < rn; r++) {
+      const row = document.createElement("div"); row.className = "wl-gr"; row.style.top = `${L.top + r * (tH + GM.gap)}px`;
+      for (let k = 0; k < L.copies * per; k++) {
+        const t = document.createElement("div"), im = new Image(); t.className = "wl-gt";
+        im.alt = ""; im.draggable = false; im.decoding = "async"; im.src = WL_PHOTOS[(r * per + (k % per)) % WL_PHOTOS.length]; t.append(im); row.append(t);
+      }
+      plane.append(row); rows.push(row); spots.push(new Float32Array(row.children.length)); marks.push(new Float32Array(row.children.length));
+    }
+    root.append(plane);
+  };
+  const frame = now => {
+    raf = 0; if (!alive()) return stop();
+    const dt = Math.min(.05, Math.max(.001, (now - last) / 1000)); last = now;
+    if (st.intro < 1) { st.intro = Math.min(1, st.intro + dt / .9); plane.style.opacity = String(1 - (1 - st.intro) ** 3); }
+    const rect = root.getBoundingClientRect(), hw = w / 2, hh = h / 2;
+    const px = st.px - rect.left - hw, py = st.py - rect.top - hh, inside = st.on && Math.abs(px) <= hw && Math.abs(py) <= hh;
+    const turn = GM.angle * Math.PI / 180, planeX = px * Math.cos(turn) + py * Math.sin(turn), planeY = -px * Math.sin(turn) + py * Math.cos(turn);
+    const nudge = st.on ? Math.max(-1, Math.min(1, px / hw)) : 0, reach = (.6 + 2.2 * GM.spotlight) * Math.max(L.tW, L.tH), settle = 1 - Math.exp(-dt / .22);
+    rows.forEach((row, r) => {
+      const drift = r % 2 ? 1 : -1;
+      if (st.offsets[r] === undefined) { st.offsets[r] = r * L.step * .37; st.shifts[r] = 0; }
+      if (!calm) st.offsets[r] += GM.speed * drift * GM_PACE[r % 4] * dt;
+      const target = calm ? 0 : GM.parallax * L.tW * 1.2 * nudge * (r % 2 ? -1 : 1);
+      st.shifts[r] += (target - st.shifts[r]) * (1 - Math.exp(-dt / GM_INERTIA[r % 4]));
+      const x = -L.period + (((st.offsets[r] + st.shifts[r]) % L.period) + L.period) % L.period;
+      row.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`;
+      const rowY = L.top + r * (L.tH + GM.gap) + L.tH / 2 - L.pH / 2, left = x - L.pW / 2 + L.tW / 2, list = row.children, v = spots[r], mk = marks[r];
+      for (let k = 0; k < list.length; k++) {
+        const want = inside ? 1 - gmSmooth(.25, 1, Math.hypot(left + k * L.step - planeX, rowY - planeY) / reach) : 0;
+        v[k] += (want - v[k]) * settle;
+        if (Math.abs(v[k] - mk[k]) > .004 || (want === 0 && v[k] < .004 && mk[k] !== 0)) { mk[k] = v[k] < .004 ? 0 : v[k]; list[k].style.setProperty("--spot", mk[k].toFixed(3)); }
+      }
+    });
+    if (vis && !document.hidden) raf = requestAnimationFrame(frame);
+  };
+  const kick = () => { if (!raf && vis && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); } };
+  const move = e => { st.px = e.clientX; st.py = e.clientY; st.on = true; };
+  const up = e => { if (e.pointerType === "touch") st.on = false; };
+  const off = () => { st.on = false; };
+  const io = new IntersectionObserver(es => { vis = es[es.length - 1].isIntersecting; kick(); });
+  const ro = new ResizeObserver(() => {
+    const nw = Math.round(root.clientWidth), nh = Math.round(root.clientHeight);
+    if (!nw || !nh || (nw === w && nh === h)) return;
+    w = nw; h = nh; build(); kick();
+  });
+  const vc = () => kick();
+  function stop(){ cancelAnimationFrame(raf); io.disconnect(); ro.disconnect(); removeEventListener("pointermove", move); removeEventListener("pointerdown", move); removeEventListener("pointerup", up); removeEventListener("blur", off); document.removeEventListener("visibilitychange", vc); document.documentElement.removeEventListener("pointerleave", off); }
+  addEventListener("pointermove", move, { passive: true }); addEventListener("pointerdown", move, { passive: true }); addEventListener("pointerup", up);
+  addEventListener("blur", off); document.addEventListener("visibilitychange", vc); document.documentElement.addEventListener("pointerleave", off);
+  io.observe(root); ro.observe(root);
+  return stop;
+}
+function wlBackdrop(host){
+  const root = host.querySelector(".wl-gm");
+  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (navigator.connection?.saveData) return () => {};
+  const alive = () => host.isConnected && host.hasAttribute("data-wlbg") && !!root?.isConnected; // the diff can reuse this node for another view
+  let stopGrid = null;
+  const stop = () => stopGrid?.();
+  // Wait until the page has loaded and settled, so building the tiles never counts as blocking time.
+  const go = () => setTimeout(() => {
+    if (!alive()) return;
+    stopGrid = wlGrid(root, alive, calm);
+  }, 1500);
+  if (document.readyState === "complete") go(); else addEventListener("load", go, { once: true });
+  return stop;
+}
 function welcomeView(){
   const adding = S.profiles.length > 0;
   return `<main class="wl" aria-labelledby="wl-h">
-    <div class="wl-top"><span class="wl-dot" aria-hidden="true"></span>Whole Life Hub</div>
+    <div class="wl-bg" data-wlbg data-morph-skip aria-hidden="true"><div class="wl-gm"></div></div>
+    <div class="wl-top"><span class="wl-dot" aria-hidden="true"></span><span class="wl-brand" data-tf="word" role="img" aria-label="Whole Life Hub"><span class="tf-it" aria-hidden="true">Whole</span><span class="tf-it" aria-hidden="true">Life</span><span class="tf-it" aria-hidden="true">Hub</span></span></div>
     <div class="wl-main">
       <div class="wl-copy">
-        <h1 id="wl-h"><span>Meals from your culture.</span><span>Workouts that fit your day.</span></h1>
+        <h1 id="wl-h">${wlShuffle("Meals from your culture.", 0)}${wlShuffle("Workouts that fit your day.", 24)}</h1>
         <p class="wl-lede">Plan meals, track calories, and get coaching based on what you actually eat and the equipment you have.</p>
         <div class="wl-actions">
           <button type="button" class="wl-cta" data-act="ob-next">Set up my hub</button>
           <button type="button" class="wl-link" data-act="ob-skip">Skip setup and start empty</button>
           ${adding ? `<button type="button" class="wl-link" data-act="ob-cancel">Cancel</button>` : ""}
         </div>
-        <p class="wl-note">${adding ? "Adding a new profile. Your other profiles stay as they are." : "Every question is optional, and everyone in your household gets their own profile."}</p>
       </div>
-      <div class="wl-art">${wlRing(true)}<div class="wl-mark">${logoSVG(120)}</div></div>
+      <div class="wl-art" data-tf="ring">${wlRing(true)}<div class="wl-mark">${logoSVG(120)}</div></div>
     </div>
   </main>`;
 }
@@ -12186,7 +12653,7 @@ function nutritionView(p){
         <label class="f">Date<input type="date" id="m-date" value="${date}" max="${today()}"></label>
         <label class="f full">What did you eat?<input type="text" id="m-name" list="dishlist" value="${esc(UI.prefill?.name || "")}" placeholder="Start typing: jollof, waakye, egusi…"></label>
         <label class="f">Calories<input type="number" id="m-cal" min="0" max="5000" value="${UI.prefill?.cal ?? ""}" placeholder="Filled from the catalog"></label>
-        <label class="f">Portion<select id="m-portion">${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
+        <label class="f">Portion<select id="m-portion" data-wheel>${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
       </div>
       <datalist id="dishlist">${DISHES.concat(dishAltOptions()).map(d => `<option value="${esc(d.n)}">${d.cal} cal</option>`).join("")}</datalist>
       ${quickLogBlock(date)}
@@ -12281,12 +12748,12 @@ function workoutsView(p){
   <div class="grid g3">
     ${UI.impOpen ? `<section class="card"><div class="eyebrow">Apple Health</div><h3>Import your iPhone export</h3>
       <p class="small muted">On iPhone: Health app, then your photo, then Export All Health Data. Unzip it and choose <b>export.xml</b>. Large files are fine; it's read in pieces on this device. Brings in workouts and weigh-ins (last 12 months) plus steps, resting heart rate, blood pressure, blood oxygen, sleep and water (last 90 days).</p>
-      <label class="btn" style="align-self:flex-start">Choose export.xml<input type="file" id="f-apple" accept=".xml,text/xml" hidden></label>
+      <div class="wlu" data-wlu="apple" data-morph-skip></div>
     </section>
     <section class="card"><div class="eyebrow">Google Health, Fitbit and other apps</div><h3>Import a workout file</h3>
       <p class="small muted">Get your data from <a href="https://takeout.google.com" target="_blank" rel="noopener">Google Takeout</a> (choose Fit or Fitbit), or export from Strava, Garmin and most apps. CSV, JSON or TCX files with a date, activity and duration work.</p>
       <details class="how"><summary>Why not automatic sync?</summary><p class="small">Google is shutting down the Google Fit APIs at the end of 2026. The replacement, the Google Health API, needs a server that signs in with Google and passes Google's security review for health data. This app has no server of its own that can sign in with Google (its only back end is the Supabase database, which holds meals and profile names), so it can't hold a Google connection. File import works today and keeps your data out of third-party servers.</p></details>
-      <label class="btn" style="align-self:flex-start">Choose file<input type="file" id="f-google" accept=".csv,.json,.tcx,text/csv,application/json" hidden multiple></label>
+      <div class="wlu" data-wlu="workoutFile" data-morph-skip></div>
     </section>` : ""}
     <section class="card"><div class="eyebrow">Manual entry</div><h3>Log a workout</h3>
       <div class="form">
@@ -12344,8 +12811,8 @@ function mergeImported(list, label){
   }
   return added;
 }
-async function importApple(file){
-  UI.import = { label:"Importing Apple Health", pct:0, msg:`Reading ${file.name} (${round(file.size/1048576,1)} MB)…` }; render();
+async function importApple(file, report){
+  UI.import = report ? null : { label:"Importing Apple Health", pct:0, msg:`Reading ${file.name} (${round(file.size/1048576,1)} MB)…` }; render();
   const reader = file.stream().getReader(); const dec = new TextDecoder(); let buf = "", read = 0, lastPaint = 0;
   const workouts = [], weights = {}; const acc = newVitalsAcc(); const vCut = addDays(today(), -90);
   const VITAL_RE = /<Record type="(?:HKQuantityTypeIdentifier(?:StepCount|ActiveEnergyBurned|RestingHeartRate|OxygenSaturation|BloodPressureSystolic|BloodPressureDiastolic|DietaryWater)|HKCategoryTypeIdentifierSleepAnalysis)"[^>]*>/g;
@@ -12369,14 +12836,15 @@ async function importApple(file){
         const t = m[0]; const date = toDate(attr(t,"startDate")); if (!date || date < cutoff) continue;
         let v = parseFloat(attr(t,"value")); const u = attr(t,"unit"); if (u === "lb") v = lbToKg(v); if (isFinite(v)) weights[date] = v;
       }
-      const now = Date.now(); if (now - lastPaint > 250) { lastPaint = now; UI.import.pct = Math.round(read/file.size*100); UI.import.msg = `${UI.import.pct}% read · ${workouts.length} workouts found so far`; render(); }
+      if (report) report(read / file.size);
+      else { const now = Date.now(); if (now - lastPaint > 250) { lastPaint = now; UI.import.pct = Math.round(read/file.size*100); UI.import.msg = `${UI.import.pct}% read · ${workouts.length} workouts found so far`; render(); } }
     }
     const vDays = commitVitals(acc);
     const added = mergeImported(workouts, "Apple Health");
     const have = new Set(entries("weights").map(w => w.date)); let wAdded = 0;
     for (const [date, kg] of Object.entries(weights)) if (!have.has(date)) { addEntry("weights", { id: uid(), date, kg: round(kg,2) }); wAdded++; }
     UI.import = { label:"Apple Health import finished", done:true, msg:`Added ${added} workouts and ${wAdded} weigh-ins from the last 12 months, plus ${vDays} days of steps, heart, blood oxygen, sleep and water data from the last 90 days. ${workouts.length - added > 0 ? `${workouts.length - added} were skipped as duplicates or out of range.` : ""}` };
-  } catch (e) { UI.import = { label:"Import stopped", done:true, msg:"That file couldn't be read. Make sure it's export.xml from the unzipped Apple Health export." }; }
+  } catch (e) { UI.import = { label:"Import stopped", done:true, msg:"That file couldn't be read. Make sure it's export.xml from the unzipped Apple Health export." }; if (report) { render(); throw e; } }
   render();
 }
 function parseCSV(text){
@@ -12409,34 +12877,96 @@ function fromObjects(objs){
 // (a video, a disk image, anything far outside what this flow is for) freezing the tab rather
 // than a limit anyone doing a real import should ever hit.
 const IMPORT_FILE_MAX_BYTES = 25 * 1024 * 1024; // 25 MB
-async function importFiles(files){
-  UI.import = { label:"Importing workouts", pct:10, msg:"Reading…" }; render();
-  let total = 0, found = 0, skipped = 0;
-  for (const f of files) {
-    try {
-      if (f.size > IMPORT_FILE_MAX_BYTES) { skipped++; continue; }
-      const text = await f.text(); let list = [];
-      if (/\.tcx$/i.test(f.name) || /<TrainingCenterDatabase/.test(text.slice(0,500))) {
-        const doc = new DOMParser().parseFromString(text, "application/xml");
-        for (const a of doc.getElementsByTagName("Activity")) {
-          const id = a.getElementsByTagName("Id")[0]?.textContent; let secs = 0, cal = 0;
-          for (const lap of a.getElementsByTagName("Lap")) { secs += parseFloat(lap.getElementsByTagName("TotalTimeSeconds")[0]?.textContent || 0); cal += parseFloat(lap.getElementsByTagName("Calories")[0]?.textContent || 0); }
-          list.push({ date: toDate(id), type: guessType(a.getAttribute("Sport")), minutes: secs/60, cal: cal || null });
-        }
-      } else if (/\.json$/i.test(f.name) || /^\s*[\[{]/.test(text)) {
-        let j = JSON.parse(text); if (!Array.isArray(j)) j = j.activities || j.sessions || j.workouts || j.data || [j];
-        list = fromObjects(j.filter(x => x && typeof x === "object"));
-      } else {
-        const rows = parseCSV(text); const head = rows.shift() || [];
-        list = fromObjects(rows.map(r => Object.fromEntries(head.map((h,i) => [h.trim(), r[i]]))));
-      }
-      found += list.length; total += mergeImported(list, f.name.replace(/\.[^.]+$/,"").slice(0,24));
-    } catch (e) { console.warn("file import failed:", e?.name || "error"); }
+// One file of a workout import. The widget calls it per file, so the totals live in IMP_TALLY until onFinish prints them.
+const IMP_TALLY = { total:0, found:0, skipped:0 };
+async function importOne(f, report){
+  const text = await WLUpload.readText(f, report); let list = [];
+  if (/\.tcx$/i.test(f.name) || /<TrainingCenterDatabase/.test(text.slice(0,500))) {
+    const doc = new DOMParser().parseFromString(text, "application/xml");
+    for (const a of doc.getElementsByTagName("Activity")) {
+      const id = a.getElementsByTagName("Id")[0]?.textContent; let secs = 0, cal = 0;
+      for (const lap of a.getElementsByTagName("Lap")) { secs += parseFloat(lap.getElementsByTagName("TotalTimeSeconds")[0]?.textContent || 0); cal += parseFloat(lap.getElementsByTagName("Calories")[0]?.textContent || 0); }
+      list.push({ date: toDate(id), type: guessType(a.getAttribute("Sport")), minutes: secs/60, cal: cal || null });
+    }
+  } else if (/\.json$/i.test(f.name) || /^\s*[\[{]/.test(text)) {
+    let j = JSON.parse(text); if (!Array.isArray(j)) j = j.activities || j.sessions || j.workouts || j.data || [j];
+    list = fromObjects(j.filter(x => x && typeof x === "object"));
+  } else {
+    const rows = parseCSV(text); const head = rows.shift() || [];
+    list = fromObjects(rows.map(r => Object.fromEntries(head.map((h,i) => [h.trim(), r[i]]))));
   }
+  IMP_TALLY.found += list.length; IMP_TALLY.total += mergeImported(list, f.name.replace(/\.[^.]+$/,"").slice(0,24));
+}
+function importSummary(){
+  const { total, found, skipped } = IMP_TALLY;
   const tooBig = skipped ? ` ${skipped} file${skipped === 1 ? " was" : "s were"} too large (over 25 MB) and skipped -- that's not a normal size for this kind of export, so double-check it's the right file.` : "";
   UI.import = { label:"Import finished", done:true, msg: (found ? `Added ${total} of ${found} workouts found. Duplicates and anything older than 12 months were skipped.` : skipped ? "No workouts were imported." : "No workouts were found. The file needs columns for date, activity and duration.") + tooBig };
   render();
 }
+
+// =================== FILE UPLOAD WIDGET (8.3.26) ===================
+// WLUpload.attach(el, { maxBytes, accept, multiple, label, inputId, onUpload(file, report), onDone(file), onStart(files), onReject(file), onError(file, err), onFinish(done, files) }).
+// The fill follows whatever number onUpload passes to report(0..1); it never moves on a timer. Imports here read files on this device, so their number is bytes read.
+const WLUpload = (() => {
+  const clamp = v => Math.min(1, Math.max(0, Number.isFinite(+v) ? +v : 0));
+  const sz = n => n >= 1048576 ? `${round(n / 1048576, 1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`;
+  const txt = (o, el) => { const s = o._st; return s.phase === "busy" ? `${s.name} · ${Math.round(s.p * 100)}%` : s.phase === "done" ? "Done" : s.phase === "error" ? "Try again" : (el.dataset.label || o.label || "Choose file"); };
+  function paint(o){
+    for (const el of o._els) { if (el.isConnected) paintOne(o, el); else o._els.delete(el); }
+  }
+  function paintOne(o, el){
+    const s = o._st;
+    const btn = el.querySelector(".wlu-btn"), bar = el.querySelector(".wlu-fill"); if (!btn) return;
+    el.dataset.state = s.phase; btn.style.setProperty("--p", s.phase === "done" ? 1 : s.p);
+    bar.setAttribute("aria-valuenow", Math.round(s.p * 100));
+    for (const t of el.querySelectorAll(".wlu-t")) t.textContent = txt(o, el);
+    el.querySelector(".wlu-msg").textContent = s.msg;
+    el.querySelector("input").disabled = s.phase === "busy";
+    btn.setAttribute("aria-busy", s.phase === "busy");
+  }
+  const set = (o, patch) => { Object.assign(o._st, patch); paint(o); };
+  async function run(o, files){
+    if (o._st.phase === "busy" || !files.length) return;
+    const max = o.maxBytes || Infinity; let fails = 0, last = "";
+    clearTimeout(o._t); set(o, { phase:"busy", p:0, name:"", msg:"" });
+    try { o.onStart?.(files); } catch {}
+    const done = [];
+    for (const f of files) {
+      if (f.size > max) { try { o.onReject?.(f); } catch {} fails++; last = `That file is ${sz(f.size)}. The most this takes is ${sz(max)}.`; continue; }
+      let hi = 0; set(o, { p:0, name:f.name.length > 22 ? f.name.slice(0, 21) + "…" : f.name, msg: files.length > 1 ? `File ${done.length + fails + 1} of ${files.length}` : "" });
+      const report = v => { hi = Math.max(hi, clamp(v)); set(o, { p:hi }); };
+      try { await o.onUpload(f, report); report(1); done.push(f); try { o.onDone?.(f); } catch {} }
+      catch (err) { console.warn("upload failed:", err?.name || "error"); fails++; last = err?.userMessage || "That file couldn't be read."; try { o.onError?.(f, err); } catch {} }
+    }
+    try { o.onFinish?.(done, files); } catch {}
+    set(o, fails && !done.length ? { phase:"error", p:0, msg:last } : { phase:"done", p:1, msg: fails ? `${fails} of ${files.length} files couldn't be used.` : "" });
+    o._t = setTimeout(() => set(o, { phase:"idle", p:0, msg:"" }), 2600);
+  }
+  function attach(el, o){
+    if (!el || !o) return null;
+    o._st = o._st || { phase:"idle", p:0, name:"", msg:"" }; (o._els = o._els || new Set()).add(el);
+    if (el._wlu === o) { paint(o); return o; }
+    el._wlu = o;
+    el.innerHTML = `<label class="btn wlu-btn"><span class="wlu-fill" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></span><span class="wlu-t"></span><span class="wlu-t on" aria-hidden="true"></span><input type="file" class="wlu-in"></label><div class="small muted wlu-msg" role="status"></div>`;
+    for (const c of (el.dataset.cls || "").split(" ").filter(Boolean)) el.querySelector(".wlu-btn").classList.add(c);
+    const inp = el.querySelector("input"); if (o.accept) inp.accept = o.accept; if (o.multiple) inp.multiple = true; if (o.inputId) inp.id = o.inputId;
+    inp.addEventListener("change", () => { const files = [...inp.files]; inp.value = ""; run(o, files); });
+    paint(o); return o;
+  }
+  // Real read progress: bytes the browser has read so far, as a share of 0..span (the work after reading is the rest).
+  const read = (f, report, how = "Text", span = 0.9) => new Promise((res, rej) => {
+    const r = new FileReader(); r.onprogress = e => { if (e.lengthComputable) report(span * e.loaded / e.total); };
+    r.onload = () => res(r.result); r.onerror = () => rej(new Error("read")); r["readAs" + how](f);
+  });
+  const readText = (f, report) => read(f, report, "Text", 0.9);
+  return { attach, read, readText, reg:{} };
+})();
+WLUpload.reg.apple = { label:"Choose export.xml", accept:".xml,text/xml", inputId:"f-apple", onUpload: (f, report) => importApple(f, report) };
+WLUpload.reg.workoutFile = { label:"Choose file", accept:".csv,.json,.tcx,text/csv,application/json", multiple:true, inputId:"f-google", maxBytes: IMPORT_FILE_MAX_BYTES,
+  onStart: () => { IMP_TALLY.total = IMP_TALLY.found = IMP_TALLY.skipped = 0; UI.import = null; },
+  onReject: () => { IMP_TALLY.skipped++; }, onUpload: importOne, onFinish: importSummary };
+// Runs after every render: a widget host the morph left alone (data-morph-skip) is attached once, and repainted if it is a new element.
+function wluScan(){ for (const el of document.querySelectorAll("[data-wlu]")) WLUpload.attach(el, WLUpload.reg[el.dataset.wlu]); }
 
 // =================== SNACKS ===================
 function snacksView(p){
@@ -12731,7 +13261,7 @@ function swatchCheckCls(hex){ return hexLuminance(hex) > 0.42 ? "dk" : "lt"; }
 function accentPicker(p){
   const cur = (p.look?.accent) || "blue";
   const curA = ACCENTS.find(a => a[0] === cur) || ACCENTS[0];
-  return `<div class="setgroup"><div class="setlabel">Accent color</div>
+  return `<div class="setgroup"><div class="setlabel">${tr("Accent color")}</div>
     <button type="button" class="compact-trigger accent-trigger" data-act="accent-pop" aria-haspopup="dialog" aria-expanded="false">
       ${icon("palette","",18)}<span class="ct-dot" style="background:${curA[0]==="dynamic" ? "conic-gradient(#F0B429,#0A6CFF,#C0265F,#00808A,#F0B429)" : curA[2]}"></span><span class="ct-label">${esc(curA[1])}</span>
     </button>
@@ -12818,7 +13348,7 @@ function textSizeRow(p){
   const idx = textSizeStep(p);
   const step = TEXT_SIZES[idx];
   const label = idx === 3 ? `${step[1]} (Default)` : step[1];
-  return `<div class="setgroup"><div class="setlabel">Text size</div>
+  return `<div class="setgroup"><div class="setlabel">${tr("Text size")}</div>
     <div class="tsrow">
       <span class="ts-a sm" aria-hidden="true">Aa</span>
       <input type="range" id="ui-ts" min="0" max="${maxIdx}" step="1" value="${Math.min(idx, maxIdx)}" aria-label="Text size" aria-valuemin="0" aria-valuemax="${maxIdx}" aria-valuenow="${Math.min(idx, maxIdx)}" aria-valuetext="${esc(label)}">
@@ -12841,13 +13371,13 @@ function settingsView(p){
   // One row, always. The active tab is bold and a shade larger with no pill behind it, and a
   // hidden bold copy of the label (::after, from data-label) holds the width so nothing shifts.
   const tabs = `<div class="tabwrap"><nav class="tabs" role="tablist" aria-label="Settings sections">${SET_TABS.map(([k,l]) =>
-    `<a role="tab" href="#/settings${k === "profile" ? "" : "/" + k}" data-label="${esc(l)}" aria-selected="${k === tab}"${k === tab ? ' aria-current="page"' : ' tabindex="-1"'}><span>${esc(l)}</span></a>`).join("")}</nav></div>`;
+    `<a role="tab" href="#/settings${k === "profile" ? "" : "/" + k}" data-label="${esc(tr(l))}" aria-selected="${k === tab}"${k === tab ? ' aria-current="page"' : ' tabindex="-1"'}><span>${esc(tr(l))}</span></a>`).join("")}</nav></div>`;
   const sections = {
     profile: (SB.user && sbClient() ? "" : accountCard()) + profileTab(p),
     premium: typeof subscriptionPanel === "function" ? premiumTab(p) : "",
     coach: typeof coachSettingsView === "function" ? coachSettingsView(p) : "",
     appearance: `<section class="card" id="appearance">
-    <h2>Appearance</h2>
+    <h2>${tr("Appearance")}</h2>
     ${(() => {
       // A dark-only theme overrules Light, so the button says so instead of looking chosen and
       // doing nothing. It stays clickable: picking Light then switching theme does what you meant.
@@ -12859,21 +13389,24 @@ function settingsView(p){
       const curMode = MODES.find(m => m[0] === mode) || MODES[0];
       const curOverruled = darkOnly && (mode === "light" || mode === "auto");
       const caption = curOverruled ? `${curMode[1]} — stays dark while your theme is dark-only` : curMode[2];
-      return `<div class="setgroup"><div class="setlabel">Display</div>
+      return `<div class="setgroup"><div class="setlabel">${tr("Display")}</div>
       <div class="seg-display" role="radiogroup" aria-label="Color mode">${MODES.map(([k,l]) => {
         const overruled = darkOnly && (k === "light" || k === "auto");
-        return `<button class="${overruled ? "overruled" : ""}" data-act="look-mode" data-v="${k}" aria-pressed="${mode===k}" title="${overruled ? `${l} — stays dark` : l}">${l}</button>`; }).join("")}</div>
+        return `<button class="${overruled ? "overruled" : ""}" data-act="look-mode" data-v="${k}" aria-pressed="${mode===k}" title="${overruled ? `${l} — stays dark` : l}">${tr(l)}</button>`; }).join("")}</div>
       <span class="tiny muted">${esc(caption)}</span>
       ${darkOnly ? `<span class="tiny muted">${esc(THEMES.find(t => t[0] === themeOf(p))?.[1] || "This theme")} is dark whichever mode you pick. Choose another theme to use Light.</span>` : ""}</div>`;
     })()}
     ${accentPicker(p)}
     ${fontPicker(p)}
     ${textSizeRow(p)}
+    ${uiStyleRow()}
+    ${languageRow()}
     ${typeof themePicker === "function" ? themePicker(p) : ""}
     ${opacityRow(p)}
-    <div class="setgroup"><div class="setlabel">Motion</div>
+    <div class="setgroup"><div class="setlabel">${tr("Motion")}</div>
       <div class="seg" role="group" aria-label="Motion"><button data-act="look-motion" data-v="full" aria-pressed="${(p.look?.motion||"full")==="full"}">Bouncy</button><button data-act="look-motion" data-v="reduced" aria-pressed="${p.look?.motion==="reduced"}">Reduced</button></div>
       <span class="tiny muted">Bouncy adds the spring animations. Reduced turns them off, and your device's own "reduce motion" setting always wins.</span></div>
+    ${reviewBar(p)}
   </section>`,
     goals: `<section class="card">
     <h2>Targets</h2>
@@ -12908,7 +13441,7 @@ function settingsView(p){
     <p class="small muted">Each profile has its own goals, logs and plans. Switch any time from the menu.</p>
     <div class="list">${S.profiles.map(x => `<div class="li"><div class="grow"><b>${esc(x.name || "Unnamed")}</b>${x.id === p.id ? ` <span class="tag good">Active</span>` : ""}<div class="small muted">${esc(GOALS.find(g=>g[0]===x.goal)?.[1] || "No goal")} · since ${fmtDay(x.created)}</div></div>
       <div class="row" style="gap:6px">${x.id !== p.id ? `<button class="btn sm" data-act="switch" data-id="${x.id}">Switch</button>` : ""}
-      ${UI.confirmDel === x.id ? `<span class="small">Delete ${esc(x.name || "this profile")} and all its logs?</span><button class="btn sm danger" data-act="del-profile-yes" data-id="${x.id}">Delete</button><button class="btn sm" data-act="del-profile-no">Keep</button>` : S.profiles.length > 1 ? `<button class="btn sm ghost" data-act="del-profile" data-id="${x.id}">Delete</button>` : ""}</div></div>`).join("")}</div>
+      ${UI.confirmDel === x.id ? `<span class="small">Delete ${esc(x.name || "this profile")} and all its logs?</span><button class="btn sm hold" data-hold="del-profile-yes" data-id="${x.id}" aria-describedby="hold-hint"><span class="hold-fill" aria-hidden="true">Hold to delete</span><span class="hold-l">Hold to delete</span></button><span id="hold-hint" class="sr-only">Press and hold for 1.5 seconds to confirm</span><button class="btn sm" data-act="del-profile-no">Keep</button>` : S.profiles.length > 1 ? `<button class="btn sm ghost" data-act="del-profile" data-id="${x.id}">Delete</button>` : ""}</div></div>`).join("")}</div>
   </section>${friendsCard()}`,
     privacy: `${privacyGlance(p)}${photoSyncCard()}${mediaCard()}<section class="card" id="security">
     <div class="row" style="gap:12px"><div class="shield">${icon("lock")}</div><h2>Privacy and security</h2></div>
@@ -12940,7 +13473,8 @@ function settingsView(p){
     <h2>Your data</h2>
     <div class="setrow"><div class="setlabel"><b>Export my data</b><span class="small muted">A JSON file with your logs, plans and settings.</span></div>
       <button class="btn" data-act="export">Download (JSON)</button></div>
-    <div class="setrow"><div class="setlabel"><b>Delete my account and data</b><span class="small muted">Every profile and everything logged under it, on this device. What is saved in your account (everything that syncs, photos included) is not deleted by this, and comes back when you sign in: to delete the account and all synced data, email the contact address in the Privacy Policy. Immediate, and cannot be undone.</span></div>
+    ${SB.user ? acctDeleteRow() : ""}
+    <div class="setrow"><div class="setlabel"><b>Delete my account and data</b><span class="small muted">Every profile and everything logged under it, on this device. What is saved in your account (everything that syncs, photos included) is not deleted by this, and comes back when you sign in: ${SB.user ? "to delete the account and all synced data, use Delete my account below." : "to delete an account and all synced data, sign in and use Delete my account."} Immediate, and cannot be undone.</span></div>
       ${UI.confirmEraseAll
         ? `<span class="row" style="gap:6px"><button class="btn sm" data-act="erase-all-no">Cancel</button><button class="btn sm danger" data-act="erase-all-yes">Confirm delete</button></span>`
         : `<button class="btn danger" data-act="erase-all-ask">Delete everything</button>`}
@@ -13136,7 +13670,19 @@ document.addEventListener("click", async e => {
     case "photo-remove": p.photo = null; saveProfile(); render(); toast("Photo removed"); break;
     case "edit-group": UI.editGroup = t.dataset.v; UI.groupErr = null; render(); document.querySelector(`#pg-${t.dataset.v} input, #pg-${t.dataset.v} select`)?.focus(); break;
     case "cancel-group": UI.editGroup = null; UI.groupErr = null; render(); break;
-    case "look-scene": case "look-mode": case "look-accent": case "look-motion": case "look-font": {
+    case "look-mode": case "look-accent": {
+      // Mode and accent are held for review (Save / Discard in Settings > Appearance); a mode
+      // change opens as a circle from the tapped button.
+      const key = a.slice(5), v = t.dataset.v;
+      if (key === "mode") wlaReveal(t, () => wlaSetLook(p, { mode:v })); else wlaSetLook(p, { accent:v });
+      if (a === "look-accent") repaintAccentPopup();
+      break;
+    }
+    case "ui-style": wlaSetStyle(t.dataset.v); break;
+    case "ui-lang": wlaSetLang(t.dataset.v); break;
+    case "look-save": wlaSave(p); break;
+    case "look-discard": wlaDiscard(p); break;
+    case "look-scene": case "look-motion": case "look-font": {
       p.look = { mode:"auto", accent:"blue", motion:"full", font:"system", ...(p.look||{}) }; p.look[a.slice(5)] = t.dataset.v; saveProfile(); render();
       // The accent popup lives outside #app (so render() above never touches it); repaint its
       // own swatches right away so the tapped one shows selected in well under 100ms.
@@ -13145,14 +13691,14 @@ document.addEventListener("click", async e => {
     }
     case "accent-pop": e.preventDefault(); openAccentPopup(t); break;
     case "font-pop": e.preventDefault(); openFontPopup(t); break;
-    case "ts-reset": p.look = { ...(p.look || {}), textSize:"l", largerAX:false }; applyTextScale(p); saveProfile(); render(); break;
+    case "ts-reset": wlaSetLook(p, { textSize:"l", largerAX:false }); break;
     case "ts-ax-toggle": {
-      p.look = { ...(p.look || {}), largerAX: t.checked };
+      wlaSnap(p); p.look = { ...(p.look || {}), largerAX: t.checked };
       // Turning the range back down to "Standard" while sitting on an AX step drops back to
       // xxxLarge (the top of the standard range) rather than silently keeping an AX scale that
       // the UI no longer shows a step for -- same clamp textSizeStep() already applies on read.
       if (!t.checked && TEXT_SIZES.findIndex(s => s[0] === p.look.textSize) > TEXT_SIZE_STD_MAX) p.look.textSize = TEXT_SIZES[TEXT_SIZE_STD_MAX][0];
-      applyTextScale(p); saveProfile(); render();
+      applyTextScale(p); render();
       break;
     }
     case "pick-act": { wSaveDraft(); UI.pickAct = t.dataset.v; UI.actOpen = false; const sel = document.getElementById("w-type"); if (sel) sel.value = t.dataset.v; render(); break; }
@@ -13163,6 +13709,10 @@ document.addEventListener("click", async e => {
     case "erase-yes": await eraseEverything(); UI.locked = false; UI.confirmErase = false; UI.unlockErr = null; resetUI(); render(); toast("Erased. Starting fresh."); break;
     // Task 7.10: the same erase, reachable from Settings > Privacy and security rather than only
     // from the locked-out "forgot passcode" screen, with a confirmation that lists what's deleted.
+    case "acct-del-ask": UI.delAcct = {}; render(); break;
+    case "sb-reload": location.reload(); break;
+    case "acct-del-no": UI.delAcct = null; render(); break;
+    case "acct-del-yes": await deleteAccount(); break;
     case "erase-all-ask": UI.confirmEraseAll = true; render(); break;
     case "erase-all-no": UI.confirmEraseAll = false; render(); break;
     case "erase-all-yes": historyAdd("erase"); await eraseEverything(); UI.locked = false; UI.confirmEraseAll = false; resetUI(); render(); toast("Deleted. Starting fresh."); break;
@@ -13239,9 +13789,7 @@ document.addEventListener("change", e => {
   if (t.id === "c-sport") { p.sport = t.value; saveProfile(); render(); }
   if (t.id === "rem-time") { p.reminders.time = t.value; saveProfile(); }
   if (t.id === "rem-meal") { p.reminders.mealTime = t.value; saveProfile(); }
-  if (t.id === "f-apple" && t.files[0]) importApple(t.files[0]);
   if (t.id === "photo-in" && t.files[0]) { processPhoto(t.files[0]).then(d => { P().photo = d; saveProfile(); render(); toast("Photo updated"); }).catch(() => toast("That file couldn't be used. Try a JPEG or PNG photo.")); }
-  if (t.id === "f-google" && t.files.length) importFiles([...t.files]);
   if (t.id === "sb-agree") UI.sbAgree = t.checked;
 });
 
@@ -13317,17 +13865,50 @@ document.addEventListener("input", e => {
     const raw = +t.value; // NOT "+t.value || 3": value 0 (xSmall) is falsy and must not fall back to Large
     const idx = Math.max(0, Math.min(maxIdx, Number.isFinite(raw) ? raw : 3));
     const step = TEXT_SIZES[idx];
+    wlaSnap(p);
     p.look = { ...(p.look || {}), textSize: step[0] };
     applyTextScale(p);
     const label = idx === 3 ? `${step[1]} (Default)` : step[1];
     t.setAttribute("aria-valuenow", String(idx)); t.setAttribute("aria-valuetext", label);
     const lbl = document.getElementById("ui-ts-label"); if (lbl) lbl.textContent = label;
     const prev = document.getElementById("ui-ts-preview"); if (prev) prev.style.fontSize = `calc(17px * ${step[2]})`;
-    clearTimeout(applyTextScale._t); applyTextScale._t = setTimeout(() => saveProfile(), 400);
+    wlaRefreshBar(p); // the review list follows the slider; the profile is written on Save
   }
 });
 
 // =================== BOOT ===================
+// ---- hold to confirm (8.3.35) ----
+// A press-and-hold button: the fill follows the accent colour and the action runs only when it reaches the end. A tap, an early
+// release, leaving the button, Escape or losing focus cancels and the fill drains back. The action name sits in data-hold, not
+// data-act, so a stray click does nothing; on completion it is copied to data-act and the normal click handler takes over.
+const HOLD_MS = 1500, HOLD = { el:null, p:0, raf:0, t0:0, from:0, dir:0, pid:null };
+function holdDrive(){
+  const h = HOLD, el = h.el; if (!el) return;
+  const now = performance.now(), d = h.dir > 0 ? HOLD_MS * (1 - h.from) : 200 * h.from + 1;
+  const k = Math.min(1, (now - h.t0) / d);
+  h.p = h.dir > 0 ? h.from + (1 - h.from) * k : h.from * (1 - k);
+  el.style.setProperty("--hp", h.p.toFixed(4));
+  if (h.dir > 0 && k >= 1) { h.raf = 0; h.dir = 0; el.dataset.act = el.dataset.hold; el.classList.add("held"); el.click(); return; }
+  if (h.dir < 0 && k >= 1) { h.raf = 0; h.dir = 0; h.el = null; return; }
+  h.raf = requestAnimationFrame(holdDrive);
+}
+function holdStart(el, pid){
+  if (HOLD.el && HOLD.el !== el) holdStop();
+  Object.assign(HOLD, { el, pid, from:HOLD.el === el ? HOLD.p : 0, dir:1, t0:performance.now() });
+  el.classList.add("holding"); cancelAnimationFrame(HOLD.raf); HOLD.raf = requestAnimationFrame(holdDrive);
+}
+function holdStop(){
+  const h = HOLD; if (!h.el || h.dir < 0) return;
+  h.el.classList.remove("holding"); h.pid = null;
+  Object.assign(h, { from:h.p, dir:-1, t0:performance.now() }); cancelAnimationFrame(h.raf); h.raf = requestAnimationFrame(holdDrive);
+}
+document.addEventListener("pointerdown", e => { const el = e.target.closest?.("[data-hold]"); if (el && e.button === 0 && e.isPrimary && !HOLD.pid) { holdStart(el, e.pointerId); try { el.setPointerCapture(e.pointerId); } catch {} } });
+for (const ev of ["pointerup", "pointercancel", "lostpointercapture", "contextmenu"]) document.addEventListener(ev, e => { if (HOLD.el && (ev === "contextmenu" || e.pointerId === HOLD.pid)) holdStop(); });
+document.addEventListener("pointermove", e => { const el = HOLD.el; if (!el || e.pointerId !== HOLD.pid) return; const r = el.getBoundingClientRect(); if (e.clientX < r.left - 10 || e.clientX > r.right + 10 || e.clientY < r.top - 10 || e.clientY > r.bottom + 10) holdStop(); });
+document.addEventListener("keydown", e => { const el = e.target.closest?.("[data-hold]"); if (e.key === "Escape") holdStop(); else if (el && (e.key === " " || e.key === "Enter")) { e.preventDefault(); if (!e.repeat && !HOLD.pid) holdStart(el, "key"); } });
+document.addEventListener("keyup", e => { if (HOLD.pid === "key" && (e.key === " " || e.key === "Enter")) { e.preventDefault(); holdStop(); } });
+window.addEventListener("blur", holdStop);
+document.addEventListener("visibilitychange", () => { if (document.hidden) holdStop(); });
 (async function boot(){
   readRoute();
   UI.loading = "boot"; render();
@@ -13687,9 +14268,12 @@ document.addEventListener("keydown", e => {
 function toggleTheme(){
   const p = P(); if (!p) return;
   const now = document.documentElement.dataset.scheme === "light" ? "dark" : "light";
-  p.look = { ...(p.look || {}), mode: now };
-  try { localStorage.setItem("wlh.mode", now); } catch {}
-  saveProfile(); render();
+  wlaReveal(document.querySelector('[data-act="theme-toggle"]'), () => {
+    p.look = { ...(p.look || {}), mode: now };
+    if (WLA.base) WLA.base.mode = now; // the header button saves at once, so it is not a pending change
+    try { localStorage.setItem("wlh.mode", now); } catch {}
+    saveProfile(); render();
+  });
 }
 (function bootTheme(){ // applied before any data loads so there's no flash
   try { const m = localStorage.getItem("wlh.mode"); if (m === "light" || m === "dark" || m === "oled") { document.documentElement.dataset.scheme = m; document.documentElement.style.colorScheme = m === "light" ? "light" : "dark"; } } catch {}
@@ -16172,6 +16756,34 @@ function ringSync(){
     if (first) { void ring.offsetWidth; ring.classList.remove("still"); }
   });
 }
+// Settings tabs: one pill slides to the active tab, and (mouse only) follows the pointer while it is over the strip.
+// Measured from the tab itself, so any number of tabs and any label width works, and it scrolls with the strip.
+function tabPlace(box, a, still){
+  const pill = box.querySelector(":scope > .tab-pill"); if (!pill || !a?.offsetWidth) return;
+  if (still) pill.classList.add("still");
+  pill.style.setProperty("--x", `${a.offsetLeft}px`); pill.style.setProperty("--w", `${a.offsetWidth}px`);
+  if (still) { void pill.offsetWidth; pill.classList.remove("still"); }
+}
+function tabSync(){
+  document.querySelectorAll(".tabs").forEach(box => {
+    const on = box.querySelector('a[aria-current="page"]');
+    let pill = box.querySelector(":scope > .tab-pill");
+    if (!on || !on.offsetWidth) { pill?.remove(); return; }
+    const first = !pill;
+    if (first) { pill = document.createElement("span"); pill.className = "tab-pill"; pill.setAttribute("aria-hidden", "true"); pill._keep = true; box.prepend(pill); }
+    tabPlace(box, on, first);
+  });
+}
+document.addEventListener("pointerover", e => {
+  if (e.pointerType !== "mouse") return;
+  const a = e.target.closest?.(".tabs a"); if (a) tabPlace(a.closest(".tabs"), a);
+});
+document.addEventListener("pointerout", e => {
+  if (e.pointerType !== "mouse") return;
+  const box = e.target.closest?.(".tabs"); if (!box || e.relatedTarget?.closest?.(".tabs a")) return;
+  tabPlace(box, box.querySelector('a[aria-current="page"]'));
+});
+window.addEventListener("resize", () => document.querySelectorAll(".tabs").forEach(b => tabPlace(b, b.querySelector('a[aria-current="page"]'), true)));
 let ringTimer = 0;
 window.addEventListener("resize", () => { clearTimeout(ringTimer); ringTimer = setTimeout(() => { document.querySelectorAll(".focus-ring").forEach(r => r.classList.add("still")); ringSync(); requestAnimationFrame(() => document.querySelectorAll(".focus-ring").forEach(r => r.classList.remove("still"))); }, 120); });
 // Click actions. Widgets are found by key, never by position, so a hidden widget in the saved list cannot shift the target.
@@ -16584,11 +17196,11 @@ function applySeason(p){
 // Change SITE_URL in this one place when the custom domain is live. Nothing else in the
 // app hardcodes a host: every internal link is a relative hash route.
 const SITE_URL = "https://[YOUR-DOMAIN]";                    // TODO: set your domain
-const CONTACT_EMAIL = "[YOUR CONTACT EMAIL]";                // TODO: set your contact address
-const LEGAL_BUSINESS_NAME = "[YOUR LEGAL BUSINESS NAME]";    // TODO: fill in before publishing
-const MAILING_ADDRESS = "[YOUR MAILING ADDRESS]";            // TODO: fill in before publishing
-const REFUND_POLICY_TEXT = "[REFUND POLICY: fill in — how many days, which plans, and whether a partial period is refunded]"; // TODO
-const LEGAL_UPDATED = "23 October 2026";
+const CONTACT_EMAIL = "wholelifehub@hotmail.com";
+const LEGAL_BUSINESS_NAME = "Whole Life Hub";
+const MAILING_ADDRESS = "13022 Thunderhead Drive, Germantown, MD 20874";
+const REFUND_POLICY_TEXT = "Every charge has 14 days. Contact us within 14 days of any charge, the first one or a renewal, and we refund it in full, whether or not you have used Premium in that time, and you do not need a reason. After those 14 days the charge for that period is not refundable, but you can cancel at any time to stop the next one. Cancelling part way through a period leaves Premium running until the period you paid for ends, and we do not refund the unused part. Refunds go back to the card you paid with, through Lemon Squeezy, and can take up to 10 days to appear. If you were charged after cancelling, charged twice, charged the wrong amount, or charged without your permission, tell us and we refund it in full. Ending Premium never deletes anything: every meal, workout, weigh-in and photo stays exactly where it is. Nothing here reduces any right the law gives you where you live.";
+const LEGAL_UPDATED = "25 October 2026";
 
 function applyCanonical(){
   if (/\[YOUR-DOMAIN\]/.test(SITE_URL)) return;              // nothing to point at yet
@@ -16663,7 +17275,7 @@ function privacyPolicyView(){
     <p>Whole Life Hub keeps your health information under your control. An account is optional. Without one, everything you enter is saved only in this browser. If you create an account with your email address, what you log is also saved in our database so it is the same on every device you sign in on, and this page lists exactly what. It also names the outside services the app contacts.</p>
 
     <h3>1. What we collect</h3>
-    <p>Only what you type or import (plus your email address, if you create an account): your name if you give one, your age, sex, height and weight, your goals and how often you train, your food culture and anything you avoid eating, your meals, snacks, drinks and workouts, your weigh-ins, a profile photo if you add one, and any health data you choose to import from a file, such as an Apple Health export. Nothing is collected in the background. There is no analytics, no tracking pixel and no advertising identifier anywhere in this app.</p>
+    <p>Only what you type or import (plus your email address, if you create an account): your name if you give one, your age, sex, height and weight, your goals and how often you train, your food culture and anything you avoid eating, your meals, snacks, drinks and workouts, your weigh-ins, a profile photo if you add one, and any health data you choose to import from a file, such as an Apple Health export. One thing is sent without you starting it: if the app itself fails, a short crash report goes to our own database so the bug can be found and fixed. It carries the error message, the page it happened on, your browser's name and the time — never what you logged, your name or your email address, and it is not tied to your account. There is no analytics, no tracking pixel and no advertising identifier anywhere in this app.</p>
 
     <h3>2. How we use it</h3>
     <p>To show you your own plans, estimates, coaching answers and summaries, and nothing else. Your data is never sold, never shared with advertisers and never used to build a profile of you.</p>
@@ -16708,6 +17320,7 @@ function privacyPolicyView(){
         <tr><td><code>wlh.sb.auth</code></td><td>Your sign-in session (set by the sign-in library). Anyone who can run a script on this page could read it.</td></tr>
         <tr><td><code>wlh.meals.v1</code></td><td>Signed in, no passcode only: a copy of your meals, and any meal changes not uploaded yet, so the app works offline. Removed when you sign out. (With a passcode on, meals stay in the encrypted copy instead, and this entry is not written.)</td></tr>
         <tr><td><code>wlh.mode</code></td><td>Your light, dark or OLED display choice.</td></tr>
+        <tr><td><code>wl-appearance</code></td><td>A copy of your saved display, accent, text size, UI style (Rounded or Crisp) and language, so the page paints the right look before it loads.</td></tr>
         <tr><td><code>wlh.navgrp</code></td><td>Which sidebar groups you left expanded or collapsed (older builds; no longer written since the sidebar stopped collapsing).</td></tr>
         <tr><td><code>wlh.showtesting</code></td><td>Whether this device shows Premium features that are still being built (Settings › Data &amp; about › Diagnostics).</td></tr>
         <tr><td><code>wlh.rail</code></td><td>Whether you collapsed the sidebar to icons on a wide screen.</td></tr>
@@ -16725,8 +17338,7 @@ function privacyPolicyView(){
     <p>These services, and nothing else:</p>
     <ul class="clean small">
       <li><b>Vercel</b>, which hosts this page. When you load it, Vercel receives and keeps standard web-request logs (for example your IP address, browser details and the page requested). It is not sent anything from your hub.</li>
-      <li><b>Supabase</b>, our database and sign-in service. Your email, password and the items listed in section 4, photos included, go there when you create an account, sign in, or are signed in. Without an account, none of your health data is sent to it.</li>
-      <li><b>jsDelivr</b>, a public content delivery network. Every time the page loads, the browser fetches the supabase-js library from it (a fixed version, checked against a fingerprint before it runs). Like any web server it can see your IP address and browser details. It is not sent anything from your hub.</li>
+      <li><b>Supabase</b>, our database and sign-in service. Your email, password and the items listed in section 4, photos included, go there when you create an account, sign in, or are signed in. Without an account, none of your health data is sent to it. It also stores the crash reports described in section 1: no account id, no health data.</li>
       <li><b>Claude</b>, the AI, answers coach questions, meal suggestions and the photo estimates described in section 3, but only when the app is opened inside Claude and you start the feature (for the photo ones, only after you've allowed them once). Outside Claude those features show as unavailable and nothing is sent.</li>
       <li><b>Lemon Squeezy</b>, our payment provider, only if you choose a Premium plan. Its checkout page opens inside this app (or in a new tab, if you pick that) and you type your email and payment details into Lemon Squeezy's page, not ours: this app never sees them. When you paste your licence key, the key is sent through our Supabase function to Lemon Squeezy to check it, and checked again about once a day. None of your health data is sent.</li>
       <li><b>Your own downloads</b> when you export your data, which stay on your device.</li>
@@ -16734,7 +17346,7 @@ function privacyPolicyView(){
     <p>Fonts are bundled with the app, not loaded from a font service. The app makes no other requests: no analytics, no advertising networks, no social media widgets, no ad identifiers.</p>
 
     <h3>7. Your choices</h3>
-    <p>You can export everything you have stored as a file from <a href="#/settings/about">Data &amp; about</a>, and you can delete the data this browser holds, or export it, from <a href="#/settings/privacy">Privacy &amp; security</a>. Deleting is immediate and cannot be undone. It does not delete what is stored in your account (section 4), photos included, and signing in again brings it back. To delete your account and all the data synced to it, email the address in section 9; that deletes the account and all synced data. You can also delete any single meal, workout, drink or weigh-in from the page it lives on, remove a profile photo, and turn any of the section 3 permissions back off — each stops that feature immediately.</p>
+    <p>You can export everything you have stored as a file from <a href="#/settings/about">Data &amp; about</a>, and you can delete the data this browser holds, or export it, from <a href="#/settings/privacy">Privacy &amp; security</a>. Deleting is immediate and cannot be undone. It does not delete what is stored in your account (section 4), photos included, and signing in again brings it back. To delete your account and all the data synced to it, sign in and use Delete my account in <a href="#/settings/privacy">Privacy &amp; security</a>: it removes the account, every row saved under it and your photos from our servers. If you cannot sign in, email the address in section 9 and we will delete it for you. You can also delete any single meal, workout, drink or weigh-in from the page it lives on, remove a profile photo, and turn any of the section 3 permissions back off — each stops that feature immediately.</p>
 
     <h3>8. Children</h3>
     <p>This app is not intended for anyone under 13, and it is not designed to be used by children. Setting up a profile starts by asking for your birth month and year. Only your age is kept, never your birth date. If the answer shows someone is under 13, no profile is created, nothing is kept, and this browser declines another attempt for 24 hours.</p>
@@ -16962,25 +17574,62 @@ function dmcaView(){
 
 // =================== REFUNDS ===================
 function refundsView(){
-  return `
+  return legalFold(`
   <section class="card legal">
     <div class="eyebrow">Legal</div>
     <h2>Refunds &amp; cancellation</h2>
     <p class="small muted">Last updated: ${esc(LEGAL_UPDATED)}</p>
-    <p>Payments are taken by Lemon Squeezy, our payment provider, on its own checkout page, and nothing is charged until you confirm there. This page is the refund policy for those payments.</p>
+    <p>WholeLife Hub Premium is a subscription run by ${esc(LEGAL_BUSINESS_NAME)}. This page is the refund and cancellation policy for every payment for Premium: the first one and every renewal.</p>
+    <p>Payments are taken by Lemon Squeezy, our payment provider and merchant of record, on its own secure checkout page. Nothing is charged until you confirm the payment there. Lemon Squeezy handles your card details, the sales tax or VAT on the purchase, and the money going back to you; its own terms and privacy policy apply to that part of the transaction.</p>
 
-    <h3>How to cancel</h3>
-    <p>Cancel any time from <a href="#/settings/premium">Settings &gt; Premium</a> &gt; Manage subscription, which opens Lemon Squeezy's My Orders page (sign in with the email you bought with). Cancelling stops the next renewal; you keep Premium access for the rest of the period you already paid for.</p>
+    <h3>1. The short version</h3>
+    <p>Every payment for Premium has 14 days in which you can ask for it back, in full, for any reason. After that the period you paid for is not refundable, but you can cancel at any time to stop the next payment.</p>
 
-    <h3>What happens after cancelling</h3>
-    <p>Premium features stop working at the end of the period you already paid for. Everything you logged stays exactly where it is — cancelling never deletes or hides your meals, workouts, weigh-ins or history, only the Premium features themselves.</p>
+    <h3>2. What you are paying for</h3>
+    <p>Premium is ${esc(planPrice("monthly") || "priced as shown on the checkout page")} or ${esc(planPrice("yearly") || "as shown there")}, and renews automatically on the same plan until you cancel. Both plans give the same features; the yearly one is cheaper over twelve months. There is no free trial, and no charge is taken until you complete the checkout yourself.</p>
+    <p>The price, the currency and the renewal date are shown on the checkout page before you pay, and again in the order email Lemon Squeezy sends you. Keep that email: it holds your order number, which makes a refund request faster.</p>
 
-    <h3>Refund policy</h3>
+    <h3>3. The 14-day refund window</h3>
     <p>${esc(REFUND_POLICY_TEXT)}</p>
+    <p>The 14 days start on the date of the charge, not the date you first signed up. Every renewal is a new charge, so every renewal has its own 14 days. One refund per charge: when a charge is refunded, Premium for that period ends.</p>
 
-    <h3>How to request a refund</h3>
-    <p>Once payments are live: contact <b>${esc(CONTACT_EMAIL)}</b> with the email or account the purchase was made under, or use the "Restore Purchases" / cancel path on the Premium screen, and we'll follow the policy above. See the <a href="#/contact">Contact page</a> for more ways to reach us.</p>
-  </section>`;
+    <h3>4. After the 14 days</h3>
+    <p>The charge for the current period is not refundable, including any part of it you have not used. We do not refund part way through a month or a year. You can still cancel at any time, which stops the next charge, and Premium keeps working until the period you have already paid for ends.</p>
+
+    <h3>5. How to cancel</h3>
+    <p>Open <a href="#/settings/premium">Settings &gt; Premium</a> &gt; Manage subscription, which opens Lemon Squeezy's My Orders page; sign in with the email you bought with and cancel there. You can also write to <b>${esc(CONTACT_EMAIL)}</b> from the address you bought with and we will cancel it for you, but if a renewal is due in less than two business days, cancel in the portal yourself to be certain it stops.</p>
+    <p>Cancelling and refunding are separate: cancelling stops future charges and does not refund the current one. If you want both, say so and we will do both.</p>
+    <p>Premium features stop at the end of the period you paid for. Everything you logged stays exactly where it is; cancelling never deletes or hides your meals, workouts, weigh-ins or history.</p>
+
+    <h3>6. How to request a refund</h3>
+    <p>Write to <b>${esc(CONTACT_EMAIL)}</b> with the subject Refund request, from the email address the purchase was made under, and include your order number if you have it. There is no form and you do not need a reason. We reply within 3 business days, usually sooner, and issue an approved refund within 2 business days of your email. The money goes back to the same card or payment method in the same currency; Lemon Squeezy confirms it at once and your bank usually shows it within 5 to 10 days. See the <a href="#/contact">Contact page</a> for other ways to reach us.</p>
+
+    <h3>7. Charges we always refund</h3>
+    <p>Inside or outside the 14 days, tell us and we refund these in full: a charge taken after you cancelled, or after you asked us to cancel and we did not do it in time; a duplicate charge, or two charges for the same period; a charge for the wrong amount or the wrong plan; a charge you did not authorise, including one made with your card by someone else. Write to us as well as your bank in that last case, so we can stop the subscription. A payment retry that succeeds is an ordinary charge and follows this policy like any other.</p>
+
+    <h3>8. If the app is not working</h3>
+    <p>Premium is software and software occasionally breaks. If a Premium feature is broken or unavailable for a sustained period because of something on our side, write to us and we will either fix it or refund the period affected, at your choice. An outage of a few hours, or a problem caused by your device, browser or connection, does not qualify on its own, though we will still look at it with you.</p>
+
+    <h3>9. If we change Premium or its price</h3>
+    <p>A price change never applies to a period you have already paid for: it applies from your next renewal, and we tell you before it takes effect so you can cancel first. If we remove a feature you specifically paid for, you can ask for a refund of the current period within 14 days of the announcement, even if that charge is older than 14 days. If we stop offering Premium altogether, we refund the unused part of any period already paid for, from the date we stop.</p>
+
+    <h3>10. Chargebacks</h3>
+    <p>If something has gone wrong with a payment, write to us first: we can usually fix it faster than a bank can, and we hold the order records. If you raise a chargeback with your bank instead, the bank's process decides the outcome, and we cannot also refund the same charge directly while that is open.</p>
+
+    <h3>11. Your legal rights</h3>
+    <p>Nothing in this policy reduces a right the law gives you where you live, and where the law gives you a longer period or a stronger right than this page, the law wins and we honour it. That includes statutory cancellation and withdrawal rights for distance purchases. In the UK and the EU you generally have 14 days to cancel an online purchase; the 14-day refund above offers that to everyone, wherever you live.</p>
+
+    <h3>12. What a refund does to your data</h3>
+    <p>Nothing is deleted. Your account and every meal, workout, weigh-in, vital, photo and profile field stay where they are; only the Premium features stop working. You can keep using the free features, and Premium can be bought again later without losing anything you logged.</p>
+
+    <h3>13. Changes to this policy</h3>
+    <p>We may update this page, and the date at the top changes when we do. A change never applies backwards to a payment already taken: the policy in force on the day you were charged is the one that applies to that charge. If a change is significant, we say so in the app before it takes effect.</p>
+
+    <h3>14. Contact</h3>
+    <p><b>${esc(LEGAL_BUSINESS_NAME)}</b><br>${esc(MAILING_ADDRESS)}<br>Email: <b>${esc(CONTACT_EMAIL)}</b></p>
+    <p>We aim to reply to every message within a few business days. For what we collect and why, see the <a href="#/privacy-policy">Privacy Policy</a>.</p>
+    <p class="small">This page is a plain-language statement of how we handle refunds. It does not replace the consumer law of the country you live in.</p>
+  </section>`);
 }
 
 // =================== CONTACT ===================
@@ -18099,8 +18748,8 @@ function premiumHub(p){
 
     <div class="prem-about">
       <div class="eyebrow">About Premium</div>
-      <p class="draft">[draft] WholeLife Premium bundles every optional feature we build past the core tracker into one
-      subscription, priced to cover the work rather than to squeeze a free app. [draft] It never changes how the free
+      <p class="draft">WholeLife Premium bundles every optional feature we build past the core tracker into one
+      subscription, priced to cover the work rather than to squeeze a free app. It never changes how the free
       tier logs food or workouts, and nothing you've already logged is ever held back behind it.</p>
     </div>
 
@@ -18573,6 +19222,7 @@ function rcptPrint(){
 }
 function showPurchaseReceipt(receipt, plan, sample = false){
   const r = receipt && typeof receipt === "object" ? receipt : {};
+  RCPT_LAST = { r, plan, sample };
   openPopover("receipt", {
     label: sample ? "Sample receipt, no payment made" : "Payment successful",
     width: "min(380px, calc(100vw - 32px))",
@@ -18582,9 +19232,75 @@ function showPurchaseReceipt(receipt, plan, sample = false){
       <div class="rc-stage"><div class="rc-slot" aria-hidden="true"></div>
         <div class="rc-window" id="rc-window">${receiptHTML(r, plan, sample)}</div></div>
       <div class="rc-actions"><button type="button" class="btn" data-act="rcpt-again">Print again</button>
+        <button type="button" class="btn" data-act="rcpt-invoice">View invoice</button>
         <button type="button" class="btn primary" data-pop="close">Done</button></div>`
   });
   rcptPrint();
+}
+
+// ---------- Invoice view (8.3.29) ----------
+// The same order data as the receipt, laid out as an invoice (the Modern style: total first, accent header). Like the receipt it
+// only formats what the payment provider sent (r); it never adds, multiplies or estimates, and a field
+// the provider did not send (buyer, due date, quantity, unit price) is left out, not made up.
+let RCPT_LAST = null;
+function invoiceHTML(r, plan, sample = false){
+  const cur = r.currency;
+  const items = (Array.isArray(r.items) ? r.items : []).filter(i => i && typeof i === "object" && (rcptNum(i.amount) !== null || i.label));
+  const taxes = Array.isArray(r.taxes) ? r.taxes.filter(t => t && typeof t === "object" && (rcptNum(t.amount) !== null || t.label)) : null;
+  const money = n => rcptNum(n) === null ? "" : rcptMoney(n, cur) || "";
+  const trow = (l, a, cls = "") => `<div class="inv-trow ${cls}"><span>${esc(l)}</span><span>${esc(money(a))}</span></div>`;
+  const total = rcptNum(r.total), subtotal = rcptNum(r.subtotal), discount = rcptNum(r.discount), paid = rcptNum(r.paid);
+  const rows = items.length
+    ? items.map(i => `<tr><td>${esc(i.label || "Premium")}</td><td class="r">${esc(money(i.amount))}</td></tr>`).join("")
+    : `<tr><td>${esc(plan ? "Premium · " + plan : "Premium")}</td><td class="r"></td></tr>`;
+  const taxHTML = taxes === null ? "" : taxes.length ? taxes.map(t => trow((t.label || "Tax") + (t.included ? " (included)" : ""), t.amount)).join("") : trow("Tax", 0);
+  const missing = [];
+  if (rcptMoney(0, cur) === null) missing.push("currency");
+  if (!items.length || items.some(i => rcptNum(i.amount) === null)) missing.push("price");
+  if (taxes === null || taxes.some(t => rcptNum(t.amount) === null)) missing.push("tax");
+  if (total === null) missing.push("total");
+  const meta = [["Issued", r.date], ["Order", r.orderNo]].filter(m => m[1]);
+  return `<article class="inv-paper" id="inv-paper" aria-label="${sample ? "Sample invoice" : "Invoice"}">
+    <header class="inv-head" data-sec="head">
+      <div><div class="inv-brand">Whole Life Hub</div><div class="inv-doc">${sample ? "Sample invoice" : "Invoice"}</div></div>
+      <div class="inv-right">${r.orderNo ? `<div class="inv-num">No. ${esc(r.orderNo)}</div>` : ""}<div class="inv-status">${sample ? "Sample" : "Paid"}</div></div>
+    </header>
+    ${meta.length ? `<section class="inv-meta" data-sec="meta">${meta.map(m => `<div><span class="k">${m[0]}</span>${esc(m[1])}</div>`).join("")}</section>` : ""}
+    <section data-sec="items"><table class="inv-items"><thead><tr><th>Description</th><th class="r">Amount</th></tr></thead><tbody>${rows}</tbody></table></section>
+    <section class="inv-totals" data-sec="totals">
+      ${subtotal !== null ? trow("Subtotal", subtotal) : ""}${discount ? trow("Discount", -Math.abs(discount)) : ""}${taxHTML}
+      ${total !== null ? trow("Total", total, "grand") : ""}${paid !== null ? trow(sample ? "Amount (sample)" : "Amount paid", paid) : ""}
+    </section>
+    <footer class="inv-note" data-sec="note">${missing.length ? `<p>Your payment provider didn't send the ${esc(missing.join(", "))} for this order.</p>` : ""}<p>${sample ? "Sample only. No payment was made." : "Thank you for your purchase."}</p></footer>
+  </article>`;
+}
+function showInvoice(receipt, plan, sample = false){
+  const r = receipt && typeof receipt === "object" ? receipt : {};
+  RCPT_LAST = { r, plan, sample };
+  closePopover("receipt");
+  openPopover("invoice", {
+    label: sample ? "Sample invoice, no payment made" : "Invoice",
+    width: "min(680px, calc(100vw - 32px))",
+    focusSel: '[data-act="inv-print"]',
+    bodyHTML: `<div class="inv" id="inv">
+      ${invoiceHTML(r, plan, sample)}
+      <div class="inv-actions"><button type="button" class="btn" data-act="inv-back">Back to receipt</button>
+        <button type="button" class="btn" data-act="inv-print">Download PDF</button>
+        <button type="button" class="btn primary" data-pop="close">Done</button></div></div>`
+  });
+}
+// Print: a copy of the invoice in the hidden print sheet, then the browser's own print dialog (the weekly review does the same).
+function printInvoice(){
+  const paper = document.getElementById("inv-paper"), root = document.getElementById("inv"); if (!paper || !root) return;
+  document.getElementById("printsheet")?.remove();
+  const d = document.createElement("div");
+  d.id = "printsheet";
+  d.innerHTML = `<div class="inv">${paper.outerHTML.replace(' id="inv-paper"', "")}</div>`;
+  document.body.appendChild(d);
+  const done = () => { document.getElementById("printsheet")?.remove(); window.removeEventListener("afterprint", done); };
+  window.addEventListener("afterprint", done);
+  setTimeout(done, 60000);
+  requestAnimationFrame(() => { try { window.print(); } catch { done(); toast("This browser would not open a print dialog."); } });
 }
 
 // ---------- Wiring ----------
@@ -18592,6 +19308,9 @@ document.addEventListener("click", e => {
   const t = e.target.closest("[data-act]"); if (!t) return;
   const a = t.dataset.act;
   if (a === "rcpt-again") { rcptPrint(); return; }
+  if (a === "rcpt-invoice" && RCPT_LAST) { showInvoice(RCPT_LAST.r, RCPT_LAST.plan, RCPT_LAST.sample); return; }
+  if (a === "inv-print") { printInvoice(); return; }
+  if (a === "inv-back" && RCPT_LAST) { closePopover("invoice"); showPurchaseReceipt(RCPT_LAST.r, RCPT_LAST.plan, RCPT_LAST.sample); return; }
   if (a === "paywall") { e.preventDefault(); openPaywall(); return; }
   if (a === "premium-popup") { e.preventDefault(); openPremiumPopup(t); return; }
   if (a === "owner-tap") { ownerTap(); return; }
@@ -20357,7 +21076,7 @@ function formCheckOptIn(){
     <p class="small muted">Turn this on any time from here, or off again in Settings &gt; Privacy and security. Importing a video file instead needs no camera permission at all.</p>
     <div class="row" style="gap:8px;margin-top:10px">
       <button class="btn primary" data-act="fc-optin">Turn it on</button>
-      <label class="btn ghost">Import a video instead<input type="file" id="fc-file" accept="video/*" hidden></label>
+      <div class="wlu" data-wlu="video" data-label="Import a video instead" data-cls="ghost" data-morph-skip></div>
     </div>
   </section>`;
 }
@@ -20376,7 +21095,7 @@ function formCheckView(p){
     </div>
   </section>
   ${UI.fcErr ? `<section class="card"><div class="note">${esc(camMessage(UI.fcErr, "video"))}</div>
-    <label class="btn" style="align-self:flex-start;margin-top:8px">Import a video file<input type="file" id="fc-file" accept="video/*" hidden></label></section>` : ""}
+    <div class="wlu" style="margin-top:8px" data-wlu="video" data-label="Import a video file" data-morph-skip></div></section>` : ""}
   <section class="card">
     <div class="row between"><h2 style="margin:0">${UI.fcState === "review" ? "Keep this one?" : "Record a set"}</h2>
       <span class="small muted tab">${clips.length} of ${CLIP_CAP}</span></div>
@@ -20402,7 +21121,7 @@ function formCheckView(p){
     : `<p class="small muted">Up to ${CLIP_SECS} seconds, heavily compressed so ${CLIP_CAP} of them fit. Prop the phone where it can see the whole movement.</p>
       <div class="row" style="gap:8px;margin-top:10px">
         <button class="btn primary" data-act="fc-open">Open the camera</button>
-        <label class="btn">Import a video<input type="file" id="fc-file" accept="video/*" hidden></label>
+        <div class="wlu" data-wlu="video" data-label="Import a video" data-morph-skip></div>
       </div>`}
   </section>
   ${sel ? formPlayer(p, sel) : ""}
@@ -20490,7 +21209,7 @@ function bodyView(p){
     </div>
   </section>
   ${UI.bdErr ? `<section class="card"><div class="note">${esc(camMessage(UI.bdErr, "photo"))}</div>
-    <label class="btn" style="align-self:flex-start;margin-top:8px">Import a photo<input type="file" id="bd-file" accept="image/*" hidden></label></section>` : ""}
+    <div class="wlu" style="margin-top:8px" data-wlu="bodyPhoto" data-label="Import a photo" data-morph-skip></div></section>` : ""}
   ${UI.bdState === "live" ? bodyCamera(p, shots) : ""}
   ${shots.length >= 2 ? bodyCompare(p, shots) : ""}
   ${shots.length ? `
@@ -20710,23 +21429,21 @@ document.addEventListener("input", e => {
 document.addEventListener("change", async e => {
   const t = e.target, p = P(); if (!p) return;
   if (t?.dataset?.act === "bd-pick") { UI[t.dataset.side === "a" ? "bdA" : "bdB"] = t.value; render(); return; }
-  if (t?.id === "fc-file" && t.files?.[0]) {
-    const f = t.files[0]; t.value = "";
-    if (f.size > CLIP_BYTES) { toast(`That file is ${Math.round(f.size / 1024)}KB, over the ${Math.round(CLIP_BYTES / 1024)}KB a clip can be.`); return; }
-    const data = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
-    UI.fcPending = { v: data, secs: 0, bytes: f.size }; UI.fcState = "review"; UI.fcErr = null; render();
-    return;
-  }
-  if (t?.id === "bd-file" && t.files?.[0]) {
-    const f = t.files[0]; t.value = "";
+});
+// The two file pickers on the form-check and body pages (no camera involved). The fill is bytes read; the photo is then resized.
+WLUpload.reg.video = { accept:"video/*", inputId:"fc-file", maxBytes: CLIP_BYTES,
+  onReject: f => toast(`That file is ${Math.round(f.size / 1024)}KB, over the ${Math.round(CLIP_BYTES / 1024)}KB a clip can be.`),
+  onUpload: async (f, report) => { const data = await WLUpload.read(f, report, "DataURL", 1); UI.fcPending = { v: data, secs: 0, bytes: f.size }; UI.fcState = "review"; UI.fcErr = null; render(); } };
+WLUpload.reg.bodyPhoto = { accept:"image/*", inputId:"bd-file",
+  onUpload: async (f, report) => {
+    const p = P(); if (!p) return;
     try {
-      const img = await bodyImport(f);
+      const buf = await WLUpload.read(f, report, "ArrayBuffer", 0.8), img = await bodyImport(new Blob([buf], { type: f.type }));
       const st = bodyState(p);
       st.shots = [{ id: uid(), at: Date.now(), date: today(), img }, ...(st.shots || [])].slice(0, BODY_CAP);
       UI.bdErr = null; saveProfile(); render(); toast("Photo added.", "success");
-    } catch { toast("That file couldn't be used. Try a JPEG or PNG."); }
-  }
-});
+    } catch { toast("That file couldn't be used. Try a JPEG or PNG."); const e = new Error("photo"); e.userMessage = "That file couldn't be used. Try a JPEG or PNG."; throw e; }
+  } };
 // Leaving either page must switch the camera off; a live stream is not something to forget.
 window.addEventListener("hashchange", () => { if (CAM.stream) { camStop(); UI.fcState = null; UI.bdState = null; } });
 function openBodyShot(s){
@@ -22754,6 +23471,27 @@ input[type=date]::-webkit-calendar-picker-indicator{opacity:.6}
 .focus-ring{position:absolute;left:0;top:0;width:var(--w);height:var(--h);translate:var(--x) var(--y);border:1.5px solid var(--gold);pointer-events:none;z-index:1;
   transition:translate .48s cubic-bezier(.34,1.56,.64,1),width .48s cubic-bezier(.34,1.56,.64,1),height .48s cubic-bezier(.34,1.56,.64,1)}
 .focus-ring.still{transition:none}
+/* 8.3.34: Settings tabs get a sliding pill (replaces the underline); wheel pickers for short lists */
+.tabs{position:relative}
+.tabs a{z-index:1;flex:1 1 0;min-width:max-content;padding-inline:14px}
+.tabs{gap:4px;padding:6px}
+.tabs a[aria-current="page"]>span::after{content:none}
+.tab-pill{position:absolute;top:6px;bottom:6px;left:0;width:var(--w,0);transform:translateX(var(--x,0));z-index:0;pointer-events:none;
+  border-radius:var(--r-xs);background:var(--surface);box-shadow:var(--shadow);
+  transition:transform .45s cubic-bezier(.34,1.56,.64,1),width .45s cubic-bezier(.34,1.56,.64,1)}
+.tab-pill.still{transition:none}
+.wl-wheel{position:relative;height:114px;overflow:hidden;border:1px solid var(--line2);border-radius:var(--r-sm);background:var(--raise);outline-offset:2px;
+  touch-action:none;user-select:none;-webkit-user-select:none;
+  -webkit-mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent);mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent)}
+.wl-wheel::before{content:"";position:absolute;left:6px;right:6px;top:38px;height:38px;border-radius:var(--r-xs);background:var(--surface);box-shadow:var(--shadow)}
+.picker-track{position:relative;padding-top:38px;--i:0;transform:translateY(calc(var(--i) * -38px));transition:transform .58s cubic-bezier(.34,1.56,.64,1)}
+.picker-track.still{transition:none}
+.picker-track [role="option"]{height:38px;display:flex;align-items:center;justify-content:center;padding:0 12px;cursor:pointer;color:var(--text);font-weight:600;
+  font-size:calc((14px) * var(--text-scale,1));white-space:nowrap;transition:opacity .3s var(--ease-smooth),transform .3s var(--ease-spring)}
+.picker-track [role="option"]:not(.active){opacity:.32;transform:scale(.88)}
+.wl-wheeled{display:none}
+:root[data-motion="reduced"] .tab-pill,:root[data-motion="reduced"] .picker-track,:root[data-motion="reduced"] .picker-track [role="option"]{transition:none}
+@media (prefers-reduced-motion:reduce){.tab-pill,.picker-track,.picker-track [role="option"]{transition:none}}
 .stk>b,.stk>.tiny{display:block}
 a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not(.links a){position:relative;text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 38%,transparent);text-underline-offset:3px}
 a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not(.links a)::after{content:"";position:absolute;left:0;bottom:-4px;width:100%;height:2px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.65,0,.35,1)}
@@ -22852,7 +23590,31 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .rc-bars{display:flex;height:40px;margin:14px 6px 6px;overflow:hidden}
 .rc-bars i{background:#111;display:block;flex:none}
 .rc-thanks{text-align:center;font-size:12px;color:var(--rc-ink);margin:6px 0 0}
-.rc-actions{display:flex;justify-content:center;gap:12px;padding:20px 16px}
+.rc-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:20px 16px}
+/* ===================== 8.3.29 invoice view ===================== */
+.inv{padding-top:16px}
+.inv-paper{display:flex;flex-direction:column;gap:22px;margin:0 16px;padding:30px 32px;border-radius:6px;overflow:hidden;background:#F6F8FB;color:#14181F;font-family:var(--body);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.inv-paper div,.inv-paper p{overflow-wrap:anywhere}
+.inv-paper p{margin:0}
+.inv-brand{font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:1px}
+.inv-doc{text-transform:uppercase;letter-spacing:3px;font-size:12px;font-weight:800;opacity:.85}
+.inv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;background:var(--accent);color:var(--accent-ink);border-radius:14px;padding:18px}
+.inv-right{text-align:right}.inv-num{font-weight:700}
+.inv-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;font-size:13.5px}
+.inv-meta .k{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1.4px;opacity:.62;margin-bottom:3px}
+.inv-items{width:100%;border-collapse:collapse;font-size:14.5px}
+.inv-items th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:1.2px;opacity:.62;padding:0 8px 8px 0}
+.inv-items td{padding:9px 8px 9px 0;vertical-align:top;border-top:2px solid #DCE3EE}
+.inv-items .r{text-align:right;padding-right:0;white-space:nowrap}
+.inv-totals{width:100%;background:#14181F;color:#fff;border-radius:14px;padding:16px 18px;box-sizing:border-box;font-size:14.5px}
+.inv-trow{display:flex;justify-content:space-between;gap:12px;padding:5px 0}
+.inv-trow>span:last-child{flex:none;white-space:nowrap}
+.inv-trow.grand{font-size:30px;font-weight:800;padding:2px 0}
+.inv-note{font-size:13px;opacity:.75}.inv-note p+p{margin-top:4px}
+.inv-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:20px 16px}
+.inv-paper [data-sec="totals"]{order:1}.inv-paper [data-sec="head"]{order:2}.inv-paper [data-sec="items"]{order:3}.inv-paper [data-sec="meta"]{order:4}.inv-paper [data-sec="note"]{order:5}
+@media (max-width:560px){.inv-paper{padding:22px 18px}.inv-head{flex-direction:column}.inv-right{text-align:left}}
+@media print{#printsheet .inv-paper{margin:0;border-radius:0}}
 /* ===================== 8.3.4 slide to pay ===================== */
 .sc{--sc-x:0px;--sc-p:0;position:relative;width:100%}
 .sc-track{position:relative;height:56px;border-radius:999px;background:var(--raise);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;-webkit-tap-highlight-color:transparent}
@@ -22908,6 +23670,12 @@ a[href^="http"]:not(.btn):not(.cover):not(.tap-row):not(.lbtn):not(.fb-open):not
 .auth-links{align-items:center;gap:0 6px;color:var(--muted);font-size:calc((13px) * var(--text-scale,1))}
 .auth-pop .auth-links{margin-top:12px}
 .auth-ob{width:min(400px,calc(100vw - 32px));margin-inline:auto}
+
+/* hold to confirm (8.3.35): the fill uses the accent colour of the chosen theme */
+.btn.hold{position:relative;overflow:hidden;isolation:isolate;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;--hp:0}
+.btn.hold .hold-fill{position:absolute;inset:0;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);clip-path:inset(0 calc((1 - var(--hp)) * 100%) 0 0)}
+.btn.hold.holding{transform:scale(.97)}
+.btn.hold:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 </style>
 <script>
 (() => {
@@ -23488,7 +24256,7 @@ function tourGuideCard(){
     if (t.disabled !== sel.disabled) t.disabled = sel.disabled;
   }
   function enhanceSelect(sel){
-    if (sel.multiple || sel.size > 1) return;
+    if (sel.multiple || sel.size > 1 || sel.hasAttribute("data-wheel")) return;
     if (coarse()) {
       if (sel._wl) { sel._wl.remove(); sel._wl = null; sel.classList.remove("wl-native"); sel.removeAttribute("aria-hidden"); sel.removeAttribute("tabindex"); }
       return;
@@ -23509,6 +24277,63 @@ function tourGuideCard(){
     if (sel.getAttribute("aria-hidden") !== "true") sel.setAttribute("aria-hidden", "true");
     if (sel.tabIndex !== -1) sel.tabIndex = -1;
     syncSelect(sel);
+  }
+  // ---- wheel picker: <select data-wheel> shown as a short list; the chosen row is full size, the rest fade ----
+  // The select stays in the page and keeps the value, so its change handlers still run. Click or tap a row,
+  // drag, or use the arrow keys, Home and End. Meant for short lists (about 8 rows or fewer).
+  const ROW = 38;
+  function wheelSet(sel, i, fire = true){
+    const w = sel._wheel; if (!w) return;
+    i = Math.max(0, Math.min(sel.options.length - 1, i));
+    const moved = sel.selectedIndex !== i;
+    sel.selectedIndex = i;
+    wheelSync(sel);
+    if (moved && fire) sel.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  function wheelSync(sel){
+    const w = sel._wheel; if (!w) return;
+    const track = w.firstElementChild, rows = [...track.children], i = Math.max(0, sel.selectedIndex);
+    if (rows.length !== sel.options.length || rows.some((r, n) => r.textContent !== sel.options[n].text)) {
+      track.replaceChildren(...[...sel.options].map((o, n) => { const r = document.createElement("div"); r.setAttribute("role", "option"); r.id = `${w.id}-o${n}`; r.dataset.i = n; r.textContent = o.text; return r; }));
+    }
+    [...track.children].forEach((r, n) => { r.classList.toggle("active", n === i); r.setAttribute("aria-selected", n === i); });
+    track.style.setProperty("--i", i);
+    w.setAttribute("aria-activedescendant", `${w.id}-o${i}`);
+    w.setAttribute("aria-disabled", sel.disabled);
+  }
+  function enhanceWheel(sel){
+    if (sel.multiple || sel.size > 1) return;
+    if (!sel._wheel) {
+      const w = document.createElement("div");
+      w.className = "wl-wheel"; w.id = `wl-w${++seq}`; w._for = sel; w.tabIndex = 0; w.setAttribute("role", "listbox");
+      w.setAttribute("aria-label", nameOf(sel) || "Choose an option");
+      const track = document.createElement("div"); track.className = "picker-track still"; w.append(track);
+      w.addEventListener("keydown", e => {
+        const to = { ArrowDown: sel.selectedIndex + 1, ArrowUp: sel.selectedIndex - 1, Home: 0, End: sel.options.length - 1 }[e.key];
+        if (to === undefined || sel.disabled) return;
+        e.preventDefault(); wheelSet(sel, to);
+      });
+      let y0 = null, i0 = 0, dragged = false;
+      w.addEventListener("pointerdown", e => { if (sel.disabled || e.button) return; y0 = e.clientY; i0 = sel.selectedIndex; dragged = false; });
+      w.addEventListener("pointermove", e => {
+        if (y0 === null) return;
+        const n = Math.round((y0 - e.clientY) / ROW);
+        if (Math.abs(e.clientY - y0) > 6 && !dragged) { dragged = true; w.setPointerCapture?.(e.pointerId); }
+        if (dragged) wheelSet(sel, i0 + n);
+      });
+      const end = () => { y0 = null; };
+      w.addEventListener("pointerup", end); w.addEventListener("pointercancel", end);
+      w.addEventListener("click", e => {
+        if (dragged) { dragged = false; return; }
+        const r = e.target.closest("[role=option]"); if (r && !sel.disabled) { wheelSet(sel, +r.dataset.i); w.focus({ preventScroll: true }); }
+      });
+      add(null, w, sel, "before"); sel._wheel = w; sel.classList.add("wl-wheeled");
+      sel.setAttribute("aria-hidden", "true"); sel.tabIndex = -1;
+      wheelSync(sel);
+      // the first paint sits in place; later changes spring
+      requestAnimationFrame(() => w.firstElementChild.classList.remove("still"));
+    }
+    wheelSync(sel);
   }
   const optItems = () => [...LB.el.querySelectorAll(".wl-opt")];
   function setAct(i, scroll = true){
@@ -23743,12 +24568,13 @@ function tourGuideCard(){
   // ---- one pass after every change to the page ----
   function pass(){
     q = 0;
-    for (const t of document.querySelectorAll(".wl-sel,.wl-date,.in-btn,.wl-count")) {
+    for (const t of document.querySelectorAll(".wl-sel,.wl-date,.in-btn,.wl-count,.wl-wheel")) {
       const f = t._for; if (f && !f.isConnected) t.remove();
     }
     if (LB.el && !LB.sel?.isConnected) closeList(false);
     if (CD.el && !CD.inp?.isConnected) closeCal(false);
     document.querySelectorAll("select").forEach(enhanceSelect);
+    document.querySelectorAll("select[data-wheel]").forEach(enhanceWheel);
     document.querySelectorAll("input[type=date],input[data-wl-date]").forEach(enhanceDate);
     document.querySelectorAll("input[type=password]").forEach(enhancePassword);
     document.querySelectorAll("textarea").forEach(ta => {
@@ -23765,4 +24591,320 @@ function tourGuideCard(){
 })();
 </script>
 
+<script>
+// Register the service worker after load so it never competes with startup; failures are silent.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("/sw.js").catch(function () {});
+  });
+}
+</script>
+
+
+<style>
+/* ================================================================
+   WL NEAT PASS - 25 Oct 2026 - Ultron, at CJ's request
+   One alignment + calm-down layer for the whole app, placed last
+   so it wins cascade ties: a single spacing rhythm, cards edged
+   with a hairline, the duplicate phone clock and breadcrumb trail
+   dropped on small screens, the cursor-glow card borders switched
+   off, and Premium feature lines shown in full, not cut mid-word.
+   Revert: delete this one block. Nothing else was restructured.
+   ================================================================ */
+
+/* 1 - One rhythm: every card shares the same gap and padding */
+:root{ --card-gap:16px; --card-padding:20px; }
+
+/* 2 - Cards read as boxes: a hairline edge on the shared card */
+.card{ border:1px solid var(--line); }
+
+/* 3 - Small screens: drop the in-page clock (the phone status bar
+   already shows the time) and the breadcrumb trail that collided
+   with the title in the header */
+@media (max-width:640px){
+  #live-clock{ display:none; }
+  .ph-text .crumbs{ display:none; }
+}
+
+/* 4 - Page titles on one calm scale */
+.page-title{ letter-spacing:-.01em; }
+
+/* 5 - Settings groups breathe on the same rhythm */
+.setgroup{ gap:10px; }
+
+/* 6 - Glow borders off: mute every paint variable the
+   cursor-tracking glow card (.border-glow-card) uses */
+.border-glow-card{
+  --fill-opacity:0;
+  --bg-c1:transparent; --bg-c2:transparent; --bg-c3:transparent;
+  --bg-glow:transparent; --bg-glow-tint:transparent;
+  --glow-color:transparent; --glow-color-60:transparent;
+  --glow-color-50:transparent; --glow-color-40:transparent;
+  --glow-color-30:transparent; --glow-color-20:transparent;
+  --glow-color-10:transparent;
+  --gradient-one:none; --gradient-two:none; --gradient-three:none;
+  --gradient-four:none; --gradient-five:none;
+}
+
+/* 7 - Premium: feature blurbs in full, no mid-word ellipsis;
+   the About paragraph is final copy now, not a draft */
+.prem-feat-row .tiny{ white-space:normal; overflow:visible; text-overflow:clip; }
+.prem-about .draft{ font-style:normal; }
+
+/* 8 - One calm selection highlight everywhere */
+::selection{ background:var(--accent-soft); }
+</style>
+<style>
+/* ================================================================
+   WL COMPACT PASS - 25 Oct 2026 - Ultron, at CJ's request
+   The compact Settings design CJ approved from the demo, applied
+   as CSS only over the existing markup: one 44px control height
+   for form rows, key/value rows on one aligned grid, Edit kept in
+   the group title row on phones instead of a full-width bar,
+   Friends switches beside their labels, and the licence key as a
+   single 44px row. Captions that only repeated their control's
+   own value are hidden. Placed after the NEAT PASS so it wins
+   cascade ties. Revert: delete this one block.
+   ================================================================ */
+
+/* 1 - Profile hero: smaller avatar, slimmer progress bar, and the
+   units switch and the progress line keep their rows on phones */
+.card.hero .avatar{ width:58px !important; height:58px !important; font-size:22px !important; }
+.card.hero .photo-edit{ gap:4px; }
+.card.hero .seg{ width:auto; }
+.card.hero .seg button{ flex:0 0 auto; }
+.card.hero .bar{ height:6px; }
+@media (max-width:560px){
+  .card.hero .setrow{ flex-direction:row; align-items:center; }
+}
+
+/* 2 - Profile groups: Edit stays in the title row on phones */
+@media (max-width:560px){
+  .pgroup > .setrow{ flex-direction:row; align-items:center; flex-wrap:nowrap; }
+}
+.pgroup > .setrow .btn.sm{ min-height:44px; }
+
+/* 3 - Key/value rows on one aligned grid: fixed label column,
+   semibold values, a hairline under each row */
+.pgroup .kv, #subscription .kv{ grid-template-columns:118px 1fr; gap:0 14px; }
+.pgroup .kv dt, .pgroup .kv dd,
+#subscription .kv dt, #subscription .kv dd{ padding:7px 0; border-bottom:1px solid var(--line); }
+.pgroup .kv dd, #subscription .kv dd{ font-weight:600; }
+.pgroup .kv dt:last-of-type, .pgroup .kv dd:last-of-type,
+#subscription .kv dt:last-of-type, #subscription .kv dd:last-of-type{ border-bottom:0; }
+
+/* 4 - Appearance: segmented labels never wrap; captions that only
+   repeat the chosen value are hidden (the Display caption stays
+   when a dark-only theme overrules the choice; the Accent one
+   stays for the Dynamic accent, where it explains the colours);
+   theme chips form a tidy two-column grid */
+#appearance .seg-display button{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px; }
+#appearance .setgroup:has(> .seg-display):not(:has(> .seg-display button.overruled)) > span.tiny.muted{ display:none; }
+#appearance .setgroup:has(> .accent-trigger .ct-dot:not([style*="conic-gradient"])) > span.tiny.muted{ display:none; }
+#appearance .theme-chip{ flex:1 1 140px; width:auto; height:44px; }
+#appearance .setgroup{ gap:6px; }
+@media (max-width:560px){
+  #appearance .setrow{ flex-direction:row; align-items:center; }
+}
+
+/* 5 - Friends: switches sit beside their labels at every width,
+   and each input + button pair is one 44px row */
+#friends .fr-opt{ flex-direction:row; align-items:center; flex-wrap:nowrap; }
+#friends .fr-opt > .setlabel{ flex:1 1 auto; }
+#friends .fr-line{ align-items:stretch; }
+#friends .fr-line input, #friends .fr-line .btn{ height:44px; min-height:44px; }
+#friends .fr-sec{ gap:6px; margin-top:12px; }
+
+/* 6 - Premium licence key: the duplicate inner label goes (the
+   group label already asks the question) and the input and the
+   Activate button form a single 44px row; the Debugging row
+   keeps its button beside its text */
+#subscription form[data-form="license"]{ flex-wrap:nowrap !important; }
+#subscription form[data-form="license"] label.f > span{ display:none; }
+#subscription form[data-form="license"] label.f{ min-width:0 !important; }
+#subscription form[data-form="license"] input,
+#subscription form[data-form="license"] .btn{ height:44px; min-height:44px; }
+@media (max-width:560px){
+  #subscription .setrow{ flex-direction:row; align-items:center; }
+  #subscription .setrow > span.small{ flex:1 1 auto; min-width:0; }
+}
+</style>
+<style>
+/* ================================================================
+   WL MAKEOVER - 25 Oct 2026 - Ultron, at CJ's request
+   The visual pass: Premium stops looking plain, the Summary rings
+   go Apple-clean, Friends rows take the sharing shape, and Trends
+   becomes two-column tiles on phones. All in the app's own gold
+   family and its existing variables - no new colours, no images,
+   no markup or script touched. Placed last so it wins cascade
+   ties over the NEAT and COMPACT blocks. Revert: delete this
+   one block.
+   ================================================================ */
+
+/* 1 - Premium store: a warm gold wash behind the hero, so the
+   screen reads as a shop window instead of a plain card */
+.prem-store{
+  background-image:
+    radial-gradient(ellipse 95% 44% at 50% -8%, color-mix(in srgb, var(--gold) 24%, transparent), transparent 70%),
+    radial-gradient(ellipse 55% 30% at 92% 2%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 70%);
+  background-repeat:no-repeat;
+}
+
+/* 2 - What's included: the feature list becomes one tinted panel;
+   each row keeps its two-tone category gradient tile, now with a
+   lit top edge and a soft warm shadow so the tiles sit IN the
+   panel rather than floating on it */
+.prem-feat-list{
+  background:color-mix(in srgb, var(--gold) 6%, var(--raise));
+  border:1px solid color-mix(in srgb, var(--gold) 20%, var(--line));
+  border-radius:var(--r-sm);
+  padding:12px 12px 8px;
+}
+.prem-feat-row{ padding:11px 6px; border-radius:0; }
+.prem-feat-row + .prem-feat-row{ border-top:1px solid color-mix(in srgb, var(--gold) 13%, var(--line)); }
+.prem-feat-ic{
+  border-radius:13px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.38),
+    inset 0 -10px 16px -12px rgba(60,38,0,.55),
+    0 6px 14px -8px rgba(122,79,0,.55);
+}
+.prem-feat-row .go{ color:color-mix(in srgb, var(--gold) 55%, var(--faint)); }
+
+/* 3 - Plan selector: the chosen plan gets the gold wash and a
+   soft glow, so the recommended choice is the obvious one */
+.plansel{
+  background:linear-gradient(165deg, color-mix(in srgb, var(--gold) 8%, var(--raise)), var(--raise) 60%);
+}
+.plansel-row.on{
+  background:linear-gradient(120deg,
+    color-mix(in srgb, var(--gold) 19%, var(--surface)),
+    color-mix(in srgb, var(--accent) 9%, var(--surface)));
+  border-color:color-mix(in srgb, var(--gold) 55%, var(--line));
+  box-shadow:0 8px 20px -12px color-mix(in srgb, var(--gold) 70%, transparent);
+}
+.plansel-row.on .ps-check{ box-shadow:0 0 0 4px color-mix(in srgb, var(--gold) 22%, transparent); }
+
+/* 4 - Plan cards (Settings > Premium): every card gets the warm
+   wash; Best value gets a gold edge and glow to match its flag,
+   and the flag itself becomes a gold gradient pill */
+.plancard{ background-image:linear-gradient(165deg, color-mix(in srgb, var(--gold) 7%, transparent), transparent 55%); }
+.plancard.best{
+  border:1.5px solid var(--gold);
+  background-image:linear-gradient(165deg,
+    color-mix(in srgb, var(--gold) 14%, transparent),
+    color-mix(in srgb, var(--accent) 5%, transparent) 60%, transparent);
+  box-shadow:
+    0 12px 28px -14px color-mix(in srgb, var(--gold) 65%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--gold) 22%, transparent);
+}
+.planflag{
+  background:linear-gradient(120deg, var(--gold), color-mix(in srgb, var(--gold) 58%, var(--accent)));
+  color:var(--gold-ink);
+}
+
+/* 5 - The buy controls go gold: the slide-to-pay inside the
+   Premium CTA bar, and the shared .prem-cta pill (its old blue
+   gradient clashed with the rest of the brand) */
+.prem-cta-bar .sc-track{
+  background-color:var(--raise);
+  background-image:linear-gradient(120deg,
+    color-mix(in srgb, var(--gold) 22%, var(--raise)),
+    color-mix(in srgb, var(--accent) 13%, var(--raise)));
+  border:1px solid color-mix(in srgb, var(--gold) 32%, var(--line));
+}
+.prem-cta-bar .sc-fill{
+  background:linear-gradient(90deg,
+    color-mix(in srgb, var(--gold) 48%, transparent),
+    color-mix(in srgb, var(--accent) 36%, transparent));
+}
+.prem-cta-bar .sc-handle{
+  background-color:var(--gold);
+  background-image:linear-gradient(135deg, var(--gold), color-mix(in srgb, var(--gold) 55%, var(--accent)));
+  color:var(--gold-ink);
+  box-shadow:0 4px 12px -4px color-mix(in srgb, var(--gold) 70%, transparent);
+}
+.prem-cta{
+  background:linear-gradient(92deg, var(--gold), color-mix(in srgb, var(--gold) 58%, var(--accent)));
+  color:var(--gold-ink);
+  box-shadow:0 10px 22px -8px color-mix(in srgb, var(--gold) 60%, transparent);
+}
+
+/* 6 - Premium popup (the dialogue): feature icons become gradient
+   tiles in the same family as the store list */
+.pop-row .pr-ic{
+  width:42px; height:42px; border-radius:13px;
+  background:linear-gradient(135deg,
+    color-mix(in srgb, var(--gold) 32%, transparent),
+    color-mix(in srgb, var(--accent) 18%, transparent));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.32),
+    0 5px 12px -7px rgba(122,79,0,.5);
+}
+
+/* 7 - Summary rings, Apple-clean: rings on the left, the three
+   values on the right in their own ring colours, nothing else.
+   The legend drops its boxes and mini bars, and the repeated
+   "N of 3 closed" head goes (the card title already says it);
+   the per-ring percent line stays, under its value. */
+.rings-card .rleg-head{ display:none; }
+.rings-card .rings svg{ filter:drop-shadow(0 8px 20px color-mix(in srgb, var(--gold) 14%, transparent)); }
+.rings-legend{ gap:2px; }
+.rings-card .rleg{ background:transparent; border-color:transparent; padding:9px 8px; }
+.rings-card .rleg-bar{ display:none; }
+.rings-card .rleg-num b{ color:var(--rc); font-size:calc((17px) * var(--text-scale,1)); }
+@media (max-width:600px){
+  .rings-card .rleg{ border-bottom:1px solid var(--line); border-radius:0; }
+  .rings-card .rleg:last-child{ border-bottom:0; }
+}
+
+/* 8 - Friends rows take the sharing shape: a round gold-wash
+   avatar disc on the left, the name and its Online/Offline pill
+   together on one line, actions on the right. The disc is a
+   plain person glyph - real photos need the friends data to
+   carry one (flagged in the PR). */
+#friends .fr-row{ align-items:center; padding:12px 0; }
+#friends .fr-row::before,
+#friends #fr-res .li::before{
+  content:""; width:42px; height:42px; flex:none; border-radius:50%;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='8' r='3.8' fill='%23A97B12'/%3E%3Cpath d='M4.6 20c1.5-3.9 4.2-5.6 7.4-5.6s5.9 1.7 7.4 5.6z' fill='%23A97B12'/%3E%3C/svg%3E"),
+    radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--gold) 32%, var(--surface)), color-mix(in srgb, var(--gold) 12%, var(--surface)) 72%);
+  background-size:24px 24px, cover;
+  background-position:center, center;
+  background-repeat:no-repeat;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--gold) 30%, transparent);
+}
+#friends .fr-row .grow{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+#friends .fr-row .tag, #friends .fr-row .neon, #friends .fr-row .fr-off{ margin-top:0; }
+
+/* 9 - Trends: the two charts become compact tiles - two columns
+   on phones, a round tinted disc behind each metric's icon,
+   the section's own adjacency (h2.sec-title + .mgrid) is the
+   hook trendsSection() actually renders. */
+h2.sec-title + .mgrid .mhead svg.ci{
+  background:color-mix(in srgb, currentColor 13%, transparent);
+  border-radius:999px; padding:6px; width:32px; height:32px;
+}
+@media (max-width:640px){
+  h2.sec-title + .mgrid{ grid-template-columns:1fr 1fr; gap:10px; }
+  h2.sec-title + .mgrid .mcard{ padding:14px; gap:10px; min-height:0; border-radius:var(--r-sm); }
+}
+</style>
+<style>
+/* =====================================================================
+   WL THEME + LANGUAGE PASS - 30 Oct 2026
+   UI style (Rounded / Crisp), the circular reveal and the review bar.
+   Colours, accents and text size already run off the existing tokens.
+   ===================================================================== */
+::view-transition-old(root),::view-transition-new(root){ animation:none; mix-blend-mode:normal; }
+::view-transition-old(root){ z-index:1; }
+::view-transition-new(root){ z-index:2; }
+:root[data-uistyle="crisp"]{ --r:6px; --r-lg:8px; --r-sm:4px; --r-xs:3px; }
+:root[data-uistyle="crisp"] :is(.btn,.btn.sm,.chip,.tag,.well,.note,.dish,.choice button,.logo,.avatar,input[type=text],input[type=number],input[type=date],input[type=time],input[type=search],select,textarea,.seg,.seg button,.seg-display,.seg-display button,.tabs a){ border-radius:var(--r-sm); }
+.wl-seg button{ min-height:44px; }
+.wl-review-bar{ display:none; position:sticky; bottom:calc(12px + env(safe-area-inset-bottom,0px)); z-index:5; margin-top:14px; padding:14px; background:var(--surface); border:1px solid var(--line2); border-radius:var(--r-sm); box-shadow:0 8px 24px rgba(0,0,0,.18); }
+.wl-review-bar.show{ display:flex; flex-direction:column; gap:6px; }
+.wl-review-bar .btn{ min-height:44px; }
+</style>
 </body></html>

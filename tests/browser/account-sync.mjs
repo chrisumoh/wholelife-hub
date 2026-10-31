@@ -78,7 +78,7 @@ async function device(name) {
   d.ev = async expr => { const r = await send("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true }); if (r.result.exceptionDetails) throw new Error(r.result.exceptionDetails.exception?.description || "eval failed: " + expr.slice(0, 120)); return r.result.result.value; };
   d.waitFor = async (expr, ms = 10000) => { const t = Date.now(); while (Date.now() - t < ms) { try { if (await d.ev(expr)) return true; } catch {} await sleep(120); } return false; };
   await send("Runtime.enable"); await send("Page.enable"); await send("Network.enable");
-  await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
+  await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*", "*/vendor/supabase*"] });
   await send("Runtime.addBinding", { name: "__rpcRaw" });
   await send("Page.addScriptToEvaluateOnNewDocument", { source: WRAP }); await send("Page.addScriptToEvaluateOnNewDocument", { source: FAKE }); await send("Page.addScriptToEvaluateOnNewDocument", { source: PHOTO_JS });
   await send("Emulation.setDeviceMetricsOverride", { width: 1200, height: 900, deviceScaleFactor: 1, mobile: false });

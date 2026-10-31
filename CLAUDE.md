@@ -67,6 +67,7 @@ A health and fitness web app that lives in one file, `index.html` (markup, CSS a
 - Do work on a branch named after the build, such as `build-8.1.11`. Push it so Vercel creates a preview link for testers. (If a session names a specific branch, use that one.)
 - **Never push or merge to `main` without asking me first.**
 - You may open a pull request into `main` when a build branch is ready. Never merge it. I merge.
+- **Name every push after the change it makes, and describe it in detail.** The commit subject and the pull request title say what changed — "Report errors to the database and state the 14-day refund policy" — with the build number kept in front, as every earlier commit does. The body says what changed and why, which files, and what was verified and what wasn't, in the same shape as a `CHANGELOG.md` entry. No `Update`, `Fixes`, `wip` or bare build number. If a branch takes several pushes, each one gets its own change-named message rather than being folded into "more work"; amend only before the branch is reviewed.
 - Run the app locally by opening `index.html`, or serve it with `python3 -m http.server 8080`.
 - **Code review (Codex).** After every push to a pull request, read Codex's comments on it yourself (don't wait for me to paste them). For each one, say here whether it is valid, then fix the valid ones on the same branch with a test, and push. Ask me first only when the fix is a real design choice or touches `supabase/`. Reply on a thread only when a finding is wrong or won't be fixed. Never resolve or merge for me.
 

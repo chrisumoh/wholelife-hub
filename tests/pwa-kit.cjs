@@ -1,7 +1,7 @@
 // Run:  node --test tests/pwa-kit.cjs
-// The install manifest, the service worker and the error-tracking starter (docs/APP_READINESS.md). None of them is wired into index.html
-// yet, so these tests are what keep them correct until it is: the files the manifest and the worker name exist, the worker still installs
-// when one file is missing, it never keeps an error page or touches other sites, and the error reporter sends JSON, paths only, once.
+// The install manifest, the service worker and the error tracker (docs/APP_READINESS.md), all switched on in index.html since 8.3.27 and
+// reporting for real since 8.3.28: the files the manifest and the worker name exist, the worker still installs when one file is missing,
+// it never keeps an error page or touches other sites, the reporter sends JSON, paths only, once, and it posts to this app's own project.
 const test = require("node:test"), assert = require("node:assert/strict"), fs = require("node:fs"), path = require("node:path"), vm = require("node:vm");
 const root = path.join(__dirname, "..");
 const read = f => fs.readFileSync(path.join(root, f), "utf8");
@@ -67,15 +67,52 @@ test("offline, the app page comes from the copy and other addresses do not get i
   assert.equal((await navigate("/img/icon-512.png")).out, "NO PAGE", "an image address is not answered with the app page");
 });
 
-function loadReporter(configured, status = 200) {
+const settle = () => new Promise(r => setImmediate(r));
+
+// One GET for a file through the worker's fetch handler; reports whether the worker answered it and what it stored.
+async function getFile(url, response, cached) {
+  const h = {}, self = { location: { origin: "https://app.test" }, addEventListener: (t, f) => { h[t] = f; } }, kept = [];
+  const net = async () => { if (!response) throw new Error("offline"); return { ...response, clone() { return this; } }; };
+  vm.runInNewContext(read("sw.js"), { self, caches: { open: async () => ({ match: async () => cached, put: async (k, v) => { kept.push(v); } }) }, URL, Promise, Response: { error: () => "NO PAGE" }, fetch: net });
+  let res; h.fetch({ request: { method: "GET", url, mode: "no-cors" }, respondWith: p => { res = p; } });
+  return { out: res ? await res : undefined, handled: !!res, kept };
+}
+const LIB_PATH = "/vendor/supabase-js-2.117.2.umd.js";
+
+test("supabase-js is our own file: the page loads it from this site, checked against its fingerprint, and the worker precaches it", async () => {
+  const html = read("index.html"), tag = /<script src="([^"]+supabase[^"]*)" integrity="sha384-([^"]+)"/.exec(html) || [];
+  assert.equal(tag[1], LIB_PATH, "the script tag points at the vendored file");
+  assert.ok(!/jsdelivr/i.test(html.split("<style")[0]), "no third-party script host in the page head");
+  const bytes = require("node:fs").readFileSync(path.join(__dirname, "..", "vendor", "supabase-js-2.117.2.umd.js"));
+  assert.equal(require("node:crypto").createHash("sha384").update(bytes).digest("base64"), tag[2], "the fingerprint matches the file");
+  assert.ok(read("sw.js").includes("'" + LIB_PATH + "'"), "the worker precaches it for a cold offline start");
+  const own = await getFile("https://app.test" + LIB_PATH, { ok: true, status: 200, type: "basic" });
+  assert.equal(own.handled, true, "same-site file goes through the worker like other static files");
+  assert.equal((await getFile("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js", { ok: true, status: 200, type: "cors" })).handled, false, "other sites still pass straight through");
+});
+
+function loadReporter(configured, status = 200, href = "https://app.test/#/coach?token=SECRET") {
   const handlers = {}, calls = [], beacons = [], timers = [];
-  let src = read("observability.js");
-  if (configured) src = src.replace("ENDPOINT: ''", "ENDPOINT: 'https://x.supabase.co/rest/v1/error_reports'").replace("ANON_KEY: ''", "ANON_KEY: 'anon-key'");
+  // Overwrite whatever the shipped file says, so these tests keep working once the real endpoint is filled in.
+  const src = read("observability.js")
+    .replace(/ENDPOINT:\s*'[^']*'/, configured ? "ENDPOINT: 'https://x.supabase.co/rest/v1/error_reports'" : "ENDPOINT: ''")
+    .replace(/ANON_KEY:\s*'[^']*'/, configured ? "ANON_KEY: 'anon-key'" : "ANON_KEY: ''");
   const win = { addEventListener: (t, f) => { handlers[t] = f; } };
-  const ctx = { window: win, navigator: { onLine: true, userAgent: "UA", sendBeacon: (...a) => { beacons.push(a); return true; } }, location: { href: "https://app.test/#/coach?token=SECRET", origin: "https://app.test" },
+  const ctx = { window: win, navigator: { onLine: true, userAgent: "UA", sendBeacon: (...a) => { beacons.push(a); return true; } }, location: { href, origin: new URL(href).origin },
     console: { warn: () => {} }, URL, Date, Map, String, JSON, fetch: (u, o) => { calls.push([u, o]); return Promise.resolve({ ok: status < 400, status }); }, setTimeout: (f, ms) => { timers.push(ms); } };
   vm.runInNewContext(src, ctx); return { handlers, calls, beacons, win, timers };
 }
+
+test("the shipped endpoint is this app's own project, reached with the publishable key only", () => {
+  const src = read("observability.js");
+  const endpoint = (/ENDPOINT:\s*'([^']*)'/.exec(src) || [])[1] || "";
+  const key = (/ANON_KEY:\s*'([^']*)'/.exec(src) || [])[1] || "";
+  const app = /const SB_URL = "([^"]+)", SB_KEY = "([^"]+)"/.exec(read("index.html")) || [];
+  assert.ok(endpoint.endsWith("/rest/v1/error_reports"), "reports go to the error_reports table: " + endpoint);
+  assert.equal(endpoint, app[1] + "/rest/v1/error_reports", "the same Supabase project as SB_URL in index.html");
+  assert.ok(/^sb_publishable_/.test(key), "the publishable key, never a secret key");
+  assert.equal(key, app[2], "byte for byte the SB_KEY in index.html: rotating one without the other would deafen the reporter, with only a console warning to show for it");
+});
 
 test("with no endpoint set, reports stay on the device", () => {
   const { handlers, calls, beacons } = loadReporter(false);
@@ -92,8 +129,28 @@ test("with an endpoint, a report is JSON with the key headers, carries the path 
   const [url, opts] = calls[0], body = JSON.parse(opts.body)[0];
   assert.equal(url, "https://x.supabase.co/rest/v1/error_reports");
   assert.equal(opts.headers["Content-Type"], "application/json"); assert.equal(opts.headers.apikey, "anon-key"); assert.equal(opts.keepalive, true);
-  assert.equal(body.page, "/", "the path, with the hash and query dropped"); assert.ok(!JSON.stringify(body).includes("SECRET"));
-  assert.deepEqual(Object.keys(body).sort(), ["created_at", "kind", "label", "message", "page", "stack", "user_agent"], "nothing else about the person is attached");
+  assert.equal(body.page, "/", "a fragment with a query in it is dropped whole"); assert.ok(!JSON.stringify(body).includes("SECRET"));
+  assert.deepEqual(Object.keys(body).sort(), ["kind", "label", "message", "page", "stack", "user_agent"], "nothing else about the person is attached, and no client clock");
+});
+
+test("the report names the screen: a route is kept, a sign-in fragment is not", () => {
+  const route = loadReporter(true, 201, "https://app.test/#/premium/pantry");
+  route.handlers.error({ message: "boom", error: { stack: "Error: boom\n at a" } });
+  assert.equal(JSON.parse(route.calls[0][1].body)[0].page, "/#/premium/pantry", "the hash route is the only way to tell which screen failed in a single-page app");
+
+  const tokens = loadReporter(true, 201, "https://app.test/#access_token=SYNTH_ROUTE&refresh_token=SYNTH_ROUTE");
+  tokens.handlers.error({ message: "boom", error: { stack: "Error: boom\n at a" } });
+  const body = JSON.parse(tokens.calls[0][1].body)[0];
+  assert.equal(body.page, "/", "a fragment that carries values is dropped whole");
+  assert.ok(!JSON.stringify(body).includes("SYNTH_ROUTE"), "no token reaches the table: " + JSON.stringify(body));
+});
+
+test("an empty message still lands, and the table sets the time", () => {
+  const { handlers, calls } = loadReporter(true, 201);
+  handlers.error({ message: "", error: undefined });
+  const body = JSON.parse(calls[0][1].body)[0];
+  assert.equal(body.message, "(no message)", "the table refuses a zero-length message, and a 400 is not retried");
+  assert.ok(!("created_at" in body), "a phone with a wrong clock must not file the bug");
 });
 
 test("tokens in URLs and error text never reach the report", () => {
@@ -109,7 +166,6 @@ test("tokens in URLs and error text never reach the report", () => {
   assert.ok(body.stack.includes("https://app.test/index.html") && body.label === "https://app.test/auth/callback", "the useful part (the path) is kept");
 });
 
-const settle = () => new Promise(r => setImmediate(r));
 
 test("a busy or unavailable server is retried a few times, with growing waits, then dropped", async () => {
   for (const status of [503, 429]) {

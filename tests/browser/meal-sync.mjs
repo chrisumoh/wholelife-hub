@@ -32,7 +32,7 @@ let pass = 0, fail = 0;
 const ok = (name, cond, extra = "") => { cond ? pass++ : fail++; console.log(`${cond ? "PASS" : "FAIL"}  ${name}${cond ? "" : "  " + extra}`); };
 
 await send("Runtime.enable"); await send("Page.enable"); await send("Network.enable");
-await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
+await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*", "*/vendor/supabase*"] });
 await send("Page.addScriptToEvaluateOnNewDocument", { source: FAKE });
 const READY = "typeof S !== 'undefined' && typeof SB !== 'undefined' && SB.booted === true && UI.loading === false";
 const boot = async () => { await send("Page.navigate", { url: "http://127.0.0.1:8765/index.html" }); await sleep(500); return waitFor(READY, 15000); };

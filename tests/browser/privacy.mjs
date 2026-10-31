@@ -37,7 +37,7 @@ const ok = (name, cond, extra = "") => { cond ? pass++ : fail++; console.log(`${
 const view = (w, h = 900) => send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: 1, mobile: w < 600 });
 
 await send("Runtime.enable"); await send("Page.enable"); await send("Network.enable");
-await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
+await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*", "*/vendor/supabase*"] });
 await send("Page.addScriptToEvaluateOnNewDocument", { source: FAKE });
 const READY = "typeof S !== 'undefined' && typeof SB !== 'undefined' && SB.booted === true && UI.loading === false";
 
@@ -76,7 +76,7 @@ await ev(`document.querySelector('[data-act="export"]').click(); true`); await s
 ok("downloading the data adds an entry", (await stored()).at(-1).k === "export");
 ok("and the card shows it straight away, without another action", /Downloaded a copy of your data/.test(await glance()) && await ev(`!!document.querySelector('[data-act="history-clear"]')`));
 await ev(`(() => { const q = newProfile("Kofi"); Object.assign(q, { onboarded: true, coachPrompted: true, tourSeen: "dismissed" }); S.profiles.push(q); saveProfile(); UI.confirmDel = q.id; location.hash = "#/settings/household"; render(); return true; })()`); await sleep(350);
-await ev(`document.querySelector('[data-act="del-profile-yes"]').click(); true`); await sleep(300);
+await ev(`(() => { const b = document.querySelector('[data-hold="del-profile-yes"]'); b.dataset.act = b.dataset.hold; b.click(); })(); true`); await sleep(300);
 ok("deleting a profile adds an entry", (await stored()).at(-1).k === "profile-del");
 await goPrivacy();
 await ev(`document.querySelector('[data-act="erase-all-ask"]').click(); true`); await sleep(250);

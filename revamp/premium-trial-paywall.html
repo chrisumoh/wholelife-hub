@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whole Life Hub — Premium, tidied + 14-day trial + paywall (drop-in blocks)</title>
+<!--
+  ============================================================================
+  PREMIUM / TRIAL / PAYWALL REVAMP — original drop-in blocks (2026)
+  What changes vs the current Premium page:
+   - Status is one slim card, not a section of its own.
+   - The 19 features group into four collapsible families (Eat, Train,
+     Health, Coach & more) with full descriptions — no truncated rows.
+   - The About copy is final (the [draft] markers are gone).
+   - The Debugging section renders only when DEBUG is true in the app —
+     normal users never see it (integration note, not demoed here).
+   - Plans, checkout and the paywall all read from one TRIAL config:
+     while TRIAL.open is false, nothing anywhere promises a trial.
+     Flip it only after the trial exists on both Lemon Squeezy variants.
+   - With the trial on: plan cards carry a "2 WEEKS FREE" badge and a
+     "then US$…" line, the CTA reads "Start free trial", the paywall
+     slider says "No charge today", and the gift note shows under the
+     plans. Checkout URLs do not change — the trial lives in Lemon
+     Squeezy's variant settings, the app only labels it honestly.
+  Trial money rule: a trial order totals $0. The receipt must print
+  "Trial — $0.00 due today" from the order data, never a fake price.
+  ============================================================================
+-->
+<style>
+  body { margin: 0; min-height: 100vh; background: #000; color: #fff;
+         font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+         display: grid; place-items: start center; padding: 24px 12px 60px; box-sizing: border-box; }
+  .demo-note { color: #8E8E93; font-size: 13.5px; text-align: center; max-width: 460px; margin: 0 0 10px; }
+  .demo-toggle { margin: 0 0 18px; background: #1C1C1E; color: #FFD60A; border: 1px solid #FFD60A;
+    border-radius: 999px; padding: 9px 18px; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+  /* ==================== COPY: CSS START ==================== */
+  .wlprem { width: min(460px, 94vw); }
+  .wlprem h1 { font-size: 30px; margin: 4px 0 14px; text-align: center; }
+  .wlprem .star { text-align: center; font-size: 56px; line-height: 1; filter: drop-shadow(0 6px 22px rgba(255,214,10,.45)); }
+  .wlprem .tag { text-align: center; color: #AEAEB2; margin: 8px 0 16px; font-size: 15px; }
+  .wlprem-card { background: #141416; border: 1px solid #26262A; border-radius: 20px; padding: 18px; margin-bottom: 16px; }
+  .wlprem-status { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+  .wlprem-status .dot { width: 10px; height: 10px; border-radius: 50%; background: #30D158; box-shadow: 0 0 10px #30D158; }
+  .wlprem-status .muted { color: #8E8E93; margin-left: auto; font-size: 13.5px; }
+
+  .wlprem details { border-top: 1px solid #232326; padding: 4px 0; }
+  .wlprem details:first-of-type { border-top: 0; }
+  .wlprem summary { cursor: pointer; font-weight: 700; font-size: 16px; padding: 10px 2px; list-style: none; }
+  .wlprem summary::-webkit-details-marker { display: none; }
+  .wlprem summary::after { content: "›"; float: right; color: #48484A; font-size: 21px; transform: rotate(90deg); }
+  .wlprem details[open ] summary::after { transform: rotate(-90deg); }
+  .wlprem-feat { display: flex; gap: 11px; padding: 9px 2px; align-items: flex-start; }
+  .wlprem-feat .tile { width: 34px; height: 34px; border-radius: 9px; flex: none; display: grid; place-items: center; font-size: 16px; }
+  .wlprem-feat .nm { font-weight: 600; font-size: 15px; }
+  .wlprem-feat .ds { color: #9A9AA0; font-size: 13.5px; line-height: 1.4; }
+  .wlprem-feat .ready { color: #30D158; font-size: 10.5px; font-weight: 800; letter-spacing: 1px; vertical-align: 2px; margin-left: 6px; }
+
+  .wlprem-plan { position: relative; border: 1.5px solid #2C2C2E; border-radius: 16px; padding: 16px; margin-top: 12px; }
+  .wlprem-plan.best { border-color: #FFD60A; }
+  .wlprem-plan .flag { position: absolute; top: -11px; left: 14px; background: #FFD60A; color: #000;
+    font-size: 11px; font-weight: 800; letter-spacing: .6px; padding: 3px 10px; border-radius: 99px; }
+  .wlprem-plan .flag.trial { background: #30D158; }
+  .wlprem-plan .pname { font-weight: 700; font-size: 15px; color: #D8D8DC; }
+  .wlprem-plan .price { font-size: 25px; font-weight: 800; margin: 3px 0; }
+  .wlprem-plan .pnote { color: #8E8E93; font-size: 13.5px; line-height: 1.45; }
+  .wlprem-plan .trial-line { color: #30D158; font-weight: 700; font-size: 14px; margin-top: 5px; display: none; }
+  .wlprem-cta { margin-top: 12px; width: 100%; background: #fff; color: #000; border: 0; border-radius: 12px;
+    padding: 12px; font-size: 15.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .wlprem-gift { display: none; margin-top: 14px; text-align: center; color: #FFD60A; font-size: 14px; line-height: 1.5; }
+  .wlprem-fine { color: #636366; font-size: 12.5px; line-height: 1.5; margin-top: 12px; }
+  .wlprem-key { display: flex; gap: 8px; margin-top: 10px; }
+  .wlprem-key input { flex: 1; background: #1C1C1E; border: 1px solid #2C2C2E; color: #fff; border-radius: 10px;
+    padding: 11px 12px; font-size: 15px; min-width: 0; }
+  .wlprem-key button { background: #2C2C2E; color: #fff; border: 0; border-radius: 10px; padding: 0 18px;
+    font-weight: 700; cursor: pointer; font-family: inherit; }
+  .wlprem-h { font-size: 12px; letter-spacing: 1.6px; text-transform: uppercase; color: #8E8E93; margin: 0 0 4px; }
+  body.trial-on .trial-line { display: block; }
+  body.trial-on .wlprem-gift { display: block; }
+
+  /* paywall */
+  .wlpay { width: min(460px, 94vw); margin-top: 26px; background: #101012; border: 1px solid #26262A;
+    border-radius: 24px; padding: 24px 20px; text-align: center; }
+  .wlpay .lock { font-size: 40px; }
+  .wlpay h2 { margin: 8px 0 6px; font-size: 24px; }
+  .wlpay p { color: #AEAEB2; font-size: 14.5px; line-height: 1.5; margin: 0 0 6px; }
+  .wlpay .trial-line { color: #30D158; font-weight: 700; display: none; margin-bottom: 8px; }
+  body.trial-on .wlpay .trial-line { display: block; }
+  .wlpay-slide { margin: 16px auto 6px; max-width: 340px; background: #1C1C1E; border: 1px solid #2C2C2E;
+    border-radius: 999px; height: 56px; position: relative; overflow: hidden; touch-action: none; }
+  .wlpay-slide .fill { position: absolute; inset: 0; width: 0; background: linear-gradient(90deg, #FFD60A, #FF9F0A); }
+  .wlpay-slide .lbl { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 700;
+    color: #8E8E93; font-size: 14.5px; pointer-events: none; }
+  .wlpay-slide .handle { position: absolute; top: 4px; left: 4px; width: 48px; height: 48px; border-radius: 50%;
+    background: #FFD60A; display: grid; place-items: center; font-size: 20px; color: #000; cursor: grab; }
+  .wlpay .restore { color: #0A84FF; font-size: 14px; background: none; border: 0; cursor: pointer; margin-top: 10px; font-family: inherit; }
+  /* ==================== COPY: CSS END ==================== */
+</style>
+</head>
+<body>
+
+<p class="demo-note">Demo shell — the button below flips the TRIAL switch so you can preview both worlds. In the app it starts OFF and only turns on once the trial exists in Lemon Squeezy.</p>
+<button class="demo-toggle" id="demoTrialToggle" type="button">Preview with trial ON</button>
+
+<!-- ==================== COPY: MARKUP START (Premium page) ==================== -->
+<div class="wlprem">
+  <div class="star">⭐</div>
+  <h1>WholeLife Premium</h1>
+  <p class="tag">Every extra feature, unlocked across food, training, coaching and health.</p>
+
+  <div class="wlprem-card wlprem-status">
+    <span class="dot"></span><strong>Premium active</strong>
+    <span class="muted">Beta tester · no end date</span>
+  </div>
+
+  <div class="wlprem-card">
+    <p class="wlprem-h">What's included</p>
+    <details open>
+      <summary>Eat smarter</summary>
+      <div class="wlprem-feat"><span class="tile" style="background:#30D158">🛒</span><div><span class="nm">Grocery list builder</span><span class="ready">READY</span><div class="ds">Turn any day or week of meals into one shopping list.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#FF9F0A">🥫</span><div><span class="nm">Pantry mode</span><span class="ready">READY</span><div class="ds">Tick off what you already have and see what is left to buy.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#0A84FF">📷</span><div><span class="nm">Photo meal logging</span><span class="ready">READY</span><div class="ds">Attach a photo to any logged meal, stored privately.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#FF453A">🍽️</span><div><span class="nm">Restaurant mode</span><span class="ready">READY</span><div class="ds">Paste a menu and get the best two or three plates for your goals.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#64D2FF">📊</span><div><span class="nm">Micronutrient gaps</span><span class="ready">READY</span><div class="ds">A weekly estimate of iron, B12, fibre and more.</div></div></div>
+    </details>
+    <details>
+      <summary>Train harder</summary>
+      <div class="wlprem-feat"><span class="tile" style="background:#30D158">📈</span><div><span class="nm">Progressive programs</span><span class="ready">READY</span><div class="ds">Eight to twelve week programs that raise your loads for you.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#FF9F0A">🎥</span><div><span class="nm">Form check camera</span><span class="ready">READY</span><div class="ds">Record a set and review it in slow motion. Nothing leaves the phone.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#BF5AF2">🖼️</span><div><span class="nm">Body progress studio</span><span class="ready">READY</span><div class="ds">Private progress photos with a ghost overlay to line up the next shot.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#32ADE6">🌙</span><div><span class="nm">Fasting &amp; Ramadan mode</span><span class="ready">READY</span><div class="ds">Meals and hydration arranged inside your eating window.</div></div></div>
+    </details>
+    <details>
+      <summary>Health &amp; habits</summary>
+      <div class="wlprem-feat"><span class="tile" style="background:#30D158">💓</span><div><span class="nm">Recovery score</span><span class="ready">READY</span><div class="ds">Train hard, go easy or rest, from your sleep, resting heart rate and soreness.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#FF9F0A">📄</span><div><span class="nm">Weekly review PDF</span><span class="ready">READY</span><div class="ds">A printable Sunday review: adherence, trends and next week.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#FF453A">🧪</span><div><span class="nm">Habit experiments</span><span class="ready">READY</span><div class="ds">Run a two week experiment and see honestly whether it worked.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#5E5CE6">🩺</span><div><span class="nm">Doctor visit prep</span><span class="ready">READY</span><div class="ds">A one page summary of your trends and notes to take with you.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#64D2FF">🔄</span><div><span class="nm">Cycle-aware plans</span><span class="ready">READY</span><div class="ds">Optional, off by default: training and iron advice that follows your cycle.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#FFD60A">💰</span><div><span class="nm">Budget mode</span><span class="ready">READY</span><div class="ds">Set a weekly food budget and let the planner respect it.</div></div></div>
+    </details>
+    <details>
+      <summary>Coach &amp; community</summary>
+      <div class="wlprem-feat"><span class="tile" style="background:#0A84FF">🎙️</span><div><span class="nm">Voice coach</span><span class="ready">READY</span><div class="ds">Log meals by speaking, and hear your set targets read back.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#32ADE6">🔗</span><div><span class="nm">Coach sharing</span><span class="ready">READY</span><div class="ds">A read-only link for a human coach, showing only what you choose.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#30D158">🏆</span><div><span class="nm">Family challenges</span><span class="ready">READY</span><div class="ds">Household challenges and a leaderboard that stays friendly.</div></div></div>
+      <div class="wlprem-feat"><span class="tile" style="background:#FF9F0A">👨‍🍳</span><div><span class="nm">Community recipes</span><span class="ready">READY</span><div class="ds">Write up your family recipes and swap them with the household.</div></div></div>
+    </details>
+  </div>
+
+  <div class="wlprem-card">
+    <p class="wlprem-h">Plans</p>
+    <div class="wlprem-plan" data-plan="monthly">
+      <span class="flag trial" data-trial-flag style="display:none">2 WEEKS FREE</span>
+      <div class="pname">Monthly</div>
+      <div class="price">US$7.99 / month</div>
+      <div class="pnote">Billed every month. Cancel any time.</div>
+      <div class="trial-line">Free for 14 days, then US$7.99/month. No charge today.</div>
+      <button class="wlprem-cta" data-checkout="monthly" type="button">Choose Monthly</button>
+    </div>
+    <div class="wlprem-plan best" data-plan="yearly">
+      <span class="flag">BEST VALUE</span>
+      <span class="flag trial" data-trial-flag style="display:none; left:110px">2 WEEKS FREE</span>
+      <div class="pname">Yearly</div>
+      <div class="price">US$59.99 / year</div>
+      <div class="pnote">Billed once a year. The cheaper of the two — save 37% against paying monthly.</div>
+      <div class="trial-line">Free for 14 days, then US$59.99/year. No charge today.</div>
+      <button class="wlprem-cta" data-checkout="yearly" type="button">Choose Yearly</button>
+    </div>
+    <p class="wlprem-gift" data-gift></p>
+    <p class="wlprem-fine">Checkout opens Lemon Squeezy's secure page in a new tab; a price shows only once it is set, and you are charged only there, after you confirm. Cancelling stops the next renewal; Premium stays on until the period you paid for ends.</p>
+  </div>
+
+  <div class="wlprem-card">
+    <p class="wlprem-h">Have a license key?</p>
+    <div class="wlprem-key">
+      <input type="text" placeholder="Paste your key" aria-label="License key">
+      <button type="button">Activate</button>
+    </div>
+    <p class="wlprem-fine">Lemon Squeezy emails your key after checkout. Paste it here to turn Premium on. To cancel, change your card or find a receipt, open My Orders at Lemon Squeezy and sign in with the email you bought with.</p>
+    <button class="wlprem-cta" type="button" style="background:#2C2C2E;color:#fff">Manage subscription</button>
+  </div>
+
+  <div class="wlprem-card">
+    <p class="wlprem-h">About Premium</p>
+    <p style="color:#C7C7CC; font-size:14.5px; line-height:1.55; margin:4px 0 0">WholeLife Premium bundles every optional feature we build past the core tracker into one subscription, priced to cover the work rather than to squeeze a free app. It never changes how the free tier logs food or workouts, and nothing you have already logged is ever held back behind it.</p>
+  </div>
+</div>
+<!-- ==================== COPY: MARKUP END (Premium page) ==================== -->
+
+<!-- ==================== COPY: MARKUP START (Paywall) ==================== -->
+<div class="wlpay" role="dialog" aria-label="Premium paywall">
+  <div class="lock">🔒</div>
+  <h2>This one's a Premium feature</h2>
+  <p>Unlock every program, coach tool and health extra — and keep the free tracker exactly as it is.</p>
+  <p class="trial-line">Start with 2 weeks free. No charge today.</p>
+  <div class="wlpay-slide" id="wlPaySlide">
+    <div class="fill"></div>
+    <div class="lbl" id="wlPayLabel">Slide to start Premium</div>
+    <div class="handle" id="wlPayHandle" role="slider" aria-label="Slide to continue" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">›</div>
+  </div>
+  <button class="restore" type="button">Restore purchases</button>
+</div>
+<!-- ==================== COPY: MARKUP END (Paywall) ==================== -->
+
+<script>
+/* ==================== COPY: JS START ====================
+   TRIAL config + trial labelling + a working slide-to-pay demo.
+   In the app this merges with the existing WLCheckout / paywall code:
+   the slider's completion calls the same checkout opener as today.  */
+const TRIAL = {
+  open: false,   // ← flip to true ONLY after the trial is live on both
+                 //   Lemon Squeezy variants (test mode checked first)
+  days: 14,
+  note: 'Two weeks free, a gift from Aba Koomson “Bon Bon” to every new WholeLife Hub user.'
+};
+
+function applyTrial() {
+  document.body.classList.toggle('trial-on', TRIAL.open);
+  document.querySelectorAll('[data-trial-flag]').forEach(f =>
+    f.style.display = TRIAL.open ? '' : 'none');
+  const gift = document.querySelector('[data-gift]');
+  if (gift) gift.textContent = TRIAL.open ? TRIAL.note : '';
+  document.querySelectorAll('[data-checkout]').forEach(b =>
+    b.textContent = TRIAL.open
+      ? 'Start free trial'
+      : (b.dataset.checkout === 'monthly' ? 'Choose Monthly' : 'Choose Yearly'));
+  const lbl = document.getElementById('wlPayLabel');
+  if (lbl) lbl.textContent = TRIAL.open ? 'Slide to start your free trial' : 'Slide to start Premium';
+}
+applyTrial();
+
+/* demo-only toggle */
+document.getElementById('demoTrialToggle').addEventListener('click', e => {
+  TRIAL.open = !TRIAL.open;
+  e.target.textContent = TRIAL.open ? 'Preview with trial OFF' : 'Preview with trial ON';
+  applyTrial();
+});
+
+/* slide-to-pay (pointer + keyboard), same feel as the app's slider */
+(() => {
+  const slide = document.getElementById('wlPaySlide');
+  const handle = document.getElementById('wlPayHandle');
+  const fill = slide.querySelector('.fill');
+  let dragging = false;
+  const setPct = p => {
+    p = Math.max(0, Math.min(100, p));
+    const max = slide.clientWidth - 56;
+    handle.style.left = (4 + max * p / 100) + 'px';
+    fill.style.width = (p * 0.92 + 8) + '%';
+    handle.setAttribute('aria-valuenow', String(Math.round(p)));
+    return p;
+  };
+  const finish = p => {
+    if (p >= 92) { setPct(100); slide.dispatchEvent(new CustomEvent('wlpay:complete', { bubbles: true })); }
+    else setPct(0);
+  };
+  handle.addEventListener('pointerdown', e => { dragging = true; handle.setPointerCapture(e.pointerId); });
+  handle.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const r = slide.getBoundingClientRect();
+    setPct((e.clientX - r.left - 28) / (r.width - 56) * 100);
+  });
+  handle.addEventListener('pointerup', () =>
+    { dragging = false; finish(+handle.getAttribute('aria-valuenow')); });
+  handle.addEventListener('keydown', e => {
+    const now = +handle.getAttribute('aria-valuenow');
+    if (e.key === 'ArrowRight') finish(setPct(now + 12) >= 100 ? 100 : now + 12);
+    if (e.key === 'ArrowLeft') setPct(now - 12);
+    if (e.key === 'End') finish(100);
+  });
+  slide.addEventListener('wlpay:complete', () =>
+    alert('Demo only — in the app this opens the Lemon Squeezy checkout.'));
+})();
+/* ==================== COPY: JS END ==================== */
+</script>
+
+</body>
+</html>

@@ -43,7 +43,7 @@ const view = async (w, h = 900, mobile = false) => send("Emulation.setDeviceMetr
 const shot = async name => { if (!SHOTS) return; const r = await send("Page.captureScreenshot", { format: "png" }); writeFileSync(join(SHOTS, name + ".png"), Buffer.from(r.result.data, "base64")); };
 
 await send("Runtime.enable"); await send("Page.enable"); await send("Network.enable"); await send("Emulation.setFocusEmulationEnabled", { enabled: true });
-await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
+await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*", "*/vendor/supabase*"] });
 await send("Page.addScriptToEvaluateOnNewDocument", { source: FAKE });
 const ready = "typeof S !== 'undefined' && typeof SB !== 'undefined' && SB.booted === true && UI.loading === false";
 const boot = async (hash = "") => { await send("Page.navigate", { url: "http://127.0.0.1:8767/index.html" + hash }); await sleep(500); return waitFor(ready, 15000); };

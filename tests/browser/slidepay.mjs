@@ -45,7 +45,7 @@ if (q.get("autoclose")) setTimeout(() => parent.postMessage("close", "*"), 300);
 const onMsg = ws.onmessage;
 ws.onmessage = m => { const d = JSON.parse(m.data); if (d.method === "Fetch.requestPaused") { lsHits.push(d.params.request.url); send("Fetch.fulfillRequest", { requestId: d.params.requestId, responseCode: 200, responseHeaders: [{ name: "content-type", value: "text/html" }], body: Buffer.from(FAKE_LS).toString("base64") }); return; } onMsg(m); };
 await send("Fetch.enable", { patterns: [{ urlPattern: "*lemonsqueezy.com*" }] });
-await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
+await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*", "*/vendor/supabase*"] });
 await send("Page.addScriptToEvaluateOnNewDocument", { source: FAKE });
 const READY = "typeof S !== 'undefined' && typeof SB !== 'undefined' && SB.booted === true && UI.loading === false";
 

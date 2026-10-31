@@ -25,7 +25,7 @@ const csp = HEADERS["Content-Security-Policy"] || "";
 ok("every expected header is configured", ["Content-Security-Policy", "X-Content-Type-Options", "X-Frame-Options", "Referrer-Policy", "Permissions-Policy"].every(k => HEADERS[k]), Object.keys(HEADERS).join(","));
 ok("framing is refused twice (CSP and X-Frame-Options)", /frame-ancestors 'none'/.test(csp) && HEADERS["X-Frame-Options"] === "DENY");
 ok("no plugins, base tag or form posts to other sites", /object-src 'none'/.test(csp) && /base-uri 'self'/.test(csp) && /form-action 'self'/.test(csp));
-ok("scripts only from this site and jsDelivr", /script-src 'self' 'unsafe-inline' https:\/\/cdn\.jsdelivr\.net;/.test(csp));
+ok("scripts only from this site, no third-party script host", /script-src .self. .unsafe-inline.;/.test(csp) && !/jsdelivr/.test(csp));
 ok("frames only from the Lemon Squeezy store (the in-app checkout), nothing else", /frame-src https:\/\/wholelife\.lemonsqueezy\.com;/.test(csp) && (csp.match(/frame-src [^;]*/) || [""])[0].split(" ").length === 2);
 ok("the payment feature only for that same store, not this page or any other site", /payment=\("https:\/\/wholelife\.lemonsqueezy\.com"\)/.test(HEADERS["Permissions-Policy"] || ""));
 const ckHosts = [...readFileSync(join(REPO, "index.html"), "utf8").matchAll(/https:\/\/([a-z0-9-]+\.lemonsqueezy\.com)\/checkout\//g)].map(m => m[1]);
@@ -58,7 +58,7 @@ const ev = async expr => { const r = await send("Runtime.evaluate", { expression
 const waitFor = async (expr, ms = 8000) => { const t = Date.now(); while (Date.now() - t < ms) { try { if (await ev(expr)) return true; } catch {} await sleep(150); } return false; };
 
 await send("Runtime.enable"); await send("Page.enable"); await send("Network.enable");
-await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
+await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*", "*/vendor/supabase*"] });
 // Record every policy violation the page reports. Injected before any page script runs.
 await send("Page.addScriptToEvaluateOnNewDocument", { source: `window.__csp = []; document.addEventListener("securitypolicyviolation", e => window.__csp.push(e.violatedDirective + " " + e.blockedURI.slice(0, 80)));` });
 await send("Page.addScriptToEvaluateOnNewDocument", { source: FAKE });

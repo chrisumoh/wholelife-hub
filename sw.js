@@ -31,7 +31,7 @@
 'use strict';
 
 // Bump this on every meaningful change to force an old-cache clean-out.
-const VERSION = 'wlh-v1';
+const VERSION = 'wlh-v2';
 const SHELL_CACHE = VERSION + '-shell';   // the app document + manifest
 const ASSET_CACHE = VERSION + '-assets'; // images and fonts (cache-forever style)
 
@@ -40,7 +40,9 @@ const ASSET_CACHE = VERSION + '-assets'; // images and fonts (cache-forever styl
 const PRECACHE_URLS = [
   '/',                    // the whole app is one document
   '/manifest.webmanifest',
-  '/img/icon-192.png'
+  '/img/icon-192.png',
+  '/img/logo-320.webp',   // the in-app logo (same picture as the app icon)
+  '/vendor/supabase-js-2.117.2.umd.js' // the sign-in library is our own file now, so a cold offline start still has it
 ];
 
 // --- Install: warm the shell cache, then take over promptly --------------

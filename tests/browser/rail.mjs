@@ -37,7 +37,7 @@ const view = (w, h = 900) => send("Emulation.setDeviceMetricsOverride", { width:
 const shot = async name => { if (!process.env.SHOTS) return; const r = await send("Page.captureScreenshot", { format: "png" }); writeFileSync(join(process.env.SHOTS, name + ".png"), Buffer.from(r.data, "base64")); };
 const goto = async h => { await ev(`location.hash = ${JSON.stringify(h)}; true`); await sleep(500); await ev(`document.querySelectorAll(".spark, .chart-svg").forEach(e => e.classList.add("drawn")); true`); };
 await send("Runtime.enable"); await send("Page.enable"); await send("Network.enable");
-await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
+await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*", "*/vendor/supabase*"] });
 await send("Page.addScriptToEvaluateOnNewDocument", { source: FAKE });
 await send("Page.addScriptToEvaluateOnNewDocument", { source: `try { localStorage.setItem("wlh.rail", "1"); } catch {}` });
 const READY = "typeof S !== 'undefined' && typeof SB !== 'undefined' && SB.booted === true && UI.loading === false";
@@ -51,7 +51,7 @@ for (const premium of [false, true]) {
   const m = await ev(`(() => { const c = e => { const r = e.getBoundingClientRect(); return { cx: r.left + r.width / 2, top: r.top, h: r.height }; };
     const rows = [...document.querySelectorAll(".app.rail .side .nav > a, .app.rail .side .nav .navgrp-items > *")].filter(e => e.offsetParent), tiles = rows.map(r => c(r.querySelector(".si-tile")));
     const rail = document.querySelector(".side").getBoundingClientRect(), pitch = tiles.slice(1).map((t, i) => Math.round(t.top - tiles[i].top));
-    return { n: rows.length, axis: Math.round(rail.left + rail.width / 2), cx: tiles.map(t => Math.round(t.cx)), logo: Math.round(c(document.querySelector(".side .brand svg")).cx), avatar: Math.round(c(document.querySelector(".side .who .avatar")).cx), upsell: !!document.querySelector(".side .nav a.upsell"), btn: !!document.querySelector(".side .nav button.prem-trigger"), heights: [...new Set(rows.map(r => Math.round(r.getBoundingClientRect().height)))], pitch }; })()`);
+    return { n: rows.length, axis: Math.round(rail.left + rail.width / 2), cx: tiles.map(t => Math.round(t.cx)), logo: Math.round(c(document.querySelector(".side .brand svg, .side .brand .logo-svg")).cx), avatar: Math.round(c(document.querySelector(".side .who .avatar")).cx), upsell: !!document.querySelector(".side .nav a.upsell"), btn: !!document.querySelector(".side .nav button.prem-trigger"), heights: [...new Set(rows.map(r => Math.round(r.getBoundingClientRect().height)))], pitch }; })()`);
   const tag = premium ? "subscriber" : "free profile";
   ok(`${tag}: the expected Premium row is showing`, premium ? m.btn && !m.upsell : m.upsell && !m.btn, JSON.stringify(m));
   ok(`${tag}: every icon, the logo and the avatar share one centre line`, m.n >= 10 && m.cx.every(x => x === m.axis) && m.logo === m.axis && m.avatar === m.axis, JSON.stringify(m));

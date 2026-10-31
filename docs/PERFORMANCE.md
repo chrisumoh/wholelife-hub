@@ -65,7 +65,7 @@ Expected result of 1 and 2: first paint in about half a second on Fast 4G, and t
 
 - **Real phones.** Nothing here measures GPU cost: backdrop blur, glass cards and animation can cost frames on an older iPhone that headless Chrome can't show. Run Safari's Web Inspector on a real phone, or Lighthouse from Chrome on Android, before judging smoothness.
 - **Safari and Firefox.** Chrome only.
-- **The supabase-js download.** The test replaces it with a fake, so about 130 KB from jsDelivr is not counted, and neither is a real sign-in.
+- **The supabase-js download.** The test replaces it with a fake, so the supabase-js file is not counted, and neither is a real sign-in.
 - **Repeat visits and caching.** Every run is a cold load with the cache off.
 
 Re-run `node tests/perf/measure.mjs` after any of the changes above and update the table.

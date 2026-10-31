@@ -39,7 +39,7 @@ const view = (w, h = 900) => send("Emulation.setDeviceMetricsOverride", { width:
 
 // The 8.3.8 rings card: a seven-day picker, per-day rings, staggered draw-in.
 await send("Runtime.enable"); await send("Page.enable"); await send("Network.enable");
-await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*"] });
+await send("Network.setBlockedURLs", { urls: ["*jsdelivr.net*", "*/vendor/supabase*"] });
 await send("Page.addScriptToEvaluateOnNewDocument", { source: FAKE });
 const READY = "typeof S !== 'undefined' && typeof SB !== 'undefined' && SB.booted === true && UI.loading === false";
 await view(1100);
