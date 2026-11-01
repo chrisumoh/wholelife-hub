@@ -33,8 +33,34 @@ jobs:
           PERF_BASE_SHA: ${{ github.event.pull_request.base.sha }}
       # Scripts parse, the version agrees everywhere, vercel.json is valid, no secrets, food data is text only.
       - run: node --test tests/sync-recovery.cjs tests/pwa-kit.cjs
-      - run: node --test tests/license-logic.test.mjs tests/license-handler.test.mjs tests/delete-account-handler.test.mjs
+      - run: node --test tests/license-logic.test.mjs tests/license-handler.test.mjs tests/delete-account-handler.test.mjs tests/wl-coach-handler.test.mjs
       - run: node tests/check-repo.mjs
+
+  # Runs the coach SQL on a throwaway PostgreSQL 16 started just for this job (never Supabase, never production): ten real connections racing
+  # for the last slot, the rolling hour, failure paths, consent, privileges and row-level security. The handler tests use a pretend reserve and cannot prove these.
+  coach-database:
+    name: Coach database (disposable Postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci-only-disposable
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tests/db/coach-reserve.test.mjs
+        env:
+          PGHOST: localhost
+          PGPORT: "5432"
+          PGUSER: postgres
+          PGPASSWORD: ci-only-disposable
 
   browser-tests:
     name: Browser tests

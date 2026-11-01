@@ -54,7 +54,7 @@ await goPrivacy();
 let t = await glance();
 ok("the Privacy tab opens with a 'Your privacy at a glance' card", /Your privacy at a glance/.test(t), t);
 ok("it says data is on this device only and nobody is signed in", /On this device only/.test(t) && /Not signed in/.test(t), t);
-ok("it shows passcode off, 0 of 3 permissions, and terms not recorded", /Passcode encryption\s*Off/.test(t) && /0 of 3 on/.test(t) && /Not recorded on this device/.test(t), t);
+ok("it shows passcode off, 0 of 4 permissions, and terms not recorded", /Passcode encryption\s*Off/.test(t) && /0 of 4 on/.test(t) && /Not recorded on this device/.test(t), t);
 ok("the history starts empty with a plain message", /Nothing yet/.test(t) && !(await ev(`!!document.querySelector('[data-act="history-clear"]')`)), t);
 ok("the summary card comes first in the tab", await ev(`document.getElementById("privacy-glance") === document.querySelector("#app section.card")`));
 
@@ -66,7 +66,7 @@ let h = await stored();
 ok("three toggles wrote three entries, in order", h.map(x => x.k).join() === "photo-on,clips-on,photo-off", JSON.stringify(h));
 t = await glance();
 ok("the card lists them, newest first, in plain words", t.indexOf("Turned off photo meal logging") > -1 && t.indexOf("Turned off photo meal logging") < t.indexOf("Turned on the form check camera") && t.indexOf("Turned on the form check camera") < t.indexOf("Turned on photo meal logging"), t);
-ok("the permission count follows the toggles (1 of 3 on)", /1 of 3 on/.test(t), t);
+ok("the permission count follows the toggles (1 of 4 on)", /1 of 4 on/.test(t), t);
 ok("an entry carries only a kind and an ISO time, no names or health data", h.every(x => Object.keys(x).sort().join() === "at,k" && !isNaN(Date.parse(x.at))), JSON.stringify(h));
 await ev(`document.querySelector('[data-act="consent-body-toggle"]').click(); true`); await sleep(300);
 ok("the body studio toggle is logged too", (await stored()).at(-1).k === "body-on");

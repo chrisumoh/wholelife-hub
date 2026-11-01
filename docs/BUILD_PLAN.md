@@ -23,6 +23,9 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.4.8 | Coach: account-bound consent record, coach function input hardening, disposable-Postgres tests | IN PROGRESS: claude/project-thread-wiw67u (PR #85) |
+| 8.4.7 | Coach: atomic hourly limit and coach chat opt-in (review fixes) | IN PROGRESS: claude/project-thread-wiw67u (PR #85) |
+| 8.4.6 | Coach: WL Coach chat (wl-coach edge function, ai_coach_logs, chat card) | IN PROGRESS: claude/project-thread-wiw67u |
 | 8.4.5 | Security and monitoring review: two foreign-key indexes (owner-run), leaked-password steps, error_reports retention notes, supabase-js check | IN PROGRESS: build-8.4.5 |
 | 8.4.2 | Database: migration files renamed to the live ledger versions; DATABASE.md and SECURITY.md reconciled | IN PROGRESS: claude/project-thread-wz2kg6 |
 | 8.4 | Settings: Appearance with circular dark mode, Rounded/Crisp, English/Spanish and a review bar | IN PROGRESS: claude/project-thread-admi1j |
