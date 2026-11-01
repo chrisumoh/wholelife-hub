@@ -151,7 +151,7 @@ await ev(`(() => { const c = document.getElementById("sb-agree"); c.checked = tr
 const su = await ev(`({ calls: window.__signUps || [], saved: localStorage.getItem("wlh.consent"), tv: TERMS_VERSION, now: Date.now() })`);
 const d0 = su.calls[0]?.options?.data;
 ok("sign-up is sent once with the terms version and the time of agreement", su.calls.length === 1 && d0?.terms_version === su.tv && /^\d{4}-\d\d-\d\dT[\d:.]+Z$/.test(d0?.terms_accepted_at || "") && Math.abs(Date.parse(d0.terms_accepted_at) - su.now) < 60000, JSON.stringify(su.calls));
-ok("the version is the date the legal pages were last updated", await ev(`TERMS_VERSION === "2026-10-25" && LEGAL_UPDATED === "25 October 2026"`));
+ok("the version is the date the legal pages were last updated", await ev(`TERMS_VERSION === "2026-11-01" && LEGAL_UPDATED === "1 November 2026"`));
 ok("the same version and time are saved on this device", (() => { try { const c = JSON.parse(su.saved); return c.v === su.tv && c.at === d0.terms_accepted_at; } catch { return false; } })(), su.saved);
 ok("sign-up adds a 'terms' entry to the on-device history", await ev(`historyGet().some(x => x.k === "terms")`));
 ok("the confirmation message about the email link still shows", await ev(`/Check your email/.test(document.getElementById("pop-auth")?.textContent || "")`));
@@ -218,6 +218,7 @@ for (const [route, h2, mustHave] of [["eula", "End User License Agreement", /Lem
 ok("the footer and the sidebar link to both pages", await ev(`["#/eula", "#/dmca"].every(h => document.querySelector('.footlinks a[href="' + h + '"]') && document.querySelector('nav a[href="' + h + '"], .side a[href="' + h + '"], [data-route="' + h.slice(2) + '"]'))`) || await ev(`["#/eula", "#/dmca"].every(h => document.querySelector('.footlinks a[href="' + h + '"]'))`));
 ok("the DMCA page hides the optional phone row while no phone is set", await ev(`(() => { location.hash = "#/dmca"; return !/Phone:/.test(document.querySelector(".legal")?.textContent || ""); })()`));
 
+ok("the Privacy Policy describes friend messages and challenges, and no longer says friends involve no health data", await ev(`(() => { location.hash = "#/privacy-policy"; return true; })()`) && await (async () => { await sleep(500); const all = await ev(`document.body.innerText + " " + [...LEGAL_FOLD.values()].map(e => { const d = document.createElement("div"); d.innerHTML = e.html; return d.textContent; }).join(" ")`); return /Friend messages\./.test(all) && /500 characters/.test(all) && /either account is deleted/.test(all) && /Friend challenges\./.test(all) && /running total/.test(all) && !/No health data is part of it\./.test(all); })());
 ok("no uncaught exceptions", errors.length === 0, errors.join(" | ").slice(0, 400));
 console.log(`\n${pass} passed, ${fail} failed`);
 ws.close(); procs.forEach(p => { try { p.kill(); } catch {} }); process.exit(fail ? 1 : 0);
