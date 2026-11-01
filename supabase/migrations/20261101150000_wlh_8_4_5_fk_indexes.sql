@@ -1,4 +1,4 @@
--- 8.4.2: cover the two foreign keys the Supabase performance advisor flagged.
+-- 8.4.5: cover the two foreign keys the Supabase performance advisor flagged.
 -- friendships.requester_id: the read/delete policies and friend_list() filter on
 --   (requester_id = me or addressee_id = me); with an index on each side Postgres can use a BitmapOr
 --   instead of scanning the table. It also serves the on-delete-cascade lookup when an account is deleted.

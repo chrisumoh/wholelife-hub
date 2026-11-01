@@ -23,7 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
-| 8.4.2 | Security and monitoring review: two foreign-key indexes (owner-run), leaked-password steps, error_reports retention notes, supabase-js check | IN PROGRESS: build-8.4.2 |
+| 8.4.5 | Security and monitoring review: two foreign-key indexes (owner-run), leaked-password steps, error_reports retention notes, supabase-js check | IN PROGRESS: build-8.4.5 |
 | 8.4 | Settings: Appearance with circular dark mode, Rounded/Crisp, English/Spanish and a review bar | IN PROGRESS: claude/project-thread-admi1j |
 | 8.3.42 | Tests: fix controls, slidepay and rail on the make-over pass | IN PROGRESS: ultron/settings-compact-pass (PR #83) |
 | 8.3.41 | Tests: Trends tiles allowed by the dashboard card test | IN PROGRESS: ultron/settings-compact-pass (PR #83) |
@@ -110,7 +110,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 - App Store screenshots: retake after redesign settles
 - Review legal pages with a lawyer before charging money
 - Supabase: turn on leaked password protection (Auth settings; steps and a test plan in SECURITY.md; still disabled on 2026-11-01)
-- Supabase: run `20261101150000_wlh_8_4_2_fk_indexes.sql` (two small indexes, optional but recommended)
+- Supabase: run `20261101150000_wlh_8_4_5_fk_indexes.sql` (two small indexes, optional but recommended)
 - Supabase GitHub integration: connect with working directory ".", production branch main, production deploys off until one merge goes through cleanly
 
 ## Verification checklist (run for every phase, before merge)
