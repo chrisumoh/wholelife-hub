@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.4 (Dev Testing), build 8.4, 2026-10-30. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.4 (Dev Testing), build 8.4.1, 2026-10-31. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.4.1 · Legal: EULA and Copyright / DMCA pages
+
+- **Problem:** The app had Terms and a Privacy Policy but no End User License Agreement and no copyright (DMCA) policy, which a copyright owner needs in order to report a problem and which the safe harbour under 17 U.S.C. 512 relies on.
+- **Change:** Two new legal pages written for what the app really does (friends, messages, challenges, blocking, the under-13 screen, Google and email sign-in, passcode, Premium through Lemon Squeezy as seller and merchant of record with licence keys). They fold long sections behind Read more like the other legal pages. They are linked from the sidebar Legal group, the footer and the end of the Terms. Facts only the owner can give (DMCA agent, governing law, liability amount, court district) are bracketed placeholders for now. A release check fails while any placeholder shows. The Privacy Policy now describes friend messages and challenges, from what the database really stores.
+- **Where:** index.html: eulaView(), dmcaView() and the LEGAL_PAGES_UPDATED, LEGAL_GOVERNING_LAW, LEGAL_LIABILITY_CAP, DMCA_AGENT_* and DMCA_DISTRICT constants (after termsView), NAV, TITLES, DESCS, the route table, siteFooter(), the end of termsView(). tests/browser/legal.mjs (sections 6 and 7), tests/browser/legal-release.mjs, tests/legal-placeholders.mjs and its test, the Legal release check job in .github/workflows/tests.yml, docs/LEGAL_RELEASE.md. privacyPolicyView() (Friends, Friend messages, Friend challenges), LEGAL_UPDATED, TERMS_VERSION. APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/browser/legal.mjs. Run node tests/browser/legal-release.mjs: it is expected to fail while the DMCA agent, court district, governing law and liability cap are unfilled, and passes once they are. By hand: open #/eula and #/dmca (or Legal > EULA and Copyright / DMCA in the menu, or the footer links), press Read more on a section, and check the text against the app.
+- **Known limits:** Drafts, not legal advice: a lawyer should review them. The bracketed placeholders show on the live page until filled in, so do not merge until they are. The DMCA agent must also be registered with the U.S. Copyright Office. The new Privacy Policy paragraphs are product facts, not legal wording, and need the lawyer too. TERMS_VERSION is now 2026-11-01 but it is stored only at sign-up, so no existing user is asked to agree again; whether they should be is the owner's call (docs/LEGAL_RELEASE.md). The sign-up agreement still points only to the Terms and the Privacy Policy, not the EULA.
 
 ## 8.4 · Settings: Appearance: circular dark mode, Rounded or Crisp, English or Spanish, and a review bar
 

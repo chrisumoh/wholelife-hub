@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.4.1 | Legal: End User License Agreement and Copyright / DMCA pages (placeholders for the owner's facts) | IN PROGRESS: claude/project-thread-ddct6e. BLOCKED on owner facts, see docs/LEGAL_RELEASE.md |
 | 8.4 | Settings: Appearance with circular dark mode, Rounded/Crisp, English/Spanish and a review bar | IN PROGRESS: claude/project-thread-admi1j |
 | 8.3.42 | Tests: fix controls, slidepay and rail on the make-over pass | IN PROGRESS: ultron/settings-compact-pass (PR #83) |
 | 8.3.41 | Tests: Trends tiles allowed by the dashboard card test | IN PROGRESS: ultron/settings-compact-pass (PR #83) |

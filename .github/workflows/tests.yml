@@ -33,6 +33,7 @@ jobs:
           PERF_BASE_SHA: ${{ github.event.pull_request.base.sha }}
       # Scripts parse, the version agrees everywhere, vercel.json is valid, no secrets, food data is text only.
       - run: node --test tests/sync-recovery.cjs tests/pwa-kit.cjs
+      - run: node --test tests/legal-placeholders.test.mjs
       - run: node --test tests/license-logic.test.mjs tests/license-handler.test.mjs tests/delete-account-handler.test.mjs
       - run: node tests/check-repo.mjs
 
@@ -68,3 +69,19 @@ jobs:
           CHROME: /usr/bin/google-chrome
           CI: "1"
 
+  # Release gate for the legal pages: red while any owner-supplied fact (DMCA agent, court district, governing law,
+  # liability cap, contact details) is still a bracketed placeholder. Not part of "Browser tests" so those stay green.
+  # See docs/LEGAL_RELEASE.md. Do not make this required until the values are filled in.
+  legal-release:
+    name: Legal release check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tests/browser/legal-release.mjs
+        env:
+          CHROME: /usr/bin/google-chrome
+          CI: "1"
