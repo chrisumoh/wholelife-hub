@@ -107,6 +107,7 @@ Everything a person logs syncs, signed in, through the tables above. No migratio
 | `20261022030000` | `wlh_8_3_10_workout_challenges` | Challenges: `challenges`, `challenge_members` (RLS on, no direct grants), functions `create_challenge`, `respond_challenge`, `leave_challenge`, `my_challenges`, `challenge_board`. **Not applied until the owner runs it.** |
 | `20261022060000` | `wlh_8_3_17_friend_messages` | Friend messages: `friend_messages` with RLS and an accepted-friends trigger. Applied to the live project. |
 | `20261024120000` | `wlh_8_3_28_error_reports` | Crash reports: `error_reports`, insert-only for `anon` and `authenticated`, no read path. **Not applied until the owner runs it.** |
+| `20261101150000` | `wlh_8_4_2_fk_indexes` | Adds `friendships_requester_idx` and `member_blocks_blocked_idx` (see "Indexes and retention"). **Not applied until the owner runs it.** |
 
 ## Delete my account (8.3.32)
 
@@ -163,3 +164,15 @@ Done in 8.2.16: every log type, all profile fields and photos (above). Left:
 
 ## Edge function: license (8.3.21)
 No table. `supabase/functions/license` checks a Premium licence key with Lemon Squeezy and reads the order for the receipt; nothing is stored in the database. Deploy with `--no-verify-jwt` (a buyer may not be signed in). Secrets, set in Supabase and never committed: `LEMONSQUEEZY_API_KEY`, `LEMONSQUEEZY_STORE_ID`, `LEMONSQUEEZY_PRODUCT_ID_MONTHLY`, `LEMONSQUEEZY_PRODUCT_ID_YEARLY`, and `LEMONSQUEEZY_ALLOW_TEST=1` only while testing with test-mode keys. It answers `{ state: valid | invalid | expired | limit | error, plan, expires, instance, receipt }` and refuses keys from any other store or product (Monthly and Yearly are separate products; the product id gives the plan). Anything that is not a clear answer from Lemon Squeezy (429, 5xx, a non-JSON body, a transport failure) is `error`, never `invalid`, so an outage cannot end anyone's Premium. The app keeps each profile's key and device id on the device only (`wlh.lic@<account>`, a map by profile id). (8.3.25) `receipt` is `{ orderNo, date, currency, items, subtotal, discount, taxes: [{ label, amount, included }], total, paid }`, each set only when the order has it: `discount` only above zero, the tax label carries the rate ("VAT 20%"), `included` when the tax is inside the price, and `paid` only when the order status is `paid`. Deployed version 5 on 2026-10-23.
+
+## Indexes and retention (8.4.2, reviewed 2026-11-01)
+
+Checked read-only against the live project, then against a throwaway local Postgres 16 with 20,000 users and 20,000 friendships/blocks.
+
+- **`friendships.requester_id` and `member_blocks.blocked_id` (advisor: unindexed foreign keys).** Live tables are empty today, so nothing is slow yet. They are worth adding because: the `friendships` read/delete policies and `friend_list()` filter on `requester_id = me or addressee_id = me`, which was a sequential scan on the test data (4.8 ms) and became a BitmapOr over both indexes (2.0 ms); and deleting an account (`delete-account`) cascades into both columns. Cost: about 630 kB per index per 20,000 rows, and one extra index write per insert or delete on tables that change only when someone sends a request or blocks. Migration `20261101150000_wlh_8_4_2_fk_indexes.sql`, owner-run.
+- **Not changed:** the advisor's "unused index" notes (8 indexes on tables with almost no rows or no traffic yet) are expected before launch; re-check after real use, do not drop them now. `friendships_addressee_idx` is needed for the policy above.
+- **`error_reports` retention.** On 2026-11-01 the table held 48 rows (88 kB), oldest 2026-10-25, none older than 30 days. The guard refuses every new report at 20,000 rows and there is no automatic cleanup (`pg_cron` is not installed), so a full table would silently stop collecting errors. Nothing is deleted or scheduled by this build. Suggested routine, run by the owner in the SQL editor:
+  - Monthly check: `select count(*), min(created_at), max(created_at) from public.error_reports;` (act when the count passes about 10,000).
+  - Cleanup when needed: `delete from public.error_reports where created_at < now() - interval '30 days';` (look at the count with a `select` first).
+  - Optional automation: switch on the `pg_cron` extension, then use the commented `cron.schedule` line at the end of the error_reports migration.
+- **supabase-js.** Pinned at 2.117.2 in `vendor/`. Checked 2026-11-01: no published security advisories for supabase-js; latest stable is 2.118.0 (2026-10-15), with PostgREST and storage fixes and no CVE. No upgrade without a concrete need and the browser tests passing.

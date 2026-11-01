@@ -3836,7 +3836,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.4", build: "8.4", channel: "Dev Testing", date: "2026-10-30", week: "Sun 25 Oct – Sat 31 Oct 2026" };
+const APP_VERSION = { update: "8.4", build: "8.4.2", channel: "Dev Testing", date: "2026-11-01", week: "Sun 25 Oct – Sat 31 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3850,6 +3850,14 @@ const APP_VERSION = { update: "8.4", build: "8.4", channel: "Dev Testing", date:
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.4.2",
+      area:"Security and monitoring",
+      title:"Two foreign-key indexes, leaked-password steps, error report retention and a supabase-js check",
+      bug:"The Supabase advisor flagged friendships.requester_id and member_blocks.blocked_id as unindexed foreign keys and leaked-password protection as off. error_reports stops collecting at 20,000 rows with no cleanup plan, and CONTEXT.md still said supabase-js loads from jsDelivr.",
+      fix:"Added migration 20261101150000 with the two indexes (a throwaway Postgres test turned a sequential scan into a BitmapOr). Documented the owner steps and a non-production test plan for leaked-password protection, a monthly error_reports check and cleanup query, and the supabase-js review (2.117.2 kept: no advisories). Nothing was applied, deleted or changed in Supabase.",
+      where:"supabase/migrations/20261101150000_wlh_8_4_2_fk_indexes.sql, docs/DATABASE.md (Indexes and retention), docs/SECURITY.md (Leaked-password protection), docs/CONTEXT.md, docs/BUILD_PLAN.md, APP_VERSION, README.md.",
+      test:"node tests/check-repo.mjs. After the owner runs the migration: select indexname from pg_indexes where tablename in ('friendships','member_blocks'); and re-run the Supabase performance advisor.",
+      limits:"The migration is not applied until the owner runs it. Leaked-password protection is still off until the owner enables it in the dashboard. Live tables are empty, so the indexes help later, not today." },
     { id:"8.4",
       area:"Settings",
       title:"Appearance: circular dark mode, Rounded or Crisp, English or Spanish, and a review bar",

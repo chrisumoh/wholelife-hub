@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.4 (Dev Testing), build 8.4, 2026-10-30. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.4 (Dev Testing), build 8.4.2, 2026-11-01. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.4.2 · Security and monitoring: Two foreign-key indexes, leaked-password steps, error report retention and a supabase-js check
+
+- **Problem:** The Supabase advisor flagged friendships.requester_id and member_blocks.blocked_id as unindexed foreign keys and leaked-password protection as off. error_reports stops collecting at 20,000 rows with no cleanup plan, and CONTEXT.md still said supabase-js loads from jsDelivr.
+- **Change:** Added migration 20261101150000 with the two indexes (a throwaway Postgres test turned a sequential scan into a BitmapOr). Documented the owner steps and a non-production test plan for leaked-password protection, a monthly error_reports check and cleanup query, and the supabase-js review (2.117.2 kept: no advisories). Nothing was applied, deleted or changed in Supabase.
+- **Where:** supabase/migrations/20261101150000_wlh_8_4_2_fk_indexes.sql, docs/DATABASE.md (Indexes and retention), docs/SECURITY.md (Leaked-password protection), docs/CONTEXT.md, docs/BUILD_PLAN.md, APP_VERSION, README.md.
+- **How to test:** Run `node tests/check-repo.mjs`. After the owner runs the migration: `select indexname from pg_indexes where tablename in ('friendships','member_blocks');` and re-run the Supabase performance advisor.
+- **Known limits:** The migration is not applied until the owner runs it. Leaked-password protection is still off until the owner enables it in the dashboard. Live tables are empty, so the indexes help later, not today.
 
 ## 8.4 · Settings: Appearance: circular dark mode, Rounded or Crisp, English or Spanish, and a review bar
 
