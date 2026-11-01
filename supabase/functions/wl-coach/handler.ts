@@ -1,5 +1,5 @@
 // WL Coach, phase 1: answers one question from a signed-in person. The Anthropic key lives only in the function's secrets.
-// Order of work: check the person, check the message and consent, reserve a slot of the hourly quota (atomically, in the database),
+// Order of work: check the person, check the message, then reserve a slot (the database checks the person's recorded consent and the hourly quota atomically),
 // answer red-flag medical topics with a fixed reply (no model call),
 // pick a model, call it, log the exchange. The system prompt lives here and nowhere else: after any edit to it, run the eval
 // set in docs/AI_COACH.md and read ai_coach_logs for a day. Deploy with --no-verify-jwt (the token is checked here).
@@ -7,7 +7,7 @@
 const ORIGIN = /^(https:\/\/wholelife-hub[a-z0-9-]*\.vercel\.app|http:\/\/(localhost|127\.0\.0\.1):\d+)$/;
 export const SMALL_MODEL = "claude-haiku-5-5", BIG_MODEL = "claude-sonnet-5-5";
 export const MAX_TOKENS_OUT = 700;
-const MAX_MESSAGE = 1000, HOURLY_LIMIT = 30, TIMEOUT_MS = 25000;
+const MAX_MESSAGE = 1000, HOURLY_LIMIT = 30, TIMEOUT_MS = 25000, MAX_BODY = 8192;
 
 export const SYSTEM_PROMPT = `You are WL Coach, the friendly fitness and nutrition coach inside Whole Life Hub, an app for people whose food is often West African (jollof rice, waakye, egusi soup, fufu, banku, kenkey, eba, amala, pounded yam, suya, moi moi, akara, plantain, zobo). Use those foods first in meal ideas and keep their usual spellings. Give real portions; never copy a generic Western dish in place of a West African one.
 Rules:
@@ -32,6 +32,12 @@ const RED_FLAGS: RegExp[] = [
 export const SAFE_REPLY = "I can't help with this one. What you describe could be serious, and a coach isn't the right place for it. Please stop what you're doing and speak to a doctor or your local emergency number now, especially if it is happening right now. If you are thinking about hurting yourself, contact a crisis line or emergency services in your country, or tell someone near you straight away. I'm here for training and food questions whenever you're ready.";
 const BIG_HINT = /\b(plan|programme|program|schedule|routine|split|week|weekly|30[- ]day|meal prep|push\/?pull|periodi[sz]ation)\b/i;
 
+// What goes in the log's error column. Only a fixed set of short codes: never the provider's text, a token or any of the prompt.
+export const errorCode = (e: unknown): string => {
+  const name = (e as { name?: string })?.name, msg = (e as { message?: string })?.message || "";
+  if (name === "TimeoutError" || name === "AbortError") return "timeout";
+  return /^(not_configured|empty_reply|provider_http_\d{3})$/.test(msg) ? msg : "provider_error";
+};
 export const flagged = (m: string) => RED_FLAGS.some((r) => r.test(m));
 export const pickModel = (m: string) => (BIG_HINT.test(m) || m.length > 400 ? BIG_MODEL : SMALL_MODEL);
 
@@ -48,9 +54,12 @@ export type Log = { reply: string; route: "redflag" | "small" | "big"; model: st
 export type Model = { text: string; inputTokens: number; outputTokens: number };
 // What index.ts wraps the real Supabase and Anthropic calls into, so tests can pass pretend ones.
 export type Deps = {
+  // Null when the token is invalid or expired; throws when the auth service itself could not be reached.
   getUser: (token: string) => Promise<{ id: string } | null>;
-  // Counts and records the question in one locked step. Resolves to the new log row's id, or null when the hourly limit is used up; throws when it cannot say.
-  reserve: (userId: string, message: string, limit: number) => Promise<string | null>;
+  // False when the model key is missing: then no slot is taken and nothing is logged.
+  ready?: () => boolean;
+  // One locked step in the database: checks the person's recorded consent, counts the last hour, records the question. Throws when it cannot say.
+  reserve: (userId: string, message: string, limit: number) => Promise<{ status: "ok"; id: string } | { status: "rate_limited" | "consent_required" }>;
   ask: (model: string, system: string, message: string, signal: AbortSignal) => Promise<Model>;
   finish: (id: string, row: Log) => Promise<void>;
 };
@@ -61,27 +70,36 @@ export async function handle(req: Request, d: Deps): Promise<Response> {
 
   const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
   if (!token) return reply(req, { state: "unauthorized" }, 401);
-  let body: { message?: unknown; consent?: unknown } = {};
-  try { body = await req.json(); } catch { return reply(req, { state: "error" }, 400); }
-  const message = typeof body.message === "string" ? body.message.trim() : "";
+  // The body must be a small JSON object. null, arrays, numbers, strings and oversize bodies are refused before anything else runs.
+  let body: unknown = null;
+  try { const raw = await req.text(); if (raw.length > MAX_BODY) return reply(req, { state: "bad_message" }, 400); body = JSON.parse(raw); } catch { return reply(req, { state: "error" }, 400); }
+  if (!body || typeof body !== "object" || Array.isArray(body)) return reply(req, { state: "error" }, 400);
+  const asked = (body as { message?: unknown }).message;
+  const message = typeof asked === "string" ? asked.trim() : "";
   if (!message || message.length > MAX_MESSAGE) return reply(req, { state: "bad_message" }, 400);
 
-  // The app sends this only after the person turned on coach chat; the server refuses without it so a direct call cannot skip the step.
-  if (body.consent !== true) return reply(req, { state: "consent_required" }, 403);
-
   let user: { id: string } | null = null;
-  try { user = await d.getUser(token); } catch { user = null; }
+  try { user = await d.getUser(token); } catch { return reply(req, { state: "error" }, 503); }
   if (!user || !/^[0-9a-f-]{36}$/i.test(user.id)) return reply(req, { state: "unauthorized" }, 401);
 
-  // The slot is taken before any model call, so simultaneous requests cannot slip past the limit, and a failure to reserve blocks the call.
-  let id: string | null = null;
-  try { id = await d.reserve(user.id, message, HOURLY_LIMIT); } catch { return reply(req, { state: "error" }, 500); }
-  if (!id) return reply(req, { state: "rate_limited" }, 429);
+  // No model key: say so before taking a slot, so a setup problem neither spends the person's hourly limit nor writes a log row.
+  // A red-flag message needs no model, so it still gets its fixed safe reply.
+  if (!flagged(message) && d.ready && !d.ready()) return reply(req, { state: "unavailable" }, 503);
+
+  // The consent check and the slot are one step in the database, keyed to the account the token names. A "consent: true" in the body proves
+  // nothing (anyone can type it), so it is not read at all. Simultaneous requests cannot slip past the limit, and a failure here blocks the call.
+  let got: Awaited<ReturnType<Deps["reserve"]>>;
+  try { got = await d.reserve(user.id, message, HOURLY_LIMIT); } catch { return reply(req, { state: "error" }, 500); }
+  const st = got?.status;
+  if (st === "consent_required") return reply(req, { state: "consent_required" }, 403);
+  if (st === "rate_limited") return reply(req, { state: "rate_limited" }, 429);
+  if (st !== "ok" || typeof (got as { id?: unknown }).id !== "string") return reply(req, { state: "error" }, 500);
+  const id = (got as { id: string }).id;
 
   const t0 = Date.now();
   const row = (r: Partial<Log>): Log => ({ reply: "", route: "small", model: null, input_tokens: null, output_tokens: null, latency_ms: Date.now() - t0, error: null, ...r });
   // The reserved row already counts toward the limit, so a failed update loses the log detail but never the metering.
-  const save = async (r: Log) => { try { await d.finish(id!, r); } catch { console.warn("coach log write failed"); } };
+  const save = async (r: Log) => { try { await d.finish(id, { ...r, reply: r.reply.slice(0, 8000) }); } catch { console.warn("coach log write failed"); } };
 
   if (flagged(message)) {
     await save(row({ reply: SAFE_REPLY, route: "redflag" }));
@@ -91,12 +109,12 @@ export async function handle(req: Request, d: Deps): Promise<Response> {
   const model = pickModel(message), route = model === BIG_MODEL ? "big" : "small";
   try {
     const out = await d.ask(model, SYSTEM_PROMPT, message, AbortSignal.timeout(TIMEOUT_MS));
-    if (!out.text.trim()) throw new Error("empty reply");
+    if (typeof out?.text !== "string" || !out.text.trim()) throw new Error("empty_reply");
     await save(row({ reply: out.text, route, model, input_tokens: out.inputTokens, output_tokens: out.outputTokens }));
     return reply(req, { state: "ok", reply: out.text, flagged: false });
   } catch (e) {
     console.warn("coach model call failed");
-    await save(row({ route, model, error: String((e as Error)?.message || "error").slice(0, 300) }));
+    await save(row({ route, model, error: errorCode(e) }));
     return reply(req, { state: "error" }, 502);
   }
 }

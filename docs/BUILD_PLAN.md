@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.4.3 | Coach: account-bound consent record, coach function input hardening, disposable-Postgres tests | IN PROGRESS: claude/project-thread-wiw67u (PR #85) |
 | 8.4.2 | Coach: atomic hourly limit and coach chat opt-in (review fixes) | IN PROGRESS: claude/project-thread-wiw67u (PR #85) |
 | 8.4.1 | Coach: WL Coach chat (wl-coach edge function, ai_coach_logs, chat card) | IN PROGRESS: claude/project-thread-wiw67u |
 | 8.4 | Settings: Appearance with circular dark mode, Rounded/Crisp, English/Spanish and a review bar | IN PROGRESS: claude/project-thread-admi1j |

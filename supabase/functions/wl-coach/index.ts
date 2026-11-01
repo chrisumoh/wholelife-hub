@@ -7,20 +7,29 @@ const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SE
 const KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
 
 const deps: Deps = {
-  getUser: async (token) => { const { data, error } = await sb.auth.getUser(token); return error || !data.user ? null : { id: data.user.id }; },
+  // A rejected token (4xx) means signed out; anything else (network, 5xx) is the auth service failing, which must not look like an expired sign-in.
+  getUser: async (token) => {
+    const { data, error } = await sb.auth.getUser(token);
+    if (error) { const st = (error as { status?: number }).status ?? 0; if (st >= 400 && st < 500) return null; throw error; }
+    return data.user ? { id: data.user.id } : null;
+  },
+  ready: () => !!KEY,
   reserve: async (id, message, limit) => {
     const { data, error } = await sb.rpc("coach_reserve", { p_user: id, p_message: message, p_limit: limit });
     if (error) throw error;
-    return typeof data === "string" ? data : null;
+    const r = Array.isArray(data) ? data[0] : data;
+    if (r?.status === "ok" && typeof r.log_id === "string") return { status: "ok", id: r.log_id };
+    if (r?.status === "rate_limited" || r?.status === "consent_required") return { status: r.status };
+    throw new Error("unexpected reserve result");
   },
   ask: async (model, system, message, signal) => {
-    if (!KEY) throw new Error("ANTHROPIC_API_KEY is not set");
+    if (!KEY) throw new Error("not_configured");
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST", signal,
       headers: { "content-type": "application/json", "x-api-key": KEY, "anthropic-version": "2023-06-01" },
       body: JSON.stringify({ model, max_tokens: MAX_TOKENS_OUT, system, messages: [{ role: "user", content: message }] }),
     });
-    if (!r.ok) throw new Error(`model http ${r.status}`);
+    if (!r.ok) throw new Error(`provider_http_${r.status}`);
     const j = await r.json();
     const text = (j.content || []).filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("\n");
     return { text, inputTokens: j.usage?.input_tokens ?? 0, outputTokens: j.usage?.output_tokens ?? 0 };

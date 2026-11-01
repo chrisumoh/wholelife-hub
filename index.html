@@ -3836,7 +3836,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.4", build: "8.4.2", channel: "Dev Testing", date: "2026-10-30", week: "Sun 25 Oct – Sat 31 Oct 2026" };
+const APP_VERSION = { update: "8.4", build: "8.4.3", channel: "Dev Testing", date: "2026-11-01", week: "Sun 25 Oct – Sat 31 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3850,6 +3850,14 @@ const APP_VERSION = { update: "8.4", build: "8.4.2", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.4.3",
+      area:"Coach",
+      title:"Coach: consent is now checked by the account's database record, and the coach function fails safely on bad input",
+      bug:"A review of 8.4.2 asked whether consent: true in the request proves consent. It does not: anyone can type it, a direct call skipped the opt-in screen, and a second tab kept sending after the person turned coach chat off. The review also asked for the database function to be tested on a real PostgreSQL. Reading the function code found that a request body of null crashed it with an unhandled error, a missing model key was logged and used up a slot, a provider error message could be written to the log, and an auth-service outage looked like an expired sign-in.",
+      fix:"New table ai_coach_consent (one row per account) written only by coach_consent_set(), which acts on the signed-in person with a server-stamped time and cannot be pointed at another account. coach_reserve now checks that record under the same per-person lock before it counts or inserts, and answers ok, rate_limited or consent_required; the function turns the last into a 403 and no longer reads a consent flag from the request. The app saves the choice to the account before the switch turns on, turns the switch off at once on withdrawal and retries the account update if it fails, and follows a consent_required answer from another tab or device back to the opt-in. Focus moves to the question box after Allow and back to the button after a failed save; errors are announced. The function now refuses bodies that are not a small JSON object, returns 503 before taking a slot when the model key is missing (a red-flag message still gets its safe reply), separates an auth outage (503) from an expired token (401), logs only fixed error codes, and cuts an over-long reply to the column limit. The Privacy Policy now says the choice and its date are saved in the account. LEGAL_UPDATED and TERMS_VERSION move to 1 November 2026.",
+      where:"supabase/migrations/20261101120000_wlh_8_4_3_ai_coach_consent.sql (new, not applied; the 20261030120000 file is untouched). supabase/functions/wl-coach/handler.ts and index.ts. index.html: coachChatCard(), coachConsentSet(), coachConsentChange(), coachWithdrawRetry(), wlCoachSend(), sbUserChanged(), boot(), the wlc-optin and consent-coach-toggle cases, privacyPolicyView() sections 3 and 4 and the never-uploaded list, LEGAL_UPDATED, TERMS_VERSION, APP_VERSION, WLH.changelog. tests/db/coach-reserve.test.mjs (new, 11 checks on a disposable Postgres), tests/wl-coach-handler.test.mjs (20), tests/browser/coachchat.mjs (27), tests/browser/legal.mjs, .github/workflows/tests.yml (new coach-database job). CHANGELOG.md, README.md, docs/BUILD_PLAN.md, docs/DATABASE.md, docs/AI_COACH.md.",
+      test:"node --test tests/wl-coach-handler.test.mjs; node tests/browser/coachchat.mjs, privacy.mjs, legal.mjs. Database tests (disposable local Postgres only): PGHOST=<socket dir or localhost> PGPORT=<port> PGUSER=postgres node --test tests/db/coach-reserve.test.mjs. By hand after the SQL is applied on a non-production project: allow coach chat, ask a question, open a second tab, turn coach chat off in the first, send from the second and see the opt-in come back.",
+      limits:"Nothing was applied, deployed or called live. Consent is stored per account (latest state only, with its version and time), while the switch on the screen is per device profile, so a second profile or device on the same account shows the opt-in again once it is withdrawn elsewhere. A question already being answered when consent is withdrawn is still finished. A person can still record their own consent by calling the database function directly with their own token; that is their own choice made as themselves, not a way to claim anyone else's. The consent history shown in Settings stays on the device. Privacy Policy wording is copy, not legal advice." },
     { id:"8.4.2",
       area:"Coach",
       title:"Coach: the hourly limit now holds under simultaneous requests, and coach chat needs an opt-in",
@@ -9164,6 +9172,7 @@ function sbDiscardAndReload(){
 }
 window.addEventListener("storage", e => { if (e.key === SIGNOUT_KEY && signedOutElsewhere(e.newValue)) sbDiscardAndReload(); });
 async function sbUserChanged(now){
+  coachWithdrawRetry();
   if (now && now === STORE_UID) { if (UI.sessionExpired) { UI.sessionExpired = false; render(); sbKick(); } return; } // the same account signed back in
   if (!now && !STORE_UID) return;
   if (!now) { let raw = null; try { raw = localStorage.getItem(SIGNOUT_KEY); } catch {} if (signedOutElsewhere(raw)) sbDiscardAndReload(); else sbSessionLost(); return; }
@@ -12173,7 +12182,7 @@ function obGround(){ return `<div class="obg-bg" aria-hidden="true"><i></i><i></
 // is kept, never the birth date. Someone under 13 gets a plain "can't set up" screen, and the device refuses another try for 24 hours
 // (a flag in this browser; clearing site data removes it, so it deters a retry rather than guaranteeing one).
 const AGE_BLOCK_KEY = "wlh.ageblock", AGE_BLOCK_MS = 24 * 3600 * 1000, CONSENT_KEY = "wlh.consent";
-const TERMS_VERSION = "2026-10-31"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
+const TERMS_VERSION = "2026-11-01"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
 const ageBlocked = () => { try { return +localStorage.getItem(AGE_BLOCK_KEY) > Date.now(); } catch { return false; } };
 const blockAge = () => { try { localStorage.setItem(AGE_BLOCK_KEY, String(Date.now() + AGE_BLOCK_MS)); } catch {} };
 // Whole years old. The birth day is not asked, so a birthday this month counts as not reached yet.
@@ -13211,15 +13220,46 @@ function coachChatCard(){
       <li>${icon("lock","",16)}<span>Your question and the answer are saved in your account, and may be read by the app's owner to check answers are safe and to fix problems. Only you can read them from the app. Deleting your account deletes them.</span></li>
       <li>${icon("x","",16)}<span>Your logs and profile are not sent. Turn this off any time in Settings &gt; Privacy and security; the rest of the app works without it. WL Coach is not medical advice.</span></li>
     </ul>
-    <div class="row" style="margin-top:6px"><button class="btn primary" data-act="wlc-optin">Allow coach chat</button></div></section>`;
+    <div class="row" style="margin-top:6px"><button class="btn primary" data-act="wlc-optin"${C.consenting ? " disabled" : ""}>${C.consenting ? "Saving…" : "Allow coach chat"}</button></div>
+    ${C.err ? `<div class="note" role="alert">${esc(C.err)}</div>` : ""}</section>`;
   const msgs = (C.msgs || []).map(m => `<div class="well" style="margin:6px 0"><span class="tiny muted">${m.me ? "You" : "WL Coach"}</span><div class="small" style="white-space:pre-wrap">${esc(m.t)}</div></div>`).join("");
   return `<section class="card" id="wlc">${head}
     <p class="small muted">Training and food questions. WL Coach can't see your logs yet, so tell it what it needs to know. It is not medical advice.</p>
     <div id="wlc-log" aria-live="polite">${msgs}</div>
     <label class="f">Your question<textarea id="wlc-q" maxlength="1000" placeholder="For example: what should I eat after a workout?">${esc(C.q || "")}</textarea></label>
     <div class="row"><button class="btn primary" data-act="wlc-send"${C.busy ? " disabled" : ""}>${C.busy ? "Thinking…" : "Send"}</button></div>
-    ${C.err ? `<div class="note">${esc(C.err)}</div>` : ""}
+    ${C.err ? `<div class="note" role="alert">${esc(C.err)}</div>` : ""}
   </section>`;
+}
+// The opt-in is also recorded on the account (coach_consent_set, 8.4.3): the wl-coach function trusts that record, never a flag typed into the request,
+// so a direct call cannot skip the screen and a withdrawal stops every tab and device at once. The switch only turns on after the record is saved.
+const COACH_WD_KEY = "wlh.coachwd", COACH_UID_KEY = "wlh.coachuid";
+async function coachConsentSet(on){
+  const c = sbClient(); if (!c || !SB.user) return false;
+  try { const r = await c.rpc("coach_consent_set", { p_on: on, p_version: TERMS_VERSION }); return !r.error; } catch { return false; }
+}
+async function coachConsentChange(on){
+  const p = P(), C = UI.wlc = { ...(UI.wlc || {}), err: null };
+  if (C.consenting) return;
+  if (on) {
+    if (!SB.user) { toast("Sign in to turn on coach chat."); return; }
+    C.consenting = true; render();
+    const ok = await coachConsentSet(true);
+    C.consenting = false;
+    if (!ok) { C.err = "Couldn't save your choice. Check your connection and try again. Nothing was sent."; render(); $('#wlc [data-act="wlc-optin"]')?.focus(); return; }
+    try { localStorage.setItem(COACH_UID_KEY, SB.user?.id || ""); localStorage.removeItem(COACH_WD_KEY); } catch {}
+    p.coachChatConsent = true; historyAdd("coach-on"); saveProfile(); render(); $("#wlc-q")?.focus(); return;
+  }
+  // Off first, so this screen stops sending at once; then the account record. If that fails it is retried the next time this account signs in.
+  p.coachChatConsent = false; historyAdd("coach-off"); saveProfile(); render();
+  let uid = ""; try { uid = SB.user?.id || localStorage.getItem(COACH_UID_KEY) || ""; localStorage.setItem(COACH_WD_KEY, uid); } catch {}
+  if (SB.user && await coachConsentSet(false)) { try { localStorage.removeItem(COACH_WD_KEY); } catch {} }
+  else if (SB.user) toast("Coach chat is off here, but we couldn't update your account yet. We'll retry.", "warn");
+}
+async function coachWithdrawRetry(){
+  let uid = ""; try { uid = localStorage.getItem(COACH_WD_KEY) || ""; } catch {}
+  if (!uid || !SB.user || SB.user.id !== uid) return;
+  if (await coachConsentSet(false)) { try { localStorage.removeItem(COACH_WD_KEY); } catch {} }
 }
 async function wlCoachSend(){
   const C = UI.wlc = { ...(UI.wlc || {}), err: null };
@@ -13233,15 +13273,18 @@ async function wlCoachSend(){
   try {
     const { data } = await c.auth.getSession(), token = data?.session?.access_token;
     if (token) {
-      const r = await fetch(`${SB_URL}/functions/v1/wl-coach`, { method:"POST", headers:{ "content-type":"application/json", apikey:SB_KEY, authorization:`Bearer ${token}` }, body: JSON.stringify({ message:q, consent:true }) });
+      const r = await fetch(`${SB_URL}/functions/v1/wl-coach`, { method:"POST", headers:{ "content-type":"application/json", apikey:SB_KEY, authorization:`Bearer ${token}` }, body: JSON.stringify({ message:q }) });
       out = await r.json().catch(() => ({})); state = out.state || "error";
     } else state = "unauthorized";
   } catch { console.warn("coach request failed"); }
   C.busy = false;
+  // The account says no (withdrawn in another tab or on another device): this screen follows it.
+  if (state === "consent_required" && P().coachChatConsent) { const p = P(); p.coachChatConsent = false; historyAdd("coach-off"); saveProfile(); }
   if (state === "ok" && typeof out.reply === "string") { C.msgs = [...(C.msgs || []), { me:true, t:q }, { me:false, t:out.reply }].slice(-12); C.q = ""; }
   else C.err = state === "unauthorized" ? "Your sign-in has expired. Sign out, sign in again, then retry."
     : state === "rate_limited" ? "You've asked a lot this hour. Try again later."
-    : state === "consent_required" ? "Allow coach chat first."
+    : state === "consent_required" ? "Coach chat is off for your account. Allow it again to continue."
+    : state === "unavailable" ? "The coach isn't available right now. Try again later."
     : state === "bad_message" ? "Write a question under 1,000 characters."
     : "The coach couldn't answer just now. Try again in a moment.";
   render();
@@ -13711,7 +13754,7 @@ document.addEventListener("click", async e => {
     case "build-wplan": p.freq = Math.max(1, Math.min(6, numv("c-freq") || p.freq || 3)); p.level = val("c-level") || p.level; if (!p.workoutGoal) p.workoutGoal = p.freq; p.workoutPlan = { created: today(), days: buildWorkoutPlan(p) }; saveProfile(); render(); toast("Workout plan ready"); break;
     case "mark-done": { const d = p.workoutPlan.days.find(x => x.dow === +t.dataset.dow); const date = addDays(weekStart(today()), (d.dow + 6) % 7); addEntry("workouts", { id: uid(), date, type: d.type, minutes: d.minutes, note: d.title, src: "Plan" }); render(); toast("Nice work. Logged.", "success"); checkCelebrations(); checkAwards(); break; }
     case "coach-q": UI.askCoach = { ...(UI.askCoach||{}), q: t.dataset.q }; render(); document.getElementById("coach-q")?.focus(); break;
-    case "wlc-optin": p.coachChatConsent = true; historyAdd("coach-on"); saveProfile(); render(); break;
+    case "wlc-optin": coachConsentChange(true); break;
     case "wlc-send": wlCoachSend(); break;
     case "ask-coach": UI.askCoach = { ...(UI.askCoach||{}), q: val("coach-q") }; askClaude("coach"); break;
     case "rem-day": { const d = +t.dataset.v; const r = p.reminders; r.days = r.days.includes(d) ? r.days.filter(x => x !== d) : [...r.days, d].sort(); saveProfile(); render(); break; }
@@ -13781,7 +13824,7 @@ document.addEventListener("click", async e => {
     // lives, and it takes effect immediately because the views that gate on these flags re-check
     // them on every render.
     case "consent-photoai-toggle": p.photoAiConsent = !p.photoAiConsent; historyAdd(p.photoAiConsent ? "photo-on" : "photo-off"); saveProfile(); render(); break;
-    case "consent-coach-toggle": p.coachChatConsent = !p.coachChatConsent; historyAdd(p.coachChatConsent ? "coach-on" : "coach-off"); saveProfile(); render(); break;
+    case "consent-coach-toggle": coachConsentChange(!p.coachChatConsent); break;
     case "consent-clips-toggle": p.prem = p.prem || {}; p.prem.clipsConsent = !p.prem.clipsConsent; historyAdd(p.prem.clipsConsent ? "clips-on" : "clips-off"); saveProfile(); render(); break;
     case "consent-body-toggle": { const st = bodyState(p); st.on = !st.on; historyAdd(st.on ? "body-on" : "body-off"); saveProfile(); render(); if (st.on) bodyPhotoLockNudge(); break; }
     case "photoai-optin": p.photoAiConsent = true; historyAdd("photo-on"); saveProfile(); render(); break;
@@ -13979,7 +14022,7 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) holdS
   if ((await openRaw()) === "locked") UI.locked = true;
   if (S.activeId && !P()) S.activeId = S.profiles[0]?.id || null;
   await sbBoot();                   // 8.1.11: restore the sign-in and the cached meals
-  sbCheckGuest(); SB.booted = true;
+  sbCheckGuest(); SB.booted = true; coachWithdrawRetry();
   try { const f = sessionStorage.getItem("wlh.flash"); if (f) { sessionStorage.removeItem("wlh.flash"); setTimeout(() => toast(f), 300); } } catch {}
   UI.loading = false;
   readRoute();                      // now that the profile exists, the premium gate can judge
@@ -17262,7 +17305,7 @@ const CONTACT_EMAIL = "wholelifehub@hotmail.com";
 const LEGAL_BUSINESS_NAME = "Whole Life Hub";
 const MAILING_ADDRESS = "13022 Thunderhead Drive, Germantown, MD 20874";
 const REFUND_POLICY_TEXT = "Every charge has 14 days. Contact us within 14 days of any charge, the first one or a renewal, and we refund it in full, whether or not you have used Premium in that time, and you do not need a reason. After those 14 days the charge for that period is not refundable, but you can cancel at any time to stop the next one. Cancelling part way through a period leaves Premium running until the period you paid for ends, and we do not refund the unused part. Refunds go back to the card you paid with, through Lemon Squeezy, and can take up to 10 days to appear. If you were charged after cancelling, charged twice, charged the wrong amount, or charged without your permission, tell us and we refund it in full. Ending Premium never deletes anything: every meal, workout, weigh-in and photo stays exactly where it is. Nothing here reduces any right the law gives you where you live.";
-const LEGAL_UPDATED = "31 October 2026";
+const LEGAL_UPDATED = "1 November 2026";
 
 function applyCanonical(){
   if (/\[YOUR-DOMAIN\]/.test(SITE_URL)) return;              // nothing to point at yet
@@ -17346,7 +17389,7 @@ function privacyPolicyView(){
       <li><b>Photo meal logging and gym equipment photos.</b> The one photo you choose is sent to Claude, the AI this app runs on, for that one answer, along with a summary of your profile (age, goals, food culture) so the answer fits you. The photo is shrunk on your device and stripped of location data before it leaves. Typing calories in by hand instead sends nothing anywhere. Turn this off any time in Settings &gt; Privacy and security.</li>
       <li><b>Form check camera.</b> Turns on your camera to record a short clip. The clip is never uploaded — recording, review and playback all happen on this device, in the same encrypted storage as the rest of your hub. Importing a video file instead needs no camera permission at all.</li>
       <li><b>Body progress studio.</b> Same as above for still photos, with one difference: signed in, with Sync photos on (Settings › Privacy &amp; security, on by default), the photos are also copied to your private account storage, as described in section 4, so they appear on your other devices. They are hidden whenever your profile is locked.</li>
-      <li><b>Coach chat.</b> Off until you press Allow coach chat, and only for signed-in accounts. Each question you type is sent through our server to Anthropic, the company that makes Claude, which answers it; the question and the answer are also saved in your account (see section 4) and may be read by the app owner to check answers are safe and fix problems. No logs or profile details are sent with it. Do not type anything you would not want shared. Turn it off any time in Privacy &amp; security.</li>
+      <li><b>Coach chat.</b> Off until you press Allow coach chat, and only for signed-in accounts. Each question you type is sent through our server to Anthropic, the company that makes Claude, which answers it; the question and the answer are also saved in your account (see section 4) and may be read by the app owner to check answers are safe and fix problems. No logs or profile details are sent with it. Do not type anything you would not want shared. Your choice is also saved in your account, with the date, so the server can check it before every question; turn it off any time in Privacy &amp; security and the next question from any device is refused.</li>
       <li><b>Voice coach.</b> Reads the coach's reply aloud using your browser's built-in text-to-speech. It does not use your microphone and never records or sends audio anywhere.</li>
       <li><b>Imported health data</b> (Apple Health, Google Fit/Fitbit or similar exports). You choose the file; it is read in this browser and the file itself is never uploaded or sent anywhere. The workouts, weigh-ins and daily values it creates are saved like anything else you log, including to your account when you are signed in (section 4). There is no live, automatic connection to any health service, so there is nothing to "disconnect" — only files you choose to import.</li>
       <li><b>Recovery score</b> reads the same profile and logged data as the rest of the app (sleep, resting heart rate, training load, how you say you feel) to shape its daily read. Nothing here is sent to a third party. Cycle-aware plans, Doctor visit prep, and Fasting and Ramadan mode are listed on the Premium screen but not built yet — not found, skipped, per this app's own build-honestly rule; they collect nothing because there is nothing there to use yet.</li>
@@ -17364,11 +17407,12 @@ function privacyPolicyView(){
       <li><b>Weigh-ins:</b> the date and time and the weight.</li>
       <li><b>Daily vitals:</b> for each day, the steps, active calories, resting heart rate, sleep, water, blood oxygen and blood pressure you entered or imported.</li>
       <li><b>Each profile:</b> its name and basics (age, sex, height, weight, target weight, goal), your food culture, diet and allergies, calorie and workout goals, activity level and sport, your coach choice and name, your workout and meal plans, your coach questions, answers and check-ins, awards, reminders, appearance choices (theme, accent, font and text size), the layout and sizes of your home-screen cards, units, menu choices, grocery and pantry lists, weekly reviews, experiments, recovery check-ins, body measurements, your sharing choices, and the location of your profile picture and progress photos.</li>
+      <li><b>Coach chat choice,</b> if you used the coach chat switch: whether it is on, the version of these terms it was given under, and when you turned it on or off.</li>
       <li><b>Coach chat questions and answers,</b> if you turned on coach chat: what you asked, the reply, the date and time, which model answered, and how long it took. Only you can read them from the app, and they are removed when you delete your account.</li>
       <li><b>Photos</b> (meals, workouts, progress photos and your profile picture), unless you turn off Sync photos in Settings › Privacy &amp; security: each is stored as one file in a private area of your account, at a path made of your account id, the profile id, the kind of photo and the item id. Before it leaves your device it is re-saved as a JPEG of about 200 KB or less, which removes metadata such as where it was taken. Only your signed-in account can open it. Deleting the item (or its profile) deletes the file.</li>
     </ul>
     <p><b>Friends (optional).</b> If you turn on Friends in Settings › Household, your app name, whether people may find you by it (off until you choose), whether friends may see when you are online, the time you were last active, and your friend requests are saved in the same database. No health data is part of it. Only your app name can be searched, and only if you allow it; only accepted friends can see your online status. Leaving friends deletes the name and the requests.</p>
-    <p><b>Never uploaded:</b> form-check videos, whether you have Premium, which camera, photo-AI and coach chat permissions you switched on, the list of consent choices in Privacy &amp; security, and the file you pick when you import health data. Photos are not uploaded while Sync photos is off. Everything above is removed from this device when you sign out and comes back from your account when you sign in again.</p>
+    <p><b>Never uploaded:</b> form-check videos, whether you have Premium, which camera and photo-AI permissions you switched on, the list of consent choices in Privacy &amp; security, and the file you pick when you import health data. Photos are not uploaded while Sync photos is off. Everything above is removed from this device when you sign out and comes back from your account when you sign in again.</p>
     <p><b>Which copy wins.</b> If the same item is changed on two devices, the change made last wins, judged by the time each was saved to your account. A change made while a device is offline is kept on that device and uploaded when it is back online. A deletion is recorded in your account (the record is marked deleted) so your other devices remove the item too.</p>
     <p>If you set a passcode, what this browser stores is encrypted in your browser before it is saved, using AES-256-GCM with a key derived from your passcode by PBKDF2-SHA-256 at 600,000 iterations. The passcode itself is never stored or transmitted, which also means it cannot be recovered if you forget it. A passcode locks and encrypts the copy on this device only: while the app is unlocked it keeps syncing, and the copies in our database and your private photo storage are not encrypted with your passcode. While the app is locked it sends and receives nothing.</p>
     <p>Everything you store stays until you delete it. There is no automatic expiry and no schedule that clears old logs; deleting a single entry, a whole profile, or everything on this device (section 7) takes effect immediately.</p>

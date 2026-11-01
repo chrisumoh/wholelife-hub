@@ -53,7 +53,9 @@ ok("signed out: asks to sign in and has no send button", /Sign in to chat/.test(
 
 await ev(`SB.user = { id: "u_me", email: "me@example.com" }; window.__calls = [];
   window.fetch = async (u, o) => { if (String(u).includes("/functions/v1/wl-coach")) { window.__calls.push({ u: String(u), o }); return new Response(JSON.stringify({ state: window.__reply || "ok", reply: "Eggs <b>and</b> plantain." }), { status: 200 }); } return new Response("{}", { status: 404 }); };
-  sbClient().auth.getSession = async () => ({ data: { session: { access_token: "tok-123" } } }); true`);
+  sbClient().auth.getSession = async () => ({ data: { session: { access_token: "tok-123" } } });
+  window.__rpc = []; window.__rpcFail = false; sbClient().rpc = async (n, a) => { window.__rpc.push({ n, a }); return window.__rpcFail ? { error: { message: "down" } } : { error: null }; };
+  try { localStorage.removeItem("wlh.coachwd"); } catch {} true`);
 await goCoach();
 const t0 = await txt();
 ok("signed in, no consent: names Anthropic, the account storage and review, and offers Allow", /Anthropic/.test(t0) && /saved in your account/.test(t0) && /read by the app's owner/.test(t0) && await ev(`!!document.querySelector('[data-act="wlc-optin"]')`));
@@ -61,22 +63,45 @@ ok("no consent: there is no question box, and nothing was sent", !(await ev(`!!d
 await ev(`wlCoachSend(); true`); await sleep(200);
 ok("calling send without consent still sends nothing", (await ev(`window.__calls.length`)) === 0);
 
-await ev(`document.querySelector('[data-act="wlc-optin"]').click(); true`); await sleep(300);
+// The choice must reach the account first: if saving it fails, the switch stays off and nothing is sent.
+await ev(`window.__rpcFail = true; document.querySelector('[data-act="wlc-optin"]').click(); true`); await sleep(300);
+ok("if the account record cannot be saved, consent stays off and says so", await ev(`P().coachChatConsent !== true && !!document.querySelector('[data-act="wlc-optin"]') && !!document.querySelector('#wlc [role="alert"]')`) && /Nothing was sent/.test(await txt()));
+ok("after a failed save, focus returns to the Allow button", await ev(`document.activeElement?.dataset?.act === "wlc-optin"`));
+ok("a failed opt-in does not appear in the consent history", !(await ev(`historyGet().some(h => h.k === "coach-on")`)));
+await ev(`window.__rpcFail = false; document.querySelector('[data-act="wlc-optin"]').click(); true`); await sleep(300);
+ok("Allow records the choice on the account with the terms version", await ev(`window.__rpc.some(c => c.n === "coach_consent_set" && c.a.p_on === true && c.a.p_version === TERMS_VERSION)`));
 ok("Allow records the choice and shows the question box", await ev(`P().coachChatConsent === true && !!document.getElementById("wlc-q")`));
+ok("after Allow, focus moves to the question box", await ev(`document.activeElement?.id === "wlc-q"`));
 ok("the choice is in the consent history", await ev(`historyGet().some(h => h.k === "coach-on")`));
 ok("the send button is 44px tall", (await ev(`document.querySelector('[data-act="wlc-send"]').getBoundingClientRect().height`)) >= 44);
 
 await ev(`document.getElementById("wlc-q").value = "What should I eat?"; document.querySelector('[data-act="wlc-send"]').click(); true`);
 ok("the reply shows as plain text", await waitFor(`document.getElementById("wlc-log")?.innerText.includes("plantain")`) && !(await ev(`!!document.querySelector("#wlc-log b")`)));
 const c = await ev(`window.__calls[0]`);
-ok("it posts the question and consent with the person's token", !!c && c.u.endsWith("/functions/v1/wl-coach") && c.o.headers.authorization === "Bearer tok-123" && c.o.body === JSON.stringify({ message: "What should I eat?", consent: true }));
+ok("it posts the question with the person's token", !!c && c.u.endsWith("/functions/v1/wl-coach") && c.o.headers.authorization === "Bearer tok-123" && c.o.body === JSON.stringify({ message: "What should I eat?" }));
+ok("the request carries no client-side consent flag (the account record is what counts)", !/consent/.test(c.o.body));
 
 await ev(`window.__reply = "rate_limited"; document.getElementById("wlc-q").value = "again"; document.querySelector('[data-act="wlc-send"]').click(); true`); await sleep(500);
 ok("a rate limit says so and keeps the question", /a lot this hour/.test(await txt()) && await ev(`document.getElementById("wlc-q").value === "again"`));
 
-await ev(`document.querySelector('[data-act="consent-coach-toggle"]') || (location.hash = "#/settings/privacy", render()); true`); await sleep(500);
-await ev(`document.querySelector('[data-act="consent-coach-toggle"]').click(); true`); await sleep(300);
-ok("turning it off in Privacy & security withdraws consent", await ev(`P().coachChatConsent === false && historyGet().some(h => h.k === "coach-off")`));
+// A stale tab: the account says consent was withdrawn elsewhere. The server answers 403 and this screen follows it.
+await ev(`window.__reply = "consent_required"; document.getElementById("wlc-q").value = "stale"; document.querySelector('[data-act="wlc-send"]').click(); true`); await sleep(500);
+ok("a refusal from the account switches this screen back to the opt-in", await ev(`P().coachChatConsent === false && !!document.querySelector('[data-act="wlc-optin"]') && !document.getElementById("wlc-q")`));
+ok("an account refusal is not shown as a generic failure", !/couldn't answer/.test(await txt()));
+await ev(`window.__reply = "ok"; document.querySelector('[data-act="wlc-optin"]').click(); true`); await sleep(300);
+ok("allowing again restores the question box", await ev(`P().coachChatConsent === true && !!document.getElementById("wlc-q")`));
+
+await ev(`window.__calls.length = 0; window.__rpc.length = 0; document.querySelector('[data-act="consent-coach-toggle"]') || (location.hash = "#/settings/privacy", render()); true`); await sleep(500);
+await ev(`window.__rpcFail = true; document.querySelector('[data-act="consent-coach-toggle"]').click(); true`); await sleep(300);
+ok("turning it off in Privacy & security withdraws consent here at once, even if the account call fails", await ev(`P().coachChatConsent === false && historyGet().some(h => h.k === "coach-off")`));
+ok("a failed withdrawal is remembered for retry", await ev(`localStorage.getItem("wlh.coachwd") === "u_me"`));
+await ev(`wlCoachSend(); true`); await sleep(200);
+ok("with it off, a direct send call posts nothing", (await ev(`window.__calls.length`)) === 0);
+await ev(`window.__rpcFail = false; window.__rpc.length = 0; coachWithdrawRetry(); true`); await sleep(300);
+ok("the retry tells the account to withdraw and clears the note", await ev(`window.__rpc.length === 1 && window.__rpc[0].a.p_on === false && localStorage.getItem("wlh.coachwd") === null`));
+await ev(`P().coachChatConsent = true; window.__rpc.length = 0; true`);
+await ev(`location.hash = "#/settings/privacy"; render(); document.querySelector('[data-act="consent-coach-toggle"]').click(); true`); await sleep(300);
+ok("a normal withdrawal calls the account once and leaves nothing to retry", await ev(`window.__rpc.length === 1 && window.__rpc[0].a.p_on === false && localStorage.getItem("wlh.coachwd") === null`));
 await goCoach();
 ok("after withdrawing, the opt-in shows again", await ev(`!!document.querySelector('[data-act="wlc-optin"]')`));
 ok("no script errors", errors.length === 0, errors.join(" | "));
