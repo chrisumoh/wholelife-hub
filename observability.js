@@ -20,7 +20,7 @@
  *
  * WHERE IT GOES (switched on in 8.3.28)
  *   Reports are posted to this project's own `error_reports` table, created by
- *   supabase/migrations/20261024120000_wlh_8_3_28_error_reports.sql. That migration has to be applied
+ *   supabase/migrations/20261025042753_wlh_8_3_28_error_reports.sql. That migration has to be applied
  *   to the live project before reports are accepted; until it is, each one is rejected (one console
  *   warning, nothing else) and the app behaves exactly as before. With ENDPOINT cleared it runs in
  *   console-only mode again: errors are captured and visible in devtools, nothing leaves the device.

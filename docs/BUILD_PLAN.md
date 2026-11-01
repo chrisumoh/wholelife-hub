@@ -24,6 +24,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 | Build | Contents | Status |
 |---|---|---|
 | 8.4.5 | Security and monitoring review: two foreign-key indexes (owner-run), leaked-password steps, error_reports retention notes, supabase-js check | IN PROGRESS: build-8.4.5 |
+| 8.4.2 | Database: migration files renamed to the live ledger versions; DATABASE.md and SECURITY.md reconciled | IN PROGRESS: claude/project-thread-wz2kg6 |
 | 8.4 | Settings: Appearance with circular dark mode, Rounded/Crisp, English/Spanish and a review bar | IN PROGRESS: claude/project-thread-admi1j |
 | 8.3.42 | Tests: fix controls, slidepay and rail on the make-over pass | IN PROGRESS: ultron/settings-compact-pass (PR #83) |
 | 8.3.41 | Tests: Trends tiles allowed by the dashboard card test | IN PROGRESS: ultron/settings-compact-pass (PR #83) |
@@ -105,7 +106,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 ## Standing backlog
 
 - Payments: Lemon Squeezy is integrated (checkout 8.3.23–8.3.25, $7.99 monthly and $59.99 yearly, shown in the app) and the licence function is deployed in test mode. Charging for real waits on the legal placeholders in index.html: SITE_URL, CONTACT_EMAIL, LEGAL_BUSINESS_NAME, MAILING_ADDRESS and REFUND_POLICY_TEXT
-- Error reports: run `20261024120000_wlh_8_3_28_error_reports.sql` on the live project, then the tracker switched on in 8.3.28 collects reports (until then they are rejected and dropped)
+- Error reports: `error_reports` is applied on the live project (ledger version `20261025042753`, checked read-only 2026-11-01), so the tracker switched on in 8.3.28 collects reports. Retention is still manual (see docs/DATABASE.md)
 - Real photos/illustrations: any AI-generated imagery flagged for replacement
 - App Store screenshots: retake after redesign settles
 - Review legal pages with a lawyer before charging money
@@ -269,4 +270,4 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 - Done: `node --test tests/pwa-kit.cjs` (13, including the new check that the endpoint is this app's own project and that only the publishable key is shipped), `node tests/check-repo.mjs` (21, version, README and change log agree), `node tests/perf/size.mjs` (raw 2,091 of 5,000 KB, brotli 528 of 800, gzip 624 of 800), and `node --check` on `observability.js` and `tests/pwa-kit.cjs`.
 - Not run: the browser suite. There is no Chrome in this environment and no root to install one, so `tests/browser/legal.mjs` — which holds the updated 24 October 2026 assertion — has not been executed, and nothing has been looked at in a browser.
 - Not run, pre-existing: the phone timing gate, a11y.mjs, real-phone and Safari checks, and sign-in on a preview.
-- Database: no Supabase tool was run and nothing was applied. `20261024120000_wlh_8_3_28_error_reports.sql` is a repository file only, so the live insert, the RLS policy and the insert-only grants are untested against Postgres. Apply it, then send one report, before calling error tracking done.
+- Database: no Supabase tool was run and nothing was applied. `20261025042753_wlh_8_3_28_error_reports.sql` is a repository file only, so the live insert, the RLS policy and the insert-only grants are untested against Postgres. Apply it, then send one report, before calling error tracking done.

@@ -44,7 +44,7 @@ fine as a plain website wherever service workers are unavailable.
 The tracker is on: `CONFIG.ENDPOINT` points at the project's `error_reports`
 table and `CONFIG.ANON_KEY` holds the publishable key (the same one the app
 uses). The table is created by
-`supabase/migrations/20261024120000_wlh_8_3_28_error_reports.sql` — RLS on, an
+`supabase/migrations/20261025042753_wlh_8_3_28_error_reports.sql` — RLS on, an
 insert-only policy for `anon` and `authenticated`, no read path for the
 browser, and length caps on every text column. The SQL lives in the migration
 only; this doc does not keep a second copy.
