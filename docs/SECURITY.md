@@ -96,6 +96,19 @@ The site sends its own security headers on every response, set in `vercel.json`.
 - If the Supabase project URL changes, change `SB_URL` and the `connect-src` and `img-src` entries together.
 - Check it with `node tests/browser/headers.mjs`. It serves the folder with exactly these headers, opens every screen and fails on any violation. After a deploy, confirm the headers on the preview in the browser's Network tab.
 
+## Leaked-password protection (open, owner action)
+
+Supabase Auth can refuse passwords found in the HaveIBeenPwned breach list. It is a dashboard setting, not a migration, and the Supabase security advisor (`auth_leaked_password_protection`) still reported it **disabled on 2026-11-01**. This repo does not change it.
+
+Owner steps (Supabase dashboard, project Whole Life Hub): Authentication > Sign In / Providers (or Attack Protection, depending on the dashboard version) > Email > turn on "Prevent use of leaked passwords"; while there, check the minimum length is at least 8. The setting may require a paid Supabase plan; if the toggle is locked, note that and leave it.
+
+Check it worked, with a **non-production** project or branch and made-up test addresses only (never a real person's password):
+1. Sign up with the well-known password `password123`. Expect a refusal ("password is known to be weak / leaked"). A long random password must still succeed.
+2. While signed in, change the password to `password123`. Expect the same refusal.
+3. Use "forgot password" and set `password123` in the reset form. Expect the same refusal.
+4. Re-run the Supabase security advisor; `auth_leaked_password_protection` should be gone.
+Existing accounts are not affected until they next set a password. The app's sign-in form shows the server's error text, so check the message is readable.
+
 ## Reporting a problem
 
 Tell the project owner before writing about a vulnerability in an issue or pull request. Don't paste real keys, tokens or someone's health data into a pull request, issue or chat. If a leak is possible, rotate first.
