@@ -8,7 +8,7 @@ Deployed health, fitness, and nutrition web app: Personal Coach, meal and snack 
 
 ## Stack
 
-- Frontend: deployed web app, Apple Health-inspired flat design system (see docs/PROMPTS/master-prompt.md for exact tokens). Actual setup: no framework and no build step. The whole app is one file, `index.html` (markup, CSS and vanilla JS together), with self-hosted fonts in `fonts/`. The only dependency is supabase-js 2.117.2, loaded from jsDelivr by a pinned script tag with SRI. Run it by serving the folder (`python3 -m http.server 8080`); Supabase sign-in does not work from file://. Tests are node scripts in `tests/browser/` plus SQL in `tests/`.
+- Frontend: deployed web app, Apple Health-inspired flat design system (see docs/PROMPTS/master-prompt.md for exact tokens). Actual setup: no framework and no build step. The whole app is one file, `index.html` (markup, CSS and vanilla JS together), with self-hosted fonts in `fonts/`. The only dependency is supabase-js 2.117.2, served from this site (`vendor/supabase-js-2.117.2.umd.js`, with SRI). Run it by serving the folder (`python3 -m http.server 8080`); Supabase sign-in does not work from file://. Tests are node scripts in `tests/browser/` plus SQL in `tests/`.
 - Backend/database: Supabase (Postgres 17), email sign-in. Tables, ownership, sync keys, RLS, migrations and the migrations-only rule all live in [DATABASE.md](DATABASE.md). Security rules are in [SECURITY.md](SECURITY.md).
 - Hosting/deploy: Vercel. Production = main at wholelife-hub.vercel.app. Every branch gets a preview at wholelife-hub-git-<branch>-wholifehub.vercel.app (dots in the branch name are dropped).
 - Auth redirects: see "Auth redirect URLs" in [SECURITY.md](SECURITY.md).

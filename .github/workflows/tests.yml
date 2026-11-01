@@ -78,6 +78,35 @@ jobs:
         env:
           CHROME: /usr/bin/google-chrome
 
+  # Validates every committed SQL migration against an empty, disposable database.
+  # No Supabase credentials, production data, or paid preview branch are used.
+  database-migrations:
+    name: Database migrations (local PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply and verify migrations
+        run: bash tests/db/check-migrations.sh
+
   # The release gate: size and phone-speed budgets in tests/perf/budget.json (mid-range phone, a year of logs). About two minutes.
   # Make this check required in the repository's branch protection to stop a merge that makes the app slower or heavier.
   perf-gate:

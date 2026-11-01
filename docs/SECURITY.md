@@ -37,10 +37,10 @@ A browser can be shared. What one account leaves behind must not show up for the
 - New code that stores health data in `localStorage`, `sessionStorage` or IndexedDB must either key it by user id or be listed in the sign-out and erase paths. Add the key to the same function that clears the others.
 - Non-health preferences (theme, rail state, tour progress) may stay.
 - (8.2.16) Everything a person logs syncs (meals, snacks, drinks, workouts, weigh-ins, vitals, all profile fields and photos), signed in, with or without a passcode: a passcode encrypts the copy on the device only. Photos are re-encoded in the browser before upload, which strips location and other metadata, and go to the private `photos` bucket under `<user id>/`; only the signed-in account's folder is writable. Deleted entries delete their files. Never log a photo path or a row (SECURITY section 5). Form-check videos, premium status and consent switches are never uploaded. Adding a synced field or a new uploaded file type is a privacy change: update the privacy policy, `docs/DATABASE.md`, the change log and `tests/browser/account-sync.mjs` in the same build.
-- Workouts and weigh-ins (8.2.15) are copied to `workouts` and `weight_entries` (owner-only row security, same as meals) when signed in with no passcode. Workout photos and the other log types are not uploaded. Pulled rows go through `cleanLog()` before they reach memory, like anything read from storage. Adding a field to a synced kind is a privacy change: update the privacy policy, `docs/DATABASE.md`, the change log and `tests/browser/workout-sync.mjs` in the same build.
+- Workouts and weigh-ins (8.2.15) are copied to `workouts` and `weight_entries` (owner-only row security, same as meals) when signed in, with or without a passcode. Since 8.2.16 the other log types and photos upload too (previous bullet). Pulled rows go through `cleanLog()` before they reach memory, like anything read from storage. Adding a field to a synced kind is a privacy change: update the privacy policy, `docs/DATABASE.md`, the change log and `tests/browser/workout-sync.mjs` in the same build.
 - `wlh.history` is a short on-device log of consent and data choices (kind and ISO time only, at most 50, no names or health data). It is not in `LS_USER_BASES`, so "Delete everything" leaves it; "Clear history" in Settings removes it. Do not add profile names, emails or health values to it.
 - The Supabase session lives in `localStorage` (`wlh.sb.auth`) with `persistSession` on. That means any script running on the page can read the token, which is the reason for the script and XSS rules below.
-- With a passcode on, meals and profiles are not synced and stay encrypted on the device. Don't weaken that to make sync work.
+- A passcode encrypts the copy on the device only (8.2.16). Sync keeps running while the app is unlocked, and nothing is sent or received while it is locked. Rows and photos in the account are not encrypted with the passcode, so do not describe the passcode as protecting the account's copy. `tests/browser/account-sync.mjs` section 7 covers it.
 - Profile fields that go to the account are the whitelist `SB_PROF_COLS` / `SB_PROF_SET` / `SB_PREM_SYNC` in `index.html` (8.2.16: the basics, choices, plans, coach history, reminders, awards, appearance and layout, and a named subset of the premium-area state). The entitlement (`premium`), consent switches and form-check clips never go; progress photos go as files, not inside the row. Adding a field to the list is a privacy change: update the privacy policy text, `docs/DATABASE.md` and the change log in the same build, and `tests/browser/profile-sync.mjs`, which fails if a field outside the list reaches the account.
 
 ## 4. User text is rendered as text
@@ -95,6 +95,19 @@ The site sends its own security headers on every response, set in `vercel.json`.
 - (8.3.25) The one allowed frame is the Lemon Squeezy checkout, `frame-src https://wholelife.lemonsqueezy.com`, and the `payment` permission is granted to that origin only (for Apple Pay and Google Pay inside it). The app loads Lemon Squeezy's page in a sandboxed `<iframe>` (`allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox`, no top navigation) and does not load `lemon.js` or any other Lemon Squeezy script, so section 6 is unchanged. A message from the frame is accepted only when its `source` is that frame and its origin is the frame's origin; it may change wording, never grant Premium. If the store moves to a custom domain, change `CHECKOUT_URLS`, `frame-src` and the `payment` origin together; `tests/browser/headers.mjs` checks they agree.
 - If the Supabase project URL changes, change `SB_URL` and the `connect-src` and `img-src` entries together.
 - Check it with `node tests/browser/headers.mjs`. It serves the folder with exactly these headers, opens every screen and fails on any violation. After a deploy, confirm the headers on the preview in the browser's Network tab.
+
+## Leaked-password protection (open, owner action)
+
+Supabase Auth can refuse passwords found in the HaveIBeenPwned breach list. It is a dashboard setting, not a migration, and the Supabase security advisor (`auth_leaked_password_protection`) still reported it **disabled on 2026-11-01**. This repo does not change it.
+
+Owner steps (Supabase dashboard, project Whole Life Hub): Authentication > Sign In / Providers (or Attack Protection, depending on the dashboard version) > Email > turn on "Prevent use of leaked passwords"; while there, check the minimum length is at least 8. The setting may require a paid Supabase plan; if the toggle is locked, note that and leave it.
+
+Check it worked, with a **non-production** project or branch and made-up test addresses only (never a real person's password):
+1. Sign up with the well-known password `password123`. Expect a refusal ("password is known to be weak / leaked"). A long random password must still succeed.
+2. While signed in, change the password to `password123`. Expect the same refusal.
+3. Use "forgot password" and set `password123` in the reset form. Expect the same refusal.
+4. Re-run the Supabase security advisor; `auth_leaked_password_protection` should be gone.
+Existing accounts are not affected until they next set a password. The app's sign-in form shows the server's error text, so check the message is readable.
 
 ## Reporting a problem
 

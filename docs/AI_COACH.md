@@ -18,7 +18,7 @@ Function order (`supabase/functions/wl-coach/handler.ts`): check the token, chec
 - `PGHOST=<disposable local Postgres> PGPORT=<port> PGUSER=postgres node --test tests/db/coach-reserve.test.mjs`: runs both migrations on a throwaway database and checks, with real concurrent connections, that ten simultaneous reservations with 29 used give exactly one `ok`; separate people do not block each other; the rolling hour boundary; failed reservations and failed final updates; consent; that `anon` and `authenticated` cannot call `coach_reserve` or write either table; and row-level security. It refuses a non-local host. CI runs it in the `coach-database` job on a service container.
 - Not covered by any test: the live Anthropic API, the deployed function, the live Supabase project. Do those by hand (steps above).
 
-## Consent (decision, 8.4.3)
+## Consent (decision, 8.4.8)
 
 The browser's `consent: true` was a flag anyone could type, so it is no longer read. The proof is a row in `ai_coach_consent` (one per account: version, time granted, time withdrawn), written only by `coach_consent_set(p_on, p_version)` for the signed-in person (`auth.uid()`; there is no user argument, and the time is stamped by the database). A person can only record their own choice, and a withdrawal blocks the very next question from any tab or device. The screen's switch is per device profile and follows the account: it turns on only after the account record is saved, and a 403 from the function turns it back off. Only the latest state is kept; the consent history list in Settings stays on the device.
 
