@@ -52,6 +52,25 @@ jobs:
         env:
           CHROME: /usr/bin/google-chrome
 
+  # Only the Android prototype under mobile/. Installs from the lockfile, type-checks and bundles. No device run, no secrets.
+  mobile:
+    name: Mobile (Android prototype)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run bundle:android
+
   # The release gate: size and phone-speed budgets in tests/perf/budget.json (mid-range phone, a year of logs). About two minutes.
   # Make this check required in the repository's branch protection to stop a merge that makes the app slower or heavier.
   perf-gate:

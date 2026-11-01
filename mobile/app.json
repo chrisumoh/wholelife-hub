@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "WholeLife Hub",
+    "slug": "wholelife-hub-mobile",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "wholelifehub",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "app.wholelifehub.prototype",
+      "adaptiveIcon": {
+        "backgroundColor": "#0D3A2C",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      }
+    },
+    "plugins": ["expo-router"],
+    "experiments": { "typedRoutes": true }
+  }
+}
