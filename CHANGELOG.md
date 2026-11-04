@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.4 (Dev Testing), build 8.4.8, 2026-11-01. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.4 (Dev Testing), build 8.4.9, 2026-11-04. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.4.9 · Layout: WL Align Pass: stacked text blocks now line up on the left edge
+
+- **Problem:** Empty states, the Premium store hero, the paywall footer, the coach card on wide screens and the photo dropzone centred every line of a stacked block, so each line started at a different point and scanned badly.
+- **Change:** One CSS block added as the last style block: .empty, .np-empty and .emptybox, .prem-store and .prem-cta-fine, .pw-foot, .coachcard from 768px up, and (tier 2, borderline, its own rule) .dropzone are left-aligned. Inside .prem-store the plan picker, About block and footer are stretched so they stay full width. The slide-to-pay button sits outside .prem-store in .prem-cta-bar, so it is unchanged. Deliberately still centred: ring numbers, loaders, the celebration card, controls and labels, price table cells, the calendar title, icon-button captions, receipts and invoices, and single-line statuses.
+- **Where:** index.html: the WL ALIGN PASS style block before the closing body tag, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. CSS only: no scripts or markup changed.
+- **How to test:** Open Premium (#/premium), an empty list such as Meals with nothing logged, and the Coach card on a window 768px or wider: the text starts at the left edge. Delete the single .dropzone rule to keep that one centred.
+- **Known limits:** The a11y browser test could not run here because axe-core could not be downloaded; every other browser test passes.
 
 ## 8.4.8 · Coach: consent is now checked by the account's database record, and the coach function fails safely on bad input
 
