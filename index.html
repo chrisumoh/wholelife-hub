@@ -3836,7 +3836,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.4", build: "8.4.8", channel: "Dev Testing", date: "2026-11-01", week: "Sun 25 Oct – Sat 31 Oct 2026" };
+const APP_VERSION = { update: "8.4", build: "8.4.9", channel: "Dev Testing", date: "2026-11-04", week: "Sun 25 Oct – Sat 31 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3850,6 +3850,14 @@ const APP_VERSION = { update: "8.4", build: "8.4.8", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.4.9",
+      area:"Layout",
+      title:"WL Align Pass: stacked text blocks now line up on the left edge",
+      bug:"Empty states, the Premium store hero, the paywall footer, the coach card on wide screens and the photo dropzone centred every line of a stacked block, so each line started at a different point and scanned badly.",
+      fix:"One CSS block added as the last style block: .empty, .np-empty and .emptybox, .prem-store and .prem-cta-fine, .pw-foot, .coachcard from 768px up, and (tier 2, borderline, its own rule) .dropzone are left-aligned. Inside .prem-store the plan picker, About block and footer are stretched so they stay full width. The slide-to-pay button sits outside .prem-store in .prem-cta-bar, so it is unchanged. Deliberately still centred: ring numbers, loaders, the celebration card, controls and labels, price table cells, the calendar title, icon-button captions, receipts and invoices, and single-line statuses.",
+      where:"index.html: the WL ALIGN PASS style block before the closing body tag, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. CSS only: no scripts or markup changed.",
+      test:"Open Premium (#/premium), an empty list such as Meals with nothing logged, and the Coach card on a window 768px or wider: the text starts at the left edge. Delete the single .dropzone rule to keep that one centred.",
+      limits:"The a11y browser test could not run here because axe-core could not be downloaded; every other browser test passes." },
     { id:"8.4.8",
       area:"Coach",
       title:"Coach: consent is now checked by the account's database record, and the coach function fails safely on bad input",
@@ -24854,5 +24862,34 @@ h2.sec-title + .mgrid .mhead svg.ci{
 .wl-review-bar{ display:none; position:sticky; bottom:calc(12px + env(safe-area-inset-bottom,0px)); z-index:5; margin-top:14px; padding:14px; background:var(--surface); border:1px solid var(--line2); border-radius:var(--r-sm); box-shadow:0 8px 24px rgba(0,0,0,.18); }
 .wl-review-bar.show{ display:flex; flex-direction:column; gap:6px; }
 .wl-review-bar .btn{ min-height:44px; }
+</style>
+<style>
+/* ============================================================
+   WL ALIGN PASS - left-align stacked text blocks
+   Stacked multi-line text gets one alignment anchor: the left edge.
+   CSS only. Deliberately centred: .ring-center, .loader, .wl-load,
+   .cel-card, .badge, .tabs a, .stepper b, .np-tabs b, .mtag,
+   .pw-table cells, .wl-cal-title, .actbtn .tiny, .rc-*, .co-status,
+   .auth-terms, .accent-pop-caption.
+   ============================================================ */
+.empty{ text-align:left; }
+.np-empty{ align-items:flex-start; text-align:left; }
+.emptybox{ align-items:flex-start; text-align:left; }
+
+/* Premium store hero. The purchase button lives in .prem-cta-bar (outside
+   .prem-store), so it stays full-width; the full-width blocks inside the
+   card are stretched so left-aligning does not shrink them. */
+.prem-store{ align-items:flex-start; text-align:left; gap:16px; }
+.prem-store .plansel, .prem-store .prem-about, .prem-store .prem-foot{ align-self:stretch; }
+.prem-cta-fine{ text-align:left; }
+
+.pw-foot{ text-align:left; }
+
+@media (min-width:768px){
+  .coachcard{ align-items:flex-start; text-align:left; }
+}
+
+/* Tier 2 (borderline): strike this rule in review to keep the dropzone centred */
+.dropzone{ align-items:flex-start; text-align:left; }
 </style>
 </body></html>
