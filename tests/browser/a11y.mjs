@@ -91,14 +91,14 @@ for (const w of [375, 1440]) for (const mode of ["light", "dark"]) {
 }
 
 console.log("--- 3. keyboard and structure (what axe cannot see)");
-await view(1440); await setMode("light"); await ev(`document.querySelectorAll('[data-pop="close"]').forEach(b => b.click()); closePalette(); document.activeElement?.blur?.(); location.hash = "#/home"; true`); await sleep(700);
+await view(1440); await setMode("light"); await ev(`document.querySelectorAll('[data-pop="close"]').forEach(b => b.click()); closePalette(); document.activeElement?.blur?.(); location.hash = "#/home"; true`); await sleep(2500); // a slow CI machine was still re-rendering at 700ms and the first Tab landed on a node that was then replaced
 const key = async (k, code, vk) => { await send("Input.dispatchKeyEvent", { type: "keyDown", key: k, code, windowsVirtualKeyCode: vk, ...(k === "Enter" ? { text: "\r" } : {}) }); await send("Input.dispatchKeyEvent", { type: "keyUp", key: k, code, windowsVirtualKeyCode: vk }); await sleep(60); };
 // A newer headless Chrome only routes key events to a page it counts as focused; say so explicitly instead of relying on the default.
 await send("Page.bringToFront"); await send("Emulation.setFocusEmulationEnabled", { enabled: true });
 await ev(`document.body.focus(); true`);
 await key("Tab", "Tab", 9);
-const first = await ev(`({ cls: document.activeElement.className, text: document.activeElement.textContent.trim(), top: document.activeElement.getBoundingClientRect().top, vis: getComputedStyle(document.activeElement).display })`);
-ok("the first Tab stop is 'Skip to page content', and it is on screen when focused", first.cls === "skip-link" && first.text === "Skip to page content" && first.top >= 0, JSON.stringify(first));
+const first = await ev(`({ cls: document.activeElement.className, text: document.activeElement.textContent.trim(), top: document.activeElement.getBoundingClientRect().top, vis: getComputedStyle(document.activeElement).display, tag: document.activeElement.tagName, focused: document.hasFocus() })`);
+ok("the first Tab stop is 'Skip to page content', and it is on screen when focused", first.cls === "skip-link" && first.text === "Skip to page content" && first.top >= 0, JSON.stringify({ ...first, text: String(first.text).slice(0, 60) }));
 await key("Enter", "Enter", 13);
 ok("pressing it moves focus into the page content", await ev(`document.activeElement?.classList.contains("section") && document.activeElement.id === "sec-home"`), await ev(`document.activeElement?.tagName + "." + document.activeElement?.className`));
 const rings = [];
