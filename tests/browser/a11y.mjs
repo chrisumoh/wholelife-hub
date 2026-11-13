@@ -93,6 +93,8 @@ for (const w of [375, 1440]) for (const mode of ["light", "dark"]) {
 console.log("--- 3. keyboard and structure (what axe cannot see)");
 await view(1440); await setMode("light"); await ev(`document.querySelectorAll('[data-pop="close"]').forEach(b => b.click()); closePalette(); document.activeElement?.blur?.(); location.hash = "#/home"; true`); await sleep(700);
 const key = async (k, code, vk) => { await send("Input.dispatchKeyEvent", { type: "keyDown", key: k, code, windowsVirtualKeyCode: vk, ...(k === "Enter" ? { text: "\r" } : {}) }); await send("Input.dispatchKeyEvent", { type: "keyUp", key: k, code, windowsVirtualKeyCode: vk }); await sleep(60); };
+// A newer headless Chrome only routes key events to a page it counts as focused; say so explicitly instead of relying on the default.
+await send("Page.bringToFront"); await send("Emulation.setFocusEmulationEnabled", { enabled: true });
 await ev(`document.body.focus(); true`);
 await key("Tab", "Tab", 9);
 const first = await ev(`({ cls: document.activeElement.className, text: document.activeElement.textContent.trim(), top: document.activeElement.getBoundingClientRect().top, vis: getComputedStyle(document.activeElement).display })`);
