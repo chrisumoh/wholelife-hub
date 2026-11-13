@@ -163,6 +163,8 @@
   // ------------------------------------------------------------- AUTO-CAPTURE
   // Uncaught exceptions (including errors in the app's inline scripts).
   window.addEventListener('error', function (event) {
+    // Browsers raise this when a resize callback needs another frame. It is harmless (47 of the first 48 reports were this).
+    if (/^ResizeObserver loop/.test(event.message || '')) return;
     report('error', event.message, event.error && event.error.stack, event.filename || '');
   });
 

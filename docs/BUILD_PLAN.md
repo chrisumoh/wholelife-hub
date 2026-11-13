@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.4.10 | Health: ignore resize noise in error reports, fix welcome photo grid null error, review log docs/health/2026-11-13.md | IN PROGRESS: claude/project-thread-bkxx67 |
 | 8.4.9 | Layout: WL Align Pass, left-align stacked text blocks (CSS only) | IN PROGRESS: claude/project-thread-5fbrr8 |
 | 8.4.8 | Coach: account-bound consent record, coach function input hardening, disposable-Postgres tests | IN PROGRESS: claude/project-thread-wiw67u (PR #85) |
 | 8.4.7 | Coach: atomic hourly limit and coach chat opt-in (review fixes) | IN PROGRESS: claude/project-thread-wiw67u (PR #85) |

@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.4 (Dev Testing), build 8.4.9, 2026-11-04. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.4 (Dev Testing), build 8.4.10, 2026-11-13. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.4.10 · Health: Health check: stop logging harmless resize noise and fix a welcome photo grid error
+
+- **Problem:** A health check found two things. The error log table was almost all one harmless browser message (ResizeObserver loop), which hides real errors and fills the 20,000-row cap. And one real error was captured: the welcome photo grid could start animating before its first build and read a missing element (TypeError: reading 'style').
+- **Change:** observability.js now skips the ResizeObserver loop message. The photo grid's frame function returns early until the first build exists; the resize callback then builds and restarts it.
+- **Where:** observability.js (error listener). index.html: wlGrid frame, APP_VERSION, WLH.changelog. docs/health/2026-11-13.md (full review log), CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/check-repo.mjs and node --test tests/pwa-kit.cjs. Open the welcome screen on a slow device or throttle the CPU: no TypeError in the console. Read docs/health/2026-11-13.md for every finding.
+- **Known limits:** The live site could not be fetched from the review environment. Leaked-password protection in Supabase still needs Chris to turn it on. No database or function was changed.
 
 ## 8.4.9 · Layout: WL Align Pass: stacked text blocks now line up on the left edge
 

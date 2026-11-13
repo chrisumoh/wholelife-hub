@@ -3836,7 +3836,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.4", build: "8.4.9", channel: "Dev Testing", date: "2026-11-04", week: "Sun 25 Oct – Sat 31 Oct 2026" };
+const APP_VERSION = { update: "8.4", build: "8.4.10", channel: "Dev Testing", date: "2026-11-13", week: "Sun 25 Oct – Sat 31 Oct 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3850,6 +3850,14 @@ const APP_VERSION = { update: "8.4", build: "8.4.9", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.4.10",
+      area:"Health",
+      title:"Health check: stop logging harmless resize noise and fix a welcome photo grid error",
+      bug:"A health check found two things. The error log table was almost all one harmless browser message (ResizeObserver loop), which hides real errors and fills the 20,000-row cap. And one real error was captured: the welcome photo grid could start animating before its first build and read a missing element (TypeError: reading 'style').",
+      fix:"observability.js now skips the ResizeObserver loop message. The photo grid's frame function returns early until the first build exists; the resize callback then builds and restarts it.",
+      where:"observability.js (error listener). index.html: wlGrid frame, APP_VERSION, WLH.changelog. docs/health/2026-11-13.md (full review log), CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and node --test tests/pwa-kit.cjs. Open the welcome screen on a slow device or throttle the CPU: no TypeError in the console. Read docs/health/2026-11-13.md for every finding.",
+      limits:"The live site could not be fetched from the review environment. Leaked-password protection in Supabase still needs Chris to turn it on. No database or function was changed." },
     { id:"8.4.9",
       area:"Layout",
       title:"WL Align Pass: stacked text blocks now line up on the left edge",
@@ -12322,6 +12330,7 @@ function wlGrid(root, alive, calm){
   };
   const frame = now => {
     raf = 0; if (!alive()) return stop();
+    if (!plane || !L) return; // the visibility callback can fire before the first build; the resize callback builds and kicks again
     const dt = Math.min(.05, Math.max(.001, (now - last) / 1000)); last = now;
     if (st.intro < 1) { st.intro = Math.min(1, st.intro + dt / .9); plane.style.opacity = String(1 - (1 - st.intro) ** 3); }
     const rect = root.getBoundingClientRect(), hw = w / 2, hh = h / 2;
