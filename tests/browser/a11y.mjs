@@ -100,7 +100,8 @@ const pageHadFocus = await ev(`document.hasFocus()`);
 await key("Tab", "Tab", 9);
 // On the CI Chrome the page starts unfocused (hasFocus() is false) and the first Tab only moves focus into the page; the second reaches the first stop.
 // Locally the page is already focused, so this extra press never happens there.
-if (!pageHadFocus && await ev(`document.activeElement === document.body`)) await key("Tab", "Tab", 9);
+// CI reports hasFocus() true yet the first Tab can still be swallowed (the run for #90 and the 8.5 runs ended on <body>), so retry whenever focus is still on the body.
+for (let i = 0; i < 3 && await ev(`document.activeElement === document.body`); i++) await key("Tab", "Tab", 9);
 const first = await ev(`({ cls: document.activeElement.className, text: document.activeElement.textContent.trim(), top: document.activeElement.getBoundingClientRect().top, vis: getComputedStyle(document.activeElement).display, tag: document.activeElement.tagName, focused: document.hasFocus() })`);
 ok("the first Tab stop is 'Skip to page content', and it is on screen when focused", first.cls === "skip-link" && first.text === "Skip to page content" && first.top >= 0, JSON.stringify({ ...first, text: String(first.text).slice(0, 60) }));
 await key("Enter", "Enter", 13);
