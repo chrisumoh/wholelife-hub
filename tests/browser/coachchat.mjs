@@ -78,7 +78,7 @@ ok("the send button is 44px tall", (await ev(`document.querySelector('[data-act=
 await ev(`document.getElementById("wlc-q").value = "What should I eat?"; document.querySelector('[data-act="wlc-send"]').click(); true`);
 ok("the reply shows as plain text", await waitFor(`document.getElementById("wlc-log")?.innerText.includes("plantain")`) && !(await ev(`!!document.querySelector("#wlc-log b")`)));
 const c = await ev(`window.__calls[0]`);
-ok("it posts the question with the person's token", !!c && c.u.endsWith("/functions/v1/wl-coach") && c.o.headers.authorization === "Bearer tok-123" && c.o.body === JSON.stringify({ message: "What should I eat?" }));
+ok("it posts the question with the person's token", !!c && c.u.endsWith("/functions/v1/wl-coach") && c.o.headers.authorization === "Bearer tok-123" && c.o.body === JSON.stringify({ message: "What should I eat?", lang: "en" }));
 ok("the request carries no client-side consent flag (the account record is what counts)", !/consent/.test(c.o.body));
 
 await ev(`window.__reply = "rate_limited"; document.getElementById("wlc-q").value = "again"; document.querySelector('[data-act="wlc-send"]').click(); true`); await sleep(500);
