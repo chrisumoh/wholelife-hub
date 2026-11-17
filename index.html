@@ -3836,7 +3836,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.4", build: "8.4.10", channel: "Dev Testing", date: "2026-11-13", week: "Sun 25 Oct – Sat 31 Oct 2026" };
+const APP_VERSION = { update: "8.5", build: "8.5", channel: "Dev Testing", date: "2026-11-17", week: "Sun 15 Nov – Sat 21 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3850,6 +3850,14 @@ const APP_VERSION = { update: "8.4", build: "8.4.10", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.5",
+      area:"Language",
+      title:"Extend Spanish controls across logging, recipes, coaching and settings",
+      bug:"Spanish previously covered only navigation, Settings tabs and Appearance, leaving the main forms and controls in English.",
+      fix:"Added Spanish labels, form options, help copy and accessible names across meal and workout logging, snacks, recipe filters and plans, coach controls, profile, goals, household and privacy settings. Dates use Spanish formatting; user entries and stored values stay untouched. Claude sample prompts request Spanish answers when Spanish is selected.",
+      where:"index.html: WL_ES_UI, localizeUI(), morphInto(), fmtDay(), fmtLong(), opt(), render(), logging/recipe/coach views and askClaude(). tests/browser/appearance.mjs, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome node tests/browser/appearance.mjs. Switch to Español, visit Log, Snacks, Recipes, Coach and Settings, check labels and a 375px viewport; switch back and verify saved meal names.",
+      limits:"The catalog's 291 long-form recipes and snack preparation prose are still in English; WL Coach's server responses and some advanced components may be English. Spanish is per device. Browser test could not run in this environment because Chromium cannot create a socket; CI and preview checks remain necessary. No Supabase code or database changed." },
     { id:"8.4.10",
       area:"Health",
       title:"Health check: stop logging harmless resize noise and fix a welcome photo grid error",
@@ -8028,8 +8036,8 @@ const parseYmd = s => { const [y,m,d] = s.split("-").map(Number); return new Dat
 const addDays = (s, n) => { const d = parseYmd(s); d.setDate(d.getDate()+n); return ymd(d); };
 const monthOf = s => s.slice(0,7);
 const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-const fmtDay = s => parseYmd(s).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});
-const fmtLong = s => parseYmd(s).toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+const fmtDay = s => parseYmd(s).toLocaleDateString(WLA.lang === "es" ? "es" : undefined,{weekday:"short",month:"short",day:"numeric"});
+const fmtLong = s => parseYmd(s).toLocaleDateString(WLA.lang === "es" ? "es" : undefined,{weekday:"long",month:"long",day:"numeric"});
 const round = (n, p=0) => { const f = 10**p; return Math.round(n*f)/f; };
 const kgToLb = kg => kg * 2.20462;
 const lbToKg = lb => lb / 2.20462;
@@ -11402,7 +11410,7 @@ const I = {
 // width/height are set explicitly: a viewBox-only SVG dropped into a flex row gets stretched
 // to the container (the 884px dumbbell and bell bugs), and CSS alone can't undo that reliably.
 const icon = (k, cls="", size=20) => `<svg class="ico ${cls}" data-icon="${k}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${I[k]}</svg>`;
-const opt = (list, val) => list.map(([v,l]) => `<option value="${esc(v)}"${String(v)===String(val??"")?" selected":""}>${esc(l)}</option>`).join("");
+const opt = (list, val) => list.map(([v,l]) => `<option value="${esc(v)}"${String(v)===String(val??"")?" selected":""}>${esc(tr(l))}</option>`).join("");
 function countryOptions(val){
   return `<option value="">Choose a country or region</option>` + REGIONS.map(r => `<optgroup label="${esc(r.n)}">${r.countries.map(c => `<option${c===val?" selected":""}>${esc(c)}</option>`).join("")}</optgroup>`).join("");
 }
@@ -11571,6 +11579,161 @@ try {
   if (WL_LANGS.some(x => x[0] === a.lang)) WLA.lang = a.lang;
 } catch {}
 const tr = s => (WLA.lang === "es" && WL_ES[s]) || s;
+// Static interface copy is translated after each morph. This keeps the language switch
+// reversible without changing saved entries, recipe identifiers, or form values.
+const WL_ES_UI = {
+  "Home":"Inicio", "Breadcrumb":"Ruta de navegación", "Skip to page content":"Saltar al contenido", "Current time":"Hora actual", "Main":"Principal",
+  "Open menu":"Abrir menú", "Close menu":"Cerrar menú", "View profile":"Ver perfil", "Lock now":"Bloquear ahora",
+  "Snack":"Bocadillo", "Log a meal":"Registrar una comida", "Log meal":"Registrar comida", "Log this meal":"Registrar esta comida",
+  "Meal":"Comida", "Date":"Fecha", "What did you eat?":"¿Qué comiste?", "Calories":"Calorías", "Portion":"Porción",
+  "Regular portion":"Porción normal", "Half portion":"Media porción", "Smaller portion":"Porción pequeña", "Large portion":"Porción grande", "Double portion":"Porción doble",
+  "Start typing: jollof, waakye, egusi…":"Empieza a escribir: jollof, waakye, egusi…", "Filled from the catalog":"Se completa desde el catálogo",
+  "Guess the calories":"Estimar las calorías", "From a photo":"Desde una foto", "Eating out":"Comer fuera",
+  "Today":"Hoy", "Previous day":"Día anterior", "Next day":"Día siguiente", "Change day":"Cambiar de día", "Left":"Restantes", "Total":"Total",
+  "Extras":"Extras", "Remove":"Quitar", "Add":"Añadir", "Done":"Listo", "Nothing added":"Nada añadido", "Anything added?":"¿Añadiste algo?",
+  "Something else":"Otra cosa", "e.g. extra stew, fried egg":"p. ej., más guiso, huevo frito", "Last 7 days":"Últimos 7 días",
+  "Log your weight":"Registrar tu peso", "Weight":"Peso", "Save weight":"Guardar peso", "Add a target line":"Añadir una meta",
+  "No meals logged yet today. Log one above, or let the coach pick from your food culture.":"Aún no has registrado comidas hoy. Registra una arriba o deja que el entrenador elija según tu cultura gastronómica.",
+  "See today's menu":"Ver el menú de hoy", "Oil, sauce and drinks add up fast. Tap anything that went with this meal.":"El aceite, las salsas y las bebidas suman calorías. Selecciona lo que acompañó esta comida.",
+  "Weigh-ins let you compare the estimate with what really happened.":"Los registros de peso te permiten comparar la estimación con los resultados reales.",
+  "Separate from meals":"Por separado de las comidas", "Today's snacks":"Bocadillos de hoy", "Nothing logged yet today":"Aún no has registrado nada hoy",
+  "Nothing logged yet. Pick from the list or add your own.":"Aún no has registrado nada. Elige de la lista o añade uno propio.",
+  "Add your own snack":"Añade un bocadillo", "e.g. roasted groundnuts, 1 handful":"p. ej., un puñado de cacahuetes tostados",
+  "Add to today":"Añadir a hoy", "Snack ideas":"Ideas para bocadillos", "Search snacks":"Buscar bocadillos", "Region":"Región",
+  "West Africa":"África occidental", "Rest of Africa":"Resto de África", "Americas & Caribbean":"Américas y el Caribe", "Europe":"Europa", "Asia & Middle East":"Asia y Oriente Medio", "All":"Todos",
+  "No common allergens":"Sin alérgenos comunes", "Allergens":"Alérgenos", "How to make it":"Cómo prepararlo", "Servings":"Porciones",
+  "1 serving":"1 porción", "2 servings":"2 porciones", "½ serving":"½ porción", "3 servings":"3 porciones", "4 servings":"4 porciones", "No snacks match.":"No hay bocadillos que coincidan.",
+  "Pagination":"Paginación", "Previous":"Anterior", "Next":"Siguiente", "Ingredients":"Ingredientes", "Method":"Preparación", "Ways to cook it":"Formas de prepararlo",
+  "Lighter version":"Versión más ligera", "Higher protein":"Más proteínas", "Serve with":"Acompañar con", "Meal prep":"Preparación anticipada",
+  "Meal plan":"Plan de comidas", "Build a meal plan":"Crear un plan de comidas", "Plan length":"Duración del plan", "3 days":"3 días", "7 days":"7 días",
+  "Grocery list":"Lista de compras", "Rebuild plan":"Rehacer el plan", "Build my plan":"Crear mi plan", "Food focus":"Preferencia gastronómica", "change":"cambiar",
+  "No match":"Sin coincidencias", "Beyond the catalog":"Más allá del catálogo", "Ask for something different":"Pide algo diferente", "What sounds good?":"¿Qué te apetece?",
+  "e.g. something with plantain and beans, under 500 cal":"p. ej., algo con plátano y frijoles de menos de 500 cal", "Suggest dishes":"Sugerir platos", "Thinking…":"Pensando…", "Stop":"Detener",
+  "Ingredients and method":"Ingredientes y preparación", "Recipe library":"Biblioteca de recetas", "Search":"Buscar", "All regions":"Todas las regiones", "Any meal":"Cualquier comida",
+  "Diet":"Dieta", "Any":"Cualquiera", "Vegan":"Vegana", "Vegetarian":"Vegetariana", "Gluten-free":"Sin gluten", "High protein":"Alta en proteínas", "Lower carb":"Menos carbohidratos",
+  "Dish or ingredient: egusi, plantain…":"Plato o ingrediente: egusi, plátano…", "Nothing matches. Clear a filter.":"Sin coincidencias. Quita algún filtro.",
+  "Your food culture":"Tu cultura gastronómica", "Country or region":"País o región", "This week":"Esta semana",
+  "Your weekly plan":"Tu plan semanal", "Workout advice":"Consejos de entrenamiento", "Days":"Días", "Level":"Nivel", "Rebuild":"Rehacer", "Mark done":"Marcar como hecho",
+  "Goal":"Objetivo", "Style":"Estilo", "Not set":"Sin definir", "Frequency not set":"Frecuencia sin definir", "Sports":"Deportes", "Train for a sport":"Entrenar para un deporte",
+  "Sport":"Deporte", "Choose a sport":"Elige un deporte", "Ask your coach":"Pregunta a tu entrenador", "Questions about training or food":"Preguntas sobre entrenamiento o comida",
+  "Your question":"Tu pregunta", "Ask":"Preguntar", "Chat with your coach":"Chatea con tu entrenador", "Ask WL Coach":"Pregunta a WL Coach",
+  "Before your first question, here is exactly what happens to it:":"Antes de tu primera pregunta, esto es exactamente lo que ocurre:",
+  "Allow coach chat":"Permitir el chat con el entrenador", "Saving…":"Guardando…", "You":"Tú", "Send":"Enviar",
+  "For example: what should I eat after a workout?":"Por ejemplo: ¿qué debería comer después de entrenar?",
+  "Settings sections":"Secciones de ajustes", "Color mode":"Modo de color", "Bouncy":"Animado", "Reduced":"Reducido", "Targets":"Metas",
+  "Daily calories":"Calorías diarias", "Workouts per week":"Entrenamientos por semana", "Goal weight":"Peso objetivo", "No target":"Sin meta",
+  "Suggested":"Sugerido", "Use this":"Usar este valor", "Save targets":"Guardar metas", "Profiles":"Perfiles", "Add a profile":"Añadir perfil",
+  "Unnamed":"Sin nombre", "Active":"Activo", "No goal":"Sin objetivo", "Switch":"Cambiar", "Cancel":"Cancelar", "Hold to delete":"Mantén pulsado para borrar",
+  "Privacy and security":"Privacidad y seguridad", "Private storage":"Almacenamiento privado", "No IDs in links":"Sin identificadores en enlaces", "Checked on load":"Validación al cargar",
+  "Passcode encryption":"Cifrado con código", "Auto-lock":"Bloqueo automático", "Collects less":"Recopilación mínima", "Encrypted in transit":"Cifrado en tránsito",
+  "New passcode":"Nuevo código", "Confirm":"Confirmar", "Change passcode":"Cambiar código", "Current passcode":"Código actual", "Turn off encryption":"Desactivar el cifrado",
+  "Passcode (8+ characters)":"Código (8 caracteres o más)", "Confirm passcode":"Confirma el código", "Turn on encryption":"Activar el cifrado",
+  "Your data":"Tus datos", "Export my data":"Exportar mis datos", "Download (JSON)":"Descargar (JSON)", "Download my data (JSON)":"Descargar mis datos (JSON)",
+  "Delete my account and data":"Eliminar mi cuenta y mis datos", "Delete everything":"Eliminar todo", "Confirm delete":"Confirmar eliminación", "Permissions":"Permisos",
+  "Weigh-ins":"Registros de peso", "Days of vitals":"Días con datos de salud", "Stored size":"Espacio utilizado", "Stored encrypted.":"Almacenado con cifrado.",
+  "How the numbers work":"Cómo se calculan las cifras", "Motion":"Movimiento", "Save":"Guardar", "Discard":"Descartar"
+};
+Object.assign(WL_ES_UI, {
+  "Breakfast":"Desayuno", "Lunch":"Almuerzo", "Dinner":"Cena", "Beginner":"Principiante", "Intermediate":"Intermedio", "Advanced":"Avanzado",
+  "No goal yet":"Aún sin objetivo", "General wellness":"Bienestar general", "Build strength":"Ganar fuerza", "Lose weight":"Bajar de peso",
+  "Gain weight / muscle":"Ganar peso o músculo", "Improve endurance":"Mejorar la resistencia", "Build healthy habits":"Crear hábitos saludables",
+  "Walking and cardio":"Caminar y cardio", "Strength training":"Entrenamiento de fuerza", "Yoga and mobility":"Yoga y movilidad", "Mixed training":"Entrenamiento mixto",
+  "No preference":"Sin preferencia", "No meals to repeat.":"No hay comidas para repetir.", "Meal logged":"Comida registrada", "Meal deleted":"Comida eliminada",
+  "Add what you ate first.":"Primero indica qué comiste.", "Add the calories for this meal.":"Añade las calorías de esta comida.",
+  "Leave the calorie box empty and hit":"Deja vacío el campo de calorías y pulsa",
+  "Blank means no target: the dashboard just shows what you've logged.":"Si dejas una meta en blanco, el panel solo mostrará lo que hayas registrado.",
+  "Add age, height and weight in your profile to get a suggested calorie target. Sex is optional; leaving it out just makes the estimate a little rougher.":"Añade tu edad, estatura y peso a tu perfil para obtener una meta sugerida de calorías. El sexo es opcional; sin él, la estimación será menos precisa.",
+  "Sets the mix of dishes in meal plans and daily picks. The recipe library always shows everything.":"Determina la mezcla de platos en los planes de comidas y las sugerencias diarias. La biblioteca de recetas siempre muestra todos los platos.",
+  "Each profile has its own goals, logs and plans. Switch any time from the menu.":"Cada perfil tiene sus propios objetivos, registros y planes. Puedes cambiar de perfil desde el menú.",
+  "Bouncy adds the spring animations. Reduced turns them off, and your device's own \"reduce motion\" setting always wins.":"Animado añade movimientos elásticos. Reducido los desactiva; la preferencia de movimiento reducido de tu dispositivo siempre tiene prioridad.",
+  "You'll need the passcode each time you open WholeLife.":"Necesitarás el código cada vez que abras WholeLife.",
+  "I understand that if I forget this passcode, my WholeLife data can't be recovered.":"Entiendo que, si olvido este código, no podré recuperar mis datos de WholeLife.",
+  "A JSON file with your logs, plans and settings.":"Un archivo JSON con tus registros, planes y ajustes.",
+  "Each of these asked you once, the first time you tried to use it. Turn any of them back off here — the feature stops immediately and asks again next time.":"Cada función pidió permiso la primera vez que intentaste usarla. Puedes desactivarla aquí; se detendrá de inmediato y volverá a pedir permiso la próxima vez.",
+  "Whole Life Hub is for personal tracking and isn't medical or nutrition advice.":"Whole Life Hub sirve para el seguimiento personal y no ofrece asesoramiento médico ni nutricional.",
+  "Sign in to chat with WL Coach. Chat needs an account because your questions are sent to our server, and from there to an AI service, to be answered.":"Inicia sesión para chatear con WL Coach. El chat requiere una cuenta porque tus preguntas se envían a nuestro servidor y, desde allí, a un servicio de IA para obtener una respuesta.",
+  "Your question is sent through our server to Anthropic, the company that makes Claude, to get an answer. Anything you type may be sent, so leave out names and details you would not want shared.":"Tu pregunta se envía a través de nuestro servidor a Anthropic, la empresa que desarrolla Claude, para obtener una respuesta. No incluyas nombres ni datos que no quieras compartir.",
+  "Your question and the answer are saved in your account, and may be read by the app's owner to check answers are safe and to fix problems. Only you can read them from the app. Deleting your account deletes them.":"Tu pregunta y la respuesta se guardan en tu cuenta. El propietario de la aplicación puede leerlas para comprobar la seguridad de las respuestas y corregir problemas. Solo tú puedes verlas desde la aplicación. Al eliminar tu cuenta, también se eliminan.",
+  "Your logs and profile are not sent. Turn this off any time in Settings > Privacy and security; the rest of the app works without it. WL Coach is not medical advice.":"Tus registros y tu perfil no se envían. Puedes desactivar esta función en Ajustes > Privacidad y seguridad; el resto de la aplicación seguirá funcionando. WL Coach no ofrece asesoramiento médico.",
+  "Training and food questions. WL Coach can't see your logs yet, so tell it what it needs to know. It is not medical advice.":"Haz preguntas sobre entrenamiento y alimentación. WL Coach aún no puede ver tus registros, así que dale la información que necesite. No ofrece asesoramiento médico.",
+  "Pick how many days you can train and your level, then build a plan. It uses your goal and exercise style.":"Elige cuántos días puedes entrenar y tu nivel; después crea un plan basado en tu objetivo y tu estilo de ejercicio.",
+  "Warm up 5–10 minutes before each session. Stop if something hurts, not just burns, and check with a doctor before starting if you have a health condition.":"Calienta entre 5 y 10 minutos antes de cada sesión. Detente si sientes dolor y consulta a un médico antes de comenzar si tienes alguna condición de salud.",
+  "Rebuild your weekly plan and these sessions replace some of the general ones.":"Rehaz tu plan semanal para que estas sesiones sustituyan algunas sesiones generales.",
+  "Soccer, basketball, running, American football, swimming or tennis: get conditioning and skill sessions for it.":"Fútbol, baloncesto, running, fútbol americano, natación o tenis: obtén sesiones de preparación física y técnica.",
+  "Claude answers using your profile and this week's logs. It uses your own Claude usage and asks permission the first time.":"Claude responde usando tu perfil y los registros de esta semana. Consume tu propio uso de Claude y pide permiso la primera vez.",
+  "Ask anything about your workouts, meals or goals":"Pregunta sobre tus entrenamientos, comidas u objetivos",
+  "Describe what you want (ingredients you have, a craving, a budget) and Claude suggests three dishes with how to make them, using your profile. This uses your own Claude usage and asks your permission the first time.":"Describe lo que buscas (ingredientes, antojos o presupuesto) y Claude te sugerirá tres platos y cómo prepararlos según tu perfil. Consume tu propio uso de Claude y pide permiso la primera vez.",
+  "Nothing added":"Nada añadido", "No common allergens":"Sin alérgenos comunes", "Delete":"Eliminar", "Keep":"Conservar", "Press and hold for 1.5 seconds to confirm":"Mantén pulsado 1,5 segundos para confirmar"
+});
+Object.assign(WL_ES_UI, {
+  "Change":"Cambiar", "Add photo":"Añadir foto", "Unnamed profile":"Perfil sin nombre", "Units":"Unidades", "Weight estimate on":"Estimación de peso activada",
+  "About you":"Sobre ti", "Name":"Nombre", "Age":"Edad", "Sex":"Sexo", "Sex (for calorie estimates)":"Sexo (para calcular calorías)",
+  "Female":"Mujer", "Male":"Hombre", "Prefer not to say":"Prefiero no decirlo", "Body":"Cuerpo", "Height":"Estatura", "Starting weight":"Peso inicial",
+  "Latest weigh-in":"Último peso registrado", "Height (ft)":"Estatura (pies)", "Height (in)":"Estatura (pulgadas)", "Height (cm)":"Estatura (cm)",
+  "Daily nutrition":"Nutrición diaria", "Training":"Entrenamiento", "Main goal":"Objetivo principal", "Exercise style":"Estilo de ejercicio", "None":"Ninguno",
+  "Food":"Alimentación", "Preference":"Preferencia", "Avoid":"Evitar", "Nothing listed":"Nada indicado", "Food preference":"Preferencia alimentaria",
+  "Allergies or foods to avoid":"Alergias o alimentos que debes evitar", "e.g. peanuts, shellfish":"p. ej., cacahuetes, mariscos",
+  "Profiles on this hub":"Perfiles en este espacio", "Switch profile":"Cambiar perfil", "Active profile":"Perfil activo",
+  "Everyone in the household gets their own targets, logs and meal plan. They all live in this hub and share its passcode.":"Cada persona del hogar tiene sus propias metas, registros y plan de comidas. Todos los perfiles viven aquí y comparten el mismo código.",
+  "You're the only profile here so far.":"Por ahora, este es el único perfil.",
+  "Your coach":"Tu entrenador", "Rename your coach":"Cambiar el nombre del entrenador", "Rename":"Renombrar", "Save name":"Guardar nombre",
+  "Switch coach":"Cambiar de entrenador", "Name your coach":"Ponle nombre a tu entrenador", "Choose your coach":"Elige a tu entrenador",
+  "Optional. Letters, numbers and spaces, up to 24 characters.":"Opcional. Letras, números y espacios; máximo 24 caracteres.",
+  "The advice and the numbers stay the same. What changes is how it's said to you.":"Los consejos y las cifras no cambian. Solo cambia la forma en que te habla.",
+  "Use this coach":"Usar este entrenador", "Something new":"Una novedad",
+  "Your coach can now speak in one of three ways. Everything you have logged stays exactly as it is, and you can switch or rename your coach any time in Settings.":"Tu entrenador ahora puede hablarte de tres maneras. Tus registros no cambian y puedes cambiar o renombrar al entrenador cuando quieras en Ajustes."
+});
+Object.assign(WL_ES_UI, {
+  "Recent":"Recientes", "Recent meals":"Comidas recientes", "Often":"Frecuentes", "Meals you log often":"Comidas que registras a menudo",
+  "Hide imports":"Ocultar importaciones", "Import from Apple Health or another app":"Importar desde Apple Health u otra aplicación",
+  "Import your iPhone export":"Importar el archivo de tu iPhone", "Google Health, Fitbit and other apps":"Google Health, Fitbit y otras aplicaciones",
+  "Import a workout file":"Importar un archivo de entrenamiento", "Why not automatic sync?":"¿Por qué no hay sincronización automática?",
+  "Manual entry":"Registro manual", "Log a workout":"Registrar un entrenamiento", "Activity":"Actividad", "Minutes":"Minutos",
+  "Calories (optional)":"Calorías (opcional)", "Estimated if blank":"Se estiman si queda vacío", "Notes":"Notas",
+  "e.g. legs, 5K, pickup soccer":"p. ej., piernas, 5 km, fútbol informal", "Save workout":"Guardar entrenamiento", "Dismiss":"Cerrar",
+  "Weekly goal":"Meta semanal", "Set a weekly goal":"Definir una meta semanal", "Workout history":"Historial de entrenamientos",
+  "Delete workout":"Eliminar entrenamiento", "Show more":"Mostrar más", "Open your coach":"Abrir tu entrenador",
+  "No workouts yet. Log one above, import a file from your phone, or mark a session done with your coach.":"Aún no hay entrenamientos. Registra uno arriba, importa un archivo del teléfono o marca una sesión como hecha con tu entrenador.",
+  "On iPhone: Health app, then your photo, then Export All Health Data. Unzip it and choose":"En el iPhone: abre Salud, toca tu foto y elige Exportar todos los datos de salud. Descomprime el archivo y selecciona",
+  ". Large files are fine; it's read in pieces on this device. Brings in workouts and weigh-ins (last 12 months) plus steps, resting heart rate, blood pressure, blood oxygen, sleep and water (last 90 days).":". Los archivos grandes se leen por partes en este dispositivo. Importa entrenamientos y peso (últimos 12 meses), además de pasos, pulso en reposo, presión arterial, oxígeno en sangre, sueño y agua (últimos 90 días).",
+  "Get your data from":"Obtén tus datos de", "(choose Fit or Fitbit), or export from Strava, Garmin and most apps. CSV, JSON or TCX files with a date, activity and duration work.":"(elige Fit o Fitbit), o expórtalos desde Strava, Garmin u otras aplicaciones. Se admiten archivos CSV, JSON o TCX con fecha, actividad y duración.",
+  "Google is shutting down the Google Fit APIs at the end of 2026. The replacement, the Google Health API, needs a server that signs in with Google and passes Google's security review for health data. This app has no server of its own that can sign in with Google (its only back end is the Supabase database, which holds meals and profile names), so it can't hold a Google connection. File import works today and keeps your data out of third-party servers.":"Google dejará de ofrecer las API de Google Fit a finales de 2026. Su reemplazo, la API de Google Health, requiere un servidor con inicio de sesión de Google y una revisión de seguridad de datos de salud. Esta aplicación no tiene un servidor propio para esa conexión; la importación de archivos funciona ahora y evita enviar tus datos a servidores de terceros.",
+  "Type it however you like:":"Escríbelo como prefieras:", "kilograms":"kilogramos", "pounds":"libras", "estimate":"estimación"
+});
+Object.assign(WL_ES_UI, {
+  "Saved in this browser only.":"Guardado solo en este navegador.", "Everything travels over HTTPS.":"Todos los datos se transmiten por HTTPS.",
+  "Your profiles and logs are saved in this browser under your account, and removed from it when you sign out. They are also saved to your account (photos too, unless Sync photos is off), so every device you sign in on shows the same data.":"Tus perfiles y registros se guardan en este navegador con tu cuenta y se quitan del dispositivo al cerrar sesión. También se guardan en tu cuenta (incluidas las fotos, salvo que desactives su sincronización) para que aparezcan en los dispositivos donde inicies sesión.",
+  "The address bar only ever holds a page or a public recipe name. Records are never looked up from the link, and every read and write is checked against who's signed in, so editing a link can't reveal anyone's data (no IDOR).":"La barra de direcciones solo contiene una página o el nombre de una receta pública. Los registros no se buscan mediante enlaces y cada lectura o escritura se comprueba con la cuenta que inició sesión.",
+  "Every saved record is validated before it's shown: unknown fields are dropped, numbers are range-checked and text is escaped, so damaged or tampered data can't run code in the page.":"Cada registro guardado se valida antes de mostrarse: se descartan campos desconocidos, se comprueba el rango de las cifras y se escapa el texto para evitar que los datos alterados ejecuten código.",
+  "Off. Turn it on below to encrypt everything before it's saved.":"Desactivado. Actívalo abajo para cifrar los datos antes de guardarlos.",
+  "Available once encryption is on.":"Disponible al activar el cifrado.", "Off. Pick a time below.":"Desactivado. Elige un plazo abajo.",
+  "No phone number or date of birth is kept (your birth month and year are used once to work out your age, then dropped). An email address is needed only if you create an account. No analytics, ads or tracking scripts. Photos are shrunk in your browser and stripped of location data.":"No se conserva tu teléfono ni tu fecha de nacimiento (el mes y el año se usan una vez para calcular tu edad y luego se descartan). Solo se necesita un correo electrónico para crear una cuenta. No hay analíticas, anuncios ni rastreadores. Las fotos se reducen en el navegador y se les quitan los datos de ubicación.",
+  "After 5 min":"Tras 5 min", "After 15 min":"Tras 15 min", "After 30 min":"Tras 30 min", "After 1 hour":"Tras 1 hora", "Never":"Nunca",
+  "On: AES-256-GCM in your browser, key from your passcode with PBKDF2-SHA-256 (600,000 rounds). The passcode never leaves this device.":"Activado: AES-256-GCM en tu navegador; la clave se deriva del código con PBKDF2-SHA-256 (600.000 iteraciones). El código nunca sale de este dispositivo.",
+  "No Data":"Sin datos", "Confirm delete":"Confirmar eliminación"
+});
+Object.assign(WL_ES_UI, {
+  "Follows your device":"Sigue la configuración del dispositivo", "Always light":"Siempre claro", "Always dark":"Siempre oscuro", "True black, saves battery":"Negro puro, ahorra batería",
+  "Color mode":"Modo de color", "Font":"Fuente", "System":"Sistema", "Small":"Pequeño", "Medium":"Mediano", "Large":"Grande",
+  "Appearance: Light":"Apariencia: claro", "Appearance: Dark":"Apariencia: oscuro", "Appearance: Auto":"Apariencia: automático",
+  "This theme":"Este tema", "is dark whichever mode you pick. Choose another theme to use Light.":"permanece oscuro en cualquier modo. Elige otro tema para usar Claro."
+});
+Object.assign(WL_ES, WL_ES_UI);
+function localizeUI(root){
+  if (WLA.lang !== "es") return;
+  const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  while (walk.nextNode()) {
+    const n = walk.currentNode, parent = n.parentElement;
+    if (!parent || parent.closest("script,style,textarea,[data-i18n-skip],.streaming,.steps,.ing,#wlc-log,.li .grow,.dish h3,.dpv-main,[data-act='quick-food'],.who-row b,.coach-say")) continue;
+    const value = n.nodeValue, trimmed = value.trim();
+    if (WL_ES[trimmed]) n.nodeValue = value.replace(trimmed, WL_ES[trimmed]);
+  }
+  root.querySelectorAll("[placeholder],[aria-label],[title]").forEach(el => {
+    for (const attr of ["placeholder","aria-label","title"]) {
+      const s = el.getAttribute(attr); if (s && WL_ES[s]) el.setAttribute(attr, WL_ES[s]);
+    }
+  });
+}
 function wlaApplyDom(){
   const el = document.documentElement;
   el.dataset.uistyle = WLA.uistyle; el.lang = WLA.lang;
@@ -11806,10 +11969,11 @@ function morphInto(root, html){
   const frag = MORPH_TPL.content;
   if (!root._morphed) {
     for (const c of frag.childNodes) morphSnap(c);
-    root.replaceChildren(frag); root._morphed = true; return;
+    root.replaceChildren(frag); root._morphed = true; localizeUI(root); return;
   }
   morphChildren(root, frag);
   MORPH_TPL.innerHTML = "";
+  localizeUI(root);
 }
 
 function render(){
@@ -11839,8 +12003,8 @@ function render(){
   const premF = UI.route === "premium" && UI.param ? PREMIUM_BY_ID[UI.param] : null;
   const pageTitle = dish ? dish.n : catP ? catP.n : metP ? metP.n : premF ? premF.name : titles[UI.route];
   const sub = dish ? ["#/recipes","Recipes",dish.n] : setTab ? ["#/settings","Settings",setTab[1]] : premF ? ["#/premium","Premium",premF.name] : metP ? ["#/health", "Health data", metP.n] : catP ? ["#/health", "Health data", catP.n] : null;
-  const crumbs = UI.route === "home" ? "" : `<nav class="crumbs" aria-label="Breadcrumb"><a href="#/home">Home</a><span aria-hidden="true">${icon("chevR","go",13)}</span>${sub ? `<a href="${sub[0]}">${sub[1]}</a><span aria-hidden="true">${icon("chevR","go",13)}</span><span aria-current="page">${esc(sub[2])}</span>` : `<span aria-current="page">${esc(pageTitle)}</span>`}</nav>`;
-  setMeta(setTab ? `${setTab[1]} · Settings` : premF ? `${premF.name} · Premium` : pageTitle, dish ? `${dish.n} (${dish.c}): ${dish.d}` : DESCS[UI.route] || DESCS.home, dish ? recipeLD(dish) : null);
+  const crumbs = UI.route === "home" ? "" : `<nav class="crumbs" aria-label="${tr("Breadcrumb")}"><a href="#/home">${tr("Home")}</a><span aria-hidden="true">${icon("chevR","go",13)}</span>${sub ? `<a href="${sub[0]}">${esc(tr(sub[1]))}</a><span aria-hidden="true">${icon("chevR","go",13)}</span><span aria-current="page">${esc(tr(sub[2]))}</span>` : `<span aria-current="page">${esc(tr(pageTitle))}</span>`}</nav>`;
+  setMeta(setTab ? `${tr(setTab[1])} · ${tr("Settings")}` : premF ? `${premF.name} · Premium` : tr(pageTitle), dish ? `${dish.n} (${dish.c}): ${dish.d}` : DESCS[UI.route] || DESCS.home, dish ? recipeLD(dish) : null);
   const routeKey = location.hash; const animate = UI.lastKey !== routeKey; UI.lastKey = routeKey;
   morphInto(root, `
   <div class="app${UI.rail ? " rail" : ""}${UI.menu ? " menu-on" : ""}">
@@ -11850,7 +12014,7 @@ function render(){
       <div class="wrap">
         <div class="compact-head" id="compact-head">
           ${moreBtnHTML(true)}
-          <span class="compact-title">${esc(pageTitle)}</span>
+          <span class="compact-title">${esc(tr(pageTitle))}</span>
           <div class="compact-actions">
             <a class="btn pill sm primary" href="#/nutrition">${icon("plus")} Log</a>
           </div>
@@ -11860,7 +12024,7 @@ function render(){
             ${moreBtnHTML(false)}
             <span class="ph-spacer" aria-hidden="true"></span>
             <div class="ph-right">
-              <div class="ph-text">${UI.route === "home" ? "" : crumbs}<h1 class="page-title">${esc(pageTitle)}</h1>${UI.route === "home" ? `<div class="date muted">${fmtLong(today())}</div>` : ""}</div>
+              <div class="ph-text">${UI.route === "home" ? "" : crumbs}<h1 class="page-title">${esc(tr(pageTitle))}</h1>${UI.route === "home" ? `<div class="date muted">${fmtLong(today())}</div>` : ""}</div>
               <span class="clock tab" id="live-clock" aria-label="Current time" data-morph-live></span>
               ${bellButton(p)}
             </div>
@@ -12684,7 +12848,7 @@ function quickLogBlock(date){
   return `<div class="quicklog">
     ${recent.length ? `<div class="eyebrow" style="margin-top:12px">Recent</div><div class="chips" role="group" aria-label="Recent meals">${recent.map(chip).join("")}</div>` : ""}
     ${often.length ? `<div class="eyebrow" style="margin-top:12px">Often</div><div class="chips" role="group" aria-label="Meals you log often">${often.map(chip).join("")}</div>` : ""}
-    ${prev ? `<div class="row" style="margin-top:12px"><button type="button" class="btn" data-act="repeat-day" data-date="${date}">Repeat ${date === today() ? "yesterday's" : fmtDay(addDays(date, -1)) + "'s"} meals</button></div>` : ""}
+    ${prev ? `<div class="row" style="margin-top:12px"><button type="button" class="btn" data-act="repeat-day" data-date="${date}">${WLA.lang === "es" ? `Repetir las comidas ${date === today() ? "de ayer" : `del ${fmtDay(addDays(date, -1))}`}` : `Repeat ${date === today() ? "yesterday's" : fmtDay(addDays(date, -1)) + "'s"} meals`}</button></div>` : ""}
   </div>`;
 }
 function nutritionView(p){
@@ -12710,9 +12874,9 @@ function nutritionView(p){
       <div class="row"><button class="btn primary" data-act="log-meal">Log meal</button><button class="btn" data-act="mb-guess">${icon("spark")} Guess the calories</button>${
         typeof isPremium === "function" && isPremium() ? `<label class="btn photo-btn">${icon("camera","",16)} From a photo<input type="file" id="meal-shot-in" accept="image/*" capture="environment" hidden></label><a class="btn" href="#/premium/restaurant">${icon("food","",16)} Eating out</a>` : ""}</div>
       ${typeof voiceMealButton === "function" ? voiceMealButton(p) : ""}
-      <p class="small muted">Leave the calorie box empty and hit <b>Guess the calories</b>. Type it how you'd say it, like "rice and stew with chicken", and you can adjust each portion. Or snap a photo below.</p>
+      <p class="small muted">${WLA.lang === "es" ? "Deja el campo de calorías vacío y pulsa Estimar las calorías. Describe la comida con tus palabras y ajusta las porciones. También puedes añadir una foto." : 'Leave the calorie box empty and hit <b>Guess the calories</b>. Type it how you\'d say it, like "rice and stew with chicken", and you can adjust each portion. Or snap a photo below.'}</p>
     </section>
-    ${pend ? extrasPanel(pend) : `<section class="card"><div class="row between"><h2>${date === today() ? "Today" : fmtDay(date)} at a glance</h2><div class="btn-group" role="group" aria-label="Change day"><button class="btn sm icon-btn" data-act="day" data-v="-1" aria-label="Previous day">${icon("chevL","",16)}</button><button class="btn sm icon-btn" data-act="day" data-v="1" aria-label="Next day"${date>=today()?" disabled":""}>${icon("chevR","",16)}</button></div></div>
+    ${pend ? extrasPanel(pend) : `<section class="card"><div class="row between"><h2>${WLA.lang === "es" ? `Resumen de ${date === today() ? "hoy" : fmtDay(date)}` : `${date === today() ? "Today" : fmtDay(date)} at a glance`}</h2><div class="btn-group" role="group" aria-label="Change day"><button class="btn sm icon-btn" data-act="day" data-v="-1" aria-label="Previous day">${icon("chevL","",16)}</button><button class="btn sm icon-btn" data-act="day" data-v="1" aria-label="Next day"${date>=today()?" disabled":""}>${icon("chevR","",16)}</button></div></div>
       <div class="grid" style="grid-template-columns:repeat(3,1fr)"><div><div class="tiny muted">Meals</div><div class="num mid">${meals.reduce((a,m)=>a+mealTotal(m),0).toLocaleString()}</div></div><div><div class="tiny muted">Snacks${drinkKcalOn(date) ? " + drinks" : ""}</div><div class="num mid">${(snacks.reduce((a,s)=>a+s.cal,0) + drinkKcalOn(date)).toLocaleString()}</div></div><div><div class="tiny muted">${p.calorieGoal ? "Left" : "Total"}</div><div class="num mid">${(p.calorieGoal ? p.calorieGoal - intakeOn(date) : intakeOn(date)).toLocaleString()}</div></div></div>
       ${burnedOn(date,p) ? `<p class="small muted">Estimated burn: ${Math.round(burnedOn(date,p)).toLocaleString()} cal including ${onDate("workouts",date).length} workout${onDate("workouts",date).length===1?"":"s"}.</p>` : ""}
     </section>`}
@@ -12723,11 +12887,11 @@ function nutritionView(p){
   ${foodPhotoCard(p)}
   ${typeof drinksSection === "function" ? drinksSection(p) : ""}
   <section class="card">
-    <div class="row between"><h2>Meals on ${date === today() ? "today" : fmtDay(date)}</h2><span class="small muted tab">${meals.reduce((a,m)=>a+mealTotal(m),0).toLocaleString()} cal</span></div>
+    <div class="row between"><h2>${WLA.lang === "es" ? `Comidas ${date === today() ? "de hoy" : `del ${fmtDay(date)}`}` : `Meals on ${date === today() ? "today" : fmtDay(date)}`}</h2><span class="small muted tab">${meals.reduce((a,m)=>a+mealTotal(m),0).toLocaleString()} cal</span></div>
     ${meals.length ? `<div class="list">${meals.map(m => `<div class="li"><div class="grow"><div class="eyebrow" style="color:var(--gold)">${SLOTS.find(s=>s[0]===m.slot)?.[1]}</div><b>${esc(m.name)}</b> <span class="tab muted small">${m.cal} cal</span>${m.est ? ` <span class="guess">${icon("spark")} estimate</span>` : ""}
       ${(m.extras||[]).length ? `<ul class="clean small muted" style="margin-top:4px">${m.extras.map(x => `<li>+ ${esc(x.name)} <span class="tab">${x.cal} cal</span></li>`).join("")}</ul>` : ""}
       </div><div class="row" style="gap:6px">${m.photo && !UI.locked ? `<button class="mealthumb" data-act="ms-view" data-id="${m.id}" aria-label="Photo of ${esc(m.name)}"><img src="${m.photo}" alt=""></button>` : ""}<span class="tab"><b>${mealTotal(m)}</b></span><button class="btn sm ghost" data-act="extras" data-id="${m.id}">Extras</button><button class="btn sm ghost" data-act="del-meal" data-id="${m.id}" aria-label="Delete ${esc(m.name)}">${icon("x","")}</button></div></div>`).join("")}</div>`
-      : `${emptyState("meals", `No meals logged${date === today() ? " yet today" : ""}. Log one above, or let the coach pick from your food culture.`, ["See today's menu","#/culture"])}`}
+      : `${emptyState("meals", WLA.lang === "es" ? `No hay comidas registradas${date === today() ? " hoy" : ""}. Registra una arriba o deja que el entrenador elija según tu cultura gastronómica.` : `No meals logged${date === today() ? " yet today" : ""}. Log one above, or let the coach pick from your food culture.`, [tr("See today's menu"),"#/culture"])}`}
   </section>
   <section class="card"><div class="row between"><h2>Last 7 days</h2>${p.calorieGoal ? "" : `<a class="small" href="#/settings">Add a target line</a>`}</div>${weekChart(p)}</section>
   <div class="grid g2">${projectionCard(p)}
@@ -13026,7 +13190,7 @@ function snacksView(p){
   const q = UI.snackQ.toLowerCase();
   const list = SNACKS.filter(s => inGroup(s, UI.snackRegion) && (!q || (s.n + s.c).toLowerCase().includes(q)));
   return `
-  <section class="card cathead" style="--cc:var(--c-snack)">${cicon("cookie","var(--c-snack)",44)}<div><h2>Snacks</h2><p class="small muted">${log.length ? `${log.reduce((a,s)=>a+s.cal,0).toLocaleString()} cal from ${log.length} snack${log.length===1?"":"s"} today` : "Nothing logged yet today"}</p></div></section>
+  <section class="card cathead" style="--cc:var(--c-snack)">${cicon("cookie","var(--c-snack)",44)}<div><h2>Snacks</h2><p class="small muted">${log.length ? (WLA.lang === "es" ? `${log.reduce((a,s)=>a+s.cal,0).toLocaleString("es")} cal de ${log.length} bocadillo${log.length===1?"":"s"} hoy` : `${log.reduce((a,s)=>a+s.cal,0).toLocaleString()} cal from ${log.length} snack${log.length===1?"":"s"} today`) : tr("Nothing logged yet today")}</p></div></section>
   <div class="grid g2">
     <section class="card"><div class="setrow"><div class="setlabel"><div class="eyebrow">Separate from meals</div><h2 style="margin-top:4px">Today's snacks</h2></div><span class="num mid">${log.reduce((a,s)=>a+s.cal,0)} <span class="small muted">cal</span></span></div>
       ${log.length ? `<div class="list">${log.map(s => `<div class="li"><span class="grow">${esc(s.name)} <span class="muted small">× ${s.qty||1}</span></span><span class="tab">${s.cal} cal</span><button class="btn sm ghost" data-act="del-snack" data-id="${s.id}" aria-label="Delete">${icon("x")}</button></div>`).join("")}</div>` : `<div class="empty small">Nothing logged yet. Pick from the list or add your own.</div>`}
@@ -13063,6 +13227,7 @@ function recipeDetail(p, d){
   const related = DISHES.filter(x => x.id !== d.id && x.r === d.r && dietOk(x,p) && !allergyHits(x,p).length).sort((a,b) => hash(d.id+a.id) - hash(d.id+b.id)).slice(0,3);
   return `<section class="card hero">
     <div class="eyebrow">${esc(d.c)} · ${REGION_NAME[d.r]}</div>
+    ${WLA.lang === "es" ? '<p class="tiny muted">La descripción y las instrucciones de esta receta están disponibles en inglés por ahora.</p>' : ""}
     <p style="max-width:65ch;font-size:17px">${esc(d.d)}</p>
     <div class="row"><span class="tag gold">≈${d.cal} cal / serving</span><span class="tag">≈${d.pr} g protein</span><span class="tag">Prep ${d.t[0] >= 240 ? "overnight soak" : d.t[0]+" min"} · Cook ${d.t[1]} min</span>${d.al.length ? `<span class="tag${hits.length?" bad":""}">Allergens: ${esc(d.al.join(", "))}</span>` : ""}</div>
     ${hits.length ? `<div class="note">This dish may contain ${esc(hits.join(", "))}, which you listed to avoid.</div>` : ""}
@@ -13086,12 +13251,12 @@ function recipeDetail(p, d){
 function planView(p){
   const plan = p.plan, pg = Math.min(UI.planPg, plan?.days.length || 1);
   return `<section class="card">
-    <div class="setrow"><div class="setlabel"><div class="eyebrow">Meal plan</div><h2 style="margin-top:4px">${plan ? `Your plan from ${fmtDay(plan.created)}` : "Build a meal plan"}</h2></div>
+    <div class="setrow"><div class="setlabel"><div class="eyebrow">Meal plan</div><h2 style="margin-top:4px">${plan ? (WLA.lang === "es" ? `Tu plan del ${fmtDay(plan.created)}` : `Your plan from ${fmtDay(plan.created)}`) : tr("Build a meal plan")}</h2></div>
       <div class="row" style="gap:8px"><div class="seg" role="group" aria-label="Plan length"><button data-act="plan-days" data-v="3" aria-pressed="${UI.planDays===3}">3 days</button><button data-act="plan-days" data-v="7" aria-pressed="${UI.planDays===7}">7 days</button></div>${plan && typeof isPremium === "function" && isPremium() ? `<a class="btn" href="#/premium/grocery">${icon("cart","",16)} Grocery list</a>` : ""}<button class="btn primary" data-act="build-plan">${plan ? "Rebuild plan" : "Build my plan"}</button></div></div>
-    <p class="small muted">Food focus: <b>${mixOf(p).label}</b>. About ${Math.round(mixOf(p).west*100)}% West African, ${Math.round(mixOf(p).africa*100)}% the rest of Africa and ${Math.round(mixOf(p).world*100)}% the rest of the world (<a href="#/settings">change</a>). No dish repeats within a plan. ${p.diet || p.allergies ? "Your food preference and allergies are applied." : ""}</p>
+    <p class="small muted">${WLA.lang === "es" ? `Preferencia gastronómica: <b>${esc(tr(mixOf(p).label))}</b>. Aproximadamente ${Math.round(mixOf(p).west*100)}% de África occidental, ${Math.round(mixOf(p).africa*100)}% del resto de África y ${Math.round(mixOf(p).world*100)}% del resto del mundo (<a href="#/settings">cambiar</a>). Ningún plato se repite en el plan. ${p.diet || p.allergies ? "Se aplican tus preferencias y alergias alimentarias." : ""}` : `Food focus: <b>${esc(mixOf(p).label)}</b>. About ${Math.round(mixOf(p).west*100)}% West African, ${Math.round(mixOf(p).africa*100)}% the rest of Africa and ${Math.round(mixOf(p).world*100)}% the rest of the world (<a href="#/settings">change</a>). No dish repeats within a plan. ${p.diet || p.allergies ? "Your food preference and allergies are applied." : ""}`}</p>
     ${plan && plan.days.length ? `<div class="plan">${plan.days.slice(pg - 1, pg).map(r => `<div class="planday"><div class="d">${fmtDay(r.date)}</div>${SLOTS.map(([k,l]) => { const d = DISHES.find(x => x.id === r[k]); return d ? `<a class="dish" href="${dishLink(d)}"><span class="slot">${l}</span><h3>${esc(d.n)}</h3><span class="small muted">${esc(d.c)} · ≈${d.cal} cal</span></a>` : `<div class="dish muted small">No match</div>`; }).join("")}</div>`).join("")}</div>
       ${pager("planPg", pg, plan.days.length)}
-      <p class="small muted">Daily total ≈ ${Math.round(plan.days.reduce((a,r) => a + SLOTS.reduce((b,[k]) => b + (DISHES.find(x=>x.id===r[k])?.cal||0), 0), 0) / plan.days.length).toLocaleString()} cal before snacks.</p>`
+      <p class="small muted">${WLA.lang === "es" ? "Total diario" : "Daily total"} ≈ ${Math.round(plan.days.reduce((a,r) => a + SLOTS.reduce((b,[k]) => b + (DISHES.find(x=>x.id===r[k])?.cal||0), 0), 0) / plan.days.length).toLocaleString(WLA.lang === "es" ? "es" : undefined)} cal ${WLA.lang === "es" ? "antes de los bocadillos" : "before snacks"}.</p>`
       : ""}
   </section>`;
 }
@@ -13116,10 +13281,10 @@ function recipesView(p){
     .sort((a,b) => ({west:0,africa:1,world:2})[bucket(a)] - ({west:0,africa:1,world:2})[bucket(b)]);
   const pg = Math.min(UI.recPg, Math.ceil(list.length / 12) || 1);
   return `
-  <section class="card cathead" style="--cc:var(--c-food)">${cicon("book","var(--c-food)",44)}<div><h2>Recipes &amp; meal plans</h2><p class="small muted">${DISHES.length.toLocaleString()} dishes across ${REGIONS.length} regions and cuisines</p></div></section>
+  <section class="card cathead" style="--cc:var(--c-food)">${cicon("book","var(--c-food)",44)}<div><h2>Recipes &amp; meal plans</h2><p class="small muted">${WLA.lang === "es" ? `${DISHES.length.toLocaleString("es")} platos de ${REGIONS.length} regiones y cocinas` : `${DISHES.length.toLocaleString()} dishes across ${REGIONS.length} regions and cuisines`}</p></div></section>
   ${planView(p)}
   <section class="card">
-    <div class="row between"><h2>Recipe library</h2><span class="small muted">${list.length} of ${DISHES.length} dishes</span></div>
+    <div class="row between"><h2>Recipe library</h2><span class="small muted">${WLA.lang === "es" ? `${list.length} de ${DISHES.length} platos` : `${list.length} of ${DISHES.length} dishes`}</span></div>
     <div class="form">
       <label class="f">Search<input type="search" id="rf-q" value="${esc(f.q)}" placeholder="Dish or ingredient: egusi, plantain…"></label>
       <label class="f">Region<select id="rf-r">${opt([["","All regions"],...REGIONS.map(r=>[r.k,r.n])], f.r)}</select></label>
@@ -13216,7 +13381,7 @@ function coachView(p){
   <section class="card"${UI.sampleOk === false ? " hidden" : ""}>
     <div class="eyebrow">Ask your coach</div><h2>Questions about training or food</h2>
     <p class="small muted">Claude answers using your profile and this week's logs. It uses your own Claude usage and asks permission the first time.</p>
-    <div class="chips">${["What should I train this week?","How do I fit jollof and fufu into my goal?","I missed three days. How do I restart?","What should I eat before a morning workout?"].map(q => `<button class="chip" data-act="coach-q" data-q="${esc(q)}">${esc(q)}</button>`).join("")}</div>
+    <div class="chips">${(WLA.lang === "es" ? ["¿Qué debería entrenar esta semana?","¿Cómo puedo incluir jollof y fufu en mi objetivo?","Me salté tres días. ¿Cómo retomo el entrenamiento?","¿Qué debería comer antes de entrenar por la mañana?"] : ["What should I train this week?","How do I fit jollof and fufu into my goal?","I missed three days. How do I restart?","What should I eat before a morning workout?"]).map(q => `<button class="chip" data-act="coach-q" data-q="${esc(q)}">${esc(q)}</button>`).join("")}</div>
     <label class="f">Your question<textarea id="coach-q" placeholder="Ask anything about your workouts, meals or goals">${esc(A.q || "")}</textarea></label>
     <div class="row"><button class="btn primary" data-act="ask-coach"${A.busy ? " disabled" : ""}>${A.busy ? `${smHTML({ status: "running", size: 16 })} Thinking…` : "Ask"}</button>${A.busy ? `<button class="btn" data-act="ask-stop">Stop</button>` : ""}</div>
     ${A.err ? `<div class="note">${esc(A.err)}</div>` : ""}
@@ -13258,6 +13423,7 @@ function coachChatCard(){
   const msgs = (C.msgs || []).map(m => `<div class="well" style="margin:6px 0"><span class="tiny muted">${m.me ? "You" : "WL Coach"}</span><div class="small" style="white-space:pre-wrap">${esc(m.t)}</div></div>`).join("");
   return `<section class="card" id="wlc">${head}
     <p class="small muted">Training and food questions. WL Coach can't see your logs yet, so tell it what it needs to know. It is not medical advice.</p>
+    ${WLA.lang === "es" ? '<p class="tiny muted">Puedes escribir en español; algunas respuestas del servicio pueden llegar en inglés.</p>' : ""}
     <div id="wlc-log" aria-live="polite">${msgs}</div>
     <label class="f">Your question<textarea id="wlc-q" maxlength="1000" placeholder="For example: what should I eat after a workout?">${esc(C.q || "")}</textarea></label>
     <div class="row"><button class="btn primary" data-act="wlc-send"${C.busy ? " disabled" : ""}>${C.busy ? "Thinking…" : "Send"}</button></div>
@@ -13342,14 +13508,14 @@ async function askClaude(kind){
       const q = st.q?.trim(); if (!q) { st.busy = false; render(); return; }
       st.text = "";
       const prompt = `You are ${coachName(p)}, a personal trainer and nutrition coach inside a fitness app called Whole Life Hub. ${coachVoice(p).prompt} The user's app profile (JSON): ${JSON.stringify(ctx)}.
-Answer their question in plain text (no markdown symbols like ** or #), under 220 words, with concrete sets, reps, times or portions where useful. Prefer West African foods when suggesting meals. Don't diagnose or give medical advice; suggest a doctor or registered dietitian for medical questions, injuries or very low calorie targets.
+Answer their question in plain text (no markdown symbols like ** or #), under 220 words, with concrete sets, reps, times or portions where useful. Prefer West African foods when suggesting meals. Don't diagnose or give medical advice; suggest a doctor or registered dietitian for medical questions, injuries or very low calorie targets. ${WLA.lang === "es" ? "Answer in Spanish, including safety advice." : ""}
 Question: ${q}`;
       await sample(prompt, { signal: ctl.signal, cache:false, onText: ({text}) => { st.text = text; const o = $("#coach-out"); if (o) { o.hidden = false; o.textContent = text; } } });
     } else {
       const q = st.q?.trim() || "something new and satisfying";
       st.items = null;
       const prompt = `Suggest 3 dishes for a user of a meal-planning app. Their profile (JSON): ${JSON.stringify(ctx)}. Their request: "${q}".
-Rules: at least 2 of the 3 should be West African unless the request says otherwise; strictly avoid their allergies; respect their food preference; real, well-known dishes or sensible home variations only.
+Rules: at least 2 of the 3 should be West African unless the request says otherwise; strictly avoid their allergies; respect their food preference; real, well-known dishes or sensible home variations only. ${WLA.lang === "es" ? "Write the why, ingredients and steps in Spanish; keep dish names authentic." : ""}
 Return ONLY JSON: {"items":[{"name":string,"origin":string (country),"calories":number (per serving, estimate),"why":string (one sentence: why it fits them),"ingredients":[string] (with amounts for 1 serving),"steps":[string] (4-7 short steps)}]}`;
       const res = await sample.json(prompt, { signal: ctl.signal });
       // BUG-112 fix: the prompt above only *asks* Claude to avoid allergies; nothing verified

@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.4 (Dev Testing), build 8.4.10, 2026-11-13. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.5 (Dev Testing), build 8.5, 2026-11-17. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.5 · Language: Extend Spanish controls across logging, recipes, coaching and settings
+
+- **Problem:** Spanish previously covered only navigation, Settings tabs and Appearance, leaving the main forms and controls in English.
+- **Change:** Added Spanish labels, form options, help copy and accessible names across meal and workout logging, snacks, recipe filters and plans, coach controls, profile, goals, household and privacy settings. Dates use Spanish formatting; user entries and stored values stay untouched. Claude sample prompts request Spanish answers when Spanish is selected.
+- **Where:** `index.html`: `WL_ES_UI`, `localizeUI()`, `morphInto()`, `fmtDay()`, `fmtLong()`, `opt()`, `render()`, logging/recipe/coach views and `askClaude()`; `tests/browser/appearance.mjs`, `CHANGELOG.md`, `README.md`, `docs/BUILD_PLAN.md`.
+- **How to test:** Run `node tests/check-repo.mjs` and `CHROME=/path/to/chrome node tests/browser/appearance.mjs`. Switch to Español, visit Log, Snacks, Recipes, Coach and Settings, check labels and a 375px viewport; switch back and verify saved meal names.
+- **Known limits:** The catalog's 291 long-form recipes and snack preparation prose are still in English; WL Coach's server responses and some advanced components may be English. Spanish is per device. Browser test could not run in this environment because Chromium cannot create a socket; CI and preview checks remain necessary. No Supabase code or database changed.
 
 ## 8.4.10 · Health: Health check: stop logging harmless resize noise and fix a welcome photo grid error
 
