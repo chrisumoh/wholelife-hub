@@ -11726,7 +11726,17 @@ Object.assign(WL_ES_UI, {
 });
 Object.assign(WL_ES, WL_ES_UI);
 function localizeUI(root){
-  if (WLA.lang !== "es") return;
+  if (WLA.lang !== "es") {
+    // The morph keeps runtime-only attribute changes. Restore the original template
+    // value when switching back instead of leaving a Spanish accessible name behind.
+    root.querySelectorAll("[placeholder],[aria-label],[title]").forEach(el => {
+      for (const attr of ["placeholder","aria-label","title"]) {
+        const original = el._ta?.[attr];
+        if (original && el.getAttribute(attr) === WL_ES[original]) el.setAttribute(attr, original);
+      }
+    });
+    return;
+  }
   const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   while (walk.nextNode()) {
     const n = walk.currentNode, parent = n.parentElement;

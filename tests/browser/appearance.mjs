@@ -103,6 +103,8 @@ await goto("#/settings/goals");
 ok("settings goals are Spanish", await ev(`document.querySelector("#st-cg")?.closest("label")?.textContent.includes("Calorías diarias") && document.querySelector('[data-act="save-targets"]')?.textContent.includes("Guardar metas")`));
 await view(375, 812);
 ok("translated controls fit a narrow viewport", await ev(`document.documentElement.scrollWidth <= innerWidth + 2`));
+await ev(`wlaSetLang("en"); true`);
+ok("switching back restores English labels and placeholders", await ev(`document.documentElement.lang === "en" && document.querySelector("#st-cg")?.placeholder === "No target" && document.querySelector('[data-act="save-targets"]')?.textContent.includes("Save targets")`));
 ok("no script errors", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);
 procs.forEach(p => { try { p.kill(); } catch {} });
