@@ -11894,6 +11894,7 @@ function applyLook(p = P()){
   el.dataset.accent = look.accent === "dynamic" ? timeAccent() : (look.accent || "blue");
   el.dataset.motion = look.motion === "reduced" ? "reduced" : "full";
   el.dataset.font = FONTS.some(f => f[0] === look.font) ? look.font : "system";
+  el.dataset.layout = look.layout === "webapp" ? "webapp" : "app";
   el.style.colorScheme = scheme === "light" ? "light" : "dark";
   applyTextScale(p);
   wlaMirror(p);
@@ -13767,6 +13768,9 @@ function settingsView(p){
     <div class="setgroup"><div class="setlabel">${tr("Motion")}</div>
       <div class="seg" role="group" aria-label="Motion"><button data-act="look-motion" data-v="full" aria-pressed="${(p.look?.motion||"full")==="full"}">Bouncy</button><button data-act="look-motion" data-v="reduced" aria-pressed="${p.look?.motion==="reduced"}">Reduced</button></div>
       <span class="tiny muted">Bouncy adds the spring animations. Reduced turns them off, and your device's own "reduce motion" setting always wins.</span></div>
+    <div class="setgroup"><div class="setlabel">Layout</div>
+      <div class="seg" role="group" aria-label="Layout"><button data-act="look-layout" data-v="app" aria-pressed="${(p.look?.layout||"app")!=="webapp"}">App</button><button data-act="look-layout" data-v="webapp" aria-pressed="${p.look?.layout==="webapp"}">Web app</button></div>
+      <span class="tiny muted">App keeps the single column. Web app spreads cards across the screen on a wide display (900px and up) and uses the sidebar layout fully. On a phone both look the same.</span></div>
     ${reviewBar(p)}
   </section>`,
     goals: `<section class="card">
@@ -14045,7 +14049,7 @@ document.addEventListener("click", async e => {
     case "ui-lang": wlaSetLang(t.dataset.v); break;
     case "look-save": wlaSave(p); break;
     case "look-discard": wlaDiscard(p); break;
-    case "look-scene": case "look-motion": case "look-font": {
+    case "look-scene": case "look-motion": case "look-font": case "look-layout": {
       p.look = { mode:"auto", accent:"blue", motion:"full", font:"system", ...(p.look||{}) }; p.look[a.slice(5)] = t.dataset.v; saveProfile(); render();
       // The accent popup lives outside #app (so render() above never touches it); repaint its
       // own swatches right away so the tapped one shows selected in well under 100ms.
@@ -25126,5 +25130,19 @@ h2.sec-title + .mgrid .mhead svg.ci{
 
 /* Tier 2 (borderline): strike this rule in review to keep the dropzone centred */
 .dropzone{ align-items:flex-start; text-align:left; }
+</style>
+
+<style>
+/* ================================================================
+   FINPEX PASS 2 - Web App layout. Settings > Appearance > Layout
+   (profile look.layout, applied as html[data-layout] in applyLook).
+   Opt-in, wide screens only: below 900px Web app behaves exactly
+   like App. Cards become a two-column grid; page furniture spans.
+   ================================================================ */
+@media (min-width:900px){
+  html[data-layout="webapp"] .wrap{max-width:1280px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+  html[data-layout="webapp"] .wrap>*{min-width:0}
+  html[data-layout="webapp"] .wrap>header,html[data-layout="webapp"] .wrap>.compact-head,html[data-layout="webapp"] .wrap>.profstrip{grid-column:1/-1}
+}
 </style>
 </body></html>
