@@ -18941,6 +18941,26 @@ function premiumHub(p){
       </a>`).join("")}
     </div>
 
+    <div class="prem-stays">
+      <div class="eyebrow">What stays open on Free</div>
+      <p class="draft">Home, logging, history and export stay open whether or not you subscribe. Export is always free, and cancelling never deletes anything you've logged.</p>
+      <div class="pill-strip">
+        <span class="wl-pill">Works offline</span>
+        <span class="wl-pill">Dark mode</span>
+        <span class="wl-pill">English &amp; Spanish</span>
+        <span class="wl-pill">Passcode lock</span>
+        <span class="wl-pill">Multiple profiles</span>
+        <span class="wl-pill">Export your data anytime</span>
+      </div>
+      <p class="advice-banner">WholeLife Hub is a tracking tool. It is not medical advice.</p>
+    </div>
+
+    <div class="prem-faqs">
+      <details class="wl-faq"><summary>What happens to my logs if I cancel?</summary><p>Nothing is deleted. Premium features lock; your logs, history and export stay yours.</p></details>
+      <details class="wl-faq"><summary>Can I cancel anytime?</summary><p>Yes — Settings &gt; Premium &gt; Manage subscription. You keep Premium until the end of the period you paid for.</p></details>
+      <details class="wl-faq"><summary>How does billing work?</summary><p>Plans are billed through Lemon Squeezy and renew automatically until you cancel. The price on the plan you pick is the price you pay.</p></details>
+    </div>
+
     <div class="prem-about">
       <div class="eyebrow">About Premium</div>
       <p class="draft">WholeLife Premium bundles every optional feature we build past the core tracker into one
@@ -25134,6 +25154,19 @@ h2.sec-title + .mgrid .mhead svg.ci{
 
 <style>
 /* ================================================================
+   FINPEX PASS 1 - Premium page: tier badges, pill strip, stays-open,
+   FAQ, advice banner. Adapted from the Finpex Tracker teardown
+   (18 Nov 2026). Markup lives in premiumHub(); no logic changes.
+   ================================================================ */
+.wl-tier-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:8px;white-space:nowrap;background:#111;color:#f5c542}
+.pill-strip{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.wl-pill{display:inline-flex;align-items:center;border:1px solid rgba(127,127,127,.4);border-radius:999px;padding:8px 12px;font-size:13px;min-height:44px}
+.prem-stays{align-self:stretch;text-align:left}
+.advice-banner{border:1px solid rgba(127,127,127,.4);border-radius:12px;padding:10px 12px;font-size:13px}
+.prem-faqs{align-self:stretch;text-align:left}
+.wl-faq{border-top:1px solid rgba(127,127,127,.35)}
+.wl-faq summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
+.wl-faq p{margin:0 0 12px}
    FINPEX PASS 2 - Web App layout. Settings > Appearance > Layout
    (profile look.layout, applied as html[data-layout] in applyLook).
    Opt-in, wide screens only: below 900px Web app behaves exactly
