@@ -12,6 +12,7 @@
 <script>document.documentElement.lang = "en";
 try { const a = JSON.parse(localStorage.getItem("wl-appearance") || "{}"), d = document.documentElement;
   if (a.uistyle === "crisp") d.dataset.uistyle = "crisp";
+  if (a.layout === "webapp") d.dataset.layout = "webapp";
   if (a.lang === "es") d.lang = "es"; } catch {}</script>
 <script src="/vendor/supabase-js-2.117.2.umd.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"></script>
 <!-- Task 7.8 fix: the page is served as a bare head/body fragment (no <html> tag of its own —
@@ -11569,6 +11570,8 @@ function applyTextScale(p = P()){
 const WL_APPEARANCE_KEY = "wl-appearance";
 const WL_STYLES = [["rounded","Rounded"],["crisp","Crisp"]];
 const WL_LANGS = [["en","English"],["es","Español"]];
+const WL_LAYOUTS = [["app","App"],["webapp","Web app"]]; // Web app only takes effect from 900px wide; on a phone it looks like App
+
 const WL_ES = {
   "Summary":"Resumen", "Log":"Registrar", "Plan":"Planificar", "Progress":"Progreso", "Meals":"Comidas", "Snacks":"Bocadillos",
   "Workouts & imports":"Entrenamientos e importaciones", "Recipes & meal plans":"Recetas y planes de comidas",
@@ -11578,14 +11581,15 @@ const WL_ES = {
   "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información",
   "Display":"Pantalla", "Automatic":"Automático", "Light":"Claro", "Dark":"Oscuro", "OLED black":"Negro OLED",
   "Accent color":"Color de acento", "Text size":"Tamaño del texto", "Motion":"Movimiento", "UI style":"Estilo de interfaz",
-  "Rounded":"Redondeado", "Crisp":"Nítido", "Language":"Idioma", "Review changes":"Revisar cambios",
+  "Rounded":"Redondeado", "Crisp":"Nítido", "Layout":"Diseño", "App":"Aplicación", "Web app":"App web", "Web app uses the full width of a desktop screen. On a phone or narrow window it looks the same as App.":"App web usa todo el ancho de una pantalla de escritorio. En un teléfono o una ventana estrecha se ve igual que Aplicación.", "Language":"Idioma", "Review changes":"Revisar cambios",
   "Save":"Guardar", "Discard":"Descartar", "Saved":"Guardado"
 };
-const WLA = { uistyle:"rounded", lang:"en", base:null, last:"" };
+const WLA = { uistyle:"rounded", lang:"en", layout:"app", base:null, last:"" };
 try {
   const a = JSON.parse(localStorage.getItem(WL_APPEARANCE_KEY) || "{}");
   if (WL_STYLES.some(x => x[0] === a.uistyle)) WLA.uistyle = a.uistyle;
   if (WL_LANGS.some(x => x[0] === a.lang)) WLA.lang = a.lang;
+  if (WL_LAYOUTS.some(x => x[0] === a.layout)) WLA.layout = a.layout;
 } catch {}
 const tr = s => (WLA.lang === "es" && WL_ES[s]) || s;
 // Static interface copy is translated after each morph. This keeps the language switch
@@ -11795,13 +11799,13 @@ function localizeUI(root){
 }
 function wlaApplyDom(){
   const el = document.documentElement;
-  el.dataset.uistyle = WLA.uistyle; el.lang = WLA.lang;
+  el.dataset.uistyle = WLA.uistyle; el.lang = WLA.lang; el.dataset.layout = WLA.layout;
 }
 function wlaMirror(p){
   wlaApplyDom();
   if (!p || WLA.base) return; // unsaved changes are not written until Save
   const l = p.look || {};
-  const v = JSON.stringify({ theme:l.mode || "auto", accent:l.accent || "blue", textsize:l.textSize || "l", uistyle:WLA.uistyle, lang:WLA.lang });
+  const v = JSON.stringify({ theme:l.mode || "auto", accent:l.accent || "blue", textsize:l.textSize || "l", uistyle:WLA.uistyle, lang:WLA.lang, layout:WLA.layout });
   if (v === WLA.last) return;
   WLA.last = v;
   try { localStorage.setItem(WL_APPEARANCE_KEY, v); } catch {}
@@ -11810,7 +11814,7 @@ function wlaSnap(p){
   if (WLA.base && WLA.base.pid !== p.id) WLA.base = null; // a different profile: start again
   if (WLA.base) return;
   const l = p.look || {};
-  WLA.base = { pid:p.id, mode:l.mode || "auto", accent:l.accent || "blue", textSize:l.textSize || "l", largerAX:!!l.largerAX, uistyle:WLA.uistyle, lang:WLA.lang };
+  WLA.base = { pid:p.id, mode:l.mode || "auto", accent:l.accent || "blue", textSize:l.textSize || "l", largerAX:!!l.largerAX, uistyle:WLA.uistyle, lang:WLA.lang, layout:WLA.layout };
 }
 function wlaSetLook(p, patch){
   wlaSnap(p);
@@ -11818,6 +11822,7 @@ function wlaSetLook(p, patch){
   render();
 }
 function wlaSetStyle(v){ const p = P(); if (!p || !WL_STYLES.some(x => x[0] === v)) return; wlaSnap(p); WLA.uistyle = v; render(); }
+function wlaSetLayout(v){ const p = P(); if (!p || !WL_LAYOUTS.some(x => x[0] === v)) return; wlaSnap(p); WLA.layout = v; render(); }
 function wlaSetLang(v){ const p = P(); if (!p || !WL_LANGS.some(x => x[0] === v)) return; wlaSnap(p); WLA.lang = v; if (wlEsState === 3) wlEsState = 0; render(); }
 function wlaRows(p){
   const b = WLA.base; if (!b || b.pid !== p.id) return [];
@@ -11828,6 +11833,7 @@ function wlaRows(p){
   if ((l.accent || "blue") !== b.accent) rows.push(["Accent color", nm(ACCENTS, b.accent), nm(ACCENTS, l.accent || "blue")]);
   if ((l.textSize || "l") !== b.textSize) rows.push(["Text size", nm(TEXT_SIZES, b.textSize), nm(TEXT_SIZES, l.textSize || "l")]);
   if (WLA.uistyle !== b.uistyle) rows.push(["UI style", nm(WL_STYLES, b.uistyle), nm(WL_STYLES, WLA.uistyle)]);
+  if (WLA.layout !== b.layout) rows.push(["Layout", nm(WL_LAYOUTS, b.layout), nm(WL_LAYOUTS, WLA.layout)]);
   if (WLA.lang !== b.lang) rows.push(["Language", nm(WL_LANGS, b.lang), nm(WL_LANGS, WLA.lang)]);
   return rows;
 }
@@ -11851,6 +11857,7 @@ function wlaChoice(label, act, list, cur){
     <div class="seg wl-seg" role="group" aria-label="${esc(tr(label))}">${list.map(([k, l]) => `<button data-act="${act}" data-v="${k}" aria-pressed="${cur === k}">${esc(tr(l))}</button>`).join("")}</div></div>`;
 }
 const uiStyleRow = () => wlaChoice("UI style", "ui-style", WL_STYLES, WLA.uistyle);
+const layoutRow = () => wlaChoice("Layout", "ui-layout", WL_LAYOUTS, WLA.layout) + `<span class="tiny muted">${esc(tr("Web app uses the full width of a desktop screen. On a phone or narrow window it looks the same as App."))}</span>`;
 const languageRow = () => wlaChoice("Language", "ui-lang", WL_LANGS, WLA.lang);
 function wlaSave(p){
   saveProfile(); WLA.base = null; wlaMirror(p); toast(tr("Saved")); render();
@@ -11859,7 +11866,7 @@ function wlaDiscard(p){
   const b = WLA.base;
   if (b && b.pid === p.id) {
     p.look = { ...(p.look || {}), mode:b.mode, accent:b.accent, textSize:b.textSize, largerAX:b.largerAX };
-    WLA.uistyle = b.uistyle; WLA.lang = b.lang;
+    WLA.uistyle = b.uistyle; WLA.lang = b.lang; WLA.layout = b.layout || "app";
   }
   WLA.base = null; render();
 }
@@ -13761,6 +13768,7 @@ function settingsView(p){
     ${fontPicker(p)}
     ${textSizeRow(p)}
     ${uiStyleRow()}
+    ${layoutRow()}
     ${languageRow()}
     ${typeof themePicker === "function" ? themePicker(p) : ""}
     ${opacityRow(p)}
@@ -14043,6 +14051,7 @@ document.addEventListener("click", async e => {
     }
     case "ui-style": wlaSetStyle(t.dataset.v); break;
     case "ui-lang": wlaSetLang(t.dataset.v); break;
+    case "ui-layout": wlaSetLayout(t.dataset.v); break;
     case "look-save": wlaSave(p); break;
     case "look-discard": wlaDiscard(p); break;
     case "look-scene": case "look-motion": case "look-font": {
@@ -17685,7 +17694,7 @@ function privacyPolicyView(){
         <tr><td><code>wlh.sb.auth</code></td><td>Your sign-in session (set by the sign-in library). Anyone who can run a script on this page could read it.</td></tr>
         <tr><td><code>wlh.meals.v1</code></td><td>Signed in, no passcode only: a copy of your meals, and any meal changes not uploaded yet, so the app works offline. Removed when you sign out. (With a passcode on, meals stay in the encrypted copy instead, and this entry is not written.)</td></tr>
         <tr><td><code>wlh.mode</code></td><td>Your light, dark or OLED display choice.</td></tr>
-        <tr><td><code>wl-appearance</code></td><td>A copy of your saved display, accent, text size, UI style (Rounded or Crisp) and language, so the page paints the right look before it loads.</td></tr>
+        <tr><td><code>wl-appearance</code></td><td>A copy of your saved display, accent, text size, UI style (Rounded or Crisp), layout (App or Web app) and language, so the page paints the right look before it loads.</td></tr>
         <tr><td><code>wlh.navgrp</code></td><td>Which sidebar groups you left expanded or collapsed (older builds; no longer written since the sidebar stopped collapsing).</td></tr>
         <tr><td><code>wlh.showtesting</code></td><td>Whether this device shows Premium features that are still being built (Settings › Data &amp; about › Diagnostics).</td></tr>
         <tr><td><code>wlh.rail</code></td><td>Whether you collapsed the sidebar to icons on a wide screen.</td></tr>
@@ -25171,5 +25180,11 @@ h2.sec-title + .mgrid .mhead svg.ci{
 .prem-faq .faq summary:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
 .prem-faq .faq p{ margin:0 0 12px; font-size:calc((13.5px) * var(--text-scale,1)); line-height:1.55; color:var(--muted); }
 .advice-banner{ margin:0; padding:12px 14px; border-radius:var(--r-sm); background:var(--good-soft); color:var(--text); font-size:calc((13px) * var(--text-scale,1)); }
+
+/* Web app layout: opt-in, desktop widths only. App view (the default) is untouched. */
+@media (min-width:900px){
+  html[data-layout="webapp"] .app .wrap{ max-width:1360px; }
+  html[data-layout="webapp"] .app .mgrid{ grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr)); }
+}
 </style>
 </body></html>
