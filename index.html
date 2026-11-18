@@ -17693,6 +17693,7 @@ function privacyPolicyView(){
         <tr><td><code>wlh.v62</code></td><td>Your profiles and logs in this browser. Signed in, the key ends in <code>@</code> and your account id, and it is removed when you sign out.</td></tr>
         <tr><td><code>wlh.sb.auth</code></td><td>Your sign-in session (set by the sign-in library). Anyone who can run a script on this page could read it.</td></tr>
         <tr><td><code>wlh.meals.v1</code></td><td>Signed in, no passcode only: a copy of your meals, and any meal changes not uploaded yet, so the app works offline. Removed when you sign out. (With a passcode on, meals stay in the encrypted copy instead, and this entry is not written.)</td></tr>
+        <tr><td><code>wlh.offlinetoast</code></td><td>A flag that the one-time "ready to work offline" note has been shown, so it never appears twice.</td></tr>
         <tr><td><code>wlh.mode</code></td><td>Your light, dark or OLED display choice.</td></tr>
         <tr><td><code>wl-appearance</code></td><td>A copy of your saved display, accent, text size, UI style (Rounded or Crisp), layout (App or Web app) and language, so the page paints the right look before it loads.</td></tr>
         <tr><td><code>wlh.navgrp</code></td><td>Which sidebar groups you left expanded or collapsed (older builds; no longer written since the sidebar stopped collapsing).</td></tr>
@@ -24822,6 +24823,14 @@ function tourGuideCard(){
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("/sw.js").catch(function () {});
+    // One-time note, once a worker is controlling the page, that the app opens offline. Honest about local storage.
+    navigator.serviceWorker.ready.then(function () {
+      try {
+        if (localStorage.getItem("wlh.offlinetoast")) return;
+        localStorage.setItem("wlh.offlinetoast", "1");
+        setTimeout(function () { if (typeof toast === "function") toast("Whole Life Hub is ready to work offline. Your logs stay in this browser and are here when you come back.", "success"); }, 2500);
+      } catch (e) {}
+    }).catch(function () {});
   });
 }
 </script>
