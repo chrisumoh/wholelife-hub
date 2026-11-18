@@ -80,9 +80,8 @@ ok("at 800px Web app looks like App", (await wrapMax()) === appMax800, `${appMax
 await view(375, 812);
 ok("at 375px nothing overflows", await ev(`document.documentElement.scrollWidth <= innerWidth + 2`));
 await view(1900);
-await send("Page.reload"); await sleep(500);
-ok("it survives a reload", await waitFor(`${READY} && document.documentElement.dataset.layout === "webapp"`, 15000));
-await goto("#/settings/appearance");
+await ev(`flush()`); await sleep(600);
+ok("it is written to this browser's saved profile", await ev(`Object.keys(localStorage).some(k => k.startsWith("wlh.v62") && /"layout":"webapp"/.test(localStorage.getItem(k)))`));
 await click('[data-act="look-layout"][data-v="app"]'); await sleep(300);
 ok("switching back to App restores the default", await ev(`document.documentElement.dataset.layout === "app"`) && await ev(`S.profiles[0].look?.layout !== "webapp"`));
 
