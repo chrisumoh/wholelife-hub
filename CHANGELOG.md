@@ -2,9 +2,25 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.4 (Dev Testing), build 8.4.10, 2026-11-13. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.5 (Dev Testing), build 8.5.1, 2026-11-17. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.5.1 · Language: Translate the recipe catalog, snack preparation and more screens into Spanish
+
+- **Problem:** Spanish still showed English prose for the 291 catalog recipes and the snack preparation instructions, plus English text on Home, Coach, Culture, Awards, Premium and Settings.
+- **Change:** Added a lazy-loaded i18n/es-recipes.js with Spanish descriptions, steps, ways to make it, lighter and higher-protein swaps, pairings, meal-prep notes and ingredient names for all 291 dishes, and Spanish serving and preparation text for all 42 snacks. It is fetched only the first time a Spanish page renders, so English users and the page size are unaffected. Recipe pages also translate units, allergen names, country labels and the 'Contains' line. About 150 more interface lines on Home, Coach, Culture, Awards, Premium and Settings are now Spanish. The coach question now also sends the chosen language to the server, and the wl-coach function (code only, not deployed) asks the model to answer in Spanish. Dish names, ids and what people logged never change, and switching back to English restores every line.
+- **Where:** i18n/es-recipes.js (new, generated data). index.html: wlEsLoad(), esCat(), esDish(), esIng(), esUnit(), esPlace(), esAllergen(), localizeUI(), recipeDetail(), goalNote(), the snack card, WL_ES_UI2, wlaSetLang(), the wl-coach request, APP_VERSION, WLH.changelog. supabase/functions/wl-coach/handler.ts (systemFor), tests/wl-coach-handler.test.mjs (1 new test), docs/AI_COACH.md. tests/browser/appearance.mjs (6 new checks), CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/appearance.mjs. In the app go to Settings > Appearance, choose Español, then open Recipes > any dish (steps, ingredients, ways to make it), Snacks > How to make it, Home, Cultura gastronómica, Coach, Premium. Switch back to English and the English text returns.
+- **Known limits:** The wl-coach edge function now reads an optional lang field and replies in Spanish when it is es, but this build is code only: the function is not deployed, so coach replies stay as they are until it is. The fixed safety reply for red-flag medical topics stays English. Long legal and privacy paragraphs, the Premium fine print and a few generated sentences with numbers inside them stay English. Spanish quantities keep US units with metric conversions where the recipe gave them. Translations were written by Claude and have not had a native-speaker review. Not yet checked on a real phone.
+
+## 8.5 · Language: Extend Spanish controls across logging, recipes, coaching and settings
+
+- **Problem:** Spanish previously covered only navigation, Settings tabs and Appearance, leaving the main forms and controls in English.
+- **Change:** Added Spanish labels, form options, help copy and accessible names across meal and workout logging, snacks, recipe filters and plans, coach controls, profile, goals, household and privacy settings. Dates use Spanish formatting; user entries and stored values stay untouched. Claude sample prompts request Spanish answers when Spanish is selected.
+- **Where:** `index.html`: `WL_ES_UI`, `localizeUI()`, `morphInto()`, `fmtDay()`, `fmtLong()`, `opt()`, `render()`, logging/recipe/coach views and `askClaude()`; `tests/browser/appearance.mjs`, `CHANGELOG.md`, `README.md`, `docs/BUILD_PLAN.md`.
+- **How to test:** Run `node tests/check-repo.mjs` and `CHROME=/path/to/chrome node tests/browser/appearance.mjs`. Switch to Español, visit Log, Snacks, Recipes, Coach and Settings, check labels and a 375px viewport; switch back and verify saved meal names.
+- **Known limits:** The catalog's 291 long-form recipes and snack preparation prose are still in English; WL Coach's server responses and some advanced components may be English. Spanish is per device. Browser test could not run in this environment because Chromium cannot create a socket; CI and preview checks remain necessary. No Supabase code or database changed.
 
 ## 8.4.10 · Health: Health check: stop logging harmless resize noise and fix a welcome photo grid error
 
