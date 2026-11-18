@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join, extname } from "node:path";
 
 // Run from the repo root:  node tests/browser/finpex.mjs   (needs Node 22+ and Chrome; set CHROME to its path, CI=1 as root)
-// Build 8.5.2: Finpex adaptations: Web app layout, offline note, Coming up and the score card.
+// Build 8.5.2: Finpex adaptations: Coming up today, the daily score and the offline note. Sections 1-2 also cover the Premium page pass (PR #92) and the Web app layout (PR #94) that shipped from the same teardown.
 // SHOTS=<folder> also saves screenshots there, for looking at.
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
@@ -52,27 +52,39 @@ const click = sel => ev(`document.querySelector(${JSON.stringify(sel)}).click();
 const store = () => ev(`JSON.parse(localStorage.getItem("wl-appearance") || "null")`);
 const rows = () => ev(`[...document.querySelectorAll("#wl-review .small")].map(e => e.textContent)`);
 
-console.log("--- 2. Layout setting");
+console.log("--- 1. Premium page: what stays open, pills, FAQ, advice note (PR #92)");
+await sleep(400);
+ok("What stays open on Free is shown", await ev(`/What stays open on Free/.test(document.querySelector(".prem-stays")?.textContent || "")`));
+ok("the pill strip lists six things that stay free", await ev(`document.querySelectorAll(".pill-strip .wl-pill").length === 6`));
+ok("the FAQ uses native details and every summary is 44px", await ev(`(() => { const s = [...document.querySelectorAll(".prem-faqs details.wl-faq > summary")]; return s.length === 3 && s.every(x => x.getBoundingClientRect().height >= 43.5); })()`));
+ok("the not-medical-advice note is there", await ev(`/not medical advice/.test(document.querySelector(".prem-stays .advice-banner")?.textContent || "")`));
+ok("pills are 44px tall", await ev(`[...document.querySelectorAll(".pill-strip .wl-pill")].every(x => x.getBoundingClientRect().height >= 43.5)`));
+ok("no free trial is promised on the page", await ev(`!/free trial/i.test(document.querySelector(".prem-store-page")?.textContent || "")`));
+ok("cancelling is stated to delete nothing", await ev(`/never deletes/.test(document.querySelector(".prem-stays")?.textContent || "")`));
+
+console.log("--- 2. Layout setting (Web app layout, PR #94: profile look setting)");
 await goto("#/settings/appearance");
-ok("Layout row with App and Web app", await ev(`[...document.querySelectorAll('[data-act="ui-layout"]')].map(b => b.textContent).join() === "App,Web app" && document.querySelector('[data-act="ui-layout"][data-v="app"]').getAttribute("aria-pressed") === "true"`));
+ok("Layout row with App and Web app", await ev(`[...document.querySelectorAll('[data-act="look-layout"]')].map(b => b.textContent).join() === "App,Web app" && document.querySelector('[data-act="look-layout"][data-v="app"]').getAttribute("aria-pressed") === "true"`));
 const wrapW = () => ev(`document.querySelector(".app .wrap").getBoundingClientRect().width`);
+const wrapMax = () => ev(`getComputedStyle(document.querySelector(".app .wrap")).maxWidth`);
+await view(800);
+const appMax800 = await wrapMax();
 await view(1900);
 const before = await wrapW();
-await click('[data-act="ui-layout"][data-v="webapp"]'); await sleep(300);
-ok("Web app applies at once and is listed for review", await ev(`document.documentElement.dataset.layout === "webapp"`) && (await rows()).some(t => t.includes("Layout")));
+await click('[data-act="look-layout"][data-v="webapp"]'); await sleep(300);
+ok("Web app applies at once", await ev(`document.documentElement.dataset.layout === "webapp"`));
 ok("the page is wider at 1900px", (await wrapW()) > before + 100, `${before} -> ${await wrapW()}`);
+ok("the choice is saved on the profile look", await ev(`S.profiles[0].look?.layout === "webapp"`));
 await view(800);
-ok("at 800px Web app looks like App", await ev(`getComputedStyle(document.querySelector(".app .wrap")).maxWidth === "960px"`));
+ok("at 800px Web app looks like App", (await wrapMax()) === appMax800, `${appMax800} -> ${await wrapMax()}`);
 await view(375, 812);
 ok("at 375px nothing overflows", await ev(`document.documentElement.scrollWidth <= innerWidth + 2`));
 await view(1900);
-await click("#wl-review .btn.primary"); await sleep(300);
-ok("Save keeps Web app and writes it to wl-appearance", (await store())?.layout === "webapp");
 await send("Page.reload"); await sleep(500);
-ok("it survives a reload and is applied before the app boots", await waitFor(`${READY} && document.documentElement.dataset.layout === "webapp"`, 15000));
+ok("it survives a reload", await waitFor(`${READY} && document.documentElement.dataset.layout === "webapp"`, 15000));
 await goto("#/settings/appearance");
-await click('[data-act="ui-layout"][data-v="app"]'); await click("#wl-review .btn.primary"); await sleep(300);
-ok("switching back to App restores the default", await ev(`document.documentElement.dataset.layout === "app"`) && (await store())?.layout === "app");
+await click('[data-act="look-layout"][data-v="app"]'); await sleep(300);
+ok("switching back to App restores the default", await ev(`document.documentElement.dataset.layout === "app"`) && await ev(`S.profiles[0].look?.layout !== "webapp"`));
 
 console.log("--- 3. Coming up today and the score card");
 await goto("#/home");

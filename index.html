@@ -12,7 +12,6 @@
 <script>document.documentElement.lang = "en";
 try { const a = JSON.parse(localStorage.getItem("wl-appearance") || "{}"), d = document.documentElement;
   if (a.uistyle === "crisp") d.dataset.uistyle = "crisp";
-  if (a.layout === "webapp") d.dataset.layout = "webapp";
   if (a.lang === "es") d.lang = "es"; } catch {}</script>
 <script src="/vendor/supabase-js-2.117.2.umd.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"></script>
 <!-- Task 7.8 fix: the page is served as a bare head/body fragment (no <html> tag of its own —
@@ -3853,12 +3852,12 @@ const APP_VERSION = { update: "8.5", build: "8.5.2", channel: "Dev Testing", dat
   const CHANGELOG = [
     { id:"8.5.2",
       area:"Finpex adaptations",
-      title:"Web app layout, offline note, Coming up today and a daily score",
-      bug:"Finpex teardown notes suggested several patterns, but the app already had a notification centre, reminders and a side rail. Home had no single read-out of what is still open today or of how today went against the person's own targets. There was no way to use the full width of a desktop screen, and nothing told people the app opens offline.",
-      fix:"Settings > Appearance: a Layout choice, App (default) or Web app, held for review and saved with the other appearance choices; Web app only widens the page and its card grids from 900px up and looks the same as App below that. Offline: a one-time note in the notification bell (System tab) once the service worker is active, saying logs stay in this browser. Home: a Coming up today card (water still to go, the planned workout if not done, no food logged yet, no weigh-in in 7 days) and a Today's score card. The score is a logging-consistency number from 0 to 100: activity (30, workouts in the last 7 days against the weekly target), water (20, against 2.7 L) and nutrition (20, full on or under the calorie target, falling by the overshoot). A part with no target or nothing logged is left out and named, the others share its weight, and the card is hidden when no part has data. It shows a donut of what fed it, a 7-day trend line and a how-it-is-worked-out note. There are no sample numbers anywhere.",
-      where:"index.html: WL_LAYOUTS, WLA.layout, wlaSetLayout(), layoutRow(), wlaApplyDom(), wlaMirror(), wlaSnap(), wlaRows(), wlaDiscard(), the head script, the ui-layout case, comingUpItems(), comingUpCard(), scoreParts(), scoreOf(), scoreCard(), wlTrendSVG(), wlDonut(), homeView(), the service-worker registration script (bell note), the privacy key table, the WL FINPEX PASS style block, APP_VERSION, WLH.changelog. tests/browser/finpex.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
-      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/finpex.mjs. Go to Settings > Appearance > Layout, choose Web app, Save, and widen the window past 900px. Open Home: set a workout target and log some water and a meal, and the Today's score card fills in. On a first visit with the service worker active, the offline note appears once.",
-      limits:"Not found in the Finpex pack or skipped on purpose: the notification centre already existed so it was not rebuilt, and the daily digest, monthly review reminder and Settings > Alerts switches were not added because reminders already live in the Coach tab. The monthly review was not built (a printable weekly review already exists in Premium). Sleep and steps have no targets in the app, so they are not in the score yet. The welcome 3-step strip, the trust strip and the legal short versions were left for a later build. The offline note is English only and the new Premium and Home text has no Spanish yet (TODO-ES). No screenshots of the Web app layout have been reviewed by a person." },
+      title:"Coming up today, a daily score and an offline note",
+      bug:"Home had no single read-out of what is still open today or of how today went against the person's own targets, and nothing told people the app opens offline.",
+      fix:"Home: a Coming up today card (water still to go, the planned workout if not done, no food logged yet, no weigh-in in 7 days) and a Today's score card. The score is a logging-consistency number from 0 to 100: activity (30, workouts in the last 7 days against the weekly target), water (20, against 2.7 L) and nutrition (20, full on or under the calorie target, falling by the overshoot). A part with no target or nothing logged is left out and named, the others share its weight, and the card is hidden when no part has data. It shows a donut of what fed it, a 7-day trend line and a how-it-is-worked-out note. There are no sample numbers anywhere. Offline: a one-time note in the notification bell (System tab) once the service worker is active, saying logs stay in this browser. Rebased 18 Nov 2026: this build originally also carried Premium page extras and a Web app layout; those shipped separately (Premium page pass, PR #92; Web app layout, PR #94), so they were taken out of this branch rather than ship two versions of each.",
+      where:"index.html: comingUpItems(), comingUpCard(), scoreParts(), scoreOf(), scoreCard(), wlTrendSVG(), wlDonut(), homeView(), the service-worker registration script (bell note), the privacy key table, the WL FINPEX PASS style block, APP_VERSION, WLH.changelog. tests/browser/finpex.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/finpex.mjs. Open Home: set a workout target and log some water and a meal, and the Today's score card fills in. On a first visit with the service worker active, the offline note appears once. The Premium and layout sections of finpex.mjs cover the versions shipped in PR #92 and PR #94.",
+      limits:"Not found in the Finpex pack or skipped on purpose: the notification centre already existed so it was not rebuilt, and the daily digest, monthly review reminder and Settings > Alerts switches were not added because reminders already live in the Coach tab. The monthly review was not built (a printable weekly review already exists in Premium). Sleep and steps have no targets in the app, so they are not in the score yet. The welcome 3-step strip, the trust strip and the legal short versions were left for a later build. The offline note is English only and the new Home text has no Spanish yet (TODO-ES)." },
     { id:"8.5.1",
       area:"Language",
       title:"Translate the recipe catalog, snack preparation and more screens into Spanish",
@@ -11644,8 +11643,6 @@ function applyTextScale(p = P()){
 const WL_APPEARANCE_KEY = "wl-appearance";
 const WL_STYLES = [["rounded","Rounded"],["crisp","Crisp"]];
 const WL_LANGS = [["en","English"],["es","Español"]];
-const WL_LAYOUTS = [["app","App"],["webapp","Web app"]]; // Web app only takes effect from 900px wide; on a phone it looks like App
-
 const WL_ES = {
   "Summary":"Resumen", "Log":"Registrar", "Plan":"Planificar", "Progress":"Progreso", "Meals":"Comidas", "Snacks":"Bocadillos",
   "Workouts & imports":"Entrenamientos e importaciones", "Recipes & meal plans":"Recetas y planes de comidas",
@@ -11655,15 +11652,14 @@ const WL_ES = {
   "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información",
   "Display":"Pantalla", "Automatic":"Automático", "Light":"Claro", "Dark":"Oscuro", "OLED black":"Negro OLED",
   "Accent color":"Color de acento", "Text size":"Tamaño del texto", "Motion":"Movimiento", "UI style":"Estilo de interfaz",
-  "Rounded":"Redondeado", "Crisp":"Nítido", "Layout":"Diseño", "App":"Aplicación", "Web app":"App web", "Web app uses the full width of a desktop screen. On a phone or narrow window it looks the same as App.":"App web usa todo el ancho de una pantalla de escritorio. En un teléfono o una ventana estrecha se ve igual que Aplicación.", "Language":"Idioma", "Review changes":"Revisar cambios",
+  "Rounded":"Redondeado", "Crisp":"Nítido", "Language":"Idioma", "Review changes":"Revisar cambios",
   "Save":"Guardar", "Discard":"Descartar", "Saved":"Guardado"
 };
-const WLA = { uistyle:"rounded", lang:"en", layout:"app", base:null, last:"" };
+const WLA = { uistyle:"rounded", lang:"en", base:null, last:"" };
 try {
   const a = JSON.parse(localStorage.getItem(WL_APPEARANCE_KEY) || "{}");
   if (WL_STYLES.some(x => x[0] === a.uistyle)) WLA.uistyle = a.uistyle;
   if (WL_LANGS.some(x => x[0] === a.lang)) WLA.lang = a.lang;
-  if (WL_LAYOUTS.some(x => x[0] === a.layout)) WLA.layout = a.layout;
 } catch {}
 const tr = s => (WLA.lang === "es" && WL_ES[s]) || s;
 // Static interface copy is translated after each morph. This keeps the language switch
@@ -11873,13 +11869,13 @@ function localizeUI(root){
 }
 function wlaApplyDom(){
   const el = document.documentElement;
-  el.dataset.uistyle = WLA.uistyle; el.lang = WLA.lang; el.dataset.layout = WLA.layout;
+  el.dataset.uistyle = WLA.uistyle; el.lang = WLA.lang;
 }
 function wlaMirror(p){
   wlaApplyDom();
   if (!p || WLA.base) return; // unsaved changes are not written until Save
   const l = p.look || {};
-  const v = JSON.stringify({ theme:l.mode || "auto", accent:l.accent || "blue", textsize:l.textSize || "l", uistyle:WLA.uistyle, lang:WLA.lang, layout:WLA.layout });
+  const v = JSON.stringify({ theme:l.mode || "auto", accent:l.accent || "blue", textsize:l.textSize || "l", uistyle:WLA.uistyle, lang:WLA.lang });
   if (v === WLA.last) return;
   WLA.last = v;
   try { localStorage.setItem(WL_APPEARANCE_KEY, v); } catch {}
@@ -11888,7 +11884,7 @@ function wlaSnap(p){
   if (WLA.base && WLA.base.pid !== p.id) WLA.base = null; // a different profile: start again
   if (WLA.base) return;
   const l = p.look || {};
-  WLA.base = { pid:p.id, mode:l.mode || "auto", accent:l.accent || "blue", textSize:l.textSize || "l", largerAX:!!l.largerAX, uistyle:WLA.uistyle, lang:WLA.lang, layout:WLA.layout };
+  WLA.base = { pid:p.id, mode:l.mode || "auto", accent:l.accent || "blue", textSize:l.textSize || "l", largerAX:!!l.largerAX, uistyle:WLA.uistyle, lang:WLA.lang };
 }
 function wlaSetLook(p, patch){
   wlaSnap(p);
@@ -11896,7 +11892,6 @@ function wlaSetLook(p, patch){
   render();
 }
 function wlaSetStyle(v){ const p = P(); if (!p || !WL_STYLES.some(x => x[0] === v)) return; wlaSnap(p); WLA.uistyle = v; render(); }
-function wlaSetLayout(v){ const p = P(); if (!p || !WL_LAYOUTS.some(x => x[0] === v)) return; wlaSnap(p); WLA.layout = v; render(); }
 function wlaSetLang(v){ const p = P(); if (!p || !WL_LANGS.some(x => x[0] === v)) return; wlaSnap(p); WLA.lang = v; if (wlEsState === 3) wlEsState = 0; render(); }
 function wlaRows(p){
   const b = WLA.base; if (!b || b.pid !== p.id) return [];
@@ -11907,7 +11902,6 @@ function wlaRows(p){
   if ((l.accent || "blue") !== b.accent) rows.push(["Accent color", nm(ACCENTS, b.accent), nm(ACCENTS, l.accent || "blue")]);
   if ((l.textSize || "l") !== b.textSize) rows.push(["Text size", nm(TEXT_SIZES, b.textSize), nm(TEXT_SIZES, l.textSize || "l")]);
   if (WLA.uistyle !== b.uistyle) rows.push(["UI style", nm(WL_STYLES, b.uistyle), nm(WL_STYLES, WLA.uistyle)]);
-  if (WLA.layout !== b.layout) rows.push(["Layout", nm(WL_LAYOUTS, b.layout), nm(WL_LAYOUTS, WLA.layout)]);
   if (WLA.lang !== b.lang) rows.push(["Language", nm(WL_LANGS, b.lang), nm(WL_LANGS, WLA.lang)]);
   return rows;
 }
@@ -11931,7 +11925,6 @@ function wlaChoice(label, act, list, cur){
     <div class="seg wl-seg" role="group" aria-label="${esc(tr(label))}">${list.map(([k, l]) => `<button data-act="${act}" data-v="${k}" aria-pressed="${cur === k}">${esc(tr(l))}</button>`).join("")}</div></div>`;
 }
 const uiStyleRow = () => wlaChoice("UI style", "ui-style", WL_STYLES, WLA.uistyle);
-const layoutRow = () => wlaChoice("Layout", "ui-layout", WL_LAYOUTS, WLA.layout) + `<span class="tiny muted">${esc(tr("Web app uses the full width of a desktop screen. On a phone or narrow window it looks the same as App."))}</span>`;
 const languageRow = () => wlaChoice("Language", "ui-lang", WL_LANGS, WLA.lang);
 function wlaSave(p){
   saveProfile(); WLA.base = null; wlaMirror(p); toast(tr("Saved")); render();
@@ -11940,7 +11933,7 @@ function wlaDiscard(p){
   const b = WLA.base;
   if (b && b.pid === p.id) {
     p.look = { ...(p.look || {}), mode:b.mode, accent:b.accent, textSize:b.textSize, largerAX:b.largerAX };
-    WLA.uistyle = b.uistyle; WLA.lang = b.lang; WLA.layout = b.layout || "app";
+    WLA.uistyle = b.uistyle; WLA.lang = b.lang;
   }
   WLA.base = null; render();
 }
@@ -11975,6 +11968,7 @@ function applyLook(p = P()){
   el.dataset.accent = look.accent === "dynamic" ? timeAccent() : (look.accent || "blue");
   el.dataset.motion = look.motion === "reduced" ? "reduced" : "full";
   el.dataset.font = FONTS.some(f => f[0] === look.font) ? look.font : "system";
+  el.dataset.layout = look.layout === "webapp" ? "webapp" : "app";
   el.style.colorScheme = scheme === "light" ? "light" : "dark";
   applyTextScale(p);
   wlaMirror(p);
@@ -13842,13 +13836,15 @@ function settingsView(p){
     ${fontPicker(p)}
     ${textSizeRow(p)}
     ${uiStyleRow()}
-    ${layoutRow()}
     ${languageRow()}
     ${typeof themePicker === "function" ? themePicker(p) : ""}
     ${opacityRow(p)}
     <div class="setgroup"><div class="setlabel">${tr("Motion")}</div>
       <div class="seg" role="group" aria-label="Motion"><button data-act="look-motion" data-v="full" aria-pressed="${(p.look?.motion||"full")==="full"}">Bouncy</button><button data-act="look-motion" data-v="reduced" aria-pressed="${p.look?.motion==="reduced"}">Reduced</button></div>
       <span class="tiny muted">Bouncy adds the spring animations. Reduced turns them off, and your device's own "reduce motion" setting always wins.</span></div>
+    <div class="setgroup"><div class="setlabel">Layout</div>
+      <div class="seg" role="group" aria-label="Layout"><button data-act="look-layout" data-v="app" aria-pressed="${(p.look?.layout||"app")!=="webapp"}">App</button><button data-act="look-layout" data-v="webapp" aria-pressed="${p.look?.layout==="webapp"}">Web app</button></div>
+      <span class="tiny muted">App keeps the single column. Web app spreads cards across the screen on a wide display (900px and up) and uses the sidebar layout fully. On a phone both look the same.</span></div>
     ${reviewBar(p)}
   </section>`,
     goals: `<section class="card">
@@ -14125,10 +14121,9 @@ document.addEventListener("click", async e => {
     }
     case "ui-style": wlaSetStyle(t.dataset.v); break;
     case "ui-lang": wlaSetLang(t.dataset.v); break;
-    case "ui-layout": wlaSetLayout(t.dataset.v); break;
     case "look-save": wlaSave(p); break;
     case "look-discard": wlaDiscard(p); break;
-    case "look-scene": case "look-motion": case "look-font": {
+    case "look-scene": case "look-motion": case "look-font": case "look-layout": {
       p.look = { mode:"auto", accent:"blue", motion:"full", font:"system", ...(p.look||{}) }; p.look[a.slice(5)] = t.dataset.v; saveProfile(); render();
       // The accent popup lives outside #app (so render() above never touches it); repaint its
       // own swatches right away so the tapped one shows selected in well under 100ms.
@@ -17769,7 +17764,7 @@ function privacyPolicyView(){
         <tr><td><code>wlh.meals.v1</code></td><td>Signed in, no passcode only: a copy of your meals, and any meal changes not uploaded yet, so the app works offline. Removed when you sign out. (With a passcode on, meals stay in the encrypted copy instead, and this entry is not written.)</td></tr>
         <tr><td><code>wlh.offlinetoast</code></td><td>A flag that the one-time "ready to work offline" note in the notification bell has been placed, so it never appears twice.</td></tr>
         <tr><td><code>wlh.mode</code></td><td>Your light, dark or OLED display choice.</td></tr>
-        <tr><td><code>wl-appearance</code></td><td>A copy of your saved display, accent, text size, UI style (Rounded or Crisp), layout (App or Web app) and language, so the page paints the right look before it loads.</td></tr>
+        <tr><td><code>wl-appearance</code></td><td>A copy of your saved display, accent, text size, UI style (Rounded or Crisp) and language, so the page paints the right look before it loads.</td></tr>
         <tr><td><code>wlh.navgrp</code></td><td>Which sidebar groups you left expanded or collapsed (older builds; no longer written since the sidebar stopped collapsing).</td></tr>
         <tr><td><code>wlh.showtesting</code></td><td>Whether this device shows Premium features that are still being built (Settings › Data &amp; about › Diagnostics).</td></tr>
         <tr><td><code>wlh.rail</code></td><td>Whether you collapsed the sidebar to icons on a wide screen.</td></tr>
@@ -25244,19 +25239,12 @@ h2.sec-title + .mgrid .mhead svg.ci{
 
 /* Tier 2 (borderline): strike this rule in review to keep the dropzone centred */
 .dropzone{ align-items:flex-start; text-align:left; }
-</style>
 <style>
 /* ============================================================
-   WL FINPEX PASS - the Web app layout and the Home score cards
-   Tier badges sit on solid colours, never the gold gradient.
-   Every touch target is at least 44px.
+   WL FINPEX PASS - Coming up today and the daily score card
+   (Finpex adaptations 06 and 07). Premium extras and the Web
+   app layout from the same pass shipped separately.
    ============================================================ */
-/* Web app layout: opt-in, desktop widths only. App view (the default) is untouched. */
-@media (min-width:900px){
-  html[data-layout="webapp"] .app .wrap{ max-width:1360px; }
-  html[data-layout="webapp"] .app .mgrid{ grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr)); }
-}
-
 /* Home: coming up and the score card */
 #wlComingUp .sec-title, #wlScore .sec-title{ margin:0 0 4px; }
 #wlComingUp .li{ min-height:44px; box-sizing:border-box; }
@@ -25290,5 +25278,15 @@ h2.sec-title + .mgrid .mhead svg.ci{
 .wl-faq{border-top:1px solid rgba(127,127,127,.35)}
 .wl-faq summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
 .wl-faq p{margin:0 0 12px}
+   FINPEX PASS 2 - Web App layout. Settings > Appearance > Layout
+   (profile look.layout, applied as html[data-layout] in applyLook).
+   Opt-in, wide screens only: below 900px Web app behaves exactly
+   like App. Cards become a two-column grid; page furniture spans.
+   ================================================================ */
+@media (min-width:900px){
+  html[data-layout="webapp"] .wrap{max-width:1280px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+  html[data-layout="webapp"] .wrap>*{min-width:0}
+  html[data-layout="webapp"] .wrap>header,html[data-layout="webapp"] .wrap>.compact-head,html[data-layout="webapp"] .wrap>.profstrip{grid-column:1/-1}
+}
 </style>
 </body></html>
