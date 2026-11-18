@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join, extname } from "node:path";
 
 // Run from the repo root:  node tests/browser/finpex.mjs   (needs Node 22+ and Chrome; set CHROME to its path, CI=1 as root)
-// Build 8.5.2: Finpex adaptations: Premium page extras, Web app layout, offline note, Coming up and the score card.
+// Build 8.5.2: Finpex adaptations: Web app layout, offline note, Coming up and the score card.
 // SHOTS=<folder> also saves screenshots there, for looking at.
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
@@ -51,16 +51,6 @@ await goto("#/premium");
 const click = sel => ev(`document.querySelector(${JSON.stringify(sel)}).click(); true`);
 const store = () => ev(`JSON.parse(localStorage.getItem("wl-appearance") || "null")`);
 const rows = () => ev(`[...document.querySelectorAll("#wl-review .small")].map(e => e.textContent)`);
-
-console.log("--- 1. Premium page: what stays open, pills, FAQ, advice note");
-await sleep(400);
-ok("What stays open on Free is shown", await ev(`/What stays open on Free/.test(document.querySelector(".stays-open")?.textContent || "")`));
-ok("the pill strip mixes free pills and PREMIUM badges", await ev(`document.querySelectorAll(".pill-strip .pill").length >= 6 && document.querySelectorAll(".pill-strip .tier-badge.premium").length === 3`));
-ok("the FAQ uses native details and every summary is 44px", await ev(`(() => { const s = [...document.querySelectorAll(".prem-faq details.faq > summary")]; return s.length === 3 && s.every(x => x.getBoundingClientRect().height >= 43.5); })()`));
-ok("the not-medical-advice note is there", await ev(`/not medical advice/.test(document.querySelector(".advice-banner")?.textContent || "")`));
-ok("pills are 44px tall", await ev(`[...document.querySelectorAll(".pill-strip .pill")].every(x => x.getBoundingClientRect().height >= 43.5)`));
-ok("no free trial is promised on the page", await ev(`!/free trial/i.test(document.querySelector(".prem-store-page")?.textContent || "")`));
-ok("tier badge text sits on a solid colour, not a gradient", await ev(`getComputedStyle(document.querySelector(".tier-badge.premium")).backgroundImage === "none"`));
 
 console.log("--- 2. Layout setting");
 await goto("#/settings/appearance");

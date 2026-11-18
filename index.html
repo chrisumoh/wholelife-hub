@@ -3853,11 +3853,11 @@ const APP_VERSION = { update: "8.5", build: "8.5.2", channel: "Dev Testing", dat
   const CHANGELOG = [
     { id:"8.5.2",
       area:"Finpex adaptations",
-      title:"Premium page extras, Web app layout, offline note, Coming up today and a daily score",
-      bug:"Finpex teardown notes suggested several patterns, but the app already had a notification centre, reminders and a side rail. The Premium page had no plain statement of what stays free, no questions and answers and no not-medical-advice note. Home had no single read-out of what is still open today or of how today went against the person's own targets. There was no way to use the full width of a desktop screen, and nothing told people the app opens offline.",
-      fix:"Premium page: a What stays open on Free section with a strip of pills (free items plain, three Premium features badged on solid colours), a three-question FAQ built from native details elements, and a calm not-medical-advice note. No trial is mentioned because none exists yet. Settings > Appearance: a Layout choice, App (default) or Web app, held for review and saved with the other appearance choices; Web app only widens the page and its card grids from 900px up and looks the same as App below that. Offline: a one-time note in the notification bell (System tab) once the service worker is active, saying logs stay in this browser. Home: a Coming up today card (water still to go, the planned workout if not done, no food logged yet, no weigh-in in 7 days) and a Today's score card. The score is a logging-consistency number from 0 to 100: activity (30, workouts in the last 7 days against the weekly target), water (20, against 2.7 L) and nutrition (20, full on or under the calorie target, falling by the overshoot). A part with no target or nothing logged is left out and named, the others share its weight, and the card is hidden when no part has data. It shows a donut of what fed it, a 7-day trend line and a how-it-is-worked-out note. There are no sample numbers anywhere.",
-      where:"index.html: premiumFreeStrip(), premiumFaq(), premiumHub(), WL_LAYOUTS, WLA.layout, wlaSetLayout(), layoutRow(), wlaApplyDom(), wlaMirror(), wlaSnap(), wlaRows(), wlaDiscard(), the head script, the ui-layout case, comingUpItems(), comingUpCard(), scoreParts(), scoreOf(), scoreCard(), wlTrendSVG(), wlDonut(), homeView(), the service-worker registration script (bell note), the privacy key table, the WL FINPEX PASS style block, APP_VERSION, WLH.changelog. tests/browser/finpex.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
-      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/finpex.mjs. In the app open Premium and scroll to What stays open on Free and Questions. Go to Settings > Appearance > Layout, choose Web app, Save, and widen the window past 900px. Open Home: set a workout target and log some water and a meal, and the Today's score card fills in. On a first visit with the service worker active, the offline note appears once.",
+      title:"Web app layout, offline note, Coming up today and a daily score",
+      bug:"Finpex teardown notes suggested several patterns, but the app already had a notification centre, reminders and a side rail. Home had no single read-out of what is still open today or of how today went against the person's own targets. There was no way to use the full width of a desktop screen, and nothing told people the app opens offline.",
+      fix:"Settings > Appearance: a Layout choice, App (default) or Web app, held for review and saved with the other appearance choices; Web app only widens the page and its card grids from 900px up and looks the same as App below that. Offline: a one-time note in the notification bell (System tab) once the service worker is active, saying logs stay in this browser. Home: a Coming up today card (water still to go, the planned workout if not done, no food logged yet, no weigh-in in 7 days) and a Today's score card. The score is a logging-consistency number from 0 to 100: activity (30, workouts in the last 7 days against the weekly target), water (20, against 2.7 L) and nutrition (20, full on or under the calorie target, falling by the overshoot). A part with no target or nothing logged is left out and named, the others share its weight, and the card is hidden when no part has data. It shows a donut of what fed it, a 7-day trend line and a how-it-is-worked-out note. There are no sample numbers anywhere.",
+      where:"index.html: WL_LAYOUTS, WLA.layout, wlaSetLayout(), layoutRow(), wlaApplyDom(), wlaMirror(), wlaSnap(), wlaRows(), wlaDiscard(), the head script, the ui-layout case, comingUpItems(), comingUpCard(), scoreParts(), scoreOf(), scoreCard(), wlTrendSVG(), wlDonut(), homeView(), the service-worker registration script (bell note), the privacy key table, the WL FINPEX PASS style block, APP_VERSION, WLH.changelog. tests/browser/finpex.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/finpex.mjs. Go to Settings > Appearance > Layout, choose Web app, Save, and widen the window past 900px. Open Home: set a workout target and log some water and a meal, and the Today's score card fills in. On a first visit with the service worker active, the offline note appears once.",
       limits:"Not found in the Finpex pack or skipped on purpose: the notification centre already existed so it was not rebuilt, and the daily digest, monthly review reminder and Settings > Alerts switches were not added because reminders already live in the Coach tab. The monthly review was not built (a printable weekly review already exists in Premium). Sleep and steps have no targets in the app, so they are not in the score yet. The welcome 3-step strip, the trust strip and the legal short versions were left for a later build. The offline note is English only and the new Premium and Home text has no Spanish yet (TODO-ES). No screenshots of the Web app layout have been reviewed by a person." },
     { id:"8.5.1",
       area:"Language",
@@ -18988,26 +18988,6 @@ function premiumPlaceholder(p, f){
 // this replaced still exists in spirit -- every feature from the registry is still listed,
 // still links to its own placeholder -- it's just one flat, scannable list now instead of
 // five separate cards, matching the "WHAT'S INCLUDED" single-list layout asked for.
-// ---- Premium page: what stays free, FAQ (Finpex adaptation 01 and 02) ----
-// Text only, no new state. Every claim here is true today: export and logging are not behind the Premium gate, and the
-// price, plan and refund wording come from the same places as the rest of the page. There is no free trial yet, so none is mentioned.
-function premiumFreeStrip(){
-  const free = ["Works offline", "Dark mode", "Export your data anytime", "English and Spanish"];
-  const prem = PREMIUM_FEATURES.slice(0, 3).map(f => f.name);
-  return `<section class="stays-open" aria-labelledby="stays-open-h">
-    <h3 id="stays-open-h">What stays open on Free</h3>
-    <p>Home, logging, history and export stay open without Premium. Export is always free, and cancelling never deletes your logs.</p>
-    <div class="pill-strip">${free.map(t => `<span class="pill">${esc(t)}</span>`).join("")}${prem.map(t => `<span class="pill">${esc(t)} <span class="tier-badge premium">PREMIUM</span></span>`).join("")}</div>
-  </section>`;
-}
-function premiumFaq(){
-  const qa = [
-    ["What happens to my logs if I cancel?", "Nothing is deleted. Premium features lock; your logs, history and export stay yours."],
-    ["Can I cancel anytime?", "Yes. Cancel in Settings > Premium > Manage subscription. You keep Premium until the end of the period you paid for."],
-    ["What if I want my money back?", "The Refunds page says exactly when and how. It is linked at the bottom of this page."]
-  ];
-  return `<section class="prem-faq" aria-labelledby="prem-faq-h"><h3 id="prem-faq-h">Questions</h3>${qa.map(([q, a]) => `<details class="faq"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}</section>`;
-}
 function premiumHub(p){
   const on = isPremium(p);
   const plan = UI.premPlan === "monthly" ? "monthly" : "yearly";
@@ -19041,7 +19021,25 @@ function premiumHub(p){
       </a>`).join("")}
     </div>
 
-    ${premiumFreeStrip()}
+    <div class="prem-stays">
+      <div class="eyebrow">What stays open on Free</div>
+      <p class="draft">Home, logging, history and export stay open whether or not you subscribe. Export is always free, and cancelling never deletes anything you've logged.</p>
+      <div class="pill-strip">
+        <span class="wl-pill">Works offline</span>
+        <span class="wl-pill">Dark mode</span>
+        <span class="wl-pill">English &amp; Spanish</span>
+        <span class="wl-pill">Passcode lock</span>
+        <span class="wl-pill">Multiple profiles</span>
+        <span class="wl-pill">Export your data anytime</span>
+      </div>
+      <p class="advice-banner">WholeLife Hub is a tracking tool. It is not medical advice.</p>
+    </div>
+
+    <div class="prem-faqs">
+      <details class="wl-faq"><summary>What happens to my logs if I cancel?</summary><p>Nothing is deleted. Premium features lock; your logs, history and export stay yours.</p></details>
+      <details class="wl-faq"><summary>Can I cancel anytime?</summary><p>Yes — Settings &gt; Premium &gt; Manage subscription. You keep Premium until the end of the period you paid for.</p></details>
+      <details class="wl-faq"><summary>How does billing work?</summary><p>Plans are billed through Lemon Squeezy and renew automatically until you cancel. The price on the plan you pick is the price you pay.</p></details>
+    </div>
 
     <div class="prem-about">
       <div class="eyebrow">About Premium</div>
@@ -19049,10 +19047,6 @@ function premiumHub(p){
       subscription, priced to cover the work rather than to squeeze a free app. It never changes how the free
       tier logs food or workouts, and nothing you've already logged is ever held back behind it.</p>
     </div>
-
-    ${premiumFaq()}
-
-    <p class="advice-banner">WholeLife Hub is a tracking tool. It is not medical advice.</p>
 
     <div class="prem-foot">
       <div class="row"><a href="#/terms">Terms</a><a href="#/privacy-policy">Privacy</a><a href="#/refunds">Refunds</a></div>
@@ -25250,26 +25244,13 @@ h2.sec-title + .mgrid .mhead svg.ci{
 
 /* Tier 2 (borderline): strike this rule in review to keep the dropzone centred */
 .dropzone{ align-items:flex-start; text-align:left; }
+</style>
 <style>
 /* ============================================================
-   WL FINPEX PASS - Premium page extras and the Web app layout
+   WL FINPEX PASS - the Web app layout and the Home score cards
    Tier badges sit on solid colours, never the gold gradient.
    Every touch target is at least 44px.
    ============================================================ */
-.tier-badge{ display:inline-block; font-size:calc((11px) * var(--text-scale,1)); font-weight:700; letter-spacing:.04em; padding:2px 8px; border-radius:999px; vertical-align:middle; white-space:nowrap; }
-.tier-badge.premium{ background:#111; color:#f5c542; }
-:root:is([data-scheme="dark"],[data-scheme="oled"]) .tier-badge.premium{ background:#f5c542; color:#111; }
-.stays-open h3, .prem-faq h3{ margin:0 0 6px; font-size:calc((15px) * var(--text-scale,1)); }
-.stays-open p{ margin:0; font-size:calc((13.5px) * var(--text-scale,1)); line-height:1.55; color:var(--muted); }
-.pill-strip{ display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 0; }
-.pill-strip .pill{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:8px 12px; font-size:calc((13px) * var(--text-scale,1)); min-height:44px; box-sizing:border-box; }
-.prem-store .stays-open, .prem-store .prem-faq, .prem-store .advice-banner{ align-self:stretch; }
-.prem-faq .faq{ border-top:1px solid var(--line); }
-.prem-faq .faq summary{ display:flex; align-items:center; min-height:44px; cursor:pointer; font-weight:600; font-size:calc((14px) * var(--text-scale,1)); }
-.prem-faq .faq summary:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
-.prem-faq .faq p{ margin:0 0 12px; font-size:calc((13.5px) * var(--text-scale,1)); line-height:1.55; color:var(--muted); }
-.advice-banner{ margin:0; padding:12px 14px; border-radius:var(--r-sm); background:var(--good-soft); color:var(--text); font-size:calc((13px) * var(--text-scale,1)); }
-
 /* Web app layout: opt-in, desktop widths only. App view (the default) is untouched. */
 @media (min-width:900px){
   html[data-layout="webapp"] .app .wrap{ max-width:1360px; }
@@ -25292,5 +25273,22 @@ h2.sec-title + .mgrid .mhead svg.ci{
 .ws-info summary{ display:flex; align-items:center; min-height:44px; cursor:pointer; font-weight:600; font-size:calc((13.5px) * var(--text-scale,1)); }
 .ws-info summary:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
 .ws-info p{ margin:0 0 8px; line-height:1.55; }
+</style>
+
+<style>
+/* ================================================================
+   FINPEX PASS 1 - Premium page: tier badges, pill strip, stays-open,
+   FAQ, advice banner. Adapted from the Finpex Tracker teardown
+   (18 Nov 2026). Markup lives in premiumHub(); no logic changes.
+   ================================================================ */
+.wl-tier-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:8px;white-space:nowrap;background:#111;color:#f5c542}
+.pill-strip{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.wl-pill{display:inline-flex;align-items:center;border:1px solid rgba(127,127,127,.4);border-radius:999px;padding:8px 12px;font-size:13px;min-height:44px}
+.prem-stays{align-self:stretch;text-align:left}
+.advice-banner{border:1px solid rgba(127,127,127,.4);border-radius:12px;padding:10px 12px;font-size:13px}
+.prem-faqs{align-self:stretch;text-align:left}
+.wl-faq{border-top:1px solid rgba(127,127,127,.35)}
+.wl-faq summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
+.wl-faq p{margin:0 0 12px}
 </style>
 </body></html>
