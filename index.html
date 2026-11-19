@@ -25290,4 +25290,21 @@ h2.sec-title + .mgrid .mhead svg.ci{
   html[data-layout="webapp"] .wrap>header,html[data-layout="webapp"] .wrap>.compact-head,html[data-layout="webapp"] .wrap>.profstrip{grid-column:1/-1}
 }
 </style>
+
+<style>
+/* ================================================================
+   NAV ICON HOVER - the sidebar tiles lift and grow on hover, the
+   way the Muse sidebar icons do. CSS only; scripts untouched.
+   The tile already squishes on :active - this adds the transition
+   so both movements ease, and the press still wins while the
+   pointer is down. Off when the app Motion setting is reduced;
+   the hover half only runs on devices that can hover.
+   ================================================================ */
+:root:not([data-motion="reduced"]) .nav a .si-tile,:root:not([data-motion="reduced"]) .nav button.prem-trigger .si-tile{transition:transform .18s ease}
+:root:not([data-motion="reduced"]) .nav a:active .si-tile,:root:not([data-motion="reduced"]) .nav button.prem-trigger:active .si-tile{transform:scale(.94)}
+@media (hover:hover) and (prefers-reduced-motion: no-preference){
+  :root:not([data-motion="reduced"]) .nav a:hover .si-tile,:root:not([data-motion="reduced"]) .nav a:focus-visible .si-tile,:root:not([data-motion="reduced"]) .nav button.prem-trigger:hover .si-tile,:root:not([data-motion="reduced"]) .nav button.prem-trigger:focus-visible .si-tile{transform:translateY(-2px) scale(1.12)}
+  :root:not([data-motion="reduced"]) .nav a:active .si-tile,:root:not([data-motion="reduced"]) .nav button.prem-trigger:active .si-tile{transform:scale(.94)}
+}
+</style>
 </body></html>
