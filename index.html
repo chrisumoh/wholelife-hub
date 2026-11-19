@@ -3836,7 +3836,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.5", build: "8.5.1", channel: "Dev Testing", date: "2026-11-17", week: "Sun 15 Nov – Sat 21 Nov 2026" };
+const APP_VERSION = { update: "8.5", build: "8.5.2", channel: "Dev Testing", date: "2026-11-18", week: "Sun 15 Nov – Sat 21 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3850,6 +3850,14 @@ const APP_VERSION = { update: "8.5", build: "8.5.1", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.5.2",
+      area:"Finpex adaptations",
+      title:"Coming up today, a daily score and an offline note",
+      bug:"Home had no single read-out of what is still open today or of how today went against the person's own targets, and nothing told people the app opens offline.",
+      fix:"Home: a Coming up today card (water still to go, the planned workout if not done, no food logged yet, no weigh-in in 7 days) and a Today's score card. The score is a logging-consistency number from 0 to 100: activity (30, workouts in the last 7 days against the weekly target), water (20, against 2.7 L) and nutrition (20, full on or under the calorie target, falling by the overshoot). A part with no target or nothing logged is left out and named, the others share its weight, and the card is hidden when no part has data. It shows a donut of what fed it, a 7-day trend line and a how-it-is-worked-out note. There are no sample numbers anywhere. Offline: a one-time note in the notification bell (System tab) once the service worker is active, saying logs stay in this browser. Rebased 18 Nov 2026: this build originally also carried Premium page extras and a Web app layout; those shipped separately (Premium page pass, PR #92; Web app layout, PR #94), so they were taken out of this branch rather than ship two versions of each.",
+      where:"index.html: comingUpItems(), comingUpCard(), scoreParts(), scoreOf(), scoreCard(), wlTrendSVG(), wlDonut(), homeView(), the service-worker registration script (bell note), the privacy key table, the WL FINPEX PASS style block, APP_VERSION, WLH.changelog. tests/browser/finpex.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/finpex.mjs. Open Home: set a workout target and log some water and a meal, and the Today's score card fills in. On a first visit with the service worker active, the offline note appears once. The Premium and layout sections of finpex.mjs cover the versions shipped in PR #92 and PR #94.",
+      limits:"Not found in the Finpex pack or skipped on purpose: the notification centre already existed so it was not rebuilt, and the daily digest, monthly review reminder and Settings > Alerts switches were not added because reminders already live in the Coach tab. The monthly review was not built (a printable weekly review already exists in Premium). Sleep and steps have no targets in the app, so they are not in the score yet. The welcome 3-step strip, the trust strip and the legal short versions were left for a later build. The offline note is English only and the new Home text has no Spanish yet (TODO-ES)." },
     { id:"8.5.1",
       area:"Language",
       title:"Translate the recipe catalog, snack preparation and more screens into Spanish",
@@ -11019,6 +11027,70 @@ function workoutStatsRow(p){
   return `<div class="scgrid plain">${cards.map(c => `<div class="sc"><span class="sc-ic" style="--a:var(--si-${c.g}-a);--b:var(--si-${c.g}-b)">${icon(c.i, "", 18)}</span>
     <div class="sc-t"><span class="sc-l">${esc(c.l)}</span><b class="sc-v">${esc(c.v)}</b></div>${c.cur === undefined ? "" : deltaPill(c.cur, c.prev)}</div>`).join("")}</div>`;
 }
+// ---- coming up today and the one-number score (Finpex adaptation 06 and 07) ----
+// Both are read-only views over what the person already logged and the targets they set. No new data is stored, no sample
+// numbers exist, and a part with no target or nothing logged is left out and named, never scored as zero.
+function comingUpItems(p){
+  const t = today(), items = [], fmtW = r => `${METRICS.water.fmt(r, p)} ${METRICS.water.unit(p)}`;
+  const water = vitalsOf(t)?.water;
+  if (water == null || water < WATER_GOAL_ML) items.push({ text: `Water: ${fmtW(WATER_GOAL_ML - (water || 0))} to go`, href: "#/metric/water" });
+  const day = p.workoutPlan?.days?.find(d => d.dow === new Date().getDay());
+  if (day && !onDate("workouts", t).length) items.push({ text: `Workout planned: ${day.title || day.type} · ${day.minutes} min`, href: "#/coach" });
+  if (!loggedFood(t)) items.push({ text: "No food logged yet today", href: "#/nutrition" });
+  const w = entries("weights", p.id);
+  if (w.length && !w.some(x => x.date > addDays(t, -7))) items.push({ text: "No weigh-in in the last 7 days", href: "#/metric/weight" });
+  return items;
+}
+function comingUpCard(p){
+  const items = comingUpItems(p);
+  return `<section class="card" id="wlComingUp" aria-labelledby="wlComingUpH"><h2 id="wlComingUpH" class="sec-title">Coming up today</h2>
+    ${items.length ? `<div class="list">${items.map(it => `<a class="li tap-row" href="${it.href}"><span class="grow">${esc(it.text)}</span>${icon("chevR", "row-chev", 16)}</a>`).join("")}</div>` : `<p class="small muted">All caught up today.</p>`}</section>`;
+}
+// Each part is 0-100 or null (no target, or nothing logged that day). Weights: activity 30, water 20, nutrition 20; sleep and steps
+// have no target in the app yet, so they are not scored. Over the calorie target the part falls by the overshoot.
+const SCORE_PARTS = [["activity", "Activity", 30, "var(--c-activity)"], ["water", "Water", 20, "var(--c-water)"], ["nutrition", "Nutrition", 20, "var(--c-nutrition)"]];
+function scoreParts(p, d){
+  const clamp = v => Math.max(0, Math.min(100, v));
+  const w = vitalsOf(d)?.water, e = loggedFood(d) ? intakeOn(d) : null, g = p.calorieGoal, wg = p.workoutGoal;
+  const done = wg ? entries("workouts", p.id).filter(x => x.date > addDays(d, -7) && x.date <= d).length : null;
+  return {
+    activity: wg ? clamp(done / wg * 100) : null,
+    water: w == null ? null : clamp(w / WATER_GOAL_ML * 100),
+    nutrition: g && e != null ? clamp(e <= g ? 100 : 100 - (e - g) / g * 100) : null
+  };
+}
+function scoreOf(parts){
+  let sw = 0, sum = 0;
+  for (const [k, , wt] of SCORE_PARTS) if (parts[k] != null) { sw += wt; sum += parts[k] * wt; }
+  return sw ? Math.round(sum / sw) : null;
+}
+function wlTrendSVG(values, w = 280, h = 64){
+  const lo = Math.min(...values, 0), hi = Math.max(...values, 100);
+  const pts = values.map((v, i) => `${(i / (values.length - 1) * w).toFixed(1)},${(h - 4 - (v - lo) / (hi - lo) * (h - 8)).toFixed(1)}`).join(" ");
+  return `<svg viewBox="0 0 ${w} ${h}" class="ws-trend" role="img" aria-label="Score, last ${values.length} days"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function wlDonut(segs){
+  const C = 2 * Math.PI * 40; let off = 0;
+  const rings = segs.map(s => { const len = s.share * C, out = `<circle cx="50" cy="50" r="40" fill="none" stroke-width="12" style="stroke:${s.color}" stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 50 50)"/>`; off += len; return out; }).join("");
+  return `<svg viewBox="0 0 100 100" class="ws-donut" role="img" aria-label="What feeds today's score">${rings}</svg>`;
+}
+function scoreCard(p){
+  const t = today(), parts = scoreParts(p, t), score = scoreOf(parts);
+  if (score == null) return "";
+  const days = Array.from({ length: 7 }, (_, i) => addDays(t, i - 6)), trend = days.map(d => scoreOf(scoreParts(p, d))).filter(v => v != null);
+  const used = SCORE_PARTS.filter(([k]) => parts[k] != null), tw = used.reduce((a, [, , wt]) => a + wt, 0) || 1;
+  const segs = used.filter(([k, , wt]) => parts[k] * wt > 0).map(([k, , wt, c]) => ({ share: parts[k] * wt / used.reduce((a, [k2, , w2]) => a + parts[k2] * w2, 0), color: c }));
+  const left = SCORE_PARTS.filter(([k]) => parts[k] == null).map(([, n]) => n.toLowerCase());
+  return `<section class="card" id="wlScore" aria-labelledby="wlScoreH"><h2 id="wlScoreH" class="sec-title">Today's score</h2>
+    <p class="small muted">How today went against your own targets. It measures how steadily you log and hit them, not your health.</p>
+    <div class="ws-row"><div class="ws-ring">${segs.length ? wlDonut(segs) : `<svg viewBox="0 0 100 100" class="ws-donut" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" stroke-width="12" style="stroke:var(--line)"/></svg>`}<b class="ws-num">${score}</b></div>
+      <ul class="ws-parts">${SCORE_PARTS.map(([k, n, , c]) => `<li><span class="ws-dot" style="background:${c}"></span><span class="grow">${esc(n)}</span><b>${parts[k] == null ? "No data" : Math.round(parts[k]) + "%"}</b></li>`).join("")}</ul></div>
+    ${trend.length > 1 ? `<div class="ws-trendwrap">${wlTrendSVG(trend)}<span class="tiny muted">Last ${trend.length} scored days</span></div>` : ""}
+    ${left.length ? `<p class="tiny muted">Not in today's score: ${esc(left.join(", "))} (no target set, or nothing logged yet).</p>` : ""}
+    <details class="ws-info"><summary>How this is worked out</summary>
+      <p class="small muted">Each part runs from 0 to 100, and the score is their weighted average, rounded. Activity (weight 30) is your workouts in the last 7 days against your weekly workout target. Water (20) is today's water against ${(WATER_GOAL_ML / 1000).toFixed(1)} L. Nutrition (20) is full on or under your calorie target and drops by the overshoot above it. A part with no target, or nothing logged, is left out and the others share its weight. Sleep and steps are not scored yet.</p></details>
+  </section>`;
+}
 function homeView(p){
   const at = lastUpdated();
   const when = at ? `${new Date(at).toDateString() === new Date().toDateString() ? "today" : new Date(at).toLocaleDateString(undefined,{month:"short",day:"numeric"})} at ${new Date(at).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}` : null;
@@ -11039,6 +11111,8 @@ function homeView(p){
   </div>
   ${weeklyStatsRow(p)}
   ${glanceCard(p)}
+  ${comingUpCard(p)}
+  ${scoreCard(p)}
   ${widgetSection(p, "home")}
   ${typeof isPremium === "function" && isPremium() && typeof microWidget === "function"
       ? `<div class="mgrid premrow">${microWidget(p)}${typeof recoveryWidget === "function" ? recoveryWidget(p) : ""}${typeof pantryWidget === "function" ? pantryWidget(p) : ""}</div>` : ""}
@@ -17688,6 +17762,7 @@ function privacyPolicyView(){
         <tr><td><code>wlh.v62</code></td><td>Your profiles and logs in this browser. Signed in, the key ends in <code>@</code> and your account id, and it is removed when you sign out.</td></tr>
         <tr><td><code>wlh.sb.auth</code></td><td>Your sign-in session (set by the sign-in library). Anyone who can run a script on this page could read it.</td></tr>
         <tr><td><code>wlh.meals.v1</code></td><td>Signed in, no passcode only: a copy of your meals, and any meal changes not uploaded yet, so the app works offline. Removed when you sign out. (With a passcode on, meals stay in the encrypted copy instead, and this entry is not written.)</td></tr>
+        <tr><td><code>wlh.offlinetoast</code></td><td>A flag that the one-time "ready to work offline" note in the notification bell has been placed, so it never appears twice.</td></tr>
         <tr><td><code>wlh.mode</code></td><td>Your light, dark or OLED display choice.</td></tr>
         <tr><td><code>wl-appearance</code></td><td>A copy of your saved display, accent, text size, UI style (Rounded or Crisp) and language, so the page paints the right look before it loads.</td></tr>
         <tr><td><code>wlh.navgrp</code></td><td>Which sidebar groups you left expanded or collapsed (older builds; no longer written since the sidebar stopped collapsing).</td></tr>
@@ -24811,6 +24886,20 @@ function tourGuideCard(){
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("/sw.js").catch(function () {});
+    // One-time note in the notification bell (not a toast, so it never covers the screen), once a worker is controlling the
+    // page and a profile exists. Honest about local storage. The flag is only set once the note is really placed.
+    navigator.serviceWorker.ready.then(function () {
+      var tries = 0;
+      (function put() {
+        try {
+          if (localStorage.getItem("wlh.offlinetoast")) return;
+          if (typeof P === "function" && P() && typeof bellNote === "function") {
+            bellNote("Ready to work offline. Your logs stay in this browser.", "");
+            localStorage.setItem("wlh.offlinetoast", "1");
+          } else if (++tries < 15) setTimeout(put, 2000);
+        } catch (e) {}
+      })();
+    }).catch(function () {});
   });
 }
 </script>
@@ -25150,6 +25239,28 @@ h2.sec-title + .mgrid .mhead svg.ci{
 
 /* Tier 2 (borderline): strike this rule in review to keep the dropzone centred */
 .dropzone{ align-items:flex-start; text-align:left; }
+<style>
+/* ============================================================
+   WL FINPEX PASS - Coming up today and the daily score card
+   (Finpex adaptations 06 and 07). Premium extras and the Web
+   app layout from the same pass shipped separately.
+   ============================================================ */
+/* Home: coming up and the score card */
+#wlComingUp .sec-title, #wlScore .sec-title{ margin:0 0 4px; }
+#wlComingUp .li{ min-height:44px; box-sizing:border-box; }
+.ws-row{ display:flex; align-items:center; gap:16px; margin:12px 0; }
+.ws-ring{ position:relative; width:112px; height:112px; flex:none; }
+.ws-donut{ width:100%; height:100%; display:block; }
+.ws-num{ position:absolute; inset:0; display:grid; place-items:center; font-size:calc((30px) * var(--text-scale,1)); font-variant-numeric:tabular-nums; }
+.ws-parts{ list-style:none; margin:0; padding:0; flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.ws-parts li{ display:flex; align-items:center; gap:8px; font-size:calc((14px) * var(--text-scale,1)); }
+.ws-parts li b{ font-variant-numeric:tabular-nums; }
+.ws-dot{ width:10px; height:10px; border-radius:50%; flex:none; }
+.ws-trendwrap{ display:flex; flex-direction:column; gap:4px; color:var(--accent); margin-bottom:8px; }
+.ws-trend{ width:100%; max-width:320px; height:64px; }
+.ws-info summary{ display:flex; align-items:center; min-height:44px; cursor:pointer; font-weight:600; font-size:calc((13.5px) * var(--text-scale,1)); }
+.ws-info summary:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.ws-info p{ margin:0 0 8px; line-height:1.55; }
 </style>
 
 <style>
