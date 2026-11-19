@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.5 (Dev Testing), build 8.5.1, 2026-11-17. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.5 (Dev Testing), build 8.5.2, 2026-11-18. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.5.2 · Finpex adaptations: Web app layout, offline note, Coming up today and a daily score
+
+- **Problem:** Finpex teardown notes suggested several patterns, but the app already had a notification centre, reminders and a side rail. Home had no single read-out of what is still open today or of how today went against the person's own targets. There was no way to use the full width of a desktop screen, and nothing told people the app opens offline.
+- **Change:** Settings > Appearance: a Layout choice, App (default) or Web app, held for review and saved with the other appearance choices; Web app only widens the page and its card grids from 900px up and looks the same as App below that. Offline: a one-time note in the notification bell (System tab) once the service worker is active, saying logs stay in this browser. Home: a Coming up today card (water still to go, the planned workout if not done, no food logged yet, no weigh-in in 7 days) and a Today's score card. The score is a logging-consistency number from 0 to 100: activity (30, workouts in the last 7 days against the weekly target), water (20, against 2.7 L) and nutrition (20, full on or under the calorie target, falling by the overshoot). A part with no target or nothing logged is left out and named, the others share its weight, and the card is hidden when no part has data. It shows a donut of what fed it, a 7-day trend line and a how-it-is-worked-out note. There are no sample numbers anywhere.
+- **Where:** index.html: WL_LAYOUTS, WLA.layout, wlaSetLayout(), layoutRow(), wlaApplyDom(), wlaMirror(), wlaSnap(), wlaRows(), wlaDiscard(), the head script, the ui-layout case, comingUpItems(), comingUpCard(), scoreParts(), scoreOf(), scoreCard(), wlTrendSVG(), wlDonut(), homeView(), the service-worker registration script (bell note), the privacy key table, the WL FINPEX PASS style block, APP_VERSION, WLH.changelog. tests/browser/finpex.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/finpex.mjs. Go to Settings > Appearance > Layout, choose Web app, Save, and widen the window past 900px. Open Home: set a workout target and log some water and a meal, and the Today's score card fills in. On a first visit with the service worker active, the offline note appears once.
+- **Known limits:** Not found in the Finpex pack or skipped on purpose: the notification centre already existed so it was not rebuilt, and the daily digest, monthly review reminder and Settings > Alerts switches were not added because reminders already live in the Coach tab. The monthly review was not built (a printable weekly review already exists in Premium). Sleep and steps have no targets in the app, so they are not in the score yet. The welcome 3-step strip, the trust strip and the legal short versions were left for a later build. The offline note is English only and the new Premium and Home text has no Spanish yet (TODO-ES). No screenshots of the Web app layout have been reviewed by a person.
 
 ## 8.5.1 · Language: Translate the recipe catalog, snack preparation and more screens into Spanish
 
