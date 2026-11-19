@@ -3836,7 +3836,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.4", build: "8.4.1", channel: "Dev Testing", date: "2026-10-31", week: "Sun 25 Oct – Sat 31 Oct 2026" };
+const APP_VERSION = { update: "8.5", build: "8.5.2", channel: "Dev Testing", date: "2026-11-18", week: "Sun 15 Nov – Sat 21 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3850,14 +3850,94 @@ const APP_VERSION = { update: "8.4", build: "8.4.1", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
-    { id:"8.4.1",
+    { id:"8.5.2",
+      area:"Finpex adaptations",
+      title:"Coming up today, a daily score and an offline note",
+      bug:"Home had no single read-out of what is still open today or of how today went against the person's own targets, and nothing told people the app opens offline.",
+      fix:"Home: a Coming up today card (water still to go, the planned workout if not done, no food logged yet, no weigh-in in 7 days) and a Today's score card. The score is a logging-consistency number from 0 to 100: activity (30, workouts in the last 7 days against the weekly target), water (20, against 2.7 L) and nutrition (20, full on or under the calorie target, falling by the overshoot). A part with no target or nothing logged is left out and named, the others share its weight, and the card is hidden when no part has data. It shows a donut of what fed it, a 7-day trend line and a how-it-is-worked-out note. There are no sample numbers anywhere. Offline: a one-time note in the notification bell (System tab) once the service worker is active, saying logs stay in this browser. Rebased 18 Nov 2026: this build originally also carried Premium page extras and a Web app layout; those shipped separately (Premium page pass, PR #92; Web app layout, PR #94), so they were taken out of this branch rather than ship two versions of each.",
+      where:"index.html: comingUpItems(), comingUpCard(), scoreParts(), scoreOf(), scoreCard(), wlTrendSVG(), wlDonut(), homeView(), the service-worker registration script (bell note), the privacy key table, the WL FINPEX PASS style block, APP_VERSION, WLH.changelog. tests/browser/finpex.mjs (new), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/finpex.mjs. Open Home: set a workout target and log some water and a meal, and the Today's score card fills in. On a first visit with the service worker active, the offline note appears once. The Premium and layout sections of finpex.mjs cover the versions shipped in PR #92 and PR #94.",
+      limits:"Not found in the Finpex pack or skipped on purpose: the notification centre already existed so it was not rebuilt, and the daily digest, monthly review reminder and Settings > Alerts switches were not added because reminders already live in the Coach tab. The monthly review was not built (a printable weekly review already exists in Premium). Sleep and steps have no targets in the app, so they are not in the score yet. The welcome 3-step strip, the trust strip and the legal short versions were left for a later build. The offline note is English only and the new Home text has no Spanish yet (TODO-ES)." },
+    { id:"8.5.1",
+      area:"Language",
+      title:"Translate the recipe catalog, snack preparation and more screens into Spanish",
+      bug:"Spanish still showed English prose for the 291 catalog recipes and the snack preparation instructions, plus English text on Home, Coach, Culture, Awards, Premium and Settings.",
+      fix:"Added a lazy-loaded i18n/es-recipes.js with Spanish descriptions, steps, ways to make it, lighter and higher-protein swaps, pairings, meal-prep notes and ingredient names for all 291 dishes, and Spanish serving and preparation text for all 42 snacks. It is fetched only the first time a Spanish page renders, so English users and the page size are unaffected. Recipe pages also translate units, allergen names, country labels and the 'Contains' line. About 150 more interface lines on Home, Coach, Culture, Awards, Premium and Settings are now Spanish. The coach question now also sends the chosen language to the server, and the wl-coach function (code only, not deployed) asks the model to answer in Spanish. Dish names, ids and what people logged never change, and switching back to English restores every line.",
+      where:"i18n/es-recipes.js (new, generated data). index.html: wlEsLoad(), esCat(), esDish(), esIng(), esUnit(), esPlace(), esAllergen(), localizeUI(), recipeDetail(), goalNote(), the snack card, WL_ES_UI2, wlaSetLang(), the wl-coach request, APP_VERSION, WLH.changelog. supabase/functions/wl-coach/handler.ts (systemFor), tests/wl-coach-handler.test.mjs (1 new test), docs/AI_COACH.md. tests/browser/appearance.mjs (6 new checks), CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/appearance.mjs. In the app go to Settings > Appearance, choose Español, then open Recipes > any dish (steps, ingredients, ways to make it), Snacks > How to make it, Home, Cultura gastronómica, Coach, Premium. Switch back to English and the English text returns.",
+      limits:"The wl-coach edge function now reads an optional lang field and replies in Spanish when it is es, but this build is code only: the function is not deployed, so coach replies stay as they are until it is. The fixed safety reply for red-flag medical topics stays English. Long legal and privacy paragraphs, the Premium fine print and a few generated sentences with numbers inside them stay English. Spanish quantities keep US units with metric conversions where the recipe gave them. Translations were written by Claude and have not had a native-speaker review. Not yet checked on a real phone." },
+    { id:"8.5",
+      area:"Language",
+      title:"Extend Spanish controls across logging, recipes, coaching and settings",
+      bug:"Spanish previously covered only navigation, Settings tabs and Appearance, leaving the main forms and controls in English.",
+      fix:"Added Spanish labels, form options, help copy and accessible names across meal and workout logging, snacks, recipe filters and plans, coach controls, profile, goals, household and privacy settings. Dates use Spanish formatting; user entries and stored values stay untouched. Claude sample prompts request Spanish answers when Spanish is selected.",
+      where:"index.html: WL_ES_UI, localizeUI(), morphInto(), fmtDay(), fmtLong(), opt(), render(), logging/recipe/coach views and askClaude(). tests/browser/appearance.mjs, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome node tests/browser/appearance.mjs. Switch to Español, visit Log, Snacks, Recipes, Coach and Settings, check labels and a 375px viewport; switch back and verify saved meal names.",
+      limits:"The catalog's 291 long-form recipes and snack preparation prose are still in English; WL Coach's server responses and some advanced components may be English. Spanish is per device. Browser test could not run in this environment because Chromium cannot create a socket; CI and preview checks remain necessary. No Supabase code or database changed." },
+    { id:"8.4.10",
+      area:"Health",
+      title:"Health check: stop logging harmless resize noise and fix a welcome photo grid error",
+      bug:"A health check found two things. The error log table was almost all one harmless browser message (ResizeObserver loop), which hides real errors and fills the 20,000-row cap. And one real error was captured: the welcome photo grid could start animating before its first build and read a missing element (TypeError: reading 'style').",
+      fix:"observability.js now skips the ResizeObserver loop message. The photo grid's frame function returns early until the first build exists; the resize callback then builds and restarts it.",
+      where:"observability.js (error listener). index.html: wlGrid frame, APP_VERSION, WLH.changelog. docs/health/2026-11-13.md (full review log), CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and node --test tests/pwa-kit.cjs. Open the welcome screen on a slow device or throttle the CPU: no TypeError in the console. Read docs/health/2026-11-13.md for every finding.",
+      limits:"The live site could not be fetched from the review environment. Leaked-password protection in Supabase still needs Chris to turn it on. No database or function was changed." },
+    { id:"8.4.9",
+      area:"Layout",
+      title:"WL Align Pass: stacked text blocks now line up on the left edge",
+      bug:"Empty states, the Premium store hero, the paywall footer, the coach card on wide screens and the photo dropzone centred every line of a stacked block, so each line started at a different point and scanned badly.",
+      fix:"One CSS block added as the last style block: .empty, .np-empty and .emptybox, .prem-store and .prem-cta-fine, .pw-foot, .coachcard from 768px up, and (tier 2, borderline, its own rule) .dropzone are left-aligned. Inside .prem-store the plan picker, About block and footer are stretched so they stay full width. The slide-to-pay button sits outside .prem-store in .prem-cta-bar, so it is unchanged. Deliberately still centred: ring numbers, loaders, the celebration card, controls and labels, price table cells, the calendar title, icon-button captions, receipts and invoices, and single-line statuses.",
+      where:"index.html: the WL ALIGN PASS style block before the closing body tag, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md. CSS only: no scripts or markup changed.",
+      test:"Open Premium (#/premium), an empty list such as Meals with nothing logged, and the Coach card on a window 768px or wider: the text starts at the left edge. Delete the single .dropzone rule to keep that one centred.",
+      limits:"The a11y browser test could not run here because axe-core could not be downloaded; every other browser test passes." },
+    { id:"8.4.8",
+      area:"Coach",
+      title:"Coach: consent is now checked by the account's database record, and the coach function fails safely on bad input",
+      bug:"A review of 8.4.7 asked whether consent: true in the request proves consent. It does not: anyone can type it, a direct call skipped the opt-in screen, and a second tab kept sending after the person turned coach chat off. The review also asked for the database function to be tested on a real PostgreSQL. Reading the function code found that a request body of null crashed it with an unhandled error, a missing model key was logged and used up a slot, a provider error message could be written to the log, and an auth-service outage looked like an expired sign-in.",
+      fix:"New table ai_coach_consent (one row per account) written only by coach_consent_set(), which acts on the signed-in person with a server-stamped time and cannot be pointed at another account. coach_reserve now checks that record under the same per-person lock before it counts or inserts, and answers ok, rate_limited or consent_required; the function turns the last into a 403 and no longer reads a consent flag from the request. The app saves the choice to the account before the switch turns on, turns the switch off at once on withdrawal and retries the account update if it fails, and follows a consent_required answer from another tab or device back to the opt-in. Focus moves to the question box after Allow and back to the button after a failed save; errors are announced. The function now refuses bodies that are not a small JSON object, returns 503 before taking a slot when the model key is missing (a red-flag message still gets its safe reply), separates an auth outage (503) from an expired token (401), logs only fixed error codes, and cuts an over-long reply to the column limit. The Privacy Policy now says the choice and its date are saved in the account. LEGAL_UPDATED and TERMS_VERSION move to 1 November 2026.",
+      where:"supabase/migrations/20261101120000_wlh_8_4_3_ai_coach_consent.sql (new, not applied; the 20261030120000 file is untouched). supabase/functions/wl-coach/handler.ts and index.ts. index.html: coachChatCard(), coachConsentSet(), coachConsentChange(), coachWithdrawRetry(), wlCoachSend(), sbUserChanged(), boot(), the wlc-optin and consent-coach-toggle cases, privacyPolicyView() sections 3 and 4 and the never-uploaded list, LEGAL_UPDATED, TERMS_VERSION, APP_VERSION, WLH.changelog. tests/db/coach-reserve.test.mjs (new, 11 checks on a disposable Postgres), tests/wl-coach-handler.test.mjs (20), tests/browser/coachchat.mjs (27), tests/browser/legal.mjs, .github/workflows/tests.yml (new coach-database job). CHANGELOG.md, README.md, docs/BUILD_PLAN.md, docs/DATABASE.md, docs/AI_COACH.md.",
+      test:"node --test tests/wl-coach-handler.test.mjs; node tests/browser/coachchat.mjs, privacy.mjs, legal.mjs. Database tests (disposable local Postgres only): PGHOST=<socket dir or localhost> PGPORT=<port> PGUSER=postgres node --test tests/db/coach-reserve.test.mjs. By hand after the SQL is applied on a non-production project: allow coach chat, ask a question, open a second tab, turn coach chat off in the first, send from the second and see the opt-in come back.",
+      limits:"Nothing was applied, deployed or called live. Consent is stored per account (latest state only, with its version and time), while the switch on the screen is per device profile, so a second profile or device on the same account shows the opt-in again once it is withdrawn elsewhere. A question already being answered when consent is withdrawn is still finished. A person can still record their own consent by calling the database function directly with their own token; that is their own choice made as themselves, not a way to claim anyone else's. The consent history shown in Settings stays on the device. Privacy Policy wording is copy, not legal advice." },
+    { id:"8.4.7",
+      area:"Coach",
+      title:"Coach: the hourly limit now holds under simultaneous requests, and coach chat needs an opt-in",
+      bug:"A review of 8.4.6 found two problems before anyone could use it. (1) The wl-coach function counted past questions, called the paid AI service, and only then saved the new one, so ten requests sent at once with 29 used all went through (39 against a limit of 30), and a failed log write let later calls through unmetered. (2) Chat was on for every signed-in person with no step naming Anthropic, and the signed-out text said questions went to the account and not to anyone else, which was not true.",
+      fix:"The limit is taken before the model is called: a new database function, coach_reserve, locks the person, counts their last hour and adds a pending row in one step, and returns nothing when the 30 are used. The function calls the model only with a reserved row, fails closed (500, no model call) if the reservation errors, and fills the row in afterwards; if that update fails the row still counts. Coach chat is now off until the person presses Allow coach chat on a screen that names Anthropic, says questions are saved in the account and may be read by the app owner to check answers are safe, and says logs and profile are not sent. The Send path checks the choice, the app sends consent:true, and the function refuses (403) without it. It is a fourth switch in Settings > Privacy & security (Coach chat), recorded in the consent history, and turning it off brings the opt-in back. The signed-out text no longer says questions stay with the account. The Privacy Policy gains a Coach chat entry in section 3, the saved questions in section 4 and Anthropic in section 6, and LEGAL_UPDATED and TERMS_VERSION move to 31 October 2026.",
+      where:"supabase/functions/wl-coach/handler.ts and index.ts (reserve/finish replace recentCount/log; consent check), supabase/migrations/20261030120000_wlh_8_4_1_ai_coach_logs.sql (edited because it has not been applied: pending route, coach_reserve). index.html: coachChatCard(), wlCoachSend(), the wlc-optin and consent-coach-toggle cases, consentCenter(), privacyGlance() count, HISTORY_LABELS, privacyPolicyView() sections 3, 4 and 6, LEGAL_UPDATED, TERMS_VERSION, APP_VERSION, WLH.changelog. tests/wl-coach-handler.test.mjs (13 checks, adds ten-at-once, consent and write-failure cases), tests/browser/coachchat.mjs (new, in run-all), privacy.mjs (of 4), legal.mjs (date). CHANGELOG.md, README.md, docs/BUILD_PLAN.md, docs/DATABASE.md, docs/AI_COACH.md.",
+      test:"node --test tests/wl-coach-handler.test.mjs (13 checks); node tests/browser/coachchat.mjs (14 checks), privacy.mjs and legal.mjs. By hand: signed in, open Coach, see the Allow coach chat screen and no question box; press Allow, ask, get a reply; Settings > Privacy & security shows Coach chat On; turn it off and Coach shows the opt-in again.",
+      limits:"The ten-at-once test uses a pretend reserve that mimics the database function; the real coach_reserve has not run against Postgres, so check it on a non-production project after the SQL is applied. The consent flag is on the device per profile (like the other switches); the server can only check that the app said consent was given, not prove it. Accounts that never saw the Terms change are not asked to agree again. The Privacy Policy wording is copy, not legal advice. The old Ask your coach card is unchanged. Not tried against the live model." },
+    { id:"8.4.6",
+      area:"Coach",
+      title:"WL Coach chat on the Coach page: signed-in people can ask training and food questions",
+      bug:"The Coach page's Ask box needs Claude's own sample permission and is not available to most people, so there was no coach chat that worked for everyone who is signed in. An AI call cannot safely run in the browser because the API key would be exposed.",
+      fix:"A new Chat with your coach card sits above Ask your coach. A signed-in person types a question; the app sends it with their own token to a new wl-coach edge function. The function checks the token, refuses empty or over-1,000-character messages and more than 30 questions an hour, answers red-flag medical topics (chest pain, trouble breathing, fainting, self-harm, eating-disorder behaviour, blood) with a fixed safe reply without calling the model, sends planning questions to Sonnet 5.5 and everything else to Haiku 5.5 with the WL Coach system prompt (West African food first, no diagnosis, no extreme diets, no invented numbers about the person), and writes every exchange to a new ai_coach_logs table that each person can read only for themselves. The Anthropic key lives only in the function's secrets. Signed out, the card says to sign in. The chat is not saved on the device. Nothing else on the page changed.",
+      where:"supabase/functions/wl-coach/handler.ts and index.ts (new), supabase/migrations/20261030120000_wlh_8_4_1_ai_coach_logs.sql (new, not applied), index.html: coachChatCard(), wlCoachSend(), the wlc-send case, coachView(), APP_VERSION, WLH.changelog. tests/wl-coach-handler.test.mjs (new), .github/workflows/tests.yml. CHANGELOG.md, README.md, docs/BUILD_PLAN.md, docs/DATABASE.md, docs/AI_COACH.md (new).",
+      test:"node --test tests/wl-coach-handler.test.mjs (11 checks). After the owner runs the SQL, sets ANTHROPIC_API_KEY and deploys (steps in docs/AI_COACH.md): sign in, open Coach, ask What is a good high-protein breakfast?, and see one row in ai_coach_logs; ask My chest hurts when I bench and see the fixed safe reply with route redflag and no model.",
+      limits:"Until the SQL is run, the key is set and the function is deployed, the card shows a try-again message. Phase 1 has no memory of the conversation (each question stands alone) and no access to the person's logs, so it says it can't see them. Red-flag matching is a keyword list, so it can miss unusual wording or catch a harmless phrase. The 30-an-hour limit is per account. Questions are stored in the account, which the Privacy Policy does not yet say (see the PR). The old Ask your coach card is unchanged. Not tried against the live model." },
+    { id:"8.4.5",
+      area:"Security and monitoring",
+      title:"Two foreign-key indexes, leaked-password steps, error report retention and a supabase-js check",
+      bug:"The Supabase advisor flagged friendships.requester_id and member_blocks.blocked_id as unindexed foreign keys and leaked-password protection as off. error_reports stops collecting at 20,000 rows with no cleanup plan, and CONTEXT.md still said supabase-js loads from jsDelivr.",
+      fix:"Added migration 20261101150000 with the two indexes (a throwaway Postgres test turned a sequential scan into a BitmapOr). Documented the owner steps and a non-production test plan for leaked-password protection, a monthly error_reports check and cleanup query, and the supabase-js review (2.117.2 kept: no advisories). Nothing was applied, deleted or changed in Supabase.",
+      where:"supabase/migrations/20261101150000_wlh_8_4_5_fk_indexes.sql, docs/DATABASE.md (Indexes and retention), docs/SECURITY.md (Leaked-password protection), docs/CONTEXT.md, docs/BUILD_PLAN.md, APP_VERSION, README.md.",
+      test:"node tests/check-repo.mjs. After the owner runs the migration: select indexname from pg_indexes where tablename in ('friendships','member_blocks'); and re-run the Supabase performance advisor.",
+      limits:"The migration is not applied until the owner runs it. Leaked-password protection is still off until the owner enables it in the dashboard. Live tables are empty, so the indexes help later, not today." },
+    { id:"8.4.2",
+      area:"Database",
+      title:"Migration files match the live ledger, and the database and security docs match what is applied",
+      bug:"Supabase's Preview check failed with \"Remote migration versions not found in local migrations directory\". The live ledger recorded friend messages as 20261022052343 and error reports as 20261025042753, but the repository files were named 20261022060000 and 20261024120000. docs/DATABASE.md also still said three applied migrations were not applied, and docs/SECURITY.md contradicted itself about syncing with a passcode.",
+      fix:"Renamed the two migration files to the versions the live ledger recorded (content unchanged; nothing is re-run, and the live database and its history were not touched). Checked read-only on 2026-11-01 that the live tables, RLS policies, grants, triggers, indexes and functions for friend_messages and error_reports match the files. Updated docs/DATABASE.md: all ten migrations now show as applied, with the version rule and the 48-row / 20,000-row error_reports state. Made docs/SECURITY.md and the stale DATABASE.md lines agree with the code and tests: a passcode encrypts the device copy only and sync runs while unlocked. Added section 6 to tests/check-repo.mjs: file names well formed and unique, the DATABASE.md table matches the folder exactly, and the old made-up versions are gone.",
+      where:"supabase/migrations/20261022052343_wlh_8_3_17_friend_messages.sql and 20261025042753_wlh_8_3_28_error_reports.sql (renamed, no content change). docs/DATABASE.md, docs/SECURITY.md, docs/BUILD_PLAN.md, docs/APP_READINESS.md, observability.js (comment), tests/check-repo.mjs, index.html (APP_VERSION, WLH.changelog), CHANGELOG.md, README.md.",
+      test:"node tests/check-repo.mjs (section 6). Owner step, run once and only if the Preview check still fails: nothing needs running on the database for this change. The renamed files match the ledger already.",
+      limits:"The Preview check itself was not re-run. Function bodies were compared on key behaviour (limits, accepted-friends check, search_path) rather than byte for byte. Live grants were read for friend_messages and error_reports only." },
+{ id:"8.4.1",
       area:"Legal",
       title:"EULA and Copyright / DMCA pages",
       bug:"The app had Terms and a Privacy Policy but no End User License Agreement and no copyright (DMCA) policy, which a copyright owner needs in order to report a problem and which the safe harbour under 17 U.S.C. 512 relies on.",
-      fix:"Two new legal pages written for what the app really does (friends, messages, challenges, blocking, the under-13 screen, Google and email sign-in, passcode, Premium through Lemon Squeezy as seller and merchant of record with licence keys). They fold long sections behind Read more like the other legal pages. They are linked from the sidebar Legal group, the footer and the end of the Terms. Facts only the owner can give (DMCA agent, governing law, liability amount, court district) are bracketed placeholders for now. A release check fails while any placeholder shows. The Privacy Policy now describes friend messages and challenges, from what the database really stores.",
+      fix:"Two new legal pages written for what the app really does (friends, messages, challenges, blocking, the under-13 screen, Google and email sign-in, passcode, Premium through Lemon Squeezy as seller and merchant of record with licence keys). They fold long sections behind Read more like the other legal pages. They are linked from the sidebar Legal group, the footer and the end of the Terms. Facts only the owner can give (DMCA agent, governing law, liability amount, court district) were bracketed placeholders; the owner filled them on 18 Nov 2026, so the release check passes. The Privacy Policy now describes friend messages and challenges, from what the database really stores.",
       where:"index.html: eulaView(), dmcaView() and the LEGAL_PAGES_UPDATED, LEGAL_GOVERNING_LAW, LEGAL_LIABILITY_CAP, DMCA_AGENT_* and DMCA_DISTRICT constants (after termsView), NAV, TITLES, DESCS, the route table, siteFooter(), the end of termsView(). tests/browser/legal.mjs (sections 6 and 7), tests/browser/legal-release.mjs, tests/legal-placeholders.mjs and its test, the Legal release check job in .github/workflows/tests.yml, docs/LEGAL_RELEASE.md. privacyPolicyView() (Friends, Friend messages, Friend challenges), LEGAL_UPDATED, TERMS_VERSION. APP_VERSION, CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
-      test:"Run node tests/browser/legal.mjs. Run node tests/browser/legal-release.mjs: it is expected to fail while the DMCA agent, court district, governing law and liability cap are unfilled, and passes once they are. By hand: open #/eula and #/dmca (or Legal > EULA and Copyright / DMCA in the menu, or the footer links), press Read more on a section, and check the text against the app.",
-      limits:"Drafts, not legal advice: a lawyer should review them. The bracketed placeholders show on the live page until filled in, so do not merge until they are. The DMCA agent must also be registered with the U.S. Copyright Office. The new Privacy Policy paragraphs are product facts, not legal wording, and need the lawyer too. TERMS_VERSION is now 2026-11-01 but it is stored only at sign-up, so no existing user is asked to agree again; whether they should be is the owner's call (docs/LEGAL_RELEASE.md). The sign-up agreement still points only to the Terms and the Privacy Policy, not the EULA." },
+      test:"Run node tests/browser/legal.mjs and node tests/browser/legal-release.mjs. The owner filled the DMCA agent, court district, governing law and liability cap on 18 Nov 2026, so the release check passes. By hand: open #/eula and #/dmca (or Legal > EULA and Copyright / DMCA in the menu, or the footer links), press Read more on a section, and check the text against the app.",
+      limits:"Drafts, not legal advice: a lawyer should still review them. The owner filled the bracketed placeholders on 18 Nov 2026. Still outstanding: the DMCA agent must be registered with the U.S. Copyright Office before the safe harbour applies. The new Privacy Policy paragraphs are product facts, not legal wording, and need the lawyer too. TERMS_VERSION is now 2026-11-01 but it is stored only at sign-up, so no existing user is asked to agree again; whether they should be is the owner's call (docs/LEGAL_RELEASE.md). The sign-up agreement still points only to the Terms and the Privacy Policy, not the EULA." },
     { id:"8.4",
       area:"Settings",
       title:"Appearance: circular dark mode, Rounded or Crisp, English or Spanish, and a review bar",
@@ -3975,7 +4055,7 @@ const APP_VERSION = { update: "8.4", build: "8.4.1", channel: "Dev Testing", dat
       title:"Error reports reach the database, and the privacy policy says so",
       bug:"8.3.27 loaded the error tracker but left its endpoint and key empty, so every crash was captured and then dropped in the console: a bug in a tester's browser was still invisible unless the tester described it.",
       fix:"observability.js now posts to the app's own Supabase table, error_reports, with the publishable key the app already uses, and a new migration creates that table: RLS on, one insert-only policy for signed-out and signed-in users, no read path for the browser at all, and a length cap on every text column. A report names the screen as well as the page: the app routes in the hash, so a bare route (#/coach) is kept while a fragment that carries values, such as the sign-in callback's access_token, is dropped whole; the table stamps the time instead of the browser, and an error with no message is sent as (no message) so the insert is not refused. Because reports now leave the device, the Privacy Policy no longer says nothing is collected in the background: section 1 names the crash report and exactly what it carries (the error message, the page path, the browser string and the time, never what was logged, a name or an email), and the Supabase entry in section 6 says the table holds no account id and no health data. LEGAL_UPDATED and TERMS_VERSION move to 24 October 2026.",
-      where:"observability.js: CONFIG.ENDPOINT, CONFIG.ANON_KEY and the header's where-it-goes note. supabase/migrations/20261024120000_wlh_8_3_28_error_reports.sql (new). index.html: privacyPolicyView() sections 1 and 6, LEGAL_UPDATED, TERMS_VERSION. tests/pwa-kit.cjs (the endpoint no longer has to be blank for the reporter tests, plus a check that the endpoint is this project and the key is the publishable one), tests/browser/legal.mjs. docs/APP_READINESS.md, docs/DATABASE.md. APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      where:"observability.js: CONFIG.ENDPOINT, CONFIG.ANON_KEY and the header's where-it-goes note. supabase/migrations/20261025042753_wlh_8_3_28_error_reports.sql (new). index.html: privacyPolicyView() sections 1 and 6, LEGAL_UPDATED, TERMS_VERSION. tests/pwa-kit.cjs (the endpoint no longer has to be blank for the reporter tests, plus a check that the endpoint is this project and the key is the publishable one), tests/browser/legal.mjs. docs/APP_READINESS.md, docs/DATABASE.md. APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
       test:"Run node --test tests/pwa-kit.cjs and node tests/check-repo.mjs. Apply the new migration on the live project first, then on the preview run WLHLog.error('test', new Error('hello')) in the console: one row appears in error_reports with the page path and no token. Open #/privacy-policy and #/terms: both say Last updated 24 October 2026, and section 1 describes the crash report.",
       limits:"Nothing is collected until the migration is applied to the live project; before that every report is rejected with a 404 and dropped, with one console warning. There is no consent switch. Write limits: the table refuses a report when 120 have arrived in the last minute and stops at 20,000 rows (a global limit, so a flood can hide real reports for that minute), and the database stamps the time. Treat it as a bug inbox, not a system of record. A report carries no account id, so it cannot be traced back to the person who hit it. The live insert was not checked from here, because the migration is not applied." },
     { id:"8.3.30",
@@ -4087,7 +4167,7 @@ const APP_VERSION = { update: "8.4", build: "8.4.1", channel: "Dev Testing", dat
       title:"Message your friends",
       bug:"Friends could see each other online, but there was no way to talk to them.",
       fix:"Each accepted friend has a Message button on the Friends card. It opens a small chat, text only, 500 characters a message. A new message pops up a card and lands in the notification centre. New table friend_messages (applied to Supabase).",
-      where:"index.html: FM, fmLoad(), fmView(), fmPaint(), fmSend(), frRows(), friendsCard(), CSS .fm-*. supabase/migrations/20261022060000_wlh_8_3_17_friend_messages.sql. tests/browser/toasts.mjs. docs/DATABASE.md.",
+      where:"index.html: FM, fmLoad(), fmView(), fmPaint(), fmSend(), frRows(), friendsCard(), CSS .fm-*. supabase/migrations/20261022052343_wlh_8_3_17_friend_messages.sql. tests/browser/toasts.mjs. docs/DATABASE.md.",
       test:"Run node tests/browser/toasts.mjs. On two friend accounts: A taps Message on B, sends a line; within 30 seconds B gets a card and sees it in the chat.",
       limits:"New messages arrive on the 30 second refresh, not instantly. No typing signal, no delete button yet, and blocking has no screen yet. No two-account live test has been done." },
     { id:"8.3.16",
@@ -7980,8 +8060,8 @@ const parseYmd = s => { const [y,m,d] = s.split("-").map(Number); return new Dat
 const addDays = (s, n) => { const d = parseYmd(s); d.setDate(d.getDate()+n); return ymd(d); };
 const monthOf = s => s.slice(0,7);
 const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-const fmtDay = s => parseYmd(s).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});
-const fmtLong = s => parseYmd(s).toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+const fmtDay = s => parseYmd(s).toLocaleDateString(WLA.lang === "es" ? "es" : undefined,{weekday:"short",month:"short",day:"numeric"});
+const fmtLong = s => parseYmd(s).toLocaleDateString(WLA.lang === "es" ? "es" : undefined,{weekday:"long",month:"long",day:"numeric"});
 const round = (n, p=0) => { const f = 10**p; return Math.round(n*f)/f; };
 const kgToLb = kg => kg * 2.20462;
 const lbToKg = lb => lb / 2.20462;
@@ -9156,6 +9236,7 @@ function sbDiscardAndReload(){
 }
 window.addEventListener("storage", e => { if (e.key === SIGNOUT_KEY && signedOutElsewhere(e.newValue)) sbDiscardAndReload(); });
 async function sbUserChanged(now){
+  coachWithdrawRetry();
   if (now && now === STORE_UID) { if (UI.sessionExpired) { UI.sessionExpired = false; render(); sbKick(); } return; } // the same account signed back in
   if (!now && !STORE_UID) return;
   if (!now) { let raw = null; try { raw = localStorage.getItem(SIGNOUT_KEY); } catch {} if (signedOutElsewhere(raw)) sbDiscardAndReload(); else sbSessionLost(); return; }
@@ -10299,8 +10380,9 @@ function buildPlan(days, p = P(), pool = null){
 }
 function goalNote(d, p = P()){
   if (!p?.goal) return null;
-  if (p.goal === "lose") return `Lighter: ${d.light[0]} (≈${d.light[1]} cal)`;
-  if (p.goal === "strength" || p.goal === "gain") return `More protein: ${d.prot[0]} (≈${d.prot[1]} cal)`;
+  const x = esDish(d);
+  if (p.goal === "lose") return WLA.lang === "es" ? `Más ligero: ${x ? x.l : d.light[0]} (≈${d.light[1]} cal)` : `Lighter: ${d.light[0]} (≈${d.light[1]} cal)`;
+  if (p.goal === "strength" || p.goal === "gain") return WLA.lang === "es" ? `Más proteínas: ${x ? x.p : d.prot[0]} (≈${d.prot[1]} cal)` : `More protein: ${d.prot[0]} (≈${d.prot[1]} cal)`;
   return null;
 }
 const searchLinks = q => {
@@ -10953,6 +11035,70 @@ function workoutStatsRow(p){
   return `<div class="scgrid plain">${cards.map(c => `<div class="sc"><span class="sc-ic" style="--a:var(--si-${c.g}-a);--b:var(--si-${c.g}-b)">${icon(c.i, "", 18)}</span>
     <div class="sc-t"><span class="sc-l">${esc(c.l)}</span><b class="sc-v">${esc(c.v)}</b></div>${c.cur === undefined ? "" : deltaPill(c.cur, c.prev)}</div>`).join("")}</div>`;
 }
+// ---- coming up today and the one-number score (Finpex adaptation 06 and 07) ----
+// Both are read-only views over what the person already logged and the targets they set. No new data is stored, no sample
+// numbers exist, and a part with no target or nothing logged is left out and named, never scored as zero.
+function comingUpItems(p){
+  const t = today(), items = [], fmtW = r => `${METRICS.water.fmt(r, p)} ${METRICS.water.unit(p)}`;
+  const water = vitalsOf(t)?.water;
+  if (water == null || water < WATER_GOAL_ML) items.push({ text: `Water: ${fmtW(WATER_GOAL_ML - (water || 0))} to go`, href: "#/metric/water" });
+  const day = p.workoutPlan?.days?.find(d => d.dow === new Date().getDay());
+  if (day && !onDate("workouts", t).length) items.push({ text: `Workout planned: ${day.title || day.type} · ${day.minutes} min`, href: "#/coach" });
+  if (!loggedFood(t)) items.push({ text: "No food logged yet today", href: "#/nutrition" });
+  const w = entries("weights", p.id);
+  if (w.length && !w.some(x => x.date > addDays(t, -7))) items.push({ text: "No weigh-in in the last 7 days", href: "#/metric/weight" });
+  return items;
+}
+function comingUpCard(p){
+  const items = comingUpItems(p);
+  return `<section class="card" id="wlComingUp" aria-labelledby="wlComingUpH"><h2 id="wlComingUpH" class="sec-title">Coming up today</h2>
+    ${items.length ? `<div class="list">${items.map(it => `<a class="li tap-row" href="${it.href}"><span class="grow">${esc(it.text)}</span>${icon("chevR", "row-chev", 16)}</a>`).join("")}</div>` : `<p class="small muted">All caught up today.</p>`}</section>`;
+}
+// Each part is 0-100 or null (no target, or nothing logged that day). Weights: activity 30, water 20, nutrition 20; sleep and steps
+// have no target in the app yet, so they are not scored. Over the calorie target the part falls by the overshoot.
+const SCORE_PARTS = [["activity", "Activity", 30, "var(--c-activity)"], ["water", "Water", 20, "var(--c-water)"], ["nutrition", "Nutrition", 20, "var(--c-nutrition)"]];
+function scoreParts(p, d){
+  const clamp = v => Math.max(0, Math.min(100, v));
+  const w = vitalsOf(d)?.water, e = loggedFood(d) ? intakeOn(d) : null, g = p.calorieGoal, wg = p.workoutGoal;
+  const done = wg ? entries("workouts", p.id).filter(x => x.date > addDays(d, -7) && x.date <= d).length : null;
+  return {
+    activity: wg ? clamp(done / wg * 100) : null,
+    water: w == null ? null : clamp(w / WATER_GOAL_ML * 100),
+    nutrition: g && e != null ? clamp(e <= g ? 100 : 100 - (e - g) / g * 100) : null
+  };
+}
+function scoreOf(parts){
+  let sw = 0, sum = 0;
+  for (const [k, , wt] of SCORE_PARTS) if (parts[k] != null) { sw += wt; sum += parts[k] * wt; }
+  return sw ? Math.round(sum / sw) : null;
+}
+function wlTrendSVG(values, w = 280, h = 64){
+  const lo = Math.min(...values, 0), hi = Math.max(...values, 100);
+  const pts = values.map((v, i) => `${(i / (values.length - 1) * w).toFixed(1)},${(h - 4 - (v - lo) / (hi - lo) * (h - 8)).toFixed(1)}`).join(" ");
+  return `<svg viewBox="0 0 ${w} ${h}" class="ws-trend" role="img" aria-label="Score, last ${values.length} days"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function wlDonut(segs){
+  const C = 2 * Math.PI * 40; let off = 0;
+  const rings = segs.map(s => { const len = s.share * C, out = `<circle cx="50" cy="50" r="40" fill="none" stroke-width="12" style="stroke:${s.color}" stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 50 50)"/>`; off += len; return out; }).join("");
+  return `<svg viewBox="0 0 100 100" class="ws-donut" role="img" aria-label="What feeds today's score">${rings}</svg>`;
+}
+function scoreCard(p){
+  const t = today(), parts = scoreParts(p, t), score = scoreOf(parts);
+  if (score == null) return "";
+  const days = Array.from({ length: 7 }, (_, i) => addDays(t, i - 6)), trend = days.map(d => scoreOf(scoreParts(p, d))).filter(v => v != null);
+  const used = SCORE_PARTS.filter(([k]) => parts[k] != null), tw = used.reduce((a, [, , wt]) => a + wt, 0) || 1;
+  const segs = used.filter(([k, , wt]) => parts[k] * wt > 0).map(([k, , wt, c]) => ({ share: parts[k] * wt / used.reduce((a, [k2, , w2]) => a + parts[k2] * w2, 0), color: c }));
+  const left = SCORE_PARTS.filter(([k]) => parts[k] == null).map(([, n]) => n.toLowerCase());
+  return `<section class="card" id="wlScore" aria-labelledby="wlScoreH"><h2 id="wlScoreH" class="sec-title">Today's score</h2>
+    <p class="small muted">How today went against your own targets. It measures how steadily you log and hit them, not your health.</p>
+    <div class="ws-row"><div class="ws-ring">${segs.length ? wlDonut(segs) : `<svg viewBox="0 0 100 100" class="ws-donut" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" stroke-width="12" style="stroke:var(--line)"/></svg>`}<b class="ws-num">${score}</b></div>
+      <ul class="ws-parts">${SCORE_PARTS.map(([k, n, , c]) => `<li><span class="ws-dot" style="background:${c}"></span><span class="grow">${esc(n)}</span><b>${parts[k] == null ? "No data" : Math.round(parts[k]) + "%"}</b></li>`).join("")}</ul></div>
+    ${trend.length > 1 ? `<div class="ws-trendwrap">${wlTrendSVG(trend)}<span class="tiny muted">Last ${trend.length} scored days</span></div>` : ""}
+    ${left.length ? `<p class="tiny muted">Not in today's score: ${esc(left.join(", "))} (no target set, or nothing logged yet).</p>` : ""}
+    <details class="ws-info"><summary>How this is worked out</summary>
+      <p class="small muted">Each part runs from 0 to 100, and the score is their weighted average, rounded. Activity (weight 30) is your workouts in the last 7 days against your weekly workout target. Water (20) is today's water against ${(WATER_GOAL_ML / 1000).toFixed(1)} L. Nutrition (20) is full on or under your calorie target and drops by the overshoot above it. A part with no target, or nothing logged, is left out and the others share its weight. Sleep and steps are not scored yet.</p></details>
+  </section>`;
+}
 function homeView(p){
   const at = lastUpdated();
   const when = at ? `${new Date(at).toDateString() === new Date().toDateString() ? "today" : new Date(at).toLocaleDateString(undefined,{month:"short",day:"numeric"})} at ${new Date(at).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}` : null;
@@ -10973,6 +11119,8 @@ function homeView(p){
   </div>
   ${weeklyStatsRow(p)}
   ${glanceCard(p)}
+  ${comingUpCard(p)}
+  ${scoreCard(p)}
   ${widgetSection(p, "home")}
   ${typeof isPremium === "function" && isPremium() && typeof microWidget === "function"
       ? `<div class="mgrid premrow">${microWidget(p)}${typeof recoveryWidget === "function" ? recoveryWidget(p) : ""}${typeof pantryWidget === "function" ? pantryWidget(p) : ""}</div>` : ""}
@@ -11353,7 +11501,7 @@ const I = {
 // width/height are set explicitly: a viewBox-only SVG dropped into a flex row gets stretched
 // to the container (the 884px dumbbell and bell bugs), and CSS alone can't undo that reliably.
 const icon = (k, cls="", size=20) => `<svg class="ico ${cls}" data-icon="${k}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${I[k]}</svg>`;
-const opt = (list, val) => list.map(([v,l]) => `<option value="${esc(v)}"${String(v)===String(val??"")?" selected":""}>${esc(l)}</option>`).join("");
+const opt = (list, val) => list.map(([v,l]) => `<option value="${esc(v)}"${String(v)===String(val??"")?" selected":""}>${esc(tr(l))}</option>`).join("");
 function countryOptions(val){
   return `<option value="">Choose a country or region</option>` + REGIONS.map(r => `<optgroup label="${esc(r.n)}">${r.countries.map(c => `<option${c===val?" selected":""}>${esc(c)}</option>`).join("")}</optgroup>`).join("");
 }
@@ -11522,6 +11670,211 @@ try {
   if (WL_LANGS.some(x => x[0] === a.lang)) WLA.lang = a.lang;
 } catch {}
 const tr = s => (WLA.lang === "es" && WL_ES[s]) || s;
+// Static interface copy is translated after each morph. This keeps the language switch
+// reversible without changing saved entries, recipe identifiers, or form values.
+const WL_ES_UI = {
+  "Home":"Inicio", "Breadcrumb":"Ruta de navegación", "Skip to page content":"Saltar al contenido", "Current time":"Hora actual", "Main":"Principal",
+  "Open menu":"Abrir menú", "Close menu":"Cerrar menú", "View profile":"Ver perfil", "Lock now":"Bloquear ahora",
+  "Snack":"Bocadillo", "Log a meal":"Registrar una comida", "Log meal":"Registrar comida", "Log this meal":"Registrar esta comida",
+  "Meal":"Comida", "Date":"Fecha", "What did you eat?":"¿Qué comiste?", "Calories":"Calorías", "Portion":"Porción",
+  "Regular portion":"Porción normal", "Half portion":"Media porción", "Smaller portion":"Porción pequeña", "Large portion":"Porción grande", "Double portion":"Porción doble",
+  "Start typing: jollof, waakye, egusi…":"Empieza a escribir: jollof, waakye, egusi…", "Filled from the catalog":"Se completa desde el catálogo",
+  "Guess the calories":"Estimar las calorías", "From a photo":"Desde una foto", "Eating out":"Comer fuera",
+  "Today":"Hoy", "Previous day":"Día anterior", "Next day":"Día siguiente", "Change day":"Cambiar de día", "Left":"Restantes", "Total":"Total",
+  "Extras":"Extras", "Remove":"Quitar", "Add":"Añadir", "Done":"Listo", "Nothing added":"Nada añadido", "Anything added?":"¿Añadiste algo?",
+  "Something else":"Otra cosa", "e.g. extra stew, fried egg":"p. ej., más guiso, huevo frito", "Last 7 days":"Últimos 7 días",
+  "Log your weight":"Registrar tu peso", "Weight":"Peso", "Save weight":"Guardar peso", "Add a target line":"Añadir una meta",
+  "No meals logged yet today. Log one above, or let the coach pick from your food culture.":"Aún no has registrado comidas hoy. Registra una arriba o deja que el entrenador elija según tu cultura gastronómica.",
+  "See today's menu":"Ver el menú de hoy", "Oil, sauce and drinks add up fast. Tap anything that went with this meal.":"El aceite, las salsas y las bebidas suman calorías. Selecciona lo que acompañó esta comida.",
+  "Weigh-ins let you compare the estimate with what really happened.":"Los registros de peso te permiten comparar la estimación con los resultados reales.",
+  "Separate from meals":"Por separado de las comidas", "Today's snacks":"Bocadillos de hoy", "Nothing logged yet today":"Aún no has registrado nada hoy",
+  "Nothing logged yet. Pick from the list or add your own.":"Aún no has registrado nada. Elige de la lista o añade uno propio.",
+  "Add your own snack":"Añade un bocadillo", "e.g. roasted groundnuts, 1 handful":"p. ej., un puñado de cacahuetes tostados",
+  "Add to today":"Añadir a hoy", "Snack ideas":"Ideas para bocadillos", "Search snacks":"Buscar bocadillos", "Region":"Región",
+  "West Africa":"África occidental", "Rest of Africa":"Resto de África", "Americas & Caribbean":"Américas y el Caribe", "Europe":"Europa", "Asia & Middle East":"Asia y Oriente Medio", "All":"Todos",
+  "No common allergens":"Sin alérgenos comunes", "Allergens":"Alérgenos", "How to make it":"Cómo prepararlo", "Servings":"Porciones",
+  "1 serving":"1 porción", "2 servings":"2 porciones", "½ serving":"½ porción", "3 servings":"3 porciones", "4 servings":"4 porciones", "No snacks match.":"No hay bocadillos que coincidan.",
+  "Pagination":"Paginación", "Previous":"Anterior", "Next":"Siguiente", "Ingredients":"Ingredientes", "Method":"Preparación", "Ways to cook it":"Formas de prepararlo",
+  "Lighter version":"Versión más ligera", "Higher protein":"Más proteínas", "Serve with":"Acompañar con", "Meal prep":"Preparación anticipada",
+  "Meal plan":"Plan de comidas", "Build a meal plan":"Crear un plan de comidas", "Plan length":"Duración del plan", "3 days":"3 días", "7 days":"7 días",
+  "Grocery list":"Lista de compras", "Rebuild plan":"Rehacer el plan", "Build my plan":"Crear mi plan", "Food focus":"Preferencia gastronómica", "change":"cambiar",
+  "No match":"Sin coincidencias", "Beyond the catalog":"Más allá del catálogo", "Ask for something different":"Pide algo diferente", "What sounds good?":"¿Qué te apetece?",
+  "e.g. something with plantain and beans, under 500 cal":"p. ej., algo con plátano y frijoles de menos de 500 cal", "Suggest dishes":"Sugerir platos", "Thinking…":"Pensando…", "Stop":"Detener",
+  "Ingredients and method":"Ingredientes y preparación", "Recipe library":"Biblioteca de recetas", "Search":"Buscar", "All regions":"Todas las regiones", "Any meal":"Cualquier comida",
+  "Diet":"Dieta", "Any":"Cualquiera", "Vegan":"Vegana", "Vegetarian":"Vegetariana", "Gluten-free":"Sin gluten", "High protein":"Alta en proteínas", "Lower carb":"Menos carbohidratos",
+  "Dish or ingredient: egusi, plantain…":"Plato o ingrediente: egusi, plátano…", "Nothing matches. Clear a filter.":"Sin coincidencias. Quita algún filtro.",
+  "Your food culture":"Tu cultura gastronómica", "Country or region":"País o región", "This week":"Esta semana",
+  "Your weekly plan":"Tu plan semanal", "Workout advice":"Consejos de entrenamiento", "Days":"Días", "Level":"Nivel", "Rebuild":"Rehacer", "Mark done":"Marcar como hecho",
+  "Goal":"Objetivo", "Style":"Estilo", "Not set":"Sin definir", "Frequency not set":"Frecuencia sin definir", "Sports":"Deportes", "Train for a sport":"Entrenar para un deporte",
+  "Sport":"Deporte", "Choose a sport":"Elige un deporte", "Ask your coach":"Pregunta a tu entrenador", "Questions about training or food":"Preguntas sobre entrenamiento o comida",
+  "Your question":"Tu pregunta", "Ask":"Preguntar", "Chat with your coach":"Chatea con tu entrenador", "Ask WL Coach":"Pregunta a WL Coach",
+  "Before your first question, here is exactly what happens to it:":"Antes de tu primera pregunta, esto es exactamente lo que ocurre:",
+  "Allow coach chat":"Permitir el chat con el entrenador", "Saving…":"Guardando…", "You":"Tú", "Send":"Enviar",
+  "For example: what should I eat after a workout?":"Por ejemplo: ¿qué debería comer después de entrenar?",
+  "Settings sections":"Secciones de ajustes", "Color mode":"Modo de color", "Bouncy":"Animado", "Reduced":"Reducido", "Targets":"Metas",
+  "Daily calories":"Calorías diarias", "Workouts per week":"Entrenamientos por semana", "Goal weight":"Peso objetivo", "No target":"Sin meta",
+  "Suggested":"Sugerido", "Use this":"Usar este valor", "Save targets":"Guardar metas", "Profiles":"Perfiles", "Add a profile":"Añadir perfil",
+  "Unnamed":"Sin nombre", "Active":"Activo", "No goal":"Sin objetivo", "Switch":"Cambiar", "Cancel":"Cancelar", "Hold to delete":"Mantén pulsado para borrar",
+  "Privacy and security":"Privacidad y seguridad", "Private storage":"Almacenamiento privado", "No IDs in links":"Sin identificadores en enlaces", "Checked on load":"Validación al cargar",
+  "Passcode encryption":"Cifrado con código", "Auto-lock":"Bloqueo automático", "Collects less":"Recopilación mínima", "Encrypted in transit":"Cifrado en tránsito",
+  "New passcode":"Nuevo código", "Confirm":"Confirmar", "Change passcode":"Cambiar código", "Current passcode":"Código actual", "Turn off encryption":"Desactivar el cifrado",
+  "Passcode (8+ characters)":"Código (8 caracteres o más)", "Confirm passcode":"Confirma el código", "Turn on encryption":"Activar el cifrado",
+  "Your data":"Tus datos", "Export my data":"Exportar mis datos", "Download (JSON)":"Descargar (JSON)", "Download my data (JSON)":"Descargar mis datos (JSON)",
+  "Delete my account and data":"Eliminar mi cuenta y mis datos", "Delete everything":"Eliminar todo", "Confirm delete":"Confirmar eliminación", "Permissions":"Permisos",
+  "Weigh-ins":"Registros de peso", "Days of vitals":"Días con datos de salud", "Stored size":"Espacio utilizado", "Stored encrypted.":"Almacenado con cifrado.",
+  "How the numbers work":"Cómo se calculan las cifras", "Motion":"Movimiento", "Save":"Guardar", "Discard":"Descartar"
+};
+Object.assign(WL_ES_UI, {
+  "Breakfast":"Desayuno", "Lunch":"Almuerzo", "Dinner":"Cena", "Beginner":"Principiante", "Intermediate":"Intermedio", "Advanced":"Avanzado",
+  "No goal yet":"Aún sin objetivo", "General wellness":"Bienestar general", "Build strength":"Ganar fuerza", "Lose weight":"Bajar de peso",
+  "Gain weight / muscle":"Ganar peso o músculo", "Improve endurance":"Mejorar la resistencia", "Build healthy habits":"Crear hábitos saludables",
+  "Walking and cardio":"Caminar y cardio", "Strength training":"Entrenamiento de fuerza", "Yoga and mobility":"Yoga y movilidad", "Mixed training":"Entrenamiento mixto",
+  "No preference":"Sin preferencia", "No meals to repeat.":"No hay comidas para repetir.", "Meal logged":"Comida registrada", "Meal deleted":"Comida eliminada",
+  "Add what you ate first.":"Primero indica qué comiste.", "Add the calories for this meal.":"Añade las calorías de esta comida.",
+  "Leave the calorie box empty and hit":"Deja vacío el campo de calorías y pulsa",
+  "Blank means no target: the dashboard just shows what you've logged.":"Si dejas una meta en blanco, el panel solo mostrará lo que hayas registrado.",
+  "Add age, height and weight in your profile to get a suggested calorie target. Sex is optional; leaving it out just makes the estimate a little rougher.":"Añade tu edad, estatura y peso a tu perfil para obtener una meta sugerida de calorías. El sexo es opcional; sin él, la estimación será menos precisa.",
+  "Sets the mix of dishes in meal plans and daily picks. The recipe library always shows everything.":"Determina la mezcla de platos en los planes de comidas y las sugerencias diarias. La biblioteca de recetas siempre muestra todos los platos.",
+  "Each profile has its own goals, logs and plans. Switch any time from the menu.":"Cada perfil tiene sus propios objetivos, registros y planes. Puedes cambiar de perfil desde el menú.",
+  "Bouncy adds the spring animations. Reduced turns them off, and your device's own \"reduce motion\" setting always wins.":"Animado añade movimientos elásticos. Reducido los desactiva; la preferencia de movimiento reducido de tu dispositivo siempre tiene prioridad.",
+  "You'll need the passcode each time you open WholeLife.":"Necesitarás el código cada vez que abras WholeLife.",
+  "I understand that if I forget this passcode, my WholeLife data can't be recovered.":"Entiendo que, si olvido este código, no podré recuperar mis datos de WholeLife.",
+  "A JSON file with your logs, plans and settings.":"Un archivo JSON con tus registros, planes y ajustes.",
+  "Each of these asked you once, the first time you tried to use it. Turn any of them back off here — the feature stops immediately and asks again next time.":"Cada función pidió permiso la primera vez que intentaste usarla. Puedes desactivarla aquí; se detendrá de inmediato y volverá a pedir permiso la próxima vez.",
+  "Whole Life Hub is for personal tracking and isn't medical or nutrition advice.":"Whole Life Hub sirve para el seguimiento personal y no ofrece asesoramiento médico ni nutricional.",
+  "Sign in to chat with WL Coach. Chat needs an account because your questions are sent to our server, and from there to an AI service, to be answered.":"Inicia sesión para chatear con WL Coach. El chat requiere una cuenta porque tus preguntas se envían a nuestro servidor y, desde allí, a un servicio de IA para obtener una respuesta.",
+  "Your question is sent through our server to Anthropic, the company that makes Claude, to get an answer. Anything you type may be sent, so leave out names and details you would not want shared.":"Tu pregunta se envía a través de nuestro servidor a Anthropic, la empresa que desarrolla Claude, para obtener una respuesta. No incluyas nombres ni datos que no quieras compartir.",
+  "Your question and the answer are saved in your account, and may be read by the app's owner to check answers are safe and to fix problems. Only you can read them from the app. Deleting your account deletes them.":"Tu pregunta y la respuesta se guardan en tu cuenta. El propietario de la aplicación puede leerlas para comprobar la seguridad de las respuestas y corregir problemas. Solo tú puedes verlas desde la aplicación. Al eliminar tu cuenta, también se eliminan.",
+  "Your logs and profile are not sent. Turn this off any time in Settings > Privacy and security; the rest of the app works without it. WL Coach is not medical advice.":"Tus registros y tu perfil no se envían. Puedes desactivar esta función en Ajustes > Privacidad y seguridad; el resto de la aplicación seguirá funcionando. WL Coach no ofrece asesoramiento médico.",
+  "Training and food questions. WL Coach can't see your logs yet, so tell it what it needs to know. It is not medical advice.":"Haz preguntas sobre entrenamiento y alimentación. WL Coach aún no puede ver tus registros, así que dale la información que necesite. No ofrece asesoramiento médico.",
+  "Pick how many days you can train and your level, then build a plan. It uses your goal and exercise style.":"Elige cuántos días puedes entrenar y tu nivel; después crea un plan basado en tu objetivo y tu estilo de ejercicio.",
+  "Warm up 5–10 minutes before each session. Stop if something hurts, not just burns, and check with a doctor before starting if you have a health condition.":"Calienta entre 5 y 10 minutos antes de cada sesión. Detente si sientes dolor y consulta a un médico antes de comenzar si tienes alguna condición de salud.",
+  "Rebuild your weekly plan and these sessions replace some of the general ones.":"Rehaz tu plan semanal para que estas sesiones sustituyan algunas sesiones generales.",
+  "Soccer, basketball, running, American football, swimming or tennis: get conditioning and skill sessions for it.":"Fútbol, baloncesto, running, fútbol americano, natación o tenis: obtén sesiones de preparación física y técnica.",
+  "Claude answers using your profile and this week's logs. It uses your own Claude usage and asks permission the first time.":"Claude responde usando tu perfil y los registros de esta semana. Consume tu propio uso de Claude y pide permiso la primera vez.",
+  "Ask anything about your workouts, meals or goals":"Pregunta sobre tus entrenamientos, comidas u objetivos",
+  "Describe what you want (ingredients you have, a craving, a budget) and Claude suggests three dishes with how to make them, using your profile. This uses your own Claude usage and asks your permission the first time.":"Describe lo que buscas (ingredientes, antojos o presupuesto) y Claude te sugerirá tres platos y cómo prepararlos según tu perfil. Consume tu propio uso de Claude y pide permiso la primera vez.",
+  "Nothing added":"Nada añadido", "No common allergens":"Sin alérgenos comunes", "Delete":"Eliminar", "Keep":"Conservar", "Press and hold for 1.5 seconds to confirm":"Mantén pulsado 1,5 segundos para confirmar"
+});
+Object.assign(WL_ES_UI, {
+  "Change":"Cambiar", "Add photo":"Añadir foto", "Unnamed profile":"Perfil sin nombre", "Units":"Unidades", "Weight estimate on":"Estimación de peso activada",
+  "About you":"Sobre ti", "Name":"Nombre", "Age":"Edad", "Sex":"Sexo", "Sex (for calorie estimates)":"Sexo (para calcular calorías)",
+  "Female":"Mujer", "Male":"Hombre", "Prefer not to say":"Prefiero no decirlo", "Body":"Cuerpo", "Height":"Estatura", "Starting weight":"Peso inicial",
+  "Latest weigh-in":"Último peso registrado", "Height (ft)":"Estatura (pies)", "Height (in)":"Estatura (pulgadas)", "Height (cm)":"Estatura (cm)",
+  "Daily nutrition":"Nutrición diaria", "Training":"Entrenamiento", "Main goal":"Objetivo principal", "Exercise style":"Estilo de ejercicio", "None":"Ninguno",
+  "Food":"Alimentación", "Preference":"Preferencia", "Avoid":"Evitar", "Nothing listed":"Nada indicado", "Food preference":"Preferencia alimentaria",
+  "Allergies or foods to avoid":"Alergias o alimentos que debes evitar", "e.g. peanuts, shellfish":"p. ej., cacahuetes, mariscos",
+  "Profiles on this hub":"Perfiles en este espacio", "Switch profile":"Cambiar perfil", "Active profile":"Perfil activo",
+  "Everyone in the household gets their own targets, logs and meal plan. They all live in this hub and share its passcode.":"Cada persona del hogar tiene sus propias metas, registros y plan de comidas. Todos los perfiles viven aquí y comparten el mismo código.",
+  "You're the only profile here so far.":"Por ahora, este es el único perfil.",
+  "Your coach":"Tu entrenador", "Rename your coach":"Cambiar el nombre del entrenador", "Rename":"Renombrar", "Save name":"Guardar nombre",
+  "Switch coach":"Cambiar de entrenador", "Name your coach":"Ponle nombre a tu entrenador", "Choose your coach":"Elige a tu entrenador",
+  "Optional. Letters, numbers and spaces, up to 24 characters.":"Opcional. Letras, números y espacios; máximo 24 caracteres.",
+  "The advice and the numbers stay the same. What changes is how it's said to you.":"Los consejos y las cifras no cambian. Solo cambia la forma en que te habla.",
+  "Use this coach":"Usar este entrenador", "Something new":"Una novedad",
+  "Your coach can now speak in one of three ways. Everything you have logged stays exactly as it is, and you can switch or rename your coach any time in Settings.":"Tu entrenador ahora puede hablarte de tres maneras. Tus registros no cambian y puedes cambiar o renombrar al entrenador cuando quieras en Ajustes."
+});
+Object.assign(WL_ES_UI, {
+  "Recent":"Recientes", "Recent meals":"Comidas recientes", "Often":"Frecuentes", "Meals you log often":"Comidas que registras a menudo",
+  "Hide imports":"Ocultar importaciones", "Import from Apple Health or another app":"Importar desde Apple Health u otra aplicación",
+  "Import your iPhone export":"Importar el archivo de tu iPhone", "Google Health, Fitbit and other apps":"Google Health, Fitbit y otras aplicaciones",
+  "Import a workout file":"Importar un archivo de entrenamiento", "Why not automatic sync?":"¿Por qué no hay sincronización automática?",
+  "Manual entry":"Registro manual", "Log a workout":"Registrar un entrenamiento", "Activity":"Actividad", "Minutes":"Minutos",
+  "Calories (optional)":"Calorías (opcional)", "Estimated if blank":"Se estiman si queda vacío", "Notes":"Notas",
+  "e.g. legs, 5K, pickup soccer":"p. ej., piernas, 5 km, fútbol informal", "Save workout":"Guardar entrenamiento", "Dismiss":"Cerrar",
+  "Weekly goal":"Meta semanal", "Set a weekly goal":"Definir una meta semanal", "Workout history":"Historial de entrenamientos",
+  "Delete workout":"Eliminar entrenamiento", "Show more":"Mostrar más", "Open your coach":"Abrir tu entrenador",
+  "No workouts yet. Log one above, import a file from your phone, or mark a session done with your coach.":"Aún no hay entrenamientos. Registra uno arriba, importa un archivo del teléfono o marca una sesión como hecha con tu entrenador.",
+  "On iPhone: Health app, then your photo, then Export All Health Data. Unzip it and choose":"En el iPhone: abre Salud, toca tu foto y elige Exportar todos los datos de salud. Descomprime el archivo y selecciona",
+  ". Large files are fine; it's read in pieces on this device. Brings in workouts and weigh-ins (last 12 months) plus steps, resting heart rate, blood pressure, blood oxygen, sleep and water (last 90 days).":". Los archivos grandes se leen por partes en este dispositivo. Importa entrenamientos y peso (últimos 12 meses), además de pasos, pulso en reposo, presión arterial, oxígeno en sangre, sueño y agua (últimos 90 días).",
+  "Get your data from":"Obtén tus datos de", "(choose Fit or Fitbit), or export from Strava, Garmin and most apps. CSV, JSON or TCX files with a date, activity and duration work.":"(elige Fit o Fitbit), o expórtalos desde Strava, Garmin u otras aplicaciones. Se admiten archivos CSV, JSON o TCX con fecha, actividad y duración.",
+  "Google is shutting down the Google Fit APIs at the end of 2026. The replacement, the Google Health API, needs a server that signs in with Google and passes Google's security review for health data. This app has no server of its own that can sign in with Google (its only back end is the Supabase database, which holds meals and profile names), so it can't hold a Google connection. File import works today and keeps your data out of third-party servers.":"Google dejará de ofrecer las API de Google Fit a finales de 2026. Su reemplazo, la API de Google Health, requiere un servidor con inicio de sesión de Google y una revisión de seguridad de datos de salud. Esta aplicación no tiene un servidor propio para esa conexión; la importación de archivos funciona ahora y evita enviar tus datos a servidores de terceros.",
+  "Type it however you like:":"Escríbelo como prefieras:", "kilograms":"kilogramos", "pounds":"libras", "estimate":"estimación"
+});
+Object.assign(WL_ES_UI, {
+  "Saved in this browser only.":"Guardado solo en este navegador.", "Everything travels over HTTPS.":"Todos los datos se transmiten por HTTPS.",
+  "Your profiles and logs are saved in this browser under your account, and removed from it when you sign out. They are also saved to your account (photos too, unless Sync photos is off), so every device you sign in on shows the same data.":"Tus perfiles y registros se guardan en este navegador con tu cuenta y se quitan del dispositivo al cerrar sesión. También se guardan en tu cuenta (incluidas las fotos, salvo que desactives su sincronización) para que aparezcan en los dispositivos donde inicies sesión.",
+  "The address bar only ever holds a page or a public recipe name. Records are never looked up from the link, and every read and write is checked against who's signed in, so editing a link can't reveal anyone's data (no IDOR).":"La barra de direcciones solo contiene una página o el nombre de una receta pública. Los registros no se buscan mediante enlaces y cada lectura o escritura se comprueba con la cuenta que inició sesión.",
+  "Every saved record is validated before it's shown: unknown fields are dropped, numbers are range-checked and text is escaped, so damaged or tampered data can't run code in the page.":"Cada registro guardado se valida antes de mostrarse: se descartan campos desconocidos, se comprueba el rango de las cifras y se escapa el texto para evitar que los datos alterados ejecuten código.",
+  "Off. Turn it on below to encrypt everything before it's saved.":"Desactivado. Actívalo abajo para cifrar los datos antes de guardarlos.",
+  "Available once encryption is on.":"Disponible al activar el cifrado.", "Off. Pick a time below.":"Desactivado. Elige un plazo abajo.",
+  "No phone number or date of birth is kept (your birth month and year are used once to work out your age, then dropped). An email address is needed only if you create an account. No analytics, ads or tracking scripts. Photos are shrunk in your browser and stripped of location data.":"No se conserva tu teléfono ni tu fecha de nacimiento (el mes y el año se usan una vez para calcular tu edad y luego se descartan). Solo se necesita un correo electrónico para crear una cuenta. No hay analíticas, anuncios ni rastreadores. Las fotos se reducen en el navegador y se les quitan los datos de ubicación.",
+  "After 5 min":"Tras 5 min", "After 15 min":"Tras 15 min", "After 30 min":"Tras 30 min", "After 1 hour":"Tras 1 hora", "Never":"Nunca",
+  "On: AES-256-GCM in your browser, key from your passcode with PBKDF2-SHA-256 (600,000 rounds). The passcode never leaves this device.":"Activado: AES-256-GCM en tu navegador; la clave se deriva del código con PBKDF2-SHA-256 (600.000 iteraciones). El código nunca sale de este dispositivo.",
+  "No Data":"Sin datos", "Confirm delete":"Confirmar eliminación"
+});
+Object.assign(WL_ES_UI, {
+  "Follows your device":"Sigue la configuración del dispositivo", "Always light":"Siempre claro", "Always dark":"Siempre oscuro", "True black, saves battery":"Negro puro, ahorra batería",
+  "Color mode":"Modo de color", "Font":"Fuente", "System":"Sistema", "Small":"Pequeño", "Medium":"Mediano", "Large":"Grande",
+  "Appearance: Light":"Apariencia: claro", "Appearance: Dark":"Apariencia: oscuro", "Appearance: Auto":"Apariencia: automático",
+  "This theme":"Este tema", "is dark whichever mode you pick. Choose another theme to use Light.":"permanece oscuro en cualquier modo. Elige otro tema para usar Claro."
+});
+Object.assign(WL_ES_UI, {
+  "Daily nutrition":"Nutrición diaria", "Workouts":"Entrenamientos", "Snack log":"Registro de bocadillos", "Settings & profiles":"Ajustes y perfiles",
+  "Category":"Categoría", "Metric":"Métrica", "Privacy Policy":"Política de privacidad", "Terms & Conditions":"Términos y condiciones",
+  "Refunds & cancellation":"Reembolsos y cancelación", "Contact":"Contacto", "Licenses & credits":"Licencias y créditos", "Page not found":"Página no encontrada",
+  "Achievement":"Logro", "Premium":"Premium"
+});
+Object.assign(WL_ES, WL_ES_UI);
+// Build 8.5.1: more screens (Home, Coach, Culture, Awards, Premium, Settings).
+const WL_ES_UI2 = {"Today at a glance": "Hoy de un vistazo", "Your rings": "Tus anillos", "today": "hoy", "Edit widgets": "Editar widgets", "days in a row": "días seguidos", "Show up for 10 minutes. Most days you'll keep going.": "Dedícale 10 minutos. La mayoría de los días seguirás.", "Log a few meals this week and your report fills in": "Registra unas cuantas comidas esta semana y tu informe se irá llenando", "tick what you have and see what you can cook": "marca lo que tienes y mira qué puedes cocinar", "Show All Trends": "Ver todas las tendencias", "General information, not medical advice. Talk to a doctor before changing how you eat or train.": "Información general, no consejo médico. Habla con un médico antes de cambiar cómo comes o entrenas.", "Move well. Eat with intention.": "Muévete bien. Come con intención.", "Today's menu": "Menú de hoy", "Picked for you": "Elegido para ti", "Replace all": "Reemplazar todo", "Choose where your food comes from": "Elige de dónde viene tu comida", "Choose a country or region": "Elige un país o región", "Optional and self-described. It shapes suggestions only and is saved in this browser.": "Opcional y a tu criterio. Solo moldea las sugerencias y se guarda en este navegador.", "Replaces the plan on Recipes.": "Reemplaza el plan de Recetas.", "Today's plan": "Plan de hoy", "Three questions, then I'll set the day": "Tres preguntas y organizo el día", "How's your energy today?": "¿Cómo está tu energía hoy?", "A little": "Un poco", "How much time do you have today?": "¿Cuánto tiempo tienes hoy?", "The planned session at the planned volume.": "La sesión planeada con el volumen planeado.", "Set today": "Fijar hoy", "The coach has a question": "El entrenador tiene una pregunta", "How well did you sleep this week?": "¿Qué tal dormiste esta semana?", "Your answer (optional)": "Tu respuesta (opcional)", "Training against what you're actually eating": "Entrenamiento según lo que realmente comes", "So the coach knows where to start you": "Para que el entrenador sepa por dónde empezarte", "Every one of these is optional. Skip anything you'd rather not answer. Rough numbers are fine; the coach only uses them to avoid pushing you too far, too fast.": "Todas son opcionales. Omite lo que prefieras no contestar. Los números aproximados sirven; el entrenador solo los usa para no exigirte demasiado ni demasiado rápido.", "How many push-ups can you do in one go?": "¿Cuántas flexiones puedes hacer seguidas?", "How many sit-ups can you do in one go?": "¿Cuántas abdominales puedes hacer seguidas?", "How long can you hold a plank?": "¿Cuánto tiempo aguantas una plancha?", "When did you last work out?": "¿Cuándo fue tu último entrenamiento?", "Is this your first time working out?": "¿Es tu primera vez entrenando?", "No, I've trained before": "No, ya he entrenado antes", "This past week": "La semana pasada", "Within the last month": "En el último mes", "Longer than a month ago": "Hace más de un mes", "Today or yesterday": "Hoy o ayer", "Skip all of this": "Omitir todo esto", "Your own goal": "Tu propia meta", "Tell the coach what you're after": "Cuéntale al entrenador lo que buscas", "Your goal": "Tu meta", "How long should the first plan be?": "¿Cuánto debe durar el primer plan?", "Answer the five questions above first and the plan fits you better.": "Contesta antes las cinco preguntas de arriba y el plan se ajustará mejor a ti.", "Don't have the kit?": "¿No tienes el equipo?", "Tell me what you're missing and I'll swap those exercises out wherever they appear in your plan.": "Dime qué te falta y cambiaré esos ejercicios donde aparezcan en tu plan.", "Build a plan and I'll check what it needs.": "Crea un plan y revisaré lo que necesita.", "Track and field": "Atletismo", "Track and sprints": "Pista y velocidad", "Where you should be": "Dónde deberías estar", "sessions planned this week": "sesiones planeadas esta semana", "Where you are": "Dónde estás", "logged this week": "registrado esta semana", "no food logged yet": "aún no hay comida registrada", "How you can improve": "Cómo puedes mejorar", "You don't have a plan running yet. Tell the coach your goal below and it'll build you one and check it with you first.": "Todavía no tienes un plan en marcha. Cuéntale tu meta al entrenador abajo y te armará uno, que revisará contigo antes.", "Answer that and the next session is scaled to it.": "Responde eso y la próxima sesión se ajustará a ello.", "Nudges for workouts and food logging": "Recordatorios para entrenar y registrar comidas", "Add a reminder": "Añadir un recordatorio", "Time to move. Even 20 minutes counts.": "Hora de moverse. Hasta 20 minutos cuentan.", "Log what you ate today so your estimate stays honest.": "Registra lo que comiste hoy para que tu estimación sea fiel.", "Blocked for this page in your browser settings.": "Bloqueado para esta página en los ajustes de tu navegador.", "Reminders that work when this page is closed": "Recordatorios que funcionan con la página cerrada", "Add to my calendar (.ics)": "Añadir a mi calendario (.ics)", "Opens with Apple Calendar, Google Calendar or Outlook.": "Se abre con Calendario de Apple, Google Calendar u Outlook.", "Read the terms": "Leer los términos", "Today's meals": "Comidas de hoy", "Build a plan": "Crear un plan", "Snap your plate": "Fotografía tu plato", "Changes daily. Add food preferences or allergies in Settings to filter these.": "Cambia cada día. Añade preferencias o alergias en Ajustes para filtrarlas.", "Nothing today": "Nada hoy", "Log a drink": "Registrar una bebida", "Log it": "Registrarlo", "No drinks logged today. Anything you add here counts toward the day.": "No hay bebidas registradas hoy. Lo que añadas aquí cuenta para el día.", "Days with a drink": "Días con bebida", "Nothing logged this week.": "Nada registrado esta semana.", "Meal log": "Registro de comidas", "Your estimate starts after your first full day of logging.": "Tu estimación empieza después de tu primer día completo de registro.", "Starts after a full day of logging": "Empieza tras un día completo de registro", "Log a machine from a photo": "Registrar una máquina con una foto", "Compete with friends": "Compite con amigos", "Sign in to start a challenge with friends.": "Inicia sesión para empezar un reto con amigos.", "Add a profile to compete": "Añade un perfil para competir", "Log your first workout.": "Registra tu primer entrenamiento.", "Log 10 workouts.": "Registra 10 entrenamientos.", "Log 50 workouts.": "Registra 50 entrenamientos.", "Log 100 workouts.": "Registra 100 entrenamientos.", "Seven Days": "Siete días", "Work out seven days in a row.": "Entrena siete días seguidos.", "Thirty Days": "Treinta días", "Work out thirty days in a row.": "Entrena treinta días seguidos.", "Close all three rings in one day.": "Cierra los tres anillos en un día.", "Perfect Week": "Semana perfecta", "Close all three rings every day for a week.": "Cierra los tres anillos cada día durante una semana.", "Close all three rings every day of a calendar month.": "Cierra los tres anillos cada día de un mes natural.", "Close the Hydration ring 20 days in one month.": "Cierra el anillo de hidratación 20 días en un mes.", "Log food on 25 days in one month.": "Registra comida 25 días en un mes.", "Finish a coach plan from day one to the last day.": "Termina un plan del entrenador del primer al último día.", "Complete a monthly challenge.": "Completa un reto mensual.", "Log a workout in three different months.": "Registra un entrenamiento en tres meses distintos.", "Premium is on": "Premium activado", "No end date": "Sin fecha de fin", "Preview the paywall": "Ver el muro de pago", "Have a license key?": "¿Tienes una clave de licencia?", "Your privacy at a glance": "Tu privacidad de un vistazo", "Where your data lives": "Dónde viven tus datos", "Consent and data history": "Consentimientos e historial de datos", "Copy my photos to my account": "Copiar mis fotos a mi cuenta", "Speaking to log a meal": "Hablar para registrar una comida", "No IDs in links.": "Sin identificadores en los enlaces.", "Friends and online status": "Amigos y estado en línea", "All of Africa": "Toda África", "Edit": "Editar", "+ Add a profile": "+ Añadir un perfil", "Add sex to turn on the weight estimate": "Añade el sexo para activar la estimación de peso", "Meals": "Comidas", "Terms": "Términos", "The Gambia": "Gambia", "Antigua and Barbuda": "Antigua y Barbuda", "Saint Kitts and Nevis": "San Cristóbal y Nieves", "Saint Vincent and the Grenadines": "San Vicente y las Granadinas", "Trinidad and Tobago": "Trinidad y Tobago", "Bosnia and Herzegovina": "Bosnia y Herzegovina", "New Zealand": "Nueva Zelanda", "Papua New Guinea": "Papúa Nueva Guinea", "Goal:": "Meta:", "Swap": "Cambiar", "Not this": "No esta", "Every extra feature, unlocked across food, training, coaching and health.": "Todas las funciones extra, desbloqueadas en comida, entrenamiento, coaching y salud.", "You're in as a beta tester.": "Estás dentro como probador beta.", "Turn any day or week of meals into one shopping list, summed and grouped by aisle.": "Convierte cualquier día o semana de comidas en una lista de compras, sumada y agrupada por pasillo.", "Tick off what you already have and see what you can cook tonight.": "Marca lo que ya tienes y mira qué puedes cocinar esta noche.", "Attach a photo to any logged meal, stored privately on your device.": "Adjunta una foto a cualquier comida registrada, guardada en privado en tu dispositivo.", "Paste a menu and get the best two or three picks for the calories you have left.": "Pega un menú y recibe las dos o tres mejores opciones para las calorías que te quedan.", "A weekly estimate of iron, B12, fibre and more, with dishes that fill the gaps.": "Una estimación semanal de hierro, B12, fibra y más, con platos que cubren las carencias.", "Eight to twelve week programs that raise your numbers as you hit them.": "Programas de ocho a doce semanas que suben tus cifras a medida que las alcanzas.", "Record a set and review it in slow motion. Nothing ever leaves your device.": "Graba una serie y revísala en cámara lenta. Nada sale de tu dispositivo.", "Private progress photos with a ghost overlay, plus tape measurements over time.": "Fotos de progreso privadas con superposición fantasma, más medidas con cinta a lo largo del tiempo.", "Train hard, go easy or rest, from your sleep, resting heart rate and training load.": "Entrena fuerte, ve suave o descansa, según tu sueño, pulso en reposo y carga de entrenamiento.", "A printable Sunday review: adherence, trends, wins and next week's focus.": "Un repaso dominical imprimible: constancia, tendencias, logros y el enfoque de la próxima semana.", "Log meals by speaking, and hear your set targets and rest timers called out.": "Registra comidas hablando y escucha en voz alta tus metas y temporizadores de descanso.", "Run a two week experiment and see honestly whether it moved the number.": "Haz un experimento de dos semanas y comprueba con honestidad si movió la cifra.", "A read-only link for a human coach, showing only what you choose to include.": "Un enlace de solo lectura para un entrenador humano, que muestra solo lo que elijas incluir.", "Household challenges and a leaderboard that celebrates rather than shames.": "Retos del hogar y una clasificación que celebra en lugar de avergonzar.", "Write up your family recipes and swap them with other people as a share file.": "Escribe tus recetas familiares e intercámbialas con otras personas en un archivo para compartir.", "A one page summary of your trends and notes to hand to a clinician.": "Un resumen de una página con tus tendencias y notas para entregar a un profesional de salud.", "Optional, off by default: training and iron advice that follows your cycle.": "Opcional y desactivado por defecto: consejos de entrenamiento y hierro que siguen tu ciclo.", "Meals and hydration arranged inside your eating window, suhoor to iftar.": "Comidas e hidratación dentro de tu ventana de alimentación, de suhoor a iftar.", "Set a weekly food budget and let the planner find cheaper dishes from your own pool.": "Fija un presupuesto semanal de comida y deja que el planificador busque platos más baratos de tu propio grupo.", "Nothing unusual in the last few days, so the plan stands.": "Nada fuera de lo normal en los últimos días, así que el plan se mantiene.", "What part of this week felt good?": "¿Qué parte de esta semana te hizo sentir bien?", "Prefiero no decirlo": "Prefiero no decirlo", "Picked for you today": "Elegido para ti hoy", "Log 350 workout minutes this month.": "Registra 350 minutos de entrenamiento este mes."};
+Object.assign(WL_ES, WL_ES_UI2);
+// ---- Spanish catalog text ----
+// Recipe prose (descriptions, steps, ingredient names, snack instructions) lives in i18n/es-recipes.js.
+// It is fetched the first time a Spanish screen renders, so English users never download it.
+// Until it arrives, or if it cannot load, the English text shows. Dish names and ids never change.
+let wlEsState = 0; // 0 not asked, 1 loading, 2 ready, 3 failed
+function wlEsLoad(){
+  if (wlEsState) return;
+  wlEsState = 1;
+  const sc = document.createElement("script");
+  sc.src = "/i18n/es-recipes.js"; sc.async = true;
+  sc.onload = () => { wlEsState = window.WL_ES_DATA ? 2 : 3; if (wlEsState === 2) render(); };
+  sc.onerror = () => { wlEsState = 3; };
+  document.head.appendChild(sc);
+}
+const esCat = () => (WLA.lang === "es" && wlEsState === 2 && window.WL_ES_DATA) || null;
+const esDish = d => esCat()?.dishes[d.id] || null;
+const esIng = name => esCat()?.ing[name] || name;
+const WL_ES_UNITS = { cups:"tazas", cup:"taza", tbsp:"cdas.", tsp:"cdta.", cloves:"dientes", thumb:"trozo (como un pulgar)", balls:"bolas", pieces:"piezas", piece:"pieza", batch:"tanda", handful:"puñado", bunch:"manojo", bunches:"manojos", can:"lata", cans:"latas", pinch:"pizca", slice:"rebanada", slices:"rebanadas", sprigs:"ramitas", sprig:"ramita", stalks:"tallos", stalk:"tallo", packet:"paquete", blocks:"bloques", block:"bloque", shots:"dosis", sheet:"lámina", head:"cabeza", stick:"rama", "can (28 oz)":"lata (28 oz)", "can (15 oz)":"lata (15 oz)", "can (14 oz)":"lata (14 oz)", "can (19 oz)":"lata (19 oz)" };
+const esUnit = u => (WLA.lang === "es" && WL_ES_UNITS[u]) || u;
+const WL_ES_PLACES = { "United Kingdom":"Reino Unido", "United States":"Estados Unidos", "Trinidad and Tobago":"Trinidad y Tobago", "Dominican Republic":"República Dominicana", "DR Congo":"RD del Congo", "South Africa":"Sudáfrica", "South Korea":"Corea del Sur", "Saudi Arabia":"Arabia Saudita", "Puerto Rico":"Puerto Rico", "Costa Rica":"Costa Rica", "New Zealand":"Nueva Zelanda", "Burkina Faso":"Burkina Faso", "Guinea-Bissau":"Guinea-Bisáu", "Cabo Verde":"Cabo Verde", "The Gambia":"Gambia", "Côte d'Ivoire":"Costa de Marfil", "Sierra Leone":"Sierra Leona", "West Africa":"África occidental", "North Africa":"África del Norte", "Central Africa":"África central", "Modern West African":"África occidental moderna", "Ethiopia":"Etiopía", "Kenya":"Kenia", "Tanzania":"Tanzania", "Morocco":"Marruecos", "Tunisia":"Túnez", "Egypt":"Egipto", "Sudan":"Sudán", "Cameroon":"Camerún", "Gabon":"Gabón", "Zimbabwe":"Zimbabue", "Jamaica":"Jamaica", "India":"India", "Mexico":"México", "Uganda":"Uganda", "Mozambique":"Mozambique", "Haiti":"Haití", "Cuba":"Cuba", "Brazil":"Brasil", "Venezuela":"Venezuela", "Colombia":"Colombia", "Peru":"Perú", "Greece":"Grecia", "Italy":"Italia", "Ireland":"Irlanda", "France":"Francia", "Portugal":"Portugal", "Switzerland":"Suiza", "Lebanon":"Líbano", "Levant":"Levante", "Syria":"Siria", "Türkiye":"Turquía", "Pakistan":"Pakistán", "Bangladesh":"Bangladés", "Japan":"Japón", "China":"China", "Vietnam":"Vietnam", "Philippines":"Filipinas", "Indonesia":"Indonesia", "Thailand":"Tailandia", "Guinea":"Guinea", "Malawi":"Malaui", "Israel":"Israel", "Uzbekistan":"Uzbekistán", "Kazakhstan":"Kazajistán", "Georgia":"Georgia", "Australia":"Australia", "Fiji":"Fiyi", "Somalia":"Somalia", "Caribbean":"Caribe", "Scotland":"Escocia", "England":"Inglaterra", "London":"Londres", "Spain":"España", "Senegal":"Senegal", "Mali":"Malí", "Liberia":"Liberia", "Niger":"Níger", "Nigeria":"Nigeria", "Ghana":"Ghana", "Benin":"Benín", "Togo":"Togo", "Mauritania":"Mauritania", "US":"EE. UU.", "Northern":"norte", "Yoruba":"yoruba", "Delta":"Delta", "Hausa":"hausa", "Efik":"efik", "Igbo":"igbo", "Niger Delta":"Delta del Níger", "Ewe":"ewe", "Ashanti":"ashanti", "Asturias":"Asturias", "Madrid":"Madrid", "La Mancha":"La Mancha", "Basque Country":"País Vasco", "New England":"Nueva Inglaterra", "Louisiana":"Luisiana", "Southern":"sur", "California":"California", "South":"sur", "Bengal":"Bengala", "Sichuan":"Sichuan" };
+const WL_ES_PLACE_RE = new RegExp("(?<![\\p{L}])(" + Object.keys(WL_ES_PLACES).sort((a, b) => b.length - a.length).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")(?![\\p{L}])", "gu");
+const esPlace = c => WLA.lang === "es" && c ? String(c).replace(WL_ES_PLACE_RE, m => WL_ES_PLACES[m]) : c;
+const WL_ES_ALLERGENS = [["tree nuts","frutos secos"], ["tree nut","fruto seco"], ["shellfish","mariscos"], ["peanuts","cacahuetes"], ["peanut","cacahuete"], ["wheat","trigo"], ["milk","leche"], ["egg","huevo"], ["fish","pescado"], ["mustard","mostaza"], ["sesame","sésamo"], ["soy sauce","salsa de soja"], ["soy","soja"], ["gluten","gluten"], ["nut","fruto seco"], ["spaghetti","espagueti"], ["if added","si se añade"], ["if served with groundnuts","si se sirve con cacahuetes"], ["some blends","algunas mezclas"], ["catfish version","versión con bagre"], ["optional","opcional"], ["in stew","en el guiso"], ["some versions","algunas versiones"], ["if injera uses wheat","si la injera lleva trigo"], ["if the injera is mixed","si la injera está mezclada"], ["cheese","queso"], ["thickener","espesante"], ["pasta","pasta"], ["garnish","guarnición"], ["fish sauce","salsa de pescado"], ["shrimp paste","pasta de camarón"], ["crema","crema"], ["ghee","ghee"], ["niter kibbeh","niter kibbeh"], ["dip","para mojar"], ["coconut","coco"], ["unless GF oats","salvo avena sin gluten"] ];
+const esAllergen = a => { if (WLA.lang !== "es") return a; let o = String(a); for (const [k, v] of WL_ES_ALLERGENS.slice().sort((x, y) => y[0].length - x[0].length)) o = o.replace(new RegExp("(?<![\\p{L}])" + k + "(?![\\p{L}])", "giu"), v); return o; };
+function localizeUI(root){
+  if (WLA.lang !== "es") {
+    // The morph keeps runtime-only attribute changes. Restore the original template
+    // value when switching back instead of leaving a Spanish accessible name behind.
+    root.querySelectorAll("[placeholder],[aria-label],[title]").forEach(el => {
+      for (const attr of ["placeholder","aria-label","title"]) {
+        const original = el._ta?.[attr];
+        if (original && el.getAttribute(attr) === WL_ES[original]) el.setAttribute(attr, original);
+      }
+    });
+    return;
+  }
+  wlEsLoad();
+  const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  while (walk.nextNode()) {
+    const n = walk.currentNode, parent = n.parentElement;
+    if (!parent) continue;
+    // Country labels sit next to dish names (which are never translated), so they are handled before the skip list below.
+    if (parent.closest(".slot,.eyebrow,.tiny") && !parent.closest("script,style,textarea,[data-i18n-skip]")) {
+      const t = esPlace(n.nodeValue).replace(/(\d+)g protein/, "$1 g de proteína");
+      if (t !== n.nodeValue) n.nodeValue = t;
+    }
+    if (parent.closest("script,style,textarea,[data-i18n-skip],.streaming,.steps,.ing,#wlc-log,.li .grow,.dish h3,.dpv-main,[data-act='quick-food'],.who-row b,.coach-say")) continue;
+    const value = n.nodeValue, trimmed = value.trim();
+    if (WL_ES[trimmed]) n.nodeValue = value.replace(trimmed, WL_ES[trimmed]);
+  }
+  root.querySelectorAll("[placeholder],[aria-label],[title]").forEach(el => {
+    for (const attr of ["placeholder","aria-label","title"]) {
+      const s = el.getAttribute(attr); if (s && WL_ES[s]) el.setAttribute(attr, WL_ES[s]);
+    }
+  });
+}
 function wlaApplyDom(){
   const el = document.documentElement;
   el.dataset.uistyle = WLA.uistyle; el.lang = WLA.lang;
@@ -11547,7 +11900,7 @@ function wlaSetLook(p, patch){
   render();
 }
 function wlaSetStyle(v){ const p = P(); if (!p || !WL_STYLES.some(x => x[0] === v)) return; wlaSnap(p); WLA.uistyle = v; render(); }
-function wlaSetLang(v){ const p = P(); if (!p || !WL_LANGS.some(x => x[0] === v)) return; wlaSnap(p); WLA.lang = v; render(); }
+function wlaSetLang(v){ const p = P(); if (!p || !WL_LANGS.some(x => x[0] === v)) return; wlaSnap(p); WLA.lang = v; if (wlEsState === 3) wlEsState = 0; render(); }
 function wlaRows(p){
   const b = WLA.base; if (!b || b.pid !== p.id) return [];
   const l = p.look || {};
@@ -11623,6 +11976,7 @@ function applyLook(p = P()){
   el.dataset.accent = look.accent === "dynamic" ? timeAccent() : (look.accent || "blue");
   el.dataset.motion = look.motion === "reduced" ? "reduced" : "full";
   el.dataset.font = FONTS.some(f => f[0] === look.font) ? look.font : "system";
+  el.dataset.layout = look.layout === "webapp" ? "webapp" : "app";
   el.style.colorScheme = scheme === "light" ? "light" : "dark";
   applyTextScale(p);
   wlaMirror(p);
@@ -11757,10 +12111,11 @@ function morphInto(root, html){
   const frag = MORPH_TPL.content;
   if (!root._morphed) {
     for (const c of frag.childNodes) morphSnap(c);
-    root.replaceChildren(frag); root._morphed = true; return;
+    root.replaceChildren(frag); root._morphed = true; localizeUI(root); return;
   }
   morphChildren(root, frag);
   MORPH_TPL.innerHTML = "";
+  localizeUI(root);
 }
 
 function render(){
@@ -11790,8 +12145,8 @@ function render(){
   const premF = UI.route === "premium" && UI.param ? PREMIUM_BY_ID[UI.param] : null;
   const pageTitle = dish ? dish.n : catP ? catP.n : metP ? metP.n : premF ? premF.name : titles[UI.route];
   const sub = dish ? ["#/recipes","Recipes",dish.n] : setTab ? ["#/settings","Settings",setTab[1]] : premF ? ["#/premium","Premium",premF.name] : metP ? ["#/health", "Health data", metP.n] : catP ? ["#/health", "Health data", catP.n] : null;
-  const crumbs = UI.route === "home" ? "" : `<nav class="crumbs" aria-label="Breadcrumb"><a href="#/home">Home</a><span aria-hidden="true">${icon("chevR","go",13)}</span>${sub ? `<a href="${sub[0]}">${sub[1]}</a><span aria-hidden="true">${icon("chevR","go",13)}</span><span aria-current="page">${esc(sub[2])}</span>` : `<span aria-current="page">${esc(pageTitle)}</span>`}</nav>`;
-  setMeta(setTab ? `${setTab[1]} · Settings` : premF ? `${premF.name} · Premium` : pageTitle, dish ? `${dish.n} (${dish.c}): ${dish.d}` : DESCS[UI.route] || DESCS.home, dish ? recipeLD(dish) : null);
+  const crumbs = UI.route === "home" ? "" : `<nav class="crumbs" aria-label="${tr("Breadcrumb")}"><a href="#/home">${tr("Home")}</a><span aria-hidden="true">${icon("chevR","go",13)}</span>${sub ? `<a href="${sub[0]}">${esc(tr(sub[1]))}</a><span aria-hidden="true">${icon("chevR","go",13)}</span><span aria-current="page">${esc(tr(sub[2]))}</span>` : `<span aria-current="page">${esc(tr(pageTitle))}</span>`}</nav>`;
+  setMeta(setTab ? `${tr(setTab[1])} · ${tr("Settings")}` : premF ? `${premF.name} · Premium` : tr(pageTitle), dish ? `${dish.n} (${dish.c}): ${dish.d}` : DESCS[UI.route] || DESCS.home, dish ? recipeLD(dish) : null);
   const routeKey = location.hash; const animate = UI.lastKey !== routeKey; UI.lastKey = routeKey;
   morphInto(root, `
   <div class="app${UI.rail ? " rail" : ""}${UI.menu ? " menu-on" : ""}">
@@ -11801,7 +12156,7 @@ function render(){
       <div class="wrap">
         <div class="compact-head" id="compact-head">
           ${moreBtnHTML(true)}
-          <span class="compact-title">${esc(pageTitle)}</span>
+          <span class="compact-title">${esc(tr(pageTitle))}</span>
           <div class="compact-actions">
             <a class="btn pill sm primary" href="#/nutrition">${icon("plus")} Log</a>
           </div>
@@ -11811,7 +12166,7 @@ function render(){
             ${moreBtnHTML(false)}
             <span class="ph-spacer" aria-hidden="true"></span>
             <div class="ph-right">
-              <div class="ph-text">${UI.route === "home" ? "" : crumbs}<h1 class="page-title">${esc(pageTitle)}</h1>${UI.route === "home" ? `<div class="date muted">${fmtLong(today())}</div>` : ""}</div>
+              <div class="ph-text">${UI.route === "home" ? "" : crumbs}<h1 class="page-title">${esc(tr(pageTitle))}</h1>${UI.route === "home" ? `<div class="date muted">${fmtLong(today())}</div>` : ""}</div>
               <span class="clock tab" id="live-clock" aria-label="Current time" data-morph-live></span>
               ${bellButton(p)}
             </div>
@@ -12281,6 +12636,7 @@ function wlGrid(root, alive, calm){
   };
   const frame = now => {
     raf = 0; if (!alive()) return stop();
+    if (!plane || !L) return; // the visibility callback can fire before the first build; the resize callback builds and kicks again
     const dt = Math.min(.05, Math.max(.001, (now - last) / 1000)); last = now;
     if (st.intro < 1) { st.intro = Math.min(1, st.intro + dt / .9); plane.style.opacity = String(1 - (1 - st.intro) ** 3); }
     const rect = root.getBoundingClientRect(), hw = w / 2, hh = h / 2;
@@ -12634,7 +12990,7 @@ function quickLogBlock(date){
   return `<div class="quicklog">
     ${recent.length ? `<div class="eyebrow" style="margin-top:12px">Recent</div><div class="chips" role="group" aria-label="Recent meals">${recent.map(chip).join("")}</div>` : ""}
     ${often.length ? `<div class="eyebrow" style="margin-top:12px">Often</div><div class="chips" role="group" aria-label="Meals you log often">${often.map(chip).join("")}</div>` : ""}
-    ${prev ? `<div class="row" style="margin-top:12px"><button type="button" class="btn" data-act="repeat-day" data-date="${date}">Repeat ${date === today() ? "yesterday's" : fmtDay(addDays(date, -1)) + "'s"} meals</button></div>` : ""}
+    ${prev ? `<div class="row" style="margin-top:12px"><button type="button" class="btn" data-act="repeat-day" data-date="${date}">${WLA.lang === "es" ? `Repetir las comidas ${date === today() ? "de ayer" : `del ${fmtDay(addDays(date, -1))}`}` : `Repeat ${date === today() ? "yesterday's" : fmtDay(addDays(date, -1)) + "'s"} meals`}</button></div>` : ""}
   </div>`;
 }
 function nutritionView(p){
@@ -12660,9 +13016,9 @@ function nutritionView(p){
       <div class="row"><button class="btn primary" data-act="log-meal">Log meal</button><button class="btn" data-act="mb-guess">${icon("spark")} Guess the calories</button>${
         typeof isPremium === "function" && isPremium() ? `<label class="btn photo-btn">${icon("camera","",16)} From a photo<input type="file" id="meal-shot-in" accept="image/*" capture="environment" hidden></label><a class="btn" href="#/premium/restaurant">${icon("food","",16)} Eating out</a>` : ""}</div>
       ${typeof voiceMealButton === "function" ? voiceMealButton(p) : ""}
-      <p class="small muted">Leave the calorie box empty and hit <b>Guess the calories</b>. Type it how you'd say it, like "rice and stew with chicken", and you can adjust each portion. Or snap a photo below.</p>
+      <p class="small muted">${WLA.lang === "es" ? "Deja el campo de calorías vacío y pulsa Estimar las calorías. Describe la comida con tus palabras y ajusta las porciones. También puedes añadir una foto." : 'Leave the calorie box empty and hit <b>Guess the calories</b>. Type it how you\'d say it, like "rice and stew with chicken", and you can adjust each portion. Or snap a photo below.'}</p>
     </section>
-    ${pend ? extrasPanel(pend) : `<section class="card"><div class="row between"><h2>${date === today() ? "Today" : fmtDay(date)} at a glance</h2><div class="btn-group" role="group" aria-label="Change day"><button class="btn sm icon-btn" data-act="day" data-v="-1" aria-label="Previous day">${icon("chevL","",16)}</button><button class="btn sm icon-btn" data-act="day" data-v="1" aria-label="Next day"${date>=today()?" disabled":""}>${icon("chevR","",16)}</button></div></div>
+    ${pend ? extrasPanel(pend) : `<section class="card"><div class="row between"><h2>${WLA.lang === "es" ? `Resumen de ${date === today() ? "hoy" : fmtDay(date)}` : `${date === today() ? "Today" : fmtDay(date)} at a glance`}</h2><div class="btn-group" role="group" aria-label="Change day"><button class="btn sm icon-btn" data-act="day" data-v="-1" aria-label="Previous day">${icon("chevL","",16)}</button><button class="btn sm icon-btn" data-act="day" data-v="1" aria-label="Next day"${date>=today()?" disabled":""}>${icon("chevR","",16)}</button></div></div>
       <div class="grid" style="grid-template-columns:repeat(3,1fr)"><div><div class="tiny muted">Meals</div><div class="num mid">${meals.reduce((a,m)=>a+mealTotal(m),0).toLocaleString()}</div></div><div><div class="tiny muted">Snacks${drinkKcalOn(date) ? " + drinks" : ""}</div><div class="num mid">${(snacks.reduce((a,s)=>a+s.cal,0) + drinkKcalOn(date)).toLocaleString()}</div></div><div><div class="tiny muted">${p.calorieGoal ? "Left" : "Total"}</div><div class="num mid">${(p.calorieGoal ? p.calorieGoal - intakeOn(date) : intakeOn(date)).toLocaleString()}</div></div></div>
       ${burnedOn(date,p) ? `<p class="small muted">Estimated burn: ${Math.round(burnedOn(date,p)).toLocaleString()} cal including ${onDate("workouts",date).length} workout${onDate("workouts",date).length===1?"":"s"}.</p>` : ""}
     </section>`}
@@ -12673,11 +13029,11 @@ function nutritionView(p){
   ${foodPhotoCard(p)}
   ${typeof drinksSection === "function" ? drinksSection(p) : ""}
   <section class="card">
-    <div class="row between"><h2>Meals on ${date === today() ? "today" : fmtDay(date)}</h2><span class="small muted tab">${meals.reduce((a,m)=>a+mealTotal(m),0).toLocaleString()} cal</span></div>
+    <div class="row between"><h2>${WLA.lang === "es" ? `Comidas ${date === today() ? "de hoy" : `del ${fmtDay(date)}`}` : `Meals on ${date === today() ? "today" : fmtDay(date)}`}</h2><span class="small muted tab">${meals.reduce((a,m)=>a+mealTotal(m),0).toLocaleString()} cal</span></div>
     ${meals.length ? `<div class="list">${meals.map(m => `<div class="li"><div class="grow"><div class="eyebrow" style="color:var(--gold)">${SLOTS.find(s=>s[0]===m.slot)?.[1]}</div><b>${esc(m.name)}</b> <span class="tab muted small">${m.cal} cal</span>${m.est ? ` <span class="guess">${icon("spark")} estimate</span>` : ""}
       ${(m.extras||[]).length ? `<ul class="clean small muted" style="margin-top:4px">${m.extras.map(x => `<li>+ ${esc(x.name)} <span class="tab">${x.cal} cal</span></li>`).join("")}</ul>` : ""}
       </div><div class="row" style="gap:6px">${m.photo && !UI.locked ? `<button class="mealthumb" data-act="ms-view" data-id="${m.id}" aria-label="Photo of ${esc(m.name)}"><img src="${m.photo}" alt=""></button>` : ""}<span class="tab"><b>${mealTotal(m)}</b></span><button class="btn sm ghost" data-act="extras" data-id="${m.id}">Extras</button><button class="btn sm ghost" data-act="del-meal" data-id="${m.id}" aria-label="Delete ${esc(m.name)}">${icon("x","")}</button></div></div>`).join("")}</div>`
-      : `${emptyState("meals", `No meals logged${date === today() ? " yet today" : ""}. Log one above, or let the coach pick from your food culture.`, ["See today's menu","#/culture"])}`}
+      : `${emptyState("meals", WLA.lang === "es" ? `No hay comidas registradas${date === today() ? " hoy" : ""}. Registra una arriba o deja que el entrenador elija según tu cultura gastronómica.` : `No meals logged${date === today() ? " yet today" : ""}. Log one above, or let the coach pick from your food culture.`, [tr("See today's menu"),"#/culture"])}`}
   </section>
   <section class="card"><div class="row between"><h2>Last 7 days</h2>${p.calorieGoal ? "" : `<a class="small" href="#/settings">Add a target line</a>`}</div>${weekChart(p)}</section>
   <div class="grid g2">${projectionCard(p)}
@@ -12976,7 +13332,7 @@ function snacksView(p){
   const q = UI.snackQ.toLowerCase();
   const list = SNACKS.filter(s => inGroup(s, UI.snackRegion) && (!q || (s.n + s.c).toLowerCase().includes(q)));
   return `
-  <section class="card cathead" style="--cc:var(--c-snack)">${cicon("cookie","var(--c-snack)",44)}<div><h2>Snacks</h2><p class="small muted">${log.length ? `${log.reduce((a,s)=>a+s.cal,0).toLocaleString()} cal from ${log.length} snack${log.length===1?"":"s"} today` : "Nothing logged yet today"}</p></div></section>
+  <section class="card cathead" style="--cc:var(--c-snack)">${cicon("cookie","var(--c-snack)",44)}<div><h2>Snacks</h2><p class="small muted">${log.length ? (WLA.lang === "es" ? `${log.reduce((a,s)=>a+s.cal,0).toLocaleString("es")} cal de ${log.length} bocadillo${log.length===1?"":"s"} hoy` : `${log.reduce((a,s)=>a+s.cal,0).toLocaleString()} cal from ${log.length} snack${log.length===1?"":"s"} today`) : tr("Nothing logged yet today")}</p></div></section>
   <div class="grid g2">
     <section class="card"><div class="setrow"><div class="setlabel"><div class="eyebrow">Separate from meals</div><h2 style="margin-top:4px">Today's snacks</h2></div><span class="num mid">${log.reduce((a,s)=>a+s.cal,0)} <span class="small muted">cal</span></span></div>
       ${log.length ? `<div class="list">${log.map(s => `<div class="li"><span class="grow">${esc(s.name)} <span class="muted small">× ${s.qty||1}</span></span><span class="tab">${s.cal} cal</span><button class="btn sm ghost" data-act="del-snack" data-id="${s.id}" aria-label="Delete">${icon("x")}</button></div>`).join("")}</div>` : `<div class="empty small">Nothing logged yet. Pick from the list or add your own.</div>`}
@@ -12991,9 +13347,9 @@ function snacksView(p){
     <div class="chips" role="group" aria-label="Region" data-ring>${regs.map(([k,l]) => `<button class="chip" data-act="snack-region" data-v="${k}" aria-pressed="${UI.snackRegion===k}">${l}</button>`).join("")}</div>
     <div class="grid g3">${list.map(s => { const hits = allergyHits(s,p); return `<div class="dish">
       <span class="slot">${esc(s.c)}</span><h3>${esc(s.n)}</h3>
-      <span class="small muted">${esc(s.sv)} · <b class="tab" style="color:var(--text)">${s.cal} cal</b></span>
-      <span class="tiny ${hits.length ? "" : "muted"}">${hits.length ? `<span class="tag bad">Contains ${esc(hits.join(", "))}</span>` : s.al.length ? `Allergens: ${esc(s.al.join(", "))}` : "No common allergens"}</span>
-      <details class="how"><summary>How to make it</summary><p class="small">${esc(s.how)}</p></details>
+      <span class="small muted">${esc(esCat()?.snacks[s.id]?.v || s.sv)} · <b class="tab" style="color:var(--text)">${s.cal} cal</b></span>
+      <span class="tiny ${hits.length ? "" : "muted"}">${hits.length ? `<span class="tag bad">${WLA.lang === "es" ? "Contiene" : "Contains"} ${esc(hits.join(", "))}</span>` : s.al.length ? `${WLA.lang === "es" ? "Alérgenos" : "Allergens"}: ${esc(s.al.map(esAllergen).join(", "))}` : "No common allergens"}</span>
+      <details class="how"><summary>How to make it</summary><p class="small">${esc(esCat()?.snacks[s.id]?.h || s.how)}</p></details>
       <div class="row" style="gap:6px;margin-top:auto"><select id="sq-${s.id}" aria-label="Servings" style="width:auto">${opt([["1","1 serving"],["2","2 servings"],["0.5","½ serving"],["3","3 servings"]],"1")}</select><button class="btn sm primary" data-act="add-snack" data-id="${s.id}">Add to today</button></div>
     </div>`; }).join("") || `<div class="empty">No snacks match.</div>`}</div>
   </section>`;
@@ -13010,38 +13366,40 @@ function pager(k, c, n){
 }
 function recipeDetail(p, d){
   const sv = UI.recipeServ; const hits = allergyHits(d,p);
+  const es = WLA.lang === "es", x = esDish(d); // x is the Spanish text once i18n/es-recipes.js has loaded
   const related = DISHES.filter(x => x.id !== d.id && x.r === d.r && dietOk(x,p) && !allergyHits(x,p).length).sort((a,b) => hash(d.id+a.id) - hash(d.id+b.id)).slice(0,3);
   return `<section class="card hero">
     <div class="eyebrow">${esc(d.c)} · ${REGION_NAME[d.r]}</div>
-    <p style="max-width:65ch;font-size:17px">${esc(d.d)}</p>
-    <div class="row"><span class="tag gold">≈${d.cal} cal / serving</span><span class="tag">≈${d.pr} g protein</span><span class="tag">Prep ${d.t[0] >= 240 ? "overnight soak" : d.t[0]+" min"} · Cook ${d.t[1]} min</span>${d.al.length ? `<span class="tag${hits.length?" bad":""}">Allergens: ${esc(d.al.join(", "))}</span>` : ""}</div>
-    ${hits.length ? `<div class="note">This dish may contain ${esc(hits.join(", "))}, which you listed to avoid.</div>` : ""}
+    ${es && !x ? `<p class="tiny muted">${wlEsState === 3 ? "El texto en español de esta receta no está disponible ahora; se muestra en inglés." : "Cargando el texto de la receta en español; mientras tanto se muestra en inglés."}</p>` : ""}
+    <p style="max-width:65ch;font-size:17px">${esc(x ? x.d : d.d)}</p>
+    <div class="row"><span class="tag gold">≈${d.cal} cal / ${es ? "porción" : "serving"}</span><span class="tag">≈${d.pr} g ${es ? "de proteína" : "protein"}</span><span class="tag">${es ? "Preparación" : "Prep"} ${d.t[0] >= 240 ? (es ? "remojo toda la noche" : "overnight soak") : d.t[0]+" min"} · ${es ? "Cocción" : "Cook"} ${d.t[1]} min</span>${d.al.length ? `<span class="tag${hits.length?" bad":""}">${es ? "Alérgenos" : "Allergens"}: ${esc(d.al.map(esAllergen).join(", "))}</span>` : ""}</div>
+    ${hits.length ? `<div class="note">${es ? `Este plato puede contener ${esc(hits.join(", "))}, que indicaste evitar.` : `This dish may contain ${esc(hits.join(", "))}, which you listed to avoid.`}</div>` : ""}
     <div class="row"><button class="btn primary" data-act="log-dish" data-id="${d.id}">Log this meal</button>${searchLinks(d.n + " recipe")}</div>
   </section>
   <div class="grid g2">
     <section class="card"><div class="setrow"><h2 class="setlabel">Ingredients</h2><div class="seg setctl" role="group" aria-label="Servings"><button data-act="serv" data-v="1" aria-pressed="${sv===1}">1 serving</button><button data-act="serv" data-v="4" aria-pressed="${sv===4}">4 servings</button></div></div>
-      <table class="ing"><tbody>${d.ing.map(([q,u,it]) => `<tr><td class="q">${q == null ? "" : `${fmtQty(q,sv)} ${esc(u)}`}</td><td>${esc(it)}</td></tr>`).join("")}</tbody></table>
+      <table class="ing"><tbody>${d.ing.map(([q,u,it]) => `<tr><td class="q">${q == null ? "" : `${fmtQty(q,sv)} ${esc(esUnit(u))}`}</td><td>${esc(esIng(it))}</td></tr>`).join("")}</tbody></table>
     </section>
-    <section class="card"><h2>Method</h2><ol class="steps">${d.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol></section>
+    <section class="card"><h2>Method</h2><ol class="steps">${(x ? x.s : d.steps).map(s => `<li>${esc(s)}</li>`).join("")}</ol></section>
   </div>
   <div class="grid g3">
-    <section class="card"><h3>Ways to cook it</h3><ul class="clean small">${d.ways.map(w => `<li>${esc(w)}</li>`).join("")}</ul></section>
-    <section class="card"><h3>Lighter version</h3><p class="small">${esc(d.light[0])}</p><span class="tag good">≈${d.light[1]} cal</span></section>
-    <section class="card"><h3>Higher protein</h3><p class="small">${esc(d.prot[0])}</p><span class="tag gold">≈${d.prot[1]} cal</span></section>
-    <section class="card"><h3>Serve with</h3><p class="small">${esc(d.pair)}</p></section>
-    <section class="card"><h3>Meal prep</h3><p class="small">${esc(d.mp)}</p></section>
+    <section class="card"><h3>Ways to cook it</h3><ul class="clean small">${(x ? x.w : d.ways).map(w => `<li>${esc(w)}</li>`).join("")}</ul></section>
+    <section class="card"><h3>Lighter version</h3><p class="small">${esc(x ? x.l : d.light[0])}</p><span class="tag good">≈${d.light[1]} cal</span></section>
+    <section class="card"><h3>Higher protein</h3><p class="small">${esc(x ? x.p : d.prot[0])}</p><span class="tag gold">≈${d.prot[1]} cal</span></section>
+    <section class="card"><h3>Serve with</h3><p class="small">${esc(x ? x.a : d.pair)}</p></section>
+    <section class="card"><h3>Meal prep</h3><p class="small">${esc(x ? x.m : d.mp)}</p></section>
   </div>
-  ${related.length ? `<section class="card"><h2>More from ${REGION_NAME[d.r]}</h2><div class="grid g3">${related.map(x => `<a class="dish" href="${dishLink(x)}"><span class="slot">${esc(x.c)}</span><h3>${esc(x.n)}</h3><span class="small muted">≈${x.cal} cal · ${x.t[1]} min cook</span></a>`).join("")}</div></section>` : ""}`;
+  ${related.length ? `<section class="card"><h2>More from ${REGION_NAME[d.r]}</h2><div class="grid g3">${related.map(x => `<a class="dish" href="${dishLink(x)}"><span class="slot">${esc(x.c)}</span><h3>${esc(x.n)}</h3><span class="small muted">≈${x.cal} cal · ${x.t[1]} min ${es ? "de cocción" : "cook"}</span></a>`).join("")}</div></section>` : ""}`;
 }
 function planView(p){
   const plan = p.plan, pg = Math.min(UI.planPg, plan?.days.length || 1);
   return `<section class="card">
-    <div class="setrow"><div class="setlabel"><div class="eyebrow">Meal plan</div><h2 style="margin-top:4px">${plan ? `Your plan from ${fmtDay(plan.created)}` : "Build a meal plan"}</h2></div>
+    <div class="setrow"><div class="setlabel"><div class="eyebrow">Meal plan</div><h2 style="margin-top:4px">${plan ? (WLA.lang === "es" ? `Tu plan del ${fmtDay(plan.created)}` : `Your plan from ${fmtDay(plan.created)}`) : tr("Build a meal plan")}</h2></div>
       <div class="row" style="gap:8px"><div class="seg" role="group" aria-label="Plan length"><button data-act="plan-days" data-v="3" aria-pressed="${UI.planDays===3}">3 days</button><button data-act="plan-days" data-v="7" aria-pressed="${UI.planDays===7}">7 days</button></div>${plan && typeof isPremium === "function" && isPremium() ? `<a class="btn" href="#/premium/grocery">${icon("cart","",16)} Grocery list</a>` : ""}<button class="btn primary" data-act="build-plan">${plan ? "Rebuild plan" : "Build my plan"}</button></div></div>
-    <p class="small muted">Food focus: <b>${mixOf(p).label}</b>. About ${Math.round(mixOf(p).west*100)}% West African, ${Math.round(mixOf(p).africa*100)}% the rest of Africa and ${Math.round(mixOf(p).world*100)}% the rest of the world (<a href="#/settings">change</a>). No dish repeats within a plan. ${p.diet || p.allergies ? "Your food preference and allergies are applied." : ""}</p>
+    <p class="small muted">${WLA.lang === "es" ? `Preferencia gastronómica: <b>${esc(tr(mixOf(p).label))}</b>. Aproximadamente ${Math.round(mixOf(p).west*100)}% de África occidental, ${Math.round(mixOf(p).africa*100)}% del resto de África y ${Math.round(mixOf(p).world*100)}% del resto del mundo (<a href="#/settings">cambiar</a>). Ningún plato se repite en el plan. ${p.diet || p.allergies ? "Se aplican tus preferencias y alergias alimentarias." : ""}` : `Food focus: <b>${esc(mixOf(p).label)}</b>. About ${Math.round(mixOf(p).west*100)}% West African, ${Math.round(mixOf(p).africa*100)}% the rest of Africa and ${Math.round(mixOf(p).world*100)}% the rest of the world (<a href="#/settings">change</a>). No dish repeats within a plan. ${p.diet || p.allergies ? "Your food preference and allergies are applied." : ""}`}</p>
     ${plan && plan.days.length ? `<div class="plan">${plan.days.slice(pg - 1, pg).map(r => `<div class="planday"><div class="d">${fmtDay(r.date)}</div>${SLOTS.map(([k,l]) => { const d = DISHES.find(x => x.id === r[k]); return d ? `<a class="dish" href="${dishLink(d)}"><span class="slot">${l}</span><h3>${esc(d.n)}</h3><span class="small muted">${esc(d.c)} · ≈${d.cal} cal</span></a>` : `<div class="dish muted small">No match</div>`; }).join("")}</div>`).join("")}</div>
       ${pager("planPg", pg, plan.days.length)}
-      <p class="small muted">Daily total ≈ ${Math.round(plan.days.reduce((a,r) => a + SLOTS.reduce((b,[k]) => b + (DISHES.find(x=>x.id===r[k])?.cal||0), 0), 0) / plan.days.length).toLocaleString()} cal before snacks.</p>`
+      <p class="small muted">${WLA.lang === "es" ? "Total diario" : "Daily total"} ≈ ${Math.round(plan.days.reduce((a,r) => a + SLOTS.reduce((b,[k]) => b + (DISHES.find(x=>x.id===r[k])?.cal||0), 0), 0) / plan.days.length).toLocaleString(WLA.lang === "es" ? "es" : undefined)} cal ${WLA.lang === "es" ? "antes de los bocadillos" : "before snacks"}.</p>`
       : ""}
   </section>`;
 }
@@ -13066,10 +13424,10 @@ function recipesView(p){
     .sort((a,b) => ({west:0,africa:1,world:2})[bucket(a)] - ({west:0,africa:1,world:2})[bucket(b)]);
   const pg = Math.min(UI.recPg, Math.ceil(list.length / 12) || 1);
   return `
-  <section class="card cathead" style="--cc:var(--c-food)">${cicon("book","var(--c-food)",44)}<div><h2>Recipes &amp; meal plans</h2><p class="small muted">${DISHES.length.toLocaleString()} dishes across ${REGIONS.length} regions and cuisines</p></div></section>
+  <section class="card cathead" style="--cc:var(--c-food)">${cicon("book","var(--c-food)",44)}<div><h2>Recipes &amp; meal plans</h2><p class="small muted">${WLA.lang === "es" ? `${DISHES.length.toLocaleString("es")} platos de ${REGIONS.length} regiones y cocinas` : `${DISHES.length.toLocaleString()} dishes across ${REGIONS.length} regions and cuisines`}</p></div></section>
   ${planView(p)}
   <section class="card">
-    <div class="row between"><h2>Recipe library</h2><span class="small muted">${list.length} of ${DISHES.length} dishes</span></div>
+    <div class="row between"><h2>Recipe library</h2><span class="small muted">${WLA.lang === "es" ? `${list.length} de ${DISHES.length} platos` : `${list.length} of ${DISHES.length} dishes`}</span></div>
     <div class="form">
       <label class="f">Search<input type="search" id="rf-q" value="${esc(f.q)}" placeholder="Dish or ingredient: egusi, plantain…"></label>
       <label class="f">Region<select id="rf-r">${opt([["","All regions"],...REGIONS.map(r=>[r.k,r.n])], f.r)}</select></label>
@@ -13161,10 +13519,12 @@ function coachView(p){
       <p class="small muted">Rebuild your weekly plan and these sessions replace some of the general ones.</p>` : `<p class="small muted">Soccer, basketball, running, American football, swimming or tennis: get conditioning and skill sessions for it.</p>`}
   </section>
 
+  ${coachChatCard()}
+
   <section class="card"${UI.sampleOk === false ? " hidden" : ""}>
     <div class="eyebrow">Ask your coach</div><h2>Questions about training or food</h2>
     <p class="small muted">Claude answers using your profile and this week's logs. It uses your own Claude usage and asks permission the first time.</p>
-    <div class="chips">${["What should I train this week?","How do I fit jollof and fufu into my goal?","I missed three days. How do I restart?","What should I eat before a morning workout?"].map(q => `<button class="chip" data-act="coach-q" data-q="${esc(q)}">${esc(q)}</button>`).join("")}</div>
+    <div class="chips">${(WLA.lang === "es" ? ["¿Qué debería entrenar esta semana?","¿Cómo puedo incluir jollof y fufu en mi objetivo?","Me salté tres días. ¿Cómo retomo el entrenamiento?","¿Qué debería comer antes de entrenar por la mañana?"] : ["What should I train this week?","How do I fit jollof and fufu into my goal?","I missed three days. How do I restart?","What should I eat before a morning workout?"]).map(q => `<button class="chip" data-act="coach-q" data-q="${esc(q)}">${esc(q)}</button>`).join("")}</div>
     <label class="f">Your question<textarea id="coach-q" placeholder="Ask anything about your workouts, meals or goals">${esc(A.q || "")}</textarea></label>
     <div class="row"><button class="btn primary" data-act="ask-coach"${A.busy ? " disabled" : ""}>${A.busy ? `${smHTML({ status: "running", size: 16 })} Thinking…` : "Ask"}</button>${A.busy ? `<button class="btn" data-act="ask-stop">Stop</button>` : ""}</div>
     ${A.err ? `<div class="note">${esc(A.err)}</div>` : ""}
@@ -13187,6 +13547,90 @@ function buildICS(p){
   out.push("END:VCALENDAR");
   return out.join("\r\n");
 }
+// ---- WL Coach chat (build 8.4.1) ----
+// The question goes to the wl-coach edge function with the person's own token. The Anthropic key never reaches the browser, the chat is
+// not saved on the device, and the function logs each exchange to ai_coach_logs (readable only by that person).
+function coachChatCard(){
+  const C = UI.wlc || {}, p = P();
+  const head = `<div class="eyebrow">Chat with your coach</div><h2>Ask WL Coach</h2>`;
+  if (!SB.user || !sbClient()) return `<section class="card" id="wlc">${head}<p class="small muted">Sign in to chat with WL Coach. Chat needs an account because your questions are sent to our server, and from there to an AI service, to be answered.</p></section>`;
+  if (!p.coachChatConsent) return `<section class="card" id="wlc">${head}
+    <p class="small muted">Before your first question, here is exactly what happens to it:</p>
+    <ul class="clean small optin">
+      <li>${icon("pmShare","",16)}<span>Your question is sent through our server to Anthropic, the company that makes Claude, to get an answer. Anything you type may be sent, so leave out names and details you would not want shared.</span></li>
+      <li>${icon("lock","",16)}<span>Your question and the answer are saved in your account, and may be read by the app's owner to check answers are safe and to fix problems. Only you can read them from the app. Deleting your account deletes them.</span></li>
+      <li>${icon("x","",16)}<span>Your logs and profile are not sent. Turn this off any time in Settings &gt; Privacy and security; the rest of the app works without it. WL Coach is not medical advice.</span></li>
+    </ul>
+    <div class="row" style="margin-top:6px"><button class="btn primary" data-act="wlc-optin"${C.consenting ? " disabled" : ""}>${C.consenting ? "Saving…" : "Allow coach chat"}</button></div>
+    ${C.err ? `<div class="note" role="alert">${esc(C.err)}</div>` : ""}</section>`;
+  const msgs = (C.msgs || []).map(m => `<div class="well" style="margin:6px 0"><span class="tiny muted">${m.me ? "You" : "WL Coach"}</span><div class="small" style="white-space:pre-wrap">${esc(m.t)}</div></div>`).join("");
+  return `<section class="card" id="wlc">${head}
+    <p class="small muted">Training and food questions. WL Coach can't see your logs yet, so tell it what it needs to know. It is not medical advice.</p>
+    ${WLA.lang === "es" ? '<p class="tiny muted">Puedes escribir en español; algunas respuestas del servicio pueden llegar en inglés.</p>' : ""}
+    <div id="wlc-log" aria-live="polite">${msgs}</div>
+    <label class="f">Your question<textarea id="wlc-q" maxlength="1000" placeholder="For example: what should I eat after a workout?">${esc(C.q || "")}</textarea></label>
+    <div class="row"><button class="btn primary" data-act="wlc-send"${C.busy ? " disabled" : ""}>${C.busy ? "Thinking…" : "Send"}</button></div>
+    ${C.err ? `<div class="note" role="alert">${esc(C.err)}</div>` : ""}
+  </section>`;
+}
+// The opt-in is also recorded on the account (coach_consent_set, 8.4.3): the wl-coach function trusts that record, never a flag typed into the request,
+// so a direct call cannot skip the screen and a withdrawal stops every tab and device at once. The switch only turns on after the record is saved.
+const COACH_WD_KEY = "wlh.coachwd", COACH_UID_KEY = "wlh.coachuid";
+async function coachConsentSet(on){
+  const c = sbClient(); if (!c || !SB.user) return false;
+  try { const r = await c.rpc("coach_consent_set", { p_on: on, p_version: TERMS_VERSION }); return !r.error; } catch { return false; }
+}
+async function coachConsentChange(on){
+  const p = P(), C = UI.wlc = { ...(UI.wlc || {}), err: null };
+  if (C.consenting) return;
+  if (on) {
+    if (!SB.user) { toast("Sign in to turn on coach chat."); return; }
+    C.consenting = true; render();
+    const ok = await coachConsentSet(true);
+    C.consenting = false;
+    if (!ok) { C.err = "Couldn't save your choice. Check your connection and try again. Nothing was sent."; render(); $('#wlc [data-act="wlc-optin"]')?.focus(); return; }
+    try { localStorage.setItem(COACH_UID_KEY, SB.user?.id || ""); localStorage.removeItem(COACH_WD_KEY); } catch {}
+    p.coachChatConsent = true; historyAdd("coach-on"); saveProfile(); render(); $("#wlc-q")?.focus(); return;
+  }
+  // Off first, so this screen stops sending at once; then the account record. If that fails it is retried the next time this account signs in.
+  p.coachChatConsent = false; historyAdd("coach-off"); saveProfile(); render();
+  let uid = ""; try { uid = SB.user?.id || localStorage.getItem(COACH_UID_KEY) || ""; localStorage.setItem(COACH_WD_KEY, uid); } catch {}
+  if (SB.user && await coachConsentSet(false)) { try { localStorage.removeItem(COACH_WD_KEY); } catch {} }
+  else if (SB.user) toast("Coach chat is off here, but we couldn't update your account yet. We'll retry.", "warn");
+}
+async function coachWithdrawRetry(){
+  let uid = ""; try { uid = localStorage.getItem(COACH_WD_KEY) || ""; } catch {}
+  if (!uid || !SB.user || SB.user.id !== uid) return;
+  if (await coachConsentSet(false)) { try { localStorage.removeItem(COACH_WD_KEY); } catch {} }
+}
+async function wlCoachSend(){
+  const C = UI.wlc = { ...(UI.wlc || {}), err: null };
+  const q = val("wlc-q").trim();
+  if (C.busy || !q) return;
+  const c = sbClient(); if (!c || !SB.user) { C.err = "Sign in first."; render(); return; }
+  if (!P().coachChatConsent) { C.err = "Allow coach chat first."; C.q = q; render(); return; }
+  if (navigator.onLine === false) { C.err = "You are offline. Try again when you are connected."; C.q = q; render(); return; }
+  C.q = q; C.busy = true; render();
+  let out = null, state = "error";
+  try {
+    const { data } = await c.auth.getSession(), token = data?.session?.access_token;
+    if (token) {
+      const r = await fetch(`${SB_URL}/functions/v1/wl-coach`, { method:"POST", headers:{ "content-type":"application/json", apikey:SB_KEY, authorization:`Bearer ${token}` }, body: JSON.stringify({ message:q, lang:WLA.lang }) });
+      out = await r.json().catch(() => ({})); state = out.state || "error";
+    } else state = "unauthorized";
+  } catch { console.warn("coach request failed"); }
+  C.busy = false;
+  // The account says no (withdrawn in another tab or on another device): this screen follows it.
+  if (state === "consent_required" && P().coachChatConsent) { const p = P(); p.coachChatConsent = false; historyAdd("coach-off"); saveProfile(); }
+  if (state === "ok" && typeof out.reply === "string") { C.msgs = [...(C.msgs || []), { me:true, t:q }, { me:false, t:out.reply }].slice(-12); C.q = ""; }
+  else C.err = state === "unauthorized" ? "Your sign-in has expired. Sign out, sign in again, then retry."
+    : state === "rate_limited" ? "You've asked a lot this hour. Try again later."
+    : state === "consent_required" ? "Coach chat is off for your account. Allow it again to continue."
+    : state === "unavailable" ? "The coach isn't available right now. Try again later."
+    : state === "bad_message" ? "Write a question under 1,000 characters."
+    : "The coach couldn't answer just now. Try again in a moment.";
+  render();
+}
 async function askClaude(kind){
   const sample = await window.claude?.use?.("sample");
   const stateKey = kind === "coach" ? "askCoach" : "askMeal";
@@ -13207,14 +13651,14 @@ async function askClaude(kind){
       const q = st.q?.trim(); if (!q) { st.busy = false; render(); return; }
       st.text = "";
       const prompt = `You are ${coachName(p)}, a personal trainer and nutrition coach inside a fitness app called Whole Life Hub. ${coachVoice(p).prompt} The user's app profile (JSON): ${JSON.stringify(ctx)}.
-Answer their question in plain text (no markdown symbols like ** or #), under 220 words, with concrete sets, reps, times or portions where useful. Prefer West African foods when suggesting meals. Don't diagnose or give medical advice; suggest a doctor or registered dietitian for medical questions, injuries or very low calorie targets.
+Answer their question in plain text (no markdown symbols like ** or #), under 220 words, with concrete sets, reps, times or portions where useful. Prefer West African foods when suggesting meals. Don't diagnose or give medical advice; suggest a doctor or registered dietitian for medical questions, injuries or very low calorie targets. ${WLA.lang === "es" ? "Answer in Spanish, including safety advice." : ""}
 Question: ${q}`;
       await sample(prompt, { signal: ctl.signal, cache:false, onText: ({text}) => { st.text = text; const o = $("#coach-out"); if (o) { o.hidden = false; o.textContent = text; } } });
     } else {
       const q = st.q?.trim() || "something new and satisfying";
       st.items = null;
       const prompt = `Suggest 3 dishes for a user of a meal-planning app. Their profile (JSON): ${JSON.stringify(ctx)}. Their request: "${q}".
-Rules: at least 2 of the 3 should be West African unless the request says otherwise; strictly avoid their allergies; respect their food preference; real, well-known dishes or sensible home variations only.
+Rules: at least 2 of the 3 should be West African unless the request says otherwise; strictly avoid their allergies; respect their food preference; real, well-known dishes or sensible home variations only. ${WLA.lang === "es" ? "Write the why, ingredients and steps in Spanish; keep dish names authentic." : ""}
 Return ONLY JSON: {"items":[{"name":string,"origin":string (country),"calories":number (per serving, estimate),"why":string (one sentence: why it fits them),"ingredients":[string] (with amounts for 1 serving),"steps":[string] (4-7 short steps)}]}`;
       const res = await sample.json(prompt, { signal: ctl.signal });
       // BUG-112 fix: the prompt above only *asks* Claude to avoid allergies; nothing verified
@@ -13406,6 +13850,9 @@ function settingsView(p){
     <div class="setgroup"><div class="setlabel">${tr("Motion")}</div>
       <div class="seg" role="group" aria-label="Motion"><button data-act="look-motion" data-v="full" aria-pressed="${(p.look?.motion||"full")==="full"}">Bouncy</button><button data-act="look-motion" data-v="reduced" aria-pressed="${p.look?.motion==="reduced"}">Reduced</button></div>
       <span class="tiny muted">Bouncy adds the spring animations. Reduced turns them off, and your device's own "reduce motion" setting always wins.</span></div>
+    <div class="setgroup"><div class="setlabel">Layout</div>
+      <div class="seg" role="group" aria-label="Layout"><button data-act="look-layout" data-v="app" aria-pressed="${(p.look?.layout||"app")!=="webapp"}">App</button><button data-act="look-layout" data-v="webapp" aria-pressed="${p.look?.layout==="webapp"}">Web app</button></div>
+      <span class="tiny muted">App keeps the single column. Web app spreads cards across the screen on a wide display (900px and up) and uses the sidebar layout fully. On a phone both look the same.</span></div>
     ${reviewBar(p)}
   </section>`,
     goals: `<section class="card">
@@ -13652,6 +14099,8 @@ document.addEventListener("click", async e => {
     case "build-wplan": p.freq = Math.max(1, Math.min(6, numv("c-freq") || p.freq || 3)); p.level = val("c-level") || p.level; if (!p.workoutGoal) p.workoutGoal = p.freq; p.workoutPlan = { created: today(), days: buildWorkoutPlan(p) }; saveProfile(); render(); toast("Workout plan ready"); break;
     case "mark-done": { const d = p.workoutPlan.days.find(x => x.dow === +t.dataset.dow); const date = addDays(weekStart(today()), (d.dow + 6) % 7); addEntry("workouts", { id: uid(), date, type: d.type, minutes: d.minutes, note: d.title, src: "Plan" }); render(); toast("Nice work. Logged.", "success"); checkCelebrations(); checkAwards(); break; }
     case "coach-q": UI.askCoach = { ...(UI.askCoach||{}), q: t.dataset.q }; render(); document.getElementById("coach-q")?.focus(); break;
+    case "wlc-optin": coachConsentChange(true); break;
+    case "wlc-send": wlCoachSend(); break;
     case "ask-coach": UI.askCoach = { ...(UI.askCoach||{}), q: val("coach-q") }; askClaude("coach"); break;
     case "rem-day": { const d = +t.dataset.v; const r = p.reminders; r.days = r.days.includes(d) ? r.days.filter(x => x !== d) : [...r.days, d].sort(); saveProfile(); render(); break; }
     case "rem-ics": case "export": {
@@ -13682,7 +14131,7 @@ document.addEventListener("click", async e => {
     case "ui-lang": wlaSetLang(t.dataset.v); break;
     case "look-save": wlaSave(p); break;
     case "look-discard": wlaDiscard(p); break;
-    case "look-scene": case "look-motion": case "look-font": {
+    case "look-scene": case "look-motion": case "look-font": case "look-layout": {
       p.look = { mode:"auto", accent:"blue", motion:"full", font:"system", ...(p.look||{}) }; p.look[a.slice(5)] = t.dataset.v; saveProfile(); render();
       // The accent popup lives outside #app (so render() above never touches it); repaint its
       // own swatches right away so the tapped one shows selected in well under 100ms.
@@ -13720,6 +14169,7 @@ document.addEventListener("click", async e => {
     // lives, and it takes effect immediately because the views that gate on these flags re-check
     // them on every render.
     case "consent-photoai-toggle": p.photoAiConsent = !p.photoAiConsent; historyAdd(p.photoAiConsent ? "photo-on" : "photo-off"); saveProfile(); render(); break;
+    case "consent-coach-toggle": coachConsentChange(!p.coachChatConsent); break;
     case "consent-clips-toggle": p.prem = p.prem || {}; p.prem.clipsConsent = !p.prem.clipsConsent; historyAdd(p.prem.clipsConsent ? "clips-on" : "clips-off"); saveProfile(); render(); break;
     case "consent-body-toggle": { const st = bodyState(p); st.on = !st.on; historyAdd(st.on ? "body-on" : "body-off"); saveProfile(); render(); if (st.on) bodyPhotoLockNudge(); break; }
     case "photoai-optin": p.photoAiConsent = true; historyAdd("photo-on"); saveProfile(); render(); break;
@@ -13917,7 +14367,7 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) holdS
   if ((await openRaw()) === "locked") UI.locked = true;
   if (S.activeId && !P()) S.activeId = S.profiles[0]?.id || null;
   await sbBoot();                   // 8.1.11: restore the sign-in and the cached meals
-  sbCheckGuest(); SB.booted = true;
+  sbCheckGuest(); SB.booted = true; coachWithdrawRetry();
   try { const f = sessionStorage.getItem("wlh.flash"); if (f) { sessionStorage.removeItem("wlh.flash"); setTimeout(() => toast(f), 300); } } catch {}
   UI.loading = false;
   readRoute();                      // now that the profile exists, the premium gate can judge
@@ -17286,6 +17736,7 @@ function privacyPolicyView(){
       <li><b>Photo meal logging and gym equipment photos.</b> The one photo you choose is sent to Claude, the AI this app runs on, for that one answer, along with a summary of your profile (age, goals, food culture) so the answer fits you. The photo is shrunk on your device and stripped of location data before it leaves. Typing calories in by hand instead sends nothing anywhere. Turn this off any time in Settings &gt; Privacy and security.</li>
       <li><b>Form check camera.</b> Turns on your camera to record a short clip. The clip is never uploaded — recording, review and playback all happen on this device, in the same encrypted storage as the rest of your hub. Importing a video file instead needs no camera permission at all.</li>
       <li><b>Body progress studio.</b> Same as above for still photos, with one difference: signed in, with Sync photos on (Settings › Privacy &amp; security, on by default), the photos are also copied to your private account storage, as described in section 4, so they appear on your other devices. They are hidden whenever your profile is locked.</li>
+      <li><b>Coach chat.</b> Off until you press Allow coach chat, and only for signed-in accounts. Each question you type is sent through our server to Anthropic, the company that makes Claude, which answers it; the question and the answer are also saved in your account (see section 4) and may be read by the app owner to check answers are safe and fix problems. No logs or profile details are sent with it. Do not type anything you would not want shared. Your choice is also saved in your account, with the date, so the server can check it before every question; turn it off any time in Privacy &amp; security and the next question from any device is refused.</li>
       <li><b>Voice coach.</b> Reads the coach's reply aloud using your browser's built-in text-to-speech. It does not use your microphone and never records or sends audio anywhere.</li>
       <li><b>Imported health data</b> (Apple Health, Google Fit/Fitbit or similar exports). You choose the file; it is read in this browser and the file itself is never uploaded or sent anywhere. The workouts, weigh-ins and daily values it creates are saved like anything else you log, including to your account when you are signed in (section 4). There is no live, automatic connection to any health service, so there is nothing to "disconnect" — only files you choose to import.</li>
       <li><b>Recovery score</b> reads the same profile and logged data as the rest of the app (sleep, resting heart rate, training load, how you say you feel) to shape its daily read. Nothing here is sent to a third party. Cycle-aware plans, Doctor visit prep, and Fasting and Ramadan mode are listed on the Premium screen but not built yet — not found, skipped, per this app's own build-honestly rule; they collect nothing because there is nothing there to use yet.</li>
@@ -17303,6 +17754,8 @@ function privacyPolicyView(){
       <li><b>Weigh-ins:</b> the date and time and the weight.</li>
       <li><b>Daily vitals:</b> for each day, the steps, active calories, resting heart rate, sleep, water, blood oxygen and blood pressure you entered or imported.</li>
       <li><b>Each profile:</b> its name and basics (age, sex, height, weight, target weight, goal), your food culture, diet and allergies, calorie and workout goals, activity level and sport, your coach choice and name, your workout and meal plans, your coach questions, answers and check-ins, awards, reminders, appearance choices (theme, accent, font and text size), the layout and sizes of your home-screen cards, units, menu choices, grocery and pantry lists, weekly reviews, experiments, recovery check-ins, body measurements, your sharing choices, and the location of your profile picture and progress photos.</li>
+      <li><b>Coach chat choice,</b> if you used the coach chat switch: whether it is on, the version of these terms it was given under, and when you turned it on or off.</li>
+      <li><b>Coach chat questions and answers,</b> if you turned on coach chat: what you asked, the reply, the date and time, which model answered, and how long it took. Only you can read them from the app, and they are removed when you delete your account.</li>
       <li><b>Photos</b> (meals, workouts, progress photos and your profile picture), unless you turn off Sync photos in Settings › Privacy &amp; security: each is stored as one file in a private area of your account, at a path made of your account id, the profile id, the kind of photo and the item id. Before it leaves your device it is re-saved as a JPEG of about 200 KB or less, which removes metadata such as where it was taken. Only your signed-in account can open it. Deleting the item (or its profile) deletes the file.</li>
     </ul>
     <p><b>Friends (optional).</b> If you turn on Friends in Settings › Household, your app name, whether people may find you by it (off until you choose), whether friends may see when you are online, the time you were last active, and your friend requests are saved in the same database. No health data is part of that. Only your app name can be searched, and only if you allow it; only accepted friends can see your online status. Leaving friends deletes the name and the requests.</p>
@@ -17321,6 +17774,7 @@ function privacyPolicyView(){
         <tr><td><code>wlh.v62</code></td><td>Your profiles and logs in this browser. Signed in, the key ends in <code>@</code> and your account id, and it is removed when you sign out.</td></tr>
         <tr><td><code>wlh.sb.auth</code></td><td>Your sign-in session (set by the sign-in library). Anyone who can run a script on this page could read it.</td></tr>
         <tr><td><code>wlh.meals.v1</code></td><td>Signed in, no passcode only: a copy of your meals, and any meal changes not uploaded yet, so the app works offline. Removed when you sign out. (With a passcode on, meals stay in the encrypted copy instead, and this entry is not written.)</td></tr>
+        <tr><td><code>wlh.offlinetoast</code></td><td>A flag that the one-time "ready to work offline" note in the notification bell has been placed, so it never appears twice.</td></tr>
         <tr><td><code>wlh.mode</code></td><td>Your light, dark or OLED display choice.</td></tr>
         <tr><td><code>wl-appearance</code></td><td>A copy of your saved display, accent, text size, UI style (Rounded or Crisp) and language, so the page paints the right look before it loads.</td></tr>
         <tr><td><code>wlh.navgrp</code></td><td>Which sidebar groups you left expanded or collapsed (older builds; no longer written since the sidebar stopped collapsing).</td></tr>
@@ -17342,6 +17796,7 @@ function privacyPolicyView(){
       <li><b>Vercel</b>, which hosts this page. When you load it, Vercel receives and keeps standard web-request logs (for example your IP address, browser details and the page requested). It is not sent anything from your hub.</li>
       <li><b>Supabase</b>, our database and sign-in service. Your email, password and the items listed in section 4, photos included, go there when you create an account, sign in, or are signed in. Without an account, none of your health data is sent to it. It also stores the crash reports described in section 1: no account id, no health data.</li>
       <li><b>Claude</b>, the AI, answers coach questions, meal suggestions and the photo estimates described in section 3, but only when the app is opened inside Claude and you start the feature (for the photo ones, only after you've allowed them once). Outside Claude those features show as unavailable and nothing is sent.</li>
+      <li><b>Anthropic</b>, the company that makes Claude, only if you turned on coach chat. Your typed question is sent to it through our server so it can answer; see section 3.</li>
       <li><b>Lemon Squeezy</b>, our payment provider, only if you choose a Premium plan. Its checkout page opens inside this app (or in a new tab, if you pick that) and you type your email and payment details into Lemon Squeezy's page, not ours: this app never sees them. When you paste your licence key, the key is sent through our Supabase function to Lemon Squeezy to check it, and checked again about once a day. None of your health data is sent.</li>
       <li><b>Your own downloads</b> when you export your data, which stay on your device.</li>
     </ul>
@@ -17400,12 +17855,12 @@ function termsView(){
 // Template, not legal advice. Review before publishing. The bracketed constants are facts only the owner can supply;
 // the DMCA agent must also be registered with the U.S. Copyright Office before the safe harbour applies.
 const LEGAL_PAGES_UPDATED = "23 October 2026";
-const LEGAL_GOVERNING_LAW = "[GOVERNING LAW: state or country whose law applies]"; // TODO: confirm with a lawyer
-const LEGAL_LIABILITY_CAP = "[LIABILITY AMOUNT, e.g. US $100]";                   // TODO: confirm with a lawyer
-const DMCA_AGENT_NAME = "[DMCA AGENT NAME OR TITLE]";                              // TODO: fill in, then register with the U.S. Copyright Office
-const DMCA_AGENT_EMAIL = "[DMCA AGENT EMAIL]";                                      // TODO: fill in
+const LEGAL_GOVERNING_LAW = "the laws of the State of Maryland, USA"; // filled by the owner 18 Nov 2026
+const LEGAL_LIABILITY_CAP = "US $100";                                             // filled by the owner 18 Nov 2026
+const DMCA_AGENT_NAME = "Chris Sulley";                                            // filled by the owner 18 Nov 2026; Copyright Office registration still to do
+const DMCA_AGENT_EMAIL = "chrisjnr988@gmail.com";                                   // filled by the owner 18 Nov 2026
 const DMCA_AGENT_PHONE = "";                                                        // optional; the row is hidden while this is empty
-const DMCA_DISTRICT = "[U.S. FEDERAL DISTRICT where the operator is located]";      // TODO: fill in
+const DMCA_DISTRICT = "the District of Maryland";                                   // filled by the owner 18 Nov 2026
 
 function eulaView(){
   return legalFold(`
@@ -17697,14 +18152,16 @@ function creditsView(){
 // set and immediately falls back to asking again. There are three flags, one per feature
 // family, deliberately not a single blanket "AI features" toggle:
 //   p.photoAiConsent      — photo meal logging + gym equipment photos (sent to Claude)
+//   p.coachChatConsent    — WL Coach chat (typed questions sent to Anthropic and saved in the account)
 //   p.prem.clipsConsent   — form check camera (recorded on-device only)
 //   p.prem.body.on        — body progress studio (already gated by its own opt-in screen,
 //                           bodyOptIn() in the body-progress file; listed here for completeness)
 function consentCenter(p){
   const row = (on, label, sub, act) => `<div class="setrow"><div class="setlabel"><b>${esc(label)}</b><span class="small muted">${esc(sub)}</span></div>
     <button class="btn sm${on ? "" : " ghost"}" data-act="${act}" aria-pressed="${!!on}">${on ? "On" : "Off"}</button></div>`;
-  return `<div class="setgroup"><div class="setlabel">Camera and photo-AI permissions</div>
+  return `<div class="setgroup"><div class="setlabel">Camera, photo-AI and coach chat permissions</div>
     ${row(!!p.photoAiConsent, "Photo meal logging & equipment photos", "Sends the one photo you choose to Claude for an estimate.", "consent-photoai-toggle")}
+    ${row(!!p.coachChatConsent, "Coach chat", "Sends your typed questions to Anthropic through our server and saves them in your account.", "consent-coach-toggle")}
     ${row(!!p.prem?.clipsConsent, "Form check camera", "Records on this device only; the video is never uploaded.", "consent-clips-toggle")}
     ${row(!!p.prem?.body?.on, "Body progress studio", "Saves progress photos on this device and, with Sync photos on, in your private account storage.", "consent-body-toggle")}
     <span class="tiny muted">Turning one off here stops that feature immediately and shows its explainer again next time you open it.</span></div>`;
@@ -17718,6 +18175,8 @@ const HISTORY_LABELS = {
   terms: "Accepted the Terms and Privacy Policy at sign-up",
   "photo-on": "Turned on photo meal logging and equipment photos",
   "photo-off": "Turned off photo meal logging and equipment photos",
+  "coach-on": "Turned on coach chat",
+  "coach-off": "Turned off coach chat",
   "clips-on": "Turned on the form check camera",
   "clips-off": "Turned off the form check camera",
   "body-on": "Turned on the body progress studio",
@@ -17746,7 +18205,7 @@ function privacyGlance(p){
   const row = (label, val) => `<div class="setrow"><div class="setlabel"><b>${esc(label)}</b></div><span class="small">${val}</span></div>`;
   let terms = null;
   try { terms = JSON.parse(localStorage.getItem(CONSENT_KEY) || "null"); } catch {}
-  const perms = [!!p.photoAiConsent, !!p.prem?.clipsConsent, !!p.prem?.body?.on].filter(Boolean).length;
+  const perms = [!!p.photoAiConsent, !!p.coachChatConsent, !!p.prem?.clipsConsent, !!p.prem?.body?.on].filter(Boolean).length;
   const hist = historyGet().slice(-10).reverse();
   const when = at => new Date(at).toLocaleString([], { day:"numeric", month:"short", year:"numeric", hour:"numeric", minute:"2-digit" });
   return `<section class="card" id="privacy-glance">
@@ -17754,7 +18213,7 @@ function privacyGlance(p){
     ${row("Where your data lives", !SB.user ? "On this device only." : CRY.lock ? "On this device, locked by your passcode, and in your account, which the passcode does not encrypt." : "On this device and in your account, so every device you sign in on matches.")}
     ${row("Account", SB.user ? esc(SB.user.email || "Signed in") : "Not signed in")}
     ${row("Passcode encryption", CRY.lock ? "On" : "Off")}
-    ${row("Camera and photo-AI permissions", `${perms} of 3 on`)}
+    ${row("Camera, photo-AI and coach chat permissions", `${perms} of 4 on`)}
     ${row("Terms accepted", terms?.v ? `Version ${esc(terms.v)}` : "Not recorded on this device")}
     <h3 style="margin:14px 0 6px">Consent and data history</h3>
     ${hist.length ? `<ul class="small" style="margin:0;padding-left:18px">${hist.map(x => `<li>${esc(HISTORY_LABELS[x.k])} <span class="muted">· ${esc(when(x.at))}</span></li>`).join("")}</ul>
@@ -18746,6 +19205,26 @@ function premiumHub(p){
         <span class="grow"><b>${esc(f.name)}${premiumReady(f.id) ? ` <span class="livetag">Ready</span>` : ""}</b><span class="tiny muted">${esc(f.blurb)}</span></span>
         ${icon("chevR","go",14)}
       </a>`).join("")}
+    </div>
+
+    <div class="prem-stays">
+      <div class="eyebrow">What stays open on Free</div>
+      <p class="draft">Home, logging, history and export stay open whether or not you subscribe. Export is always free, and cancelling never deletes anything you've logged.</p>
+      <div class="pill-strip">
+        <span class="wl-pill">Works offline</span>
+        <span class="wl-pill">Dark mode</span>
+        <span class="wl-pill">English &amp; Spanish</span>
+        <span class="wl-pill">Passcode lock</span>
+        <span class="wl-pill">Multiple profiles</span>
+        <span class="wl-pill">Export your data anytime</span>
+      </div>
+      <p class="advice-banner">WholeLife Hub is a tracking tool. It is not medical advice.</p>
+    </div>
+
+    <div class="prem-faqs">
+      <details class="wl-faq"><summary>What happens to my logs if I cancel?</summary><p>Nothing is deleted. Premium features lock; your logs, history and export stay yours.</p></details>
+      <details class="wl-faq"><summary>Can I cancel anytime?</summary><p>Yes — Settings &gt; Premium &gt; Manage subscription. You keep Premium until the end of the period you paid for.</p></details>
+      <details class="wl-faq"><summary>How does billing work?</summary><p>Plans are billed through Lemon Squeezy and renew automatically until you cancel. The price on the plan you pick is the price you pay.</p></details>
     </div>
 
     <div class="prem-about">
@@ -24598,6 +25077,20 @@ function tourGuideCard(){
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("/sw.js").catch(function () {});
+    // One-time note in the notification bell (not a toast, so it never covers the screen), once a worker is controlling the
+    // page and a profile exists. Honest about local storage. The flag is only set once the note is really placed.
+    navigator.serviceWorker.ready.then(function () {
+      var tries = 0;
+      (function put() {
+        try {
+          if (localStorage.getItem("wlh.offlinetoast")) return;
+          if (typeof P === "function" && P() && typeof bellNote === "function") {
+            bellNote("Ready to work offline. Your logs stay in this browser.", "");
+            localStorage.setItem("wlh.offlinetoast", "1");
+          } else if (++tries < 15) setTimeout(put, 2000);
+        } catch (e) {}
+      })();
+    }).catch(function () {});
   });
 }
 </script>
@@ -24908,5 +25401,101 @@ h2.sec-title + .mgrid .mhead svg.ci{
 .wl-review-bar{ display:none; position:sticky; bottom:calc(12px + env(safe-area-inset-bottom,0px)); z-index:5; margin-top:14px; padding:14px; background:var(--surface); border:1px solid var(--line2); border-radius:var(--r-sm); box-shadow:0 8px 24px rgba(0,0,0,.18); }
 .wl-review-bar.show{ display:flex; flex-direction:column; gap:6px; }
 .wl-review-bar .btn{ min-height:44px; }
+</style>
+<style>
+/* ============================================================
+   WL ALIGN PASS - left-align stacked text blocks
+   Stacked multi-line text gets one alignment anchor: the left edge.
+   CSS only. Deliberately centred: .ring-center, .loader, .wl-load,
+   .cel-card, .badge, .tabs a, .stepper b, .np-tabs b, .mtag,
+   .pw-table cells, .wl-cal-title, .actbtn .tiny, .rc-*, .co-status,
+   .auth-terms, .accent-pop-caption.
+   ============================================================ */
+.empty{ text-align:left; }
+.np-empty{ align-items:flex-start; text-align:left; }
+.emptybox{ align-items:flex-start; text-align:left; }
+
+/* Premium store hero. The purchase button lives in .prem-cta-bar (outside
+   .prem-store), so it stays full-width; the full-width blocks inside the
+   card are stretched so left-aligning does not shrink them. */
+.prem-store{ align-items:flex-start; text-align:left; gap:16px; }
+.prem-store .plansel, .prem-store .prem-about, .prem-store .prem-foot{ align-self:stretch; }
+.prem-cta-fine{ text-align:left; }
+
+.pw-foot{ text-align:left; }
+
+@media (min-width:768px){
+  .coachcard{ align-items:flex-start; text-align:left; }
+}
+
+/* Tier 2 (borderline): strike this rule in review to keep the dropzone centred */
+.dropzone{ align-items:flex-start; text-align:left; }
+<style>
+/* ============================================================
+   WL FINPEX PASS - Coming up today and the daily score card
+   (Finpex adaptations 06 and 07). Premium extras and the Web
+   app layout from the same pass shipped separately.
+   ============================================================ */
+/* Home: coming up and the score card */
+#wlComingUp .sec-title, #wlScore .sec-title{ margin:0 0 4px; }
+#wlComingUp .li{ min-height:44px; box-sizing:border-box; }
+.ws-row{ display:flex; align-items:center; gap:16px; margin:12px 0; }
+.ws-ring{ position:relative; width:112px; height:112px; flex:none; }
+.ws-donut{ width:100%; height:100%; display:block; }
+.ws-num{ position:absolute; inset:0; display:grid; place-items:center; font-size:calc((30px) * var(--text-scale,1)); font-variant-numeric:tabular-nums; }
+.ws-parts{ list-style:none; margin:0; padding:0; flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.ws-parts li{ display:flex; align-items:center; gap:8px; font-size:calc((14px) * var(--text-scale,1)); }
+.ws-parts li b{ font-variant-numeric:tabular-nums; }
+.ws-dot{ width:10px; height:10px; border-radius:50%; flex:none; }
+.ws-trendwrap{ display:flex; flex-direction:column; gap:4px; color:var(--accent); margin-bottom:8px; }
+.ws-trend{ width:100%; max-width:320px; height:64px; }
+.ws-info summary{ display:flex; align-items:center; min-height:44px; cursor:pointer; font-weight:600; font-size:calc((13.5px) * var(--text-scale,1)); }
+.ws-info summary:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.ws-info p{ margin:0 0 8px; line-height:1.55; }
+</style>
+
+<style>
+/* ================================================================
+   FINPEX PASS 1 - Premium page: tier badges, pill strip, stays-open,
+   FAQ, advice banner. Adapted from the Finpex Tracker teardown
+   (18 Nov 2026). Markup lives in premiumHub(); no logic changes.
+   ================================================================ */
+.wl-tier-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:8px;white-space:nowrap;background:#111;color:#f5c542}
+.pill-strip{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.wl-pill{display:inline-flex;align-items:center;border:1px solid rgba(127,127,127,.4);border-radius:999px;padding:8px 12px;font-size:13px;min-height:44px}
+.prem-stays{align-self:stretch;text-align:left}
+.advice-banner{border:1px solid rgba(127,127,127,.4);border-radius:12px;padding:10px 12px;font-size:13px}
+.prem-faqs{align-self:stretch;text-align:left}
+.wl-faq{border-top:1px solid rgba(127,127,127,.35)}
+.wl-faq summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
+.wl-faq p{margin:0 0 12px}
+/* ================================================================
+   FINPEX PASS 2 - Web App layout. Settings > Appearance > Layout
+   (profile look.layout, applied as html[data-layout] in applyLook).
+   Opt-in, wide screens only: below 900px Web app behaves exactly
+   like App. Cards become a two-column grid; page furniture spans.
+   ================================================================ */
+@media (min-width:900px){
+  html[data-layout="webapp"] .wrap{max-width:1280px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+  html[data-layout="webapp"] .wrap>*{min-width:0}
+  html[data-layout="webapp"] .wrap>header,html[data-layout="webapp"] .wrap>.compact-head,html[data-layout="webapp"] .wrap>.profstrip{grid-column:1/-1}
+}
+</style>
+
+<style>
+/* ================================================================
+   NAV ICON HOVER - the sidebar tiles lift and grow on hover, the
+   way the Muse sidebar icons do. CSS only; scripts untouched.
+   The tile already squishes on :active - this adds the transition
+   so both movements ease, and the press still wins while the
+   pointer is down. Off when the app Motion setting is reduced;
+   the hover half only runs on devices that can hover.
+   ================================================================ */
+:root:not([data-motion="reduced"]) .nav a .si-tile,:root:not([data-motion="reduced"]) .nav button.prem-trigger .si-tile{transition:transform .18s ease}
+:root:not([data-motion="reduced"]) .nav a:active .si-tile,:root:not([data-motion="reduced"]) .nav button.prem-trigger:active .si-tile{transform:scale(.94)}
+@media (hover:hover) and (prefers-reduced-motion: no-preference){
+  :root:not([data-motion="reduced"]) .nav a:hover .si-tile,:root:not([data-motion="reduced"]) .nav a:focus-visible .si-tile,:root:not([data-motion="reduced"]) .nav button.prem-trigger:hover .si-tile,:root:not([data-motion="reduced"]) .nav button.prem-trigger:focus-visible .si-tile{transform:translateY(-2px) scale(1.12)}
+  :root:not([data-motion="reduced"]) .nav a:active .si-tile,:root:not([data-motion="reduced"]) .nav button.prem-trigger:active .si-tile{transform:scale(.94)}
+}
 </style>
 </body></html>
