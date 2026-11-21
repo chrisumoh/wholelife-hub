@@ -9896,7 +9896,7 @@ function cleanProfile(x){
   }
   d.awards = { earned:{}, challenges:{} };
   if (x.awards && typeof x.awards === "object") {
-    for (const [k, v] of Object.entries(x.awards.earned || {}).slice(0, 80)) if (BADGES.some(b => b.k === k) && DATE_RE.test(v)) d.awards.earned[k] = v;
+    for (const [k, v] of Object.entries(x.awards.earned || {}).slice(0, 200)) if (BADGES.some(b => b.k === k) && DATE_RE.test(v)) d.awards.earned[k] = v;
     // BUG-114 fix: same wrong-direction cap as menuPick/photoFix above (keyed by year-month, so
     // it only bites after ~80 months of continuous use, but the fix is the same one line).
     for (const [k, v] of Object.entries(x.awards.challenges || {}).slice(-80)) if (/^\d{4}-\d{2}$/.test(k) && DATE_RE.test(v)) d.awards.challenges[k] = v;
@@ -16301,7 +16301,18 @@ const WI_COLOR = { walk:["#0E9DB3","#3FD0E0"], run:["#B03A00","#FF9A4D"], cycle:
   soccer:["#0E7A3C","#4CD964"], basketball:["#B34700","#FF8A3D"], football:["#6B3A16","#C98B4B"], rugby:["#7A3A12","#E0974F"], volleyball:["#B08A00","#FFD84D"],
   cricket:["#9A3A12","#F08A5A"], baseball:["#B0302C","#FF8A7A"], handball:["#1F7A5A","#5DE0B0"], hockey:["#1A5FA8","#5AA9F2"],
   tennis:["#7A8F00","#C6E14A"], badminton:["#4F8F10","#A9E65A"], tabletennis:["#B02A2A","#FF8080"], squash:["#6A7A10","#BFD84A"], golf:["#1A7A3A","#7BE08A"],
-  boxing:["#B01E2E","#FF5A6E"], martial:["#8A1F3A","#F0607F"], wrestling:["#9A2A1A","#F07A5A"], other:["#4A5568","#A0AEC0"] };
+  boxing:["#B01E2E","#FF5A6E"], martial:["#8A1F3A","#F0607F"], wrestling:["#9A2A1A","#F07A5A"], other:["#4A5568","#A0AEC0"] ,
+  flame: ["#f97316","#fbbf24"],
+  inferno: ["#dc2626","#fb923c"],
+  rings: ["#22c55e","#a3e635"],
+  calweek: ["#0ea5e9","#7dd3fc"],
+  calmonth: ["#6366f1","#a5b4fc"],
+  drop: ["#0284c7","#38bdf8"],
+  logbook: ["#d97706","#fcd34d"],
+  flag: ["#475569","#cbd5e1"],
+  target: ["#e11d48","#fda4af"],
+  quarter: ["#7c3aed","#c4b5fd"]
+};
 // Every icon is drawn in a 48x48 box on the shared disc.
 // Build 8.3.5: redrawn set from the designer. "§" is the instance's gradient paint, put in by wicon().
 // Parts that move on hover keep their w-* class (w-leg, w-arm, w-ball, w-wheel, w-wave ...).
@@ -16350,6 +16361,17 @@ const WI_ART = {
   martial: `<circle cx="15.5" cy="9" r="3.6" fill="§" stroke="none"/><g class="w-body"><path stroke-width="4.4" d="M15.8 13 L18.5 22"/></g><path d="M16.8 18.8 L20.8 18.2"/><g class="w-arm"><path d="M16.2 14.5 L22.5 12 L25.5 15 M16.2 14.5 L11.5 18.5 L8.5 16"/></g><g class="w-leg"><path d="M18.5 22 L17.5 31.5 L17.5 39 M18.5 22 L28.5 20 L37.5 20"/></g>`,
   wrestling: `<circle cx="15.5" cy="12.5" r="3.4" fill="§" stroke="none"/><circle cx="32.5" cy="12.5" r="3.4" fill="§" stroke="none"/><g class="w-body"><path stroke-width="4.4" d="M15.8 16.5 L19.5 26.5 M32.2 16.5 L28.5 26.5"/></g><g class="w-arm"><path d="M16.5 17.5 C21 14.8 27 14.8 31.5 17.5 M17.5 21.5 C22 24 26 24 30.5 21.5"/></g><g class="w-leg"><path d="M19.5 26.5 L14.5 34 L12.5 39.5 M19.5 26.5 L20.5 33.5 L19.5 39.5 M28.5 26.5 L33.5 34 L35.5 39.5 M28.5 26.5 L27.5 33.5 L28.5 39.5"/></g>`,
   other: `<circle cx="19.5" cy="20" r="11.5"/><path d="M19.5 20 L19.5 13.5 M19.5 20 L24.5 22.5"/><g class="w-ball"><circle cx="35" cy="33.5" r="7.5"/></g><circle cx="35" cy="33.5" r="1.6" fill="§" stroke="none"/><path d="M29 29.5 C31.5 32 31.5 35 29 37.5"/>`
+,
+  flame: `<g class="w-flame"><path d="M24 5c1 6-2.5 9-5 12.5C16.8 20.3 15 23 15 27a9 9 0 0 0 18 0c0-3-1.5-5.4-3-7.5-.3 1.8-1.2 3.2-2.6 4C28.6 17.6 27.8 10.6 24 5z"/></g><path d="M24 38.5a3.8 3.8 0 0 1-3.8-3.8c0-1.6 1-2.7 1.9-4 .4 1 1 1.7 1.9 2.1.5-.9.7-1.7.8-2.6.7 1 1.4 2.2 1.4 3.6A3.8 3.8 0 0 1 24 38.5z" fill="§" stroke="none"/>`,
+  inferno: `<g class="w-flame"><path d="M24 3c1.2 6.8-3 10.6-5.7 14.6C15.9 21.2 14 24.4 14 28.5A10 10 0 0 0 34 28.5c0-3.4-1.7-6.1-3.4-8.5-.3 2-1.3 3.6-3 4.5C29.3 18.3 28.3 10 24 3z"/><path d="M24 40a4.5 4.5 0 0 1-4.5-4.5c0-1.9 1.2-3.2 2.3-4.8.5 1.2 1.2 2 2.2 2.5.6-1 .9-2 1-3.1.8 1.2 1.7 2.6 1.7 4.4A4.5 4.5 0 0 1 24 40z"/></g><path d="M8.5 41.5c-1.2-1.6-2-3.4-2-5.3M39.5 41.5c1.2-1.6 2-3.4 2-5.3" stroke-width="2.2"/>`,
+  rings: `<g class="w-rings"><circle cx="17.5" cy="19" r="8"/><circle cx="30.5" cy="19" r="8"/><circle cx="24" cy="29.5" r="8"/></g>`,
+  calweek: `<g class="w-cal"><path d="M10 12h28a2 2 0 0 1 2 2v24a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2z"/><path d="M8 20h32M17 7v7M31 7v7"/></g><g fill="§" stroke="none"><circle cx="14.5" cy="27" r="1.9"/><circle cx="20.5" cy="27" r="1.9"/><circle cx="26.5" cy="27" r="1.9"/><circle cx="32.5" cy="27" r="1.9"/><circle cx="14.5" cy="34" r="1.9" opacity=".45"/><circle cx="20.5" cy="34" r="1.9" opacity=".45"/><circle cx="26.5" cy="34" r="1.9" opacity=".45"/><circle cx="32.5" cy="34" r="1.9" opacity=".45"/></g>`,
+  calmonth: `<g class="w-cal"><path d="M10 12h28a2 2 0 0 1 2 2v24a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2z"/><path d="M8 20h32M17 7v7M31 7v7"/></g><g fill="§" stroke="none"><circle cx="14.5" cy="26" r="1.8"/><circle cx="20.5" cy="26" r="1.8"/><circle cx="26.5" cy="26" r="1.8"/><circle cx="32.5" cy="26" r="1.8"/><circle cx="14.5" cy="32" r="1.8"/><circle cx="20.5" cy="32" r="1.8"/><circle cx="26.5" cy="32" r="1.8"/><circle cx="32.5" cy="32" r="1.8"/><circle cx="14.5" cy="37.5" r="1.8"/><circle cx="20.5" cy="37.5" r="1.8"/><circle cx="26.5" cy="37.5" r="1.8"/><circle cx="32.5" cy="37.5" r="1.8"/></g>`,
+  drop: `<g class="w-drop"><path d="M24 5c5.5 6.8 10 12.3 10 18.5a10 10 0 0 1-20 0C14 17.3 18.5 11.8 24 5z"/><path d="M17.5 30.5c2-1.4 4-1.4 6.5 0s4.5 1.4 6.5 0"/></g><circle cx="20" cy="21.5" r="1.7" fill="§" stroke="none"/>`,
+  logbook: `<g class="w-book"><path d="M15 6h21a2 2 0 0 1 2 2v34H15z"/><path d="M15 6v36M21 15h11M21 22h11"/></g><path d="M20.5 33.5l3.2 3.2L30 29.5"/>`,
+  flag: `<g class="w-pole"><path d="M14 5v38"/></g><g class="w-flag"><path d="M14 8c5-3 10 3 20 0v13c-10 3-15-3-20 0z"/><path d="M21.5 6.6v13.2M28.5 6.6v13.2M14 14.8c5-3 10 3 20 0"/></g><path d="M8 43.5h13"/>`,
+  target: `<g class="w-target"><circle cx="22" cy="26" r="15"/><circle cx="22" cy="26" r="9.5"/></g><circle cx="22" cy="26" r="3.4" fill="§" stroke="none"/><path d="M31.5 16.5L42 6M36.5 6H42v5.5"/>`,
+  quarter: `<g class="w-quarter"><circle cx="24" cy="24" r="16.5"/><path d="M24 7.5v33M7.5 24h33"/></g><path d="M24 7.5a16.5 16.5 0 0 1 16.5 16.5H24z" fill="§" stroke="none"/>`
 };
 // The shared frame: frosted disc, rim light, highlight — identical for every type.
 let WI_SEQ = 0;
@@ -16431,17 +16453,75 @@ const BADGES = [
   { k:"ten-workouts",  n:"Ten Sessions",    d:"Log 10 workouts.",                     icon:"strength", test:p => entries("workouts").length >= 10 },
   { k:"fifty-workouts",n:"Fifty Sessions",  d:"Log 50 workouts.",                     icon:"hiit",     test:p => entries("workouts").length >= 50 },
   { k:"hundred",       n:"Century",         d:"Log 100 workouts.",                    icon:"cycle",    test:p => entries("workouts").length >= 100 },
-  { k:"streak-7",      n:"Seven Days",      d:"Work out seven days in a row.",        icon:"walk",     test:p => workoutStreak(p) >= 7 },
-  { k:"streak-30",     n:"Thirty Days",     d:"Work out thirty days in a row.",       icon:"hike",     test:p => workoutStreak(p) >= 30 },
-  { k:"perfect-day",   n:"All Three",       d:"Close all three rings in one day.",    icon:"yoga",     test:p => { for (let i=0;i<400;i++) if (ringsClosedOn(addDays(today(),-i),p).all) return true; return false; } },
-  { k:"perfect-week",  n:"Perfect Week",    d:"Close all three rings every day for a week.", icon:"row", test:p => { for (let s=0;s<60;s++){ let ok=true; for(let i=0;i<7;i++) if(!ringsClosedOn(addDays(today(),-s-i),p).all){ok=false;break;} if(ok) return true; } return false; } },
-  { k:"month-rings",   n:"Full Month",      d:"Close all three rings every day of a calendar month.", icon:"soccer", test:p => { const mk = monthKey(addDays(today(),-1)); const st = monthStats(mk,p); return st.counted >= 28 && st.allRings === st.counted; } },
-  { k:"hydrated",      n:"Well Watered",    d:"Close the Hydration ring 20 days in one month.", icon:"swim", test:p => monthStats(monthKey(today()),p).water >= 20 },
-  { k:"food-logger",   n:"Honest Logger",   d:"Log food on 25 days in one month.",    icon:"basketball", test:p => monthStats(monthKey(today()),p).food >= 25 },
-  { k:"early-bird",    n:"Plan Finisher",   d:"Finish a coach plan from day one to the last day.", icon:"tennis", test:p => !!p.coach?.plan && today() > addDays(p.coach.plan.start, p.coach.plan.days - 1) },
-  { k:"challenge",     n:"Challenge Taken", d:"Complete a monthly challenge.",        icon:"dance",    test:p => challengeProgress(monthKey(today()), p).done },
-  { k:"three-months",  n:"Quarter",         d:"Log a workout in three different months.", icon:"elliptical", test:p => new Set(entries("workouts").map(w => monthKey(w.date))).size >= 3 }
+  { k:"streak-7",      n:"Seven Days",      d:"Work out seven days in a row.",        icon:"flame",     test:p => workoutStreak(p) >= 7 },
+  { k:"streak-30",     n:"Thirty Days",     d:"Work out thirty days in a row.",       icon:"inferno",     test:p => workoutStreak(p) >= 30 },
+  { k:"perfect-day",   n:"All Three",       d:"Close all three rings in one day.",    icon:"rings",     test:p => { for (let i=0;i<400;i++) if (ringsClosedOn(addDays(today(),-i),p).all) return true; return false; } },
+  { k:"perfect-week",  n:"Perfect Week",    d:"Close all three rings every day for a week.", icon:"calweek", test:p => { for (let s=0;s<60;s++){ let ok=true; for(let i=0;i<7;i++) if(!ringsClosedOn(addDays(today(),-s-i),p).all){ok=false;break;} if(ok) return true; } return false; } },
+  { k:"month-rings",   n:"Full Month",      d:"Close all three rings every day of a calendar month.", icon:"calmonth", test:p => { const mk = monthKey(addDays(today(),-1)); const st = monthStats(mk,p); return st.counted >= 28 && st.allRings === st.counted; } },
+  { k:"hydrated",      n:"Well Watered",    d:"Close the Hydration ring 20 days in one month.", icon:"drop", test:p => monthStats(monthKey(today()),p).water >= 20 },
+  { k:"food-logger",   n:"Honest Logger",   d:"Log food on 25 days in one month.",    icon:"logbook", test:p => monthStats(monthKey(today()),p).food >= 25 },
+  { k:"early-bird",    n:"Plan Finisher",   d:"Finish a coach plan from day one to the last day.", icon:"flag", test:p => !!p.coach?.plan && today() > addDays(p.coach.plan.start, p.coach.plan.days - 1) },
+  { k:"challenge",     n:"Challenge Taken", d:"Complete a monthly challenge.",        icon:"target",    test:p => challengeProgress(monthKey(today()), p).done },
+  { k:"three-months",  n:"Quarter",         d:"Log a workout in three different months.", icon:"quarter", test:p => new Set(entries("workouts").map(w => monthKey(w.date))).size >= 3 }
 ];
+// --- per-sport badges: a first, a 10 and a 50 for every activity in the catalogue ---
+// (The catch-all "other" type is covered by First Move and the session-count badges above.)
+const SPORT_NOUNS = {
+  walk: ["Walk", "walks", "walk"],
+  run: ["Run", "runs", "run"],
+  cycle: ["Ride", "rides", "ride"],
+  spin: ["Spin Class", "spin classes", "spin class"],
+  hike: ["Hike", "hikes", "hike"],
+  elliptical: ["Elliptical Session", "elliptical sessions", "elliptical session"],
+  stairs: ["Stair Climb", "stair climbs", "stair climb"],
+  jumprope: ["Jump Rope Session", "jump rope sessions", "jump rope session"],
+  row: ["Row", "rows", "row"],
+  athletics: ["Track Session", "track sessions", "track session"],
+  strength: ["Strength Session", "strength sessions", "strength session"],
+  calisthenics: ["Bodyweight Session", "bodyweight sessions", "bodyweight session"],
+  hiit: ["HIIT Session", "HIIT sessions", "HIIT session"],
+  yoga: ["Yoga Session", "yoga sessions", "yoga session"],
+  pilates: ["Pilates Session", "Pilates sessions", "Pilates session"],
+  stretch: ["Stretch", "stretches", "stretch"],
+  aerobics: ["Aerobics Class", "aerobics classes", "aerobics class"],
+  dance: ["Dance Session", "dance sessions", "dance session"],
+  gymnastics: ["Gymnastics Session", "gymnastics sessions", "gymnastics session"],
+  soccer: ["Soccer Game", "soccer games", "soccer game"],
+  basketball: ["Basketball Game", "basketball games", "basketball game"],
+  football: ["Football Game", "football games", "football game"],
+  rugby: ["Rugby Match", "rugby matches", "rugby match"],
+  volleyball: ["Volleyball Game", "volleyball games", "volleyball game"],
+  cricket: ["Cricket Match", "cricket matches", "cricket match"],
+  baseball: ["Baseball Game", "baseball games", "baseball game"],
+  handball: ["Handball Game", "handball games", "handball game"],
+  hockey: ["Hockey Game", "hockey games", "hockey game"],
+  tennis: ["Tennis Match", "tennis matches", "tennis match"],
+  badminton: ["Badminton Match", "badminton matches", "badminton match"],
+  tabletennis: ["Table Tennis Match", "table tennis matches", "table tennis match"],
+  squash: ["Squash Match", "squash matches", "squash match"],
+  golf: ["Golf Round", "rounds of golf", "round of golf"],
+  boxing: ["Boxing Session", "boxing sessions", "boxing session"],
+  martial: ["Martial Arts Session", "martial arts sessions", "martial arts session"],
+  wrestling: ["Wrestling Match", "wrestling matches", "wrestling match"],
+  swim: ["Swim", "swims", "swim"],
+  kayak: ["Kayak Trip", "kayak trips", "kayak trip"],
+  climb: ["Climb", "climbs", "climb"],
+  ski: ["Ski Day", "ski days", "ski day"],
+  iceskate: ["Ice Skating Session", "ice skating sessions", "ice skating session"],
+  skate: ["Skate Session", "skate sessions", "skate session"],
+  horse: ["Horse Ride", "horse rides", "horse ride"]
+};
+const sportCount = (p, k) => entries("workouts").filter(w => w.type === k).length;
+for (const a of ACTIVITIES) {
+  const nn = SPORT_NOUNS[a.k];
+  if (!nn) continue;
+  BADGES.push(
+    { k: "first-" + a.k, n: "First " + nn[0], d: "Log your first " + nn[2] + ".", icon: a.k, test: p => sportCount(p, a.k) >= 1 },
+    { k: a.k + "-10", n: nn[0] + " Regular", d: "Log 10 " + nn[1] + ".", icon: a.k, test: p => sportCount(p, a.k) >= 10 },
+    { k: a.k + "-50", n: nn[0] + " Devotee", d: "Log 50 " + nn[1] + ".", icon: a.k, test: p => sportCount(p, a.k) >= 50 }
+  );
+}
+
 // Recompute, stamp anything newly earned with today's date, and report what is new.
 function refreshAwards(p){
   p.awards = p.awards && typeof p.awards === "object" ? p.awards : { earned: {}, challenges: {} };
