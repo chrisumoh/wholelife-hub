@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.5 (Dev Testing), build 8.5.2, 2026-11-18. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.5 (Dev Testing), build 8.5.3, 2026-11-21. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.5.3 · Settings: Persistent left sidebar for Settings (rebuilt)
+
+- **Problem:** Settings switched its 8 sections through a horizontal tab strip that scrolled away and read as a menu bar. A first sidebar attempt (PR #98) rendered as a narrow card of stacked icon-over-label tiles because it reused the shared .tabs class, which the UI-style rules restyle, and it was reverted.
+- **Change:** Settings now has a persistent left rail with two groups (You: Profile, Coach, Goals & food, Household. App: Appearance, Premium, Privacy & security, Data & about), an icon and label side by side on every row, a filled pill on the active section, and sticky position beside the scrolling section. It uses its own setrail classes (never .tabs) in a last style block with scoped, !important layout rules. Under 900px it becomes one pinned, horizontally scrolling row. The same 8 sections, keys and content, no reload on switching.
+- **Where:** index.html: settingsView(), SET_RAIL, SET_RAIL_ICON, the setrail-css style block (last in the file), WL_ES (App, Settings sections). tests/browser/appearance.mjs and pickers.mjs (re-pointed from .tabs to .setrail; the sliding-pill checks were removed with the tab strip), tests/browser/slidepay.mjs (two checks updated for the Free/Premium pricing cards). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/pickers.mjs, appearance.mjs and slidepay.mjs. Open Settings & profiles on a desktop width: the rail stays put while the section scrolls and the active row is a filled pill. Narrow the window below 900px: the rail becomes a single scrolling row above the section.
+- **Known limits:** The sliding hover pill and arrow-key tablist behaviour of the old strip are gone: rows are plain links reached with Tab, marked with aria-current. Learn page work (PR #99) and the pricing cards (PR #97) are separate changes in the same branch history.
 
 ## 8.5.2 · Finpex adaptations: Web app layout, offline note, Coming up today and a daily score
 

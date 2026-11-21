@@ -3875,7 +3875,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.5", build: "8.5.2", channel: "Dev Testing", date: "2026-11-18", week: "Sun 15 Nov – Sat 21 Nov 2026" };
+const APP_VERSION = { update: "8.5", build: "8.5.3", channel: "Dev Testing", date: "2026-11-21", week: "Sun 15 Nov – Sat 21 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3889,6 +3889,14 @@ const APP_VERSION = { update: "8.5", build: "8.5.2", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.5.3",
+      area:"Settings",
+      title:"Persistent left sidebar for Settings (rebuilt)",
+      bug:"Settings switched its 8 sections through a horizontal tab strip that scrolled away and read as a menu bar. A first sidebar attempt (PR #98) rendered as a narrow card of stacked icon-over-label tiles because it reused the shared .tabs class, which the UI-style rules restyle, and it was reverted.",
+      fix:"Settings now has a persistent left rail with two groups (You: Profile, Coach, Goals & food, Household. App: Appearance, Premium, Privacy & security, Data & about), an icon and label side by side on every row, a filled pill on the active section, and sticky position beside the scrolling section. It uses its own setrail classes (never .tabs) in a last style block with scoped, !important layout rules. Under 900px it becomes one pinned, horizontally scrolling row. The same 8 sections, keys and content, no reload on switching.",
+      where:"index.html: settingsView(), SET_RAIL, SET_RAIL_ICON, the setrail-css style block (last in the file), WL_ES (App, Settings sections). tests/browser/appearance.mjs and pickers.mjs (re-pointed from .tabs to .setrail; the sliding-pill checks were removed with the tab strip), tests/browser/slidepay.mjs (two checks updated for the Free/Premium pricing cards). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/pickers.mjs, appearance.mjs and slidepay.mjs. Open Settings & profiles on a desktop width: the rail stays put while the section scrolls and the active row is a filled pill. Narrow the window below 900px: the rail becomes a single scrolling row above the section.",
+      limits:"The sliding hover pill and arrow-key tablist behaviour of the old strip are gone: rows are plain links reached with Tab, marked with aria-current. Learn page work (PR #99) and the pricing cards (PR #97) are separate changes in the same branch history." },
     { id:"8.5.2",
       area:"Finpex adaptations",
       title:"Coming up today, a daily score and an offline note",
@@ -10571,6 +10579,8 @@ function sceneLayer(p){
 }
 
 // =================== SETTINGS (tabbed) ===================
+const SET_RAIL = [["You",["profile","coach","goals","household"]],["App",["appearance","premium","privacy","about"]]];
+const SET_RAIL_ICON = { profile:"user", coach:"coach", goals:"clipboard", household:"users", appearance:"palette", premium:"crown", privacy:"lock", about:"info" };
 const SET_TABS = [["profile","Profile"],["coach","Coach"],["appearance","Appearance"],["goals","Goals & food"],["household","Household"],["premium","Premium"],["privacy","Privacy & security"],["about","Data & about"]];
 const initials = n => (n || "").trim().split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join("").toUpperCase() || "?";
 function factRow(k, v){ return `<dt>${esc(k)}</dt><dd>${v}</dd>`; }
@@ -11691,7 +11701,7 @@ const WL_ES = {
   "Food culture":"Cultura gastronómica", "Personal coach":"Entrenador personal", "Health data":"Datos de salud",
   "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Go Premium":"Hazte Premium",
   "Profile":"Perfil", "Coach":"Entrenador", "Appearance":"Apariencia", "Goals & food":"Metas y comida", "Household":"Hogar",
-  "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información",
+  "App":"Aplicación", "Settings sections":"Secciones de ajustes", "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información",
   "Display":"Pantalla", "Automatic":"Automático", "Light":"Claro", "Dark":"Oscuro", "OLED black":"Negro OLED",
   "Accent color":"Color de acento", "Text size":"Tamaño del texto", "Motion":"Movimiento", "UI style":"Estilo de interfaz",
   "Rounded":"Redondeado", "Crisp":"Nítido", "Language":"Idioma", "Review changes":"Revisar cambios",
@@ -13847,10 +13857,11 @@ function settingsView(p){
   const us = p.units === "us"; const hIn = p.heightCm ? p.heightCm/2.54 : null;
   const sg = suggestedGoal(p);
   const tab = SET_TABS.some(t => t[0] === UI.param) ? UI.param : "profile";
-  // One row, always. The active tab is bold and a shade larger with no pill behind it, and a
-  // hidden bold copy of the label (::after, from data-label) holds the width so nothing shifts.
-  const tabs = `<div class="tabwrap"><nav class="tabs" role="tablist" aria-label="Settings sections">${SET_TABS.map(([k,l]) =>
-    `<a role="tab" href="#/settings${k === "profile" ? "" : "/" + k}" data-label="${esc(tr(l))}" aria-selected="${k === tab}"${k === tab ? ' aria-current="page"' : ' tabindex="-1"'}><span>${esc(tr(l))}</span></a>`).join("")}</nav></div>`;
+  // A persistent left rail (own setrail* classes: the shared .tabs class is restyled by the UI-style
+  // rules, which is what broke the first rail). Below 900px it becomes a pinned scrolling row.
+  const rail = `<nav class="setrail" aria-label="${esc(tr("Settings sections"))}">${SET_RAIL.map(([g, keys]) =>
+    `<div class="setrail-grp"><div class="setrail-lbl">${esc(tr(g))}</div>${keys.map(k => { const t = SET_TABS.find(x => x[0] === k);
+      return `<a class="setrail-item" href="#/settings${k === "profile" ? "" : "/" + k}"${k === tab ? ' aria-current="page"' : ""}>${icon(SET_RAIL_ICON[k], "", 18)}<span>${esc(tr(t[1]))}</span></a>`; }).join("")}</div>`).join("")}</nav>`;
   const sections = {
     profile: (SB.user && sbClient() ? "" : accountCard()) + profileTab(p),
     premium: typeof subscriptionPanel === "function" ? premiumTab(p) : "",
@@ -13989,7 +14000,7 @@ function settingsView(p){
     <p class="tiny faint">Whole Life Hub is for personal tracking and isn't medical or nutrition advice.</p>
   </section>`
   };
-  return tabs + sections[tab];
+  return `<div class="set-layout">${rail}<div class="set-body">${sections[tab]}</div></div>`;
 }
 
 // =================== EVENTS ===================
@@ -25495,6 +25506,30 @@ h2.sec-title + .mgrid .mhead svg.ci{
 @media (hover:hover) and (prefers-reduced-motion: no-preference){
   :root:not([data-motion="reduced"]) .nav a:hover .si-tile,:root:not([data-motion="reduced"]) .nav a:focus-visible .si-tile,:root:not([data-motion="reduced"]) .nav button.prem-trigger:hover .si-tile,:root:not([data-motion="reduced"]) .nav button.prem-trigger:focus-visible .si-tile{transform:translateY(-2px) scale(1.12)}
   :root:not([data-motion="reduced"]) .nav a:active .si-tile,:root:not([data-motion="reduced"]) .nav button.prem-trigger:active .si-tile{transform:scale(.94)}
+}
+</style>
+<style id="setrail-css">
+/* Settings rail. Everything is scoped under .set-layout with fresh class names and !important on the
+   layout properties, so no shared rule (.tabs, .nav a, UI-style passes) can restyle it. */
+.set-layout{display:grid!important;grid-template-columns:240px minmax(0,1fr);gap:20px;align-items:start;min-width:0}
+.set-layout>.set-body{display:flex;flex-direction:column;gap:16px;min-width:0}
+.set-layout>.setrail{position:sticky;top:16px;display:flex!important;flex-direction:column;gap:14px;align-self:start;max-height:calc(100vh - 32px);overflow-y:auto;padding:10px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);box-shadow:none;min-width:0}
+.set-layout .setrail-grp{display:flex;flex-direction:column;gap:2px}
+.set-layout .setrail-lbl{padding:6px 12px 4px;font-size:calc(11px * var(--text-scale,1));font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.set-layout .setrail a.setrail-item{display:flex!important;flex-direction:row!important;align-items:center;justify-content:flex-start!important;gap:12px;min-height:44px;padding:0 12px;border-radius:var(--r-sm);color:var(--muted);font-weight:600;font-size:calc(14px * var(--text-scale,1));text-align:left;text-decoration:none;white-space:nowrap;background:none;box-shadow:none;transform:none}
+.set-layout .setrail a.setrail-item svg{flex:0 0 18px;width:18px;height:18px}
+.set-layout .setrail a.setrail-item span{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media (hover:hover) and (pointer:fine){.set-layout .setrail a.setrail-item:hover{background:var(--raise);color:var(--text);transform:none}}
+.set-layout .setrail a.setrail-item[aria-current="page"]{background:var(--raise);color:var(--text);font-weight:700;box-shadow:inset 3px 0 0 var(--accent)}
+.set-layout .setrail a.setrail-item:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+@media (max-width:900px){
+  .set-layout{grid-template-columns:minmax(0,1fr)!important;gap:12px}
+  .set-layout>.setrail{position:sticky;top:0;z-index:5;flex-direction:row!important;align-items:center;gap:6px;max-height:none;overflow-x:auto;overflow-y:hidden;padding:6px;border-radius:var(--r-sm);scrollbar-width:none}
+  .set-layout>.setrail::-webkit-scrollbar{display:none}
+  .set-layout .setrail-grp{flex-direction:row;align-items:center;gap:4px;flex:0 0 auto}
+  .set-layout .setrail-lbl{display:none}
+  .set-layout .setrail a.setrail-item{flex:0 0 auto;padding:0 14px}
+  .set-layout .setrail a.setrail-item[aria-current="page"]{box-shadow:none}
 }
 </style>
 </body></html>

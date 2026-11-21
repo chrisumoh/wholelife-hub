@@ -59,7 +59,7 @@ console.log("--- 2. Changes apply live and are listed");
 await click('[data-act="ui-style"][data-v="crisp"]'); await sleep(200);
 ok("Crisp squares the corners at once", await ev(`document.documentElement.dataset.uistyle === "crisp" && getComputedStyle(document.documentElement).getPropertyValue("--r").trim() === "6px"`));
 await click('[data-act="ui-lang"][data-v="es"]'); await sleep(200);
-ok("Spanish: nav and Settings tabs change with no reload", await ev(`document.documentElement.lang === "es" && /Ajustes/.test(document.querySelector(".side")?.textContent || "") && /Apariencia/.test(document.querySelector(".tabs")?.textContent || "")`));
+ok("Spanish: nav and Settings tabs change with no reload", await ev(`document.documentElement.lang === "es" && /Ajustes/.test(document.querySelector(".side")?.textContent || "") && /Apariencia/.test(document.querySelector(".setrail")?.textContent || "")`));
 await ev(`wlaSetLook(P(), { accent: "violet" }); true`); await sleep(200);
 const r1 = await rows();
 ok("bar lists each change as label: old → new", r1.length === 3 && r1.every(t => t.includes("→")), JSON.stringify(r1));

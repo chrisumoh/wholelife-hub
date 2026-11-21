@@ -53,26 +53,19 @@ await ev(`(async () => { const p = newProfile("Ada"); Object.assign(p, { onboard
 await ev(`P().widgets.find(w => w.k === "coach").size = "l"; render(); true`);
 await goto("#/home");
 
-console.log("--- 1. Settings tabs: one pill follows the active tab");
+console.log("--- 1. Settings rail: the left rail replaced the sliding-pill tab strip (build 8.5.x)");
 await goto("#/settings"); await sleep(500);
-const pill = () => ev(`(() => { const t = document.querySelector(".tabs"), p = t.querySelector(":scope > .tab-pill"), a = t.querySelector('a[aria-current="page"]'); return p ? { x: p.style.getPropertyValue("--x"), w: p.style.getPropertyValue("--w"), ax: a.offsetLeft + "px", aw: a.offsetWidth + "px", n: t.querySelectorAll("a").length, pills: t.querySelectorAll(".tab-pill").length, under: getComputedStyle(a.firstElementChild, "::after").content } : null; })()`);
-let pl = await pill();
-ok("one pill, sized and placed on the active tab", pl && pl.pills === 1 && pl.x === pl.ax && pl.w === pl.aw && pl.n === 8, JSON.stringify(pl));
-ok("the old underline is gone", pl && (pl.under === "none" || pl.under === "normal"), JSON.stringify(pl));
-await ev(`document.querySelector('.tabs a[data-label="Appearance"]').click(); true`); await sleep(700);
-pl = await pill();
-ok("choosing another tab moves the same pill to it", pl && pl.pills === 1 && pl.x === pl.ax && pl.w === pl.aw, JSON.stringify(pl));
-ok("the pill is behind the labels and ignores the pointer", await ev(`(() => { const p = document.querySelector(".tab-pill"), s = getComputedStyle(p); return s.pointerEvents === "none" && p.getAttribute("aria-hidden") === "true" && +s.zIndex === 0; })()`));
-await ev(`(() => { const a = [...document.querySelectorAll(".tabs a")].find(x => x.dataset.label === "Household"); a.dispatchEvent(new PointerEvent("pointerover", { bubbles: true, pointerType: "mouse" })); return true; })()`); await sleep(100);
-ok("a mouse over another tab slides the pill there", await ev(`(() => { const a = [...document.querySelectorAll(".tabs a")].find(x => x.dataset.label === "Household"); return document.querySelector(".tab-pill").style.getPropertyValue("--x") === a.offsetLeft + "px"; })()`));
-await ev(`(() => { const a = [...document.querySelectorAll(".tabs a")].find(x => x.dataset.label === "Household"); a.dispatchEvent(new PointerEvent("pointerout", { bubbles: true, pointerType: "mouse", relatedTarget: document.body })); return true; })()`); await sleep(100);
-pl = await pill();
-ok("leaving the strip brings it back to the active tab", pl && pl.x === pl.ax, JSON.stringify(pl));
-await ev(`(() => { const a = [...document.querySelectorAll(".tabs a")].find(x => x.dataset.label === "Premium"); a.dispatchEvent(new PointerEvent("pointerover", { bubbles: true, pointerType: "touch" })); return true; })()`); await sleep(100);
-ok("a touch does not move it", (await pill()).x === pl.ax);
+const rail = () => ev(`(() => { const r = document.querySelector(".setrail"), act = r ? [...r.querySelectorAll('a[aria-current="page"]')] : []; return r ? { n: r.querySelectorAll("a").length, groups: [...r.querySelectorAll(".setrail-lbl")].map(x => x.textContent), active: act.map(a => a.textContent.trim()), minH: Math.min(...[...r.querySelectorAll("a")].map(a => a.getBoundingClientRect().height)), dir: getComputedStyle(r.querySelector("a")).flexDirection, tabsLeft: document.querySelectorAll(".set-layout .tabs").length } : null; })()`);
+let rl = await rail();
+ok("8 rail rows in the You and App groups, Profile active", rl && rl.n === 8 && rl.groups.join() === "You,App" && rl.active.join() === "Profile", JSON.stringify(rl));
+ok("every row is at least 44px tall and icon and label sit side by side", rl && rl.minH >= 44 && rl.dir === "row", JSON.stringify(rl));
+ok("the shared .tabs class is not used inside the layout", rl && rl.tabsLeft === 0, JSON.stringify(rl));
+await ev(`document.querySelector('.setrail a[href="#/settings/appearance"]').click(); true`); await sleep(500);
+rl = await rail();
+ok("choosing a row switches the section and moves the active mark", rl && rl.active.join() === "Appearance" && await ev(`!!document.getElementById("appearance")`), JSON.stringify(rl));
+ok("the rail stays sticky while the page scrolls", await ev(`getComputedStyle(document.querySelector(".setrail")).position === "sticky"`));
 await view(390, 800); await sleep(300);
-pl = await pill();
-ok("on a phone the strip scrolls and the pill still sits on the active tab", pl && pl.x === pl.ax && pl.w === pl.aw, JSON.stringify(pl));
+ok("on a phone the rail is a single pinned row, not a squeezed card", await ev(`(() => { const r = document.querySelector(".setrail"), b = r.getBoundingClientRect(); return b.height < 80 && b.width > 300 && getComputedStyle(r).flexDirection === "row" && r.scrollWidth > r.clientWidth; })()`));
 await view(1200);
 
 console.log("--- 2. wheel picker on Log a meal");
@@ -92,8 +85,8 @@ ok("the wheel is a listbox with a name and the active row announced", await ev(`
 ok("the Meal select beside it stays a dropdown", await ev(`(() => { const s = document.getElementById("m-slot"); return !s._wheel && !!s._wl; })()`));
 ok("no wheel appears where no select asks for one (Settings)", await ev(`(async () => { location.hash = "#/settings"; await new Promise(r => setTimeout(r, 600)); return document.querySelectorAll(".wl-wheel").length === 0; })()`));
 await ev(`document.documentElement.dataset.motion = "reduced"; true`);
-const rm = await ev(`(() => { const p = document.querySelector(".tab-pill"); return { m: document.documentElement.dataset.motion, d: p && getComputedStyle(p).transitionDuration }; })()`);
-ok("reduced motion switches the slide off", rm.m === "reduced" && parseFloat(rm.d) < 0.01, JSON.stringify(rm));
+const rm = await ev(`(() => ({ m: document.documentElement.dataset.motion, rail: !!document.querySelector(".setrail") && document.querySelectorAll(".setrail a").length === 8 }))()`);
+ok("reduced motion keeps the Settings rail intact (the sliding pill went with the tab strip)", rm.m === "reduced" && rm.rail, JSON.stringify(rm));
 
 ok("no script errors", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);
