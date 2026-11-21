@@ -3825,6 +3825,30 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 /* No underlines, except real links in the legal pages. */
 .app a:not(.legal a),.app a:not(.legal a):hover,.app a:not(.legal a):focus{text-decoration:none!important}
 
+/* Plans & pricing: two tier cards in the Finpex arrangement (Free / Premium). */
+.prem-head{text-align:center}
+.prem-banner{display:flex;gap:8px;align-items:center;justify-content:center;text-align:left;background:var(--good-soft);border:1px solid var(--good);border-radius:12px;padding:10px 14px;font-size:13.5px;margin-top:12px}
+.prem-toggle{display:flex;gap:4px;background:var(--raise);border:1px solid var(--line);border-radius:999px;padding:4px;width:max-content;max-width:100%;margin:16px auto 18px}
+.prem-toggle button{min-height:36px;padding:6px 18px;border-radius:999px;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:600;cursor:pointer}
+.prem-toggle button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.28)}
+.prem-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch;margin:2px 0 4px}
+.prem-card{position:relative;border:1px solid var(--line2);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:7px;background:var(--surface)}
+.prem-card.pro{border:2px solid var(--gold);margin-top:10px}
+.prem-card-tab{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--gold-ink);font-size:11.5px;font-weight:700;padding:3px 12px;border-radius:999px;white-space:nowrap}
+.prem-card-head{display:flex;align-items:center;gap:9px;font-size:17px;flex-wrap:wrap}
+.prem-card-ic{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--raise);color:var(--good);flex:none}
+.prem-card-ic.gold{background:var(--gold-soft);color:var(--gold)}
+.prem-mini{margin-left:auto;display:flex;gap:2px;background:var(--raise);border-radius:999px;padding:3px}
+.prem-mini button{min-height:28px;padding:3px 10px;font-size:12px;border-radius:999px;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:600;cursor:pointer}
+.prem-mini button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.prem-price{font-size:32px;font-weight:800;line-height:1.05}
+.prem-price span{font-size:13px;font-weight:500;color:var(--muted)}
+.prem-checks{list-style:none;margin:4px 0 10px;padding:0;display:grid;gap:8px;font-size:13.5px}
+.prem-checks li{display:flex;gap:8px;align-items:flex-start}
+.prem-checks .ico{color:var(--good);flex:none;margin-top:1px}
+.prem-card-btn{margin-top:auto;min-height:44px;width:100%}
+.prem-fineprint{text-align:center;margin:10px 4px 2px}
+@media (max-width:720px){.prem-cards{grid-template-columns:1fr}}
 /* Settings: persistent grouped sidebar (the Finpex pattern) with the section beside it.
    The nav keeps the shared .tabs class (tests read its labels); every layout property the
    old tab-bar rules set is reset here so the rail is a rail at every UI style. */
@@ -19090,25 +19114,53 @@ function premiumPlaceholder(p, f){
 function premiumHub(p){
   const on = isPremium(p);
   const plan = UI.premPlan === "monthly" ? "monthly" : "yearly";
-  const planRow = (pl) => {
-    const sel = plan === pl.k;
-    return `<label class="plansel-row${sel ? " on" : ""}" data-act="prem-plan" data-v="${pl.k}">
-      <input type="radio" name="prem-plan" value="${pl.k}" ${sel ? "checked" : ""}>
-      <span class="ps-check">${icon("check","",13)}</span>
-      <span class="grow"><b>${esc(pl.name)}</b><span class="tiny muted">${pl.k === "yearly" ? "12 months" : "Billed monthly"}</span></span>
-      <span class="ps-meta">${pl.k === "yearly" ? `<span class="ps-disc">${planSavePct() ? "Save " + planSavePct() + "%" : "Save yearly"}</span>` : ""}<span class="ps-price">${esc(planPrice(pl.k) || "Price TBA")}</span></span>
-    </label>`;
-  };
   return `
   <div class="prem-store-page">
   <section class="card prem-store">
-    ${premiumEmblemSVG()}
-    <h2>WholeLife Premium</h2>
-    <p class="prem-sub">Every extra feature, unlocked across food, training, coaching and health.</p>
-
-    ${on ? `<span class="prem-active-pill">${icon("check","",15)} Premium active</span>
-      <span class="tiny muted">${esc({beta:"You're in as a beta tester.",code:"Unlocked with a beta owner code.",purchase:"Thanks for subscribing."}[premiumSource(p)] || "Active on this profile.")}</span>`
-      : `<div class="plansel" role="radiogroup" aria-label="Choose a plan">${planRow(PREMIUM_PLANS.find(x=>x.k==="yearly"))}${planRow(PREMIUM_PLANS.find(x=>x.k==="monthly"))}</div>`}
+    <div class="prem-head">
+      <div class="eyebrow">${icon("crown","up-crown",15)} Plans &amp; pricing</div>
+      <h2>WholeLife Premium</h2>
+      <p class="prem-sub">Every extra feature, unlocked across food, training, coaching and health.</p>
+      ${on ? `<p class="prem-banner">${icon("check","",15)} <span><b>Premium is active on this profile.</b> ${esc({beta:"You're in as a beta tester.",code:"Unlocked with a beta owner code.",purchase:"Thanks for subscribing."}[premiumSource(p)] || "Active on this profile.")}</span></p>` : ""}
+    </div>
+    <div class="prem-toggle" role="group" aria-label="Billing period">
+      <button type="button" data-act="prem-plan" data-v="monthly" aria-pressed="${plan === "monthly"}">Monthly</button>
+      <button type="button" data-act="prem-plan" data-v="yearly" aria-pressed="${plan === "yearly"}">Yearly${planSavePct() ? " · Save " + planSavePct() + "%" : ""}</button>
+    </div>
+    <div class="prem-cards">
+      <div class="prem-card">
+        <div class="prem-card-head"><span class="prem-card-ic">${icon("leaf","",19)}</span><b>Free</b></div>
+        <p class="tiny muted">The core tracker, free forever</p>
+        <div class="prem-price">$0 <span>forever</span></div>
+        <ul class="prem-checks">
+          <li>${icon("check","",14)}<span>Summary, rings and health data</span></li>
+          <li>${icon("check","",14)}<span>Log meals, snacks, drinks and workouts</span></li>
+          <li>${icon("check","",14)}<span>Full history, search and data export</span></li>
+          <li>${icon("check","",14)}<span>Recipes, meal plans and food culture</span></li>
+          <li>${icon("check","",14)}<span>Achievements and the monthly challenge</span></li>
+          <li>${icon("check","",14)}<span>Works offline, dark mode, English &amp; Spanish</span></li>
+        </ul>
+        <button type="button" class="btn prem-card-btn" disabled>${on ? "Included in Premium" : "Your current plan"}</button>
+      </div>
+      <div class="prem-card pro">
+        <span class="prem-card-tab">Most complete</span>
+        <div class="prem-card-head"><span class="prem-card-ic gold">${icon("crown","",19)}</span><b>Premium</b>
+          <span class="prem-mini" role="group" aria-label="Billing period">
+            <button type="button" data-act="prem-plan" data-v="monthly" aria-pressed="${plan === "monthly"}">Monthly</button>
+            <button type="button" data-act="prem-plan" data-v="yearly" aria-pressed="${plan === "yearly"}">Yearly${planSavePct() ? " · Save " + planSavePct() + "%" : ""}</button>
+          </span>
+        </div>
+        <p class="tiny muted">Every extra feature, for planning ahead</p>
+        <div class="prem-price">${esc((planPrice(plan) || "Price TBA").replace(/ \/ (month|year)/, ""))} <span>${plan === "yearly" ? "a year" : "a month"}</span></div>
+        <ul class="prem-checks">
+          <li>${icon("check","",14)}<span><b>Everything in Free</b></span></li>
+          ${PREMIUM_FEATURES.slice(0, 6).map(f => `<li>${icon("check","",14)}<span>${esc(f.name)}</span></li>`).join("")}
+          <li>${icon("check","",14)}<span>Every other Premium feature, listed below</span></li>
+        </ul>
+        ${on ? `<button type="button" class="btn prem-card-btn" disabled>Premium active</button>` : `<button type="button" class="btn primary prem-card-btn" data-act="prem-cta">Subscribe — ${esc(planPrice(plan) || "Price TBA")}</button>`}
+      </div>
+    </div>
+    <p class="tiny muted prem-fineprint">Prices in USD, billed through Lemon Squeezy. Plans renew automatically until you cancel; cancel any time in Settings &gt; Premium. Cancelling never deletes anything you've logged.</p>
 
     <div class="prem-feat-list">
       <div class="prem-feat-head">What's included</div>
