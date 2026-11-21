@@ -3875,7 +3875,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.5", build: "8.5.3", channel: "Dev Testing", date: "2026-11-21", week: "Sun 15 Nov – Sat 21 Nov 2026" };
+const APP_VERSION = { update: "8.5", build: "8.5.4", channel: "Dev Testing", date: "2026-11-21", week: "Sun 15 Nov – Sat 21 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3889,6 +3889,14 @@ const APP_VERSION = { update: "8.5", build: "8.5.3", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.5.4",
+      area:"Menu",
+      title:"Flat Finpex-style side menu",
+      bug:"The main menu was busier than Finpex's: gradient icon tiles, a bold active state and hover lift. The new Settings rail also had an accent edge on its active row.",
+      fix:"Main menu: flat line icons with no gradient tiles, muted rows, one quiet filled pill for the active page, no hover lift, small grey group labels. Settings rail: the accent edge is gone, so the active row is the same quiet pill. CSS only: the 30px icon box is kept, so the rail geometry and icon centre line do not move.",
+      where:"index.html: the flatnav-css style block (last in the file). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/rail.mjs. Open any page in light and dark: the side menu icons are plain outlines, the active page is a soft pill, and hovering a row does not move it.",
+      limits:"First pass of the Finpex clean-up: the menu only. Page layouts and the many chips and pills inside cards are not changed yet. Premium rows and the icon-only rail keep their own animated icons." },
     { id:"8.5.3",
       area:"Settings",
       title:"Persistent left sidebar for Settings (rebuilt)",
@@ -25531,5 +25539,17 @@ h2.sec-title + .mgrid .mhead svg.ci{
   .set-layout .setrail a.setrail-item{flex:0 0 auto;padding:0 14px}
   .set-layout .setrail a.setrail-item[aria-current="page"]{box-shadow:none}
 }
+</style>
+<style id="flatnav-css">
+/* Finpex-style menu: flat line icons (no gradient tiles), muted rows, one quiet active pill, no motion on hover.
+   The tile box keeps its 30px size so rail geometry and the icon centre line do not move. */
+html .side .nav a .si-tile,html .side .nav button.prem-trigger .si-tile{background:none;box-shadow:none;border-radius:0;color:currentColor}
+html:root .side .nav a .si-tile svg,html:root .side .nav button.prem-trigger .si-tile svg{color:currentColor!important;width:18px;height:18px;stroke-width:1.8}
+html .side .nav a,html .side .nav button.prem-trigger{color:var(--muted);font-weight:500}
+@media (hover:hover) and (pointer:fine){html .side .nav a:hover,html .side .nav button.prem-trigger:hover{transform:none;box-shadow:none;background:var(--raise);color:var(--text)}}
+html .side .nav a[aria-current="page"],html .side .nav button.prem-trigger[aria-current="page"]{background:var(--raise);color:var(--text);font-weight:600;box-shadow:none}
+html .side .nav .grp{color:var(--faint);font-size:calc(11px * var(--text-scale,1));font-weight:700;letter-spacing:.08em}
+/* the Settings rail: pill only, no accent edge */
+.set-layout .setrail a.setrail-item[aria-current="page"]{box-shadow:none}
 </style>
 </body></html>

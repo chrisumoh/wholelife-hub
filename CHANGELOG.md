@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.5 (Dev Testing), build 8.5.3, 2026-11-21. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.5 (Dev Testing), build 8.5.4, 2026-11-21. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.5.4 · Menu: Flat Finpex-style side menu
+
+- **Problem:** The main menu was busier than Finpex's: gradient icon tiles, a bold active state and hover lift. The new Settings rail also had an accent edge on its active row.
+- **Change:** Main menu: flat line icons with no gradient tiles, muted rows, one quiet filled pill for the active page, no hover lift, small grey group labels. Settings rail: the accent edge is gone, so the active row is the same quiet pill. CSS only: the 30px icon box is kept, so the rail geometry and icon centre line do not move.
+- **Where:** index.html: the flatnav-css style block (last in the file). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/rail.mjs. Open any page in light and dark: the side menu icons are plain outlines, the active page is a soft pill, and hovering a row does not move it.
+- **Known limits:** First pass of the Finpex clean-up: the menu only. Page layouts and the many chips and pills inside cards are not changed yet. Premium rows and the icon-only rail keep their own animated icons.
 
 ## 8.5.3 · Settings: Persistent left sidebar for Settings (rebuilt)
 
