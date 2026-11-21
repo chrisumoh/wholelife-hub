@@ -9896,7 +9896,7 @@ function cleanProfile(x){
   }
   d.awards = { earned:{}, challenges:{} };
   if (x.awards && typeof x.awards === "object") {
-    for (const [k, v] of Object.entries(x.awards.earned || {}).slice(0, 80)) if (BADGES.some(b => b.k === k) && DATE_RE.test(v)) d.awards.earned[k] = v;
+    for (const [k, v] of Object.entries(x.awards.earned || {}).slice(0, 200)) if (BADGES.some(b => b.k === k) && DATE_RE.test(v)) d.awards.earned[k] = v;
     // BUG-114 fix: same wrong-direction cap as menuPick/photoFix above (keyed by year-month, so
     // it only bites after ~80 months of continuous use, but the fix is the same one line).
     for (const [k, v] of Object.entries(x.awards.challenges || {}).slice(-80)) if (/^\d{4}-\d{2}$/.test(k) && DATE_RE.test(v)) d.awards.challenges[k] = v;
@@ -10630,27 +10630,29 @@ function scenePicker(p){
 }
 // =================== CATEGORY ICONS (filled, color-coded, labeled where it helps) ===================
 const CI = {
- medal:`<path class="p-cup" d="M7 4h10v5a5 5 0 0 1-10 0z" fill="currentColor"/><path class="p-arms" d="M7 6H4.5A2.5 2.5 0 0 0 7 10.5M17 6h2.5A2.5 2.5 0 0 1 17 10.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path class="p-stem" d="M12 14v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="p-base" d="M10.2 17h3.6l.7 3h-5z" fill="currentColor"/><path class="p-foot" d="M9 20h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>`,
+ medal:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" /><path d="M11 12 5.12 2.2" /><path d="m13 12 5.88-9.8" /><path d="M8 7h8" /><circle cx="12" cy="17" r="5" /><path d="M12 18v-2h-.5" /></g>`,
  glass:(c)=>`<path class="p-glass" d="M7 3h10l-1.2 7.2A4 4 0 0 1 11.8 13h-.6A4 4 0 0 1 7.2 10.2z" fill="${c}"/><path class="p-stem" d="M12 13v6M9 20h6" stroke="${c}" stroke-width="2" stroke-linecap="round" fill="none"/><circle class="p-bub" cx="10.5" cy="6" r="1" fill="#fff" opacity=".55"/><circle class="p-bub" cx="13.5" cy="7.5" r=".8" fill="#fff" opacity=".45"/>`,
-  heartecg:`<path class="p-heart" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.9 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.7 0 5.7 3.9 4.2 7.3C19.5 16.4 12 21 12 21z" fill="currentColor"/><polyline class="p-ecg" points="4.2,12.2 8,12.2 9.4,9.4 11.4,15.2 13.4,8 15,12.2 19.8,12.2" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>`,
+  heartecg:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="p-heart" d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /><path class="p-ecg" d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" /></g>`,
   bloodo2:`<path d="M12 2.3c4 4.7 7.2 8.7 7.2 12.4a7.2 7.2 0 0 1-14.4 0C4.8 11 8 7 12 2.3z" fill="currentColor"/><text x="12" y="17.4" text-anchor="middle" font-family="-apple-system,Figtree,Arial,sans-serif" font-weight="800" font-size="7.2" fill="#fff">O₂</text>`,
   bp:`<path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.9 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.7 0 5.7 3.9 4.2 7.3C19.5 16.4 12 21 12 21z" fill="currentColor"/><text x="12" y="14.2" text-anchor="middle" font-family="-apple-system,Figtree,Arial,sans-serif" font-weight="800" font-size="6.6" fill="#fff">BP</text>`,
   flame:`<path d="M12.6 2c.8 3.4-1.3 5.3-2.9 7.1C8.3 10.7 7 12.5 7 15a5 5 0 0 0 10 0c0-2.3-1.1-3.9-2.3-5.2-.2 1.4-.9 2.4-2 2.9.7-3.8.3-7.4-.1-10.7z" fill="currentColor"/><path d="M12 20.5a2.6 2.6 0 0 1-2.6-2.6c0-1.5 1.2-2.4 2.1-3.6.3 1 .9 1.5 1.6 1.7.6-.7.9-1.3 1-2 .5.8 1 1.8 1 3a2.9 2.9 0 0 1-3.1 3.5z" fill="#fff" opacity=".85"/>`,
   steps:`<ellipse cx="8.3" cy="8.6" rx="3" ry="4.7" fill="currentColor"/><circle cx="8.3" cy="15.4" r="1.9" fill="currentColor"/><ellipse cx="15.7" cy="11.4" rx="3" ry="4.7" fill="currentColor"/><circle cx="15.7" cy="18.2" r="1.9" fill="currentColor"/>`,
   bed:`<path d="M2 19v-9.5h2.2v5H21a1.5 1.5 0 0 1 1.5 1.5v3h-2.2v-2H4.2v2z" fill="currentColor"/><rect x="5" y="10" width="5" height="3.6" rx="1.6" fill="currentColor"/><path d="M11.2 10.2h7.3a3 3 0 0 1 3 3v.6H11.2z" fill="currentColor"/><text x="18.5" y="7.6" text-anchor="middle" font-family="-apple-system,Figtree,Arial,sans-serif" font-weight="800" font-size="5.4" fill="currentColor">z</text><text x="21" y="4.8" text-anchor="middle" font-family="-apple-system,Figtree,Arial,sans-serif" font-weight="800" font-size="4.2" fill="currentColor">z</text>`,
-  apple:`<path class="p-body" d="M12 7.2c-1.3-1-4.1-1.5-5.8.4C4.3 9.7 4.7 13.4 6.2 16.3c1.2 2.4 2.9 4.2 4.4 4 .8-.1 1-.5 1.4-.5s.6.4 1.4.5c1.5.2 3.2-1.6 4.4-4 1.5-2.9 1.9-6.6 0-8.7-1.7-1.9-4.5-1.4-5.8-.4z" fill="currentColor"/><path class="p-leaf" d="M12.3 6.6c.2-2.1 1.5-3.6 3.6-4.1-.1 2.1-1.4 3.7-3.6 4.1z" fill="currentColor"/>`,
+  apple:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="p-leaf" d="M12 6.528V3a1 1 0 0 1 1-1h0" /><path class="p-body" d="M18.237 21A15 15 0 0 0 22 11a6 6 0 0 0-10-4.472A6 6 0 0 0 2 11a15.1 15.1 0 0 0 3.763 10 3 3 0 0 0 3.648.648 5.5 5.5 0 0 1 5.178 0A3 3 0 0 0 18.237 21" /></g>`,
   glass:`<path d="M5 2.5h14l-1.9 17.7A2 2 0 0 1 15.1 22H8.9a2 2 0 0 1-2-1.8z" fill="currentColor"/><path d="M7.2 10.6c1.6.9 3.2.9 4.8 0s3.2-.9 4.8 0" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>`,
   body:`<circle cx="12" cy="4.4" r="2.4" fill="currentColor"/><path d="M3.8 8.3h16.4v2.2h-5.3l1 10.8h-2.4l-.9-6.2h-1.2l-.9 6.2H8.1l1-10.8H3.8z" fill="currentColor"/>`,
   scale:`<rect x="3" y="3" width="18" height="18" rx="5" fill="currentColor"/><path d="M7.6 11a4.6 4.6 0 0 1 8.8 0" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><path d="M12 11.6l1.8-2.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`,
   trend:`<rect x="3" y="3" width="18" height="18" rx="5" fill="currentColor"/><polyline points="6.5,15.5 10,12 12.6,14 17.5,8.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.4 8.5h3.1v3.1" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
-  dumbbell:`<g class="p-bar"><path d="M1.5 10h2v4h-2zM4 7.3h3v9.4H4zM17 7.3h3v9.4h-3zM20.5 10h2v4h-2zM7 11h10v2H7z" fill="currentColor"/></g>`,
-  cookie:`<circle class="p-cookie" cx="12" cy="12" r="9.2" fill="currentColor"/><circle class="p-chip" cx="9" cy="9" r="1.3" fill="#fff" opacity=".9"/><circle class="p-chip" cx="14.6" cy="8.4" r="1.1" fill="#fff" opacity=".9"/><circle class="p-chip" cx="15.4" cy="14" r="1.4" fill="#fff" opacity=".9"/><circle class="p-chip" cx="9.6" cy="15" r="1.1" fill="#fff" opacity=".9"/><circle class="p-chip" cx="12.2" cy="12" r=".9" fill="#fff" opacity=".9"/>`,
+  dumbbell:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="p-bar"><path d="M17.596 12.768a2 2 0 1 0 2.829-2.829l-1.768-1.767a2 2 0 0 0 2.828-2.829l-2.828-2.828a2 2 0 0 0-2.829 2.828l-1.767-1.768a2 2 0 1 0-2.829 2.829z" /><path d="m2.5 21.5 1.4-1.4" /><path d="m20.1 3.9 1.4-1.4" /><path d="M5.343 21.485a2 2 0 1 0 2.829-2.828l1.767 1.768a2 2 0 1 0 2.829-2.829l-6.364-6.364a2 2 0 1 0-2.829 2.829l1.768 1.767a2 2 0 0 0-2.828 2.829z" /><path d="m9.6 14.4 4.8-4.8" /></g>`,
+  cookie:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="p-cookie" d="M11.496 2c.324-.016.558.292.529.615a4 4 0 004.235 4.368.713.713 0 01.758.757 4 4 0 004.366 4.237c.323-.03.63.204.614.527a10 10 0 01-2.915 6.566A1 1 0 114.93 4.918 10 10 0 0111.496 2" /><path class="p-chip" d="M11 17h.01" /><path class="p-chip" d="M12 12h.01" /><path class="p-chip" d="M16 16h.01" /><path d="M16 3h.01" /><path d="M21 4h.01" /><path d="M21 8h.01" /><path class="p-chip" d="M7 14h.01" /><path d="M9 8h.01" /></g>`,
   book:`<g class="p-cover"><path d="M4 4.6A2.6 2.6 0 0 1 6.6 2H20v15.6H6.6A2.6 2.6 0 0 0 4 20.2z" fill="currentColor"/><path d="M6.6 19H20v3H6.6a1.5 1.5 0 0 1 0-3z" fill="currentColor" opacity=".55"/></g><path class="p-lines" d="M8.5 7h7.5M8.5 10h5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>`,
-  globe:`<g class="p-globe"><circle cx="12" cy="12" r="9.5" fill="currentColor"/><path class="p-meridians" d="M2.8 12h18.4M12 2.6c2.6 2.6 2.6 16.2 0 18.8M12 2.6c-2.6 2.6-2.6 16.2 0 18.8M4.5 7.2h15M4.5 16.8h15" fill="none" stroke="#fff" stroke-width="1.2" opacity=".9"/></g>`,
+  globe:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="p-globe"><circle cx="12" cy="12" r="10" /><path class="p-meridians" d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path class="p-meridians" d="M2 12h20" /></g>`,
   stopwatch:`<rect x="9.5" y="1.5" width="5" height="2.4" rx="1" fill="currentColor"/><circle cx="12" cy="13.5" r="8.5" fill="currentColor"/><path class="p-minute" d="M12 13.5V8.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path class="p-second" d="M12 13.5l3 2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="13.5" r="1" fill="#fff"/>`,
-  grid:`<rect class="p-tile" x="3" y="3" width="8" height="8" rx="2.4" fill="currentColor"/><rect class="p-tile" x="13" y="3" width="8" height="8" rx="2.4" fill="currentColor"/><rect class="p-tile" x="3" y="13" width="8" height="8" rx="2.4" fill="currentColor"/><rect class="p-tile" x="13" y="13" width="8" height="8" rx="2.4" fill="currentColor"/>`,
+  grid:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect class="p-tile" width="7" height="7" x="3" y="3" rx="1" /><rect class="p-tile" width="7" height="7" x="14" y="3" rx="1" /><rect class="p-tile" width="7" height="7" x="14" y="14" rx="1" /><rect class="p-tile" width="7" height="7" x="3" y="14" rx="1" /></g>`,
   heart:`<path class="p-heart" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.9 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.7 0 5.7 3.9 4.2 7.3C19.5 16.4 12 21 12 21z" fill="currentColor"/>`,
-  gear:`<path class="p-gear" d="M10.3 2h3.4l.5 2.6 1.6.7 2.2-1.5 2.4 2.4-1.5 2.2.7 1.6 2.6.5v3.4l-2.6.5-.7 1.6 1.5 2.2-2.4 2.4-2.2-1.5-1.6.7-.5 2.6h-3.4l-.5-2.6-1.6-.7-2.2 1.5-2.4-2.4 1.5-2.2-.7-1.6L2 13.7v-3.4l2.6-.5.7-1.6-1.5-2.2 2.4-2.4 2.2 1.5 1.6-.7z" fill="currentColor"/><circle cx="12" cy="12" r="3.2" fill="#fff"/>`
+  gear:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="p-gear" d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></g>`,
+  chefhat:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v5" /><path d="M14 11v5" /><path d="M6 12.65c0-.457-.316-.844-.727-1.041A4 4 0 017.52 4.034a1.53 1.53 0 001.367-.547 4 4 0 016.225 0 1.53 1.53 0 001.367.547 4 4 0 012.248 7.575c-.411.197-.727.584-.727 1.04V19a2 2 0 01-2 2H8a2 2 0 01-2-2z" /><path d="M6 16h12" /></g>`,
+  sparkles:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" /></g>`
 };
 const cicon = (k, color, size = 22, cls = "") => `<svg class="ci ci-${k}${cls ? " " + cls : ""}" width="${size}" height="${size}" viewBox="0 0 24 24" style="color:${color}" aria-hidden="true">${CI[k] || ""}</svg>`;
 // Click micro-animations: add the class, drop it when the animation ends so it can replay.
@@ -11450,7 +11452,7 @@ const I = {
  alert:'<path d="M12 4.5l9 16H3z"/><path d="M12 10v4M12 17.4v.2"/>',
  pencil:'<path d="M4 20h4L20 8a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M14 6l4 4"/>',
  trophy:'<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5A2.5 2.5 0 0 0 7 10.5M17 6h2.5A2.5 2.5 0 0 1 17 10.5"/><path d="M12 14v3M9 20h6M10.5 17h3l.5 3h-4z"/>',
- crown:'<path d="M3.5 8.5l3.6 2.6L12 5l4.9 6.1 3.6-2.6L19 18.5H5z"/><path d="M5 21h14"/>',
+ crown:'<path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" />',
  cart:'<circle cx="9.5" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3h2.2l2.4 11.2a1.6 1.6 0 0 0 1.6 1.3h9.1a1.6 1.6 0 0 0 1.6-1.3L21 7H6"/>',
  jar:'<path d="M8 2.6h8v2.1l-1.4 1.6a3 3 0 0 0-.7 2v.5h-3.8v-.5a3 3 0 0 0-.7-2L8 4.7z"/><rect x="5.6" y="8.8" width="12.8" height="12.6" rx="2.4"/><path d="M5.6 13h12.8"/>',
  leaf:'<path d="M20 4c0 9.4-4.6 14-12.4 14H5.2C5.2 9.6 10 4 20 4z"/><path d="M4 21c1.6-5.4 5-9.2 10.2-11.4"/>',
@@ -12486,9 +12488,9 @@ function sideNav(){
     group("log", "Log", link("#/nutrition", UI.route === "nutrition", "apple", SI_GRAD.meals, "Meals")
       + link("#/snacks", UI.route === "snacks", "cookie", SI_GRAD.snacks, "Snacks")
       + link("#/workouts", UI.route === "workouts", "dumbbell", SI_GRAD.workouts, "Workouts & imports"))
-    + group("plan", "Plan", link("#/recipes", UI.route === "recipes", "book", SI_GRAD.recipes, "Recipes & meal plans")
+    + group("plan", "Plan", link("#/recipes", UI.route === "recipes", "chefhat", SI_GRAD.recipes, "Recipes & meal plans")
       + link("#/culture", UI.route === "culture", "globe", SI_GRAD.culture, "Food culture")
-      + link("#/coach", UI.route === "coach", "stopwatch", SI_GRAD.coach, "Personal coach"))
+      + link("#/coach", UI.route === "coach", "sparkles", SI_GRAD.coach, "Personal coach"))
     + group("progress", "Progress", link("#/health", inHealth, "grid", SI_GRAD.health, "Health data")
       + link("#/awards", UI.route === "awards", "medal", SI_GRAD.awards, "Achievements & Goals"));
   const tail = `<div class="navgrp navgrp-static navgrp-tail" data-grp="more"><div class="navgrp-items">${premHub}
@@ -16299,7 +16301,18 @@ const WI_COLOR = { walk:["#0E9DB3","#3FD0E0"], run:["#B03A00","#FF9A4D"], cycle:
   soccer:["#0E7A3C","#4CD964"], basketball:["#B34700","#FF8A3D"], football:["#6B3A16","#C98B4B"], rugby:["#7A3A12","#E0974F"], volleyball:["#B08A00","#FFD84D"],
   cricket:["#9A3A12","#F08A5A"], baseball:["#B0302C","#FF8A7A"], handball:["#1F7A5A","#5DE0B0"], hockey:["#1A5FA8","#5AA9F2"],
   tennis:["#7A8F00","#C6E14A"], badminton:["#4F8F10","#A9E65A"], tabletennis:["#B02A2A","#FF8080"], squash:["#6A7A10","#BFD84A"], golf:["#1A7A3A","#7BE08A"],
-  boxing:["#B01E2E","#FF5A6E"], martial:["#8A1F3A","#F0607F"], wrestling:["#9A2A1A","#F07A5A"], other:["#4A5568","#A0AEC0"] };
+  boxing:["#B01E2E","#FF5A6E"], martial:["#8A1F3A","#F0607F"], wrestling:["#9A2A1A","#F07A5A"], other:["#4A5568","#A0AEC0"] ,
+  flame: ["#f97316","#fbbf24"],
+  inferno: ["#dc2626","#fb923c"],
+  rings: ["#22c55e","#a3e635"],
+  calweek: ["#0ea5e9","#7dd3fc"],
+  calmonth: ["#6366f1","#a5b4fc"],
+  drop: ["#0284c7","#38bdf8"],
+  logbook: ["#d97706","#fcd34d"],
+  flag: ["#475569","#cbd5e1"],
+  target: ["#e11d48","#fda4af"],
+  quarter: ["#7c3aed","#c4b5fd"]
+};
 // Every icon is drawn in a 48x48 box on the shared disc.
 // Build 8.3.5: redrawn set from the designer. "§" is the instance's gradient paint, put in by wicon().
 // Parts that move on hover keep their w-* class (w-leg, w-arm, w-ball, w-wheel, w-wave ...).
@@ -16348,6 +16361,17 @@ const WI_ART = {
   martial: `<circle cx="15.5" cy="9" r="3.6" fill="§" stroke="none"/><g class="w-body"><path stroke-width="4.4" d="M15.8 13 L18.5 22"/></g><path d="M16.8 18.8 L20.8 18.2"/><g class="w-arm"><path d="M16.2 14.5 L22.5 12 L25.5 15 M16.2 14.5 L11.5 18.5 L8.5 16"/></g><g class="w-leg"><path d="M18.5 22 L17.5 31.5 L17.5 39 M18.5 22 L28.5 20 L37.5 20"/></g>`,
   wrestling: `<circle cx="15.5" cy="12.5" r="3.4" fill="§" stroke="none"/><circle cx="32.5" cy="12.5" r="3.4" fill="§" stroke="none"/><g class="w-body"><path stroke-width="4.4" d="M15.8 16.5 L19.5 26.5 M32.2 16.5 L28.5 26.5"/></g><g class="w-arm"><path d="M16.5 17.5 C21 14.8 27 14.8 31.5 17.5 M17.5 21.5 C22 24 26 24 30.5 21.5"/></g><g class="w-leg"><path d="M19.5 26.5 L14.5 34 L12.5 39.5 M19.5 26.5 L20.5 33.5 L19.5 39.5 M28.5 26.5 L33.5 34 L35.5 39.5 M28.5 26.5 L27.5 33.5 L28.5 39.5"/></g>`,
   other: `<circle cx="19.5" cy="20" r="11.5"/><path d="M19.5 20 L19.5 13.5 M19.5 20 L24.5 22.5"/><g class="w-ball"><circle cx="35" cy="33.5" r="7.5"/></g><circle cx="35" cy="33.5" r="1.6" fill="§" stroke="none"/><path d="M29 29.5 C31.5 32 31.5 35 29 37.5"/>`
+,
+  flame: `<g class="w-flame"><path d="M24 5c1 6-2.5 9-5 12.5C16.8 20.3 15 23 15 27a9 9 0 0 0 18 0c0-3-1.5-5.4-3-7.5-.3 1.8-1.2 3.2-2.6 4C28.6 17.6 27.8 10.6 24 5z"/></g><path d="M24 38.5a3.8 3.8 0 0 1-3.8-3.8c0-1.6 1-2.7 1.9-4 .4 1 1 1.7 1.9 2.1.5-.9.7-1.7.8-2.6.7 1 1.4 2.2 1.4 3.6A3.8 3.8 0 0 1 24 38.5z" fill="§" stroke="none"/>`,
+  inferno: `<g class="w-flame"><path d="M24 3c1.2 6.8-3 10.6-5.7 14.6C15.9 21.2 14 24.4 14 28.5A10 10 0 0 0 34 28.5c0-3.4-1.7-6.1-3.4-8.5-.3 2-1.3 3.6-3 4.5C29.3 18.3 28.3 10 24 3z"/><path d="M24 40a4.5 4.5 0 0 1-4.5-4.5c0-1.9 1.2-3.2 2.3-4.8.5 1.2 1.2 2 2.2 2.5.6-1 .9-2 1-3.1.8 1.2 1.7 2.6 1.7 4.4A4.5 4.5 0 0 1 24 40z"/></g><path d="M8.5 41.5c-1.2-1.6-2-3.4-2-5.3M39.5 41.5c1.2-1.6 2-3.4 2-5.3" stroke-width="2.2"/>`,
+  rings: `<g class="w-rings"><circle cx="17.5" cy="19" r="8"/><circle cx="30.5" cy="19" r="8"/><circle cx="24" cy="29.5" r="8"/></g>`,
+  calweek: `<g class="w-cal"><path d="M10 12h28a2 2 0 0 1 2 2v24a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2z"/><path d="M8 20h32M17 7v7M31 7v7"/></g><g fill="§" stroke="none"><circle cx="14.5" cy="27" r="1.9"/><circle cx="20.5" cy="27" r="1.9"/><circle cx="26.5" cy="27" r="1.9"/><circle cx="32.5" cy="27" r="1.9"/><circle cx="14.5" cy="34" r="1.9" opacity=".45"/><circle cx="20.5" cy="34" r="1.9" opacity=".45"/><circle cx="26.5" cy="34" r="1.9" opacity=".45"/><circle cx="32.5" cy="34" r="1.9" opacity=".45"/></g>`,
+  calmonth: `<g class="w-cal"><path d="M10 12h28a2 2 0 0 1 2 2v24a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2z"/><path d="M8 20h32M17 7v7M31 7v7"/></g><g fill="§" stroke="none"><circle cx="14.5" cy="26" r="1.8"/><circle cx="20.5" cy="26" r="1.8"/><circle cx="26.5" cy="26" r="1.8"/><circle cx="32.5" cy="26" r="1.8"/><circle cx="14.5" cy="32" r="1.8"/><circle cx="20.5" cy="32" r="1.8"/><circle cx="26.5" cy="32" r="1.8"/><circle cx="32.5" cy="32" r="1.8"/><circle cx="14.5" cy="37.5" r="1.8"/><circle cx="20.5" cy="37.5" r="1.8"/><circle cx="26.5" cy="37.5" r="1.8"/><circle cx="32.5" cy="37.5" r="1.8"/></g>`,
+  drop: `<g class="w-drop"><path d="M24 5c5.5 6.8 10 12.3 10 18.5a10 10 0 0 1-20 0C14 17.3 18.5 11.8 24 5z"/><path d="M17.5 30.5c2-1.4 4-1.4 6.5 0s4.5 1.4 6.5 0"/></g><circle cx="20" cy="21.5" r="1.7" fill="§" stroke="none"/>`,
+  logbook: `<g class="w-book"><path d="M15 6h21a2 2 0 0 1 2 2v34H15z"/><path d="M15 6v36M21 15h11M21 22h11"/></g><path d="M20.5 33.5l3.2 3.2L30 29.5"/>`,
+  flag: `<g class="w-pole"><path d="M14 5v38"/></g><g class="w-flag"><path d="M14 8c5-3 10 3 20 0v13c-10 3-15-3-20 0z"/><path d="M21.5 6.6v13.2M28.5 6.6v13.2M14 14.8c5-3 10 3 20 0"/></g><path d="M8 43.5h13"/>`,
+  target: `<g class="w-target"><circle cx="22" cy="26" r="15"/><circle cx="22" cy="26" r="9.5"/></g><circle cx="22" cy="26" r="3.4" fill="§" stroke="none"/><path d="M31.5 16.5L42 6M36.5 6H42v5.5"/>`,
+  quarter: `<g class="w-quarter"><circle cx="24" cy="24" r="16.5"/><path d="M24 7.5v33M7.5 24h33"/></g><path d="M24 7.5a16.5 16.5 0 0 1 16.5 16.5H24z" fill="§" stroke="none"/>`
 };
 // The shared frame: frosted disc, rim light, highlight — identical for every type.
 let WI_SEQ = 0;
@@ -16429,17 +16453,75 @@ const BADGES = [
   { k:"ten-workouts",  n:"Ten Sessions",    d:"Log 10 workouts.",                     icon:"strength", test:p => entries("workouts").length >= 10 },
   { k:"fifty-workouts",n:"Fifty Sessions",  d:"Log 50 workouts.",                     icon:"hiit",     test:p => entries("workouts").length >= 50 },
   { k:"hundred",       n:"Century",         d:"Log 100 workouts.",                    icon:"cycle",    test:p => entries("workouts").length >= 100 },
-  { k:"streak-7",      n:"Seven Days",      d:"Work out seven days in a row.",        icon:"walk",     test:p => workoutStreak(p) >= 7 },
-  { k:"streak-30",     n:"Thirty Days",     d:"Work out thirty days in a row.",       icon:"hike",     test:p => workoutStreak(p) >= 30 },
-  { k:"perfect-day",   n:"All Three",       d:"Close all three rings in one day.",    icon:"yoga",     test:p => { for (let i=0;i<400;i++) if (ringsClosedOn(addDays(today(),-i),p).all) return true; return false; } },
-  { k:"perfect-week",  n:"Perfect Week",    d:"Close all three rings every day for a week.", icon:"row", test:p => { for (let s=0;s<60;s++){ let ok=true; for(let i=0;i<7;i++) if(!ringsClosedOn(addDays(today(),-s-i),p).all){ok=false;break;} if(ok) return true; } return false; } },
-  { k:"month-rings",   n:"Full Month",      d:"Close all three rings every day of a calendar month.", icon:"soccer", test:p => { const mk = monthKey(addDays(today(),-1)); const st = monthStats(mk,p); return st.counted >= 28 && st.allRings === st.counted; } },
-  { k:"hydrated",      n:"Well Watered",    d:"Close the Hydration ring 20 days in one month.", icon:"swim", test:p => monthStats(monthKey(today()),p).water >= 20 },
-  { k:"food-logger",   n:"Honest Logger",   d:"Log food on 25 days in one month.",    icon:"basketball", test:p => monthStats(monthKey(today()),p).food >= 25 },
-  { k:"early-bird",    n:"Plan Finisher",   d:"Finish a coach plan from day one to the last day.", icon:"tennis", test:p => !!p.coach?.plan && today() > addDays(p.coach.plan.start, p.coach.plan.days - 1) },
-  { k:"challenge",     n:"Challenge Taken", d:"Complete a monthly challenge.",        icon:"dance",    test:p => challengeProgress(monthKey(today()), p).done },
-  { k:"three-months",  n:"Quarter",         d:"Log a workout in three different months.", icon:"elliptical", test:p => new Set(entries("workouts").map(w => monthKey(w.date))).size >= 3 }
+  { k:"streak-7",      n:"Seven Days",      d:"Work out seven days in a row.",        icon:"flame",     test:p => workoutStreak(p) >= 7 },
+  { k:"streak-30",     n:"Thirty Days",     d:"Work out thirty days in a row.",       icon:"inferno",     test:p => workoutStreak(p) >= 30 },
+  { k:"perfect-day",   n:"All Three",       d:"Close all three rings in one day.",    icon:"rings",     test:p => { for (let i=0;i<400;i++) if (ringsClosedOn(addDays(today(),-i),p).all) return true; return false; } },
+  { k:"perfect-week",  n:"Perfect Week",    d:"Close all three rings every day for a week.", icon:"calweek", test:p => { for (let s=0;s<60;s++){ let ok=true; for(let i=0;i<7;i++) if(!ringsClosedOn(addDays(today(),-s-i),p).all){ok=false;break;} if(ok) return true; } return false; } },
+  { k:"month-rings",   n:"Full Month",      d:"Close all three rings every day of a calendar month.", icon:"calmonth", test:p => { const mk = monthKey(addDays(today(),-1)); const st = monthStats(mk,p); return st.counted >= 28 && st.allRings === st.counted; } },
+  { k:"hydrated",      n:"Well Watered",    d:"Close the Hydration ring 20 days in one month.", icon:"drop", test:p => monthStats(monthKey(today()),p).water >= 20 },
+  { k:"food-logger",   n:"Honest Logger",   d:"Log food on 25 days in one month.",    icon:"logbook", test:p => monthStats(monthKey(today()),p).food >= 25 },
+  { k:"early-bird",    n:"Plan Finisher",   d:"Finish a coach plan from day one to the last day.", icon:"flag", test:p => !!p.coach?.plan && today() > addDays(p.coach.plan.start, p.coach.plan.days - 1) },
+  { k:"challenge",     n:"Challenge Taken", d:"Complete a monthly challenge.",        icon:"target",    test:p => challengeProgress(monthKey(today()), p).done },
+  { k:"three-months",  n:"Quarter",         d:"Log a workout in three different months.", icon:"quarter", test:p => new Set(entries("workouts").map(w => monthKey(w.date))).size >= 3 }
 ];
+// --- per-sport badges: a first, a 10 and a 50 for every activity in the catalogue ---
+// (The catch-all "other" type is covered by First Move and the session-count badges above.)
+const SPORT_NOUNS = {
+  walk: ["Walk", "walks", "walk"],
+  run: ["Run", "runs", "run"],
+  cycle: ["Ride", "rides", "ride"],
+  spin: ["Spin Class", "spin classes", "spin class"],
+  hike: ["Hike", "hikes", "hike"],
+  elliptical: ["Elliptical Session", "elliptical sessions", "elliptical session"],
+  stairs: ["Stair Climb", "stair climbs", "stair climb"],
+  jumprope: ["Jump Rope Session", "jump rope sessions", "jump rope session"],
+  row: ["Row", "rows", "row"],
+  athletics: ["Track Session", "track sessions", "track session"],
+  strength: ["Strength Session", "strength sessions", "strength session"],
+  calisthenics: ["Bodyweight Session", "bodyweight sessions", "bodyweight session"],
+  hiit: ["HIIT Session", "HIIT sessions", "HIIT session"],
+  yoga: ["Yoga Session", "yoga sessions", "yoga session"],
+  pilates: ["Pilates Session", "Pilates sessions", "Pilates session"],
+  stretch: ["Stretch", "stretches", "stretch"],
+  aerobics: ["Aerobics Class", "aerobics classes", "aerobics class"],
+  dance: ["Dance Session", "dance sessions", "dance session"],
+  gymnastics: ["Gymnastics Session", "gymnastics sessions", "gymnastics session"],
+  soccer: ["Soccer Game", "soccer games", "soccer game"],
+  basketball: ["Basketball Game", "basketball games", "basketball game"],
+  football: ["Football Game", "football games", "football game"],
+  rugby: ["Rugby Match", "rugby matches", "rugby match"],
+  volleyball: ["Volleyball Game", "volleyball games", "volleyball game"],
+  cricket: ["Cricket Match", "cricket matches", "cricket match"],
+  baseball: ["Baseball Game", "baseball games", "baseball game"],
+  handball: ["Handball Game", "handball games", "handball game"],
+  hockey: ["Hockey Game", "hockey games", "hockey game"],
+  tennis: ["Tennis Match", "tennis matches", "tennis match"],
+  badminton: ["Badminton Match", "badminton matches", "badminton match"],
+  tabletennis: ["Table Tennis Match", "table tennis matches", "table tennis match"],
+  squash: ["Squash Match", "squash matches", "squash match"],
+  golf: ["Golf Round", "rounds of golf", "round of golf"],
+  boxing: ["Boxing Session", "boxing sessions", "boxing session"],
+  martial: ["Martial Arts Session", "martial arts sessions", "martial arts session"],
+  wrestling: ["Wrestling Match", "wrestling matches", "wrestling match"],
+  swim: ["Swim", "swims", "swim"],
+  kayak: ["Kayak Trip", "kayak trips", "kayak trip"],
+  climb: ["Climb", "climbs", "climb"],
+  ski: ["Ski Day", "ski days", "ski day"],
+  iceskate: ["Ice Skating Session", "ice skating sessions", "ice skating session"],
+  skate: ["Skate Session", "skate sessions", "skate session"],
+  horse: ["Horse Ride", "horse rides", "horse ride"]
+};
+const sportCount = (p, k) => entries("workouts").filter(w => w.type === k).length;
+for (const a of ACTIVITIES) {
+  const nn = SPORT_NOUNS[a.k];
+  if (!nn) continue;
+  BADGES.push(
+    { k: "first-" + a.k, n: "First " + nn[0], d: "Log your first " + nn[2] + ".", icon: a.k, test: p => sportCount(p, a.k) >= 1 },
+    { k: a.k + "-10", n: nn[0] + " Regular", d: "Log 10 " + nn[1] + ".", icon: a.k, test: p => sportCount(p, a.k) >= 10 },
+    { k: a.k + "-50", n: nn[0] + " Devotee", d: "Log 50 " + nn[1] + ".", icon: a.k, test: p => sportCount(p, a.k) >= 50 }
+  );
+}
+
 // Recompute, stamp anything newly earned with today's date, and report what is new.
 function refreshAwards(p){
   p.awards = p.awards && typeof p.awards === "object" ? p.awards : { earned: {}, challenges: {} };
