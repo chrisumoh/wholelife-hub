@@ -3824,6 +3824,27 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 .choice .ch-t{font-family:var(--display);font-size:calc((var(--t-h3,16px)) * var(--text-scale,1));font-weight:700;letter-spacing:-.012em;line-height:1.15}
 /* No underlines, except real links in the legal pages. */
 .app a:not(.legal a),.app a:not(.legal a):hover,.app a:not(.legal a):focus{text-decoration:none!important}
+
+/* Settings: persistent grouped sidebar (the Finpex pattern) with the section beside it.
+   The nav keeps the shared .tabs class (tests read its labels); every layout property the
+   old tab-bar rules set is reset here so the rail is a rail at every UI style. */
+.set-layout{display:grid;grid-template-columns:232px minmax(0,1fr);gap:20px;align-items:start}
+.set-rail{position:sticky;top:14px;min-width:0}
+.set-nav{display:flex;flex-direction:column;flex-wrap:nowrap;gap:14px;overflow:visible;align-self:stretch;max-width:none;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}
+.set-grp{display:flex;flex-direction:column;gap:2px}
+.set-grp .grp{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:700;padding:4px 10px 6px}
+.set-nav a{display:flex;align-items:center;justify-content:flex-start;text-align:left;gap:10px;min-height:44px;padding:9px 10px;border-radius:10px;color:var(--muted);text-decoration:none;font-weight:550;white-space:nowrap;background:transparent;box-shadow:none;animation:none}
+.set-nav a .ico{flex:none}
+.set-nav a:hover{background:var(--raise);color:var(--text)}
+.set-nav a[aria-selected="true"]{background:var(--raise);color:var(--text);font-weight:700}
+.set-main{min-width:0}
+@media (max-width:900px){
+  .set-layout{grid-template-columns:1fr;gap:12px}
+  .set-rail{top:8px;z-index:6}
+  .set-nav{flex-direction:row;gap:6px;overflow-x:auto;padding:8px}
+  .set-grp{flex-direction:row;gap:2px}
+  .set-grp .grp{display:none}
+}
 </style><div id="app"></div>
 <script>
 // =================== DEVELOPER LOG + CHANGE LOG (for testers) ===================
@@ -13806,8 +13827,9 @@ function settingsView(p){
   const tab = SET_TABS.some(t => t[0] === UI.param) ? UI.param : "profile";
   // One row, always. The active tab is bold and a shade larger with no pill behind it, and a
   // hidden bold copy of the label (::after, from data-label) holds the width so nothing shifts.
-  const tabs = `<div class="tabwrap"><nav class="tabs" role="tablist" aria-label="Settings sections">${SET_TABS.map(([k,l]) =>
-    `<a role="tab" href="#/settings${k === "profile" ? "" : "/" + k}" data-label="${esc(tr(l))}" aria-selected="${k === tab}"${k === tab ? ' aria-current="page"' : ' tabindex="-1"'}><span>${esc(tr(l))}</span></a>`).join("")}</nav></div>`;
+  const SET_GROUPS = [["You", ["profile", "coach", "goals", "household"]], ["App", ["appearance", "premium", "privacy", "about"]]];
+  const SET_ICONS = { profile: "user", coach: "coach", appearance: "palette", goals: "clipboard", household: "users", premium: "crown", privacy: "lock", about: "info" };
+  const tabs = `<aside class="set-rail"><nav class="tabs set-nav" role="tablist" aria-label="Settings sections">${SET_GROUPS.map(([g, ks]) => `<div class="set-grp"><span class="grp" aria-hidden="true">${esc(tr(g))}</span>${ks.map(k => { const l = SET_TABS.find(t => t[0] === k)[1]; return `<a role="tab" href="#/settings${k === "profile" ? "" : "/" + k}" data-label="${esc(tr(l))}" aria-selected="${k === tab}"${k === tab ? ' aria-current="page"' : ""}>${icon(SET_ICONS[k], "", 18)}<span>${esc(tr(l))}</span></a>`; }).join("")}</div>`).join("")}</nav></aside>`;
   const sections = {
     profile: (SB.user && sbClient() ? "" : accountCard()) + profileTab(p),
     premium: typeof subscriptionPanel === "function" ? premiumTab(p) : "",
@@ -13946,7 +13968,7 @@ function settingsView(p){
     <p class="tiny faint">Whole Life Hub is for personal tracking and isn't medical or nutrition advice.</p>
   </section>`
   };
-  return tabs + sections[tab];
+  return `<div class="set-layout">${tabs}<div class="set-main">${sections[tab]}</div></div>`;
 }
 
 // =================== EVENTS ===================
