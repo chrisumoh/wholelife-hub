@@ -3849,6 +3849,20 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 .prem-card-btn{margin-top:auto;min-height:44px;width:100%}
 .prem-fineprint{text-align:center;margin:10px 4px 2px}
 @media (max-width:720px){.prem-cards{grid-template-columns:1fr}}
+/* Learn page: grouped walkthrough cards with watched progress (Finpex Learn pattern). */
+.learn-head{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.learn-progress{margin:14px 0 6px}
+.learn-progress .row{display:flex;justify-content:space-between}
+.learn-bar{height:8px;border-radius:999px;background:var(--raise);overflow:hidden;margin-top:6px}
+.learn-bar span{display:block;height:100%;background:var(--accent);border-radius:999px}
+.learn-grp{margin-top:20px}
+.learn-grp > .grp{display:block;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:700;margin-bottom:10px}
+.learn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.learn-card{display:flex;flex-direction:column;text-align:left;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden;cursor:pointer;font:inherit;color:var(--text)}
+.learn-thumb{position:relative;display:grid;place-items:center;height:104px;background:linear-gradient(135deg,var(--accent-soft),var(--raise));color:var(--accent)}
+.learn-dur{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px}
+.learn-body{display:flex;flex-direction:column;gap:3px;padding:12px 14px 14px}
+.learn-done{color:var(--good);font-weight:600}
 /* Settings: persistent grouped sidebar (the Finpex pattern) with the section beside it.
    The nav keeps the shared .tabs class (tests read its labels); every layout property the
    old tab-bar rules set is reset here so the rail is a rail at every UI style. */
@@ -10675,7 +10689,8 @@ function scenePicker(p){
 }
 // =================== CATEGORY ICONS (filled, color-coded, labeled where it helps) ===================
 const CI = {
- medal:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" /><path d="M11 12 5.12 2.2" /><path d="m13 12 5.88-9.8" /><path d="M8 7h8" /><circle cx="12" cy="17" r="5" /><path d="M12 18v-2h-.5" /></g>`,
+  gradcap:`<path class="p-cap" d="M12 4l10 5-10 5L2 9z" fill="currentColor"/><path class="p-band" d="M6 11.4V16c0 1.8 2.7 3.2 6 3.2s6-1.4 6-3.2v-4.6l-6 3z" fill="currentColor" opacity=".55"/><path class="p-tassel" d="M22 9.2V15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>`,
+  medal:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" /><path d="M11 12 5.12 2.2" /><path d="m13 12 5.88-9.8" /><path d="M8 7h8" /><circle cx="12" cy="17" r="5" /><path d="M12 18v-2h-.5" /></g>`,
  glass:(c)=>`<path class="p-glass" d="M7 3h10l-1.2 7.2A4 4 0 0 1 11.8 13h-.6A4 4 0 0 1 7.2 10.2z" fill="${c}"/><path class="p-stem" d="M12 13v6M9 20h6" stroke="${c}" stroke-width="2" stroke-linecap="round" fill="none"/><circle class="p-bub" cx="10.5" cy="6" r="1" fill="#fff" opacity=".55"/><circle class="p-bub" cx="13.5" cy="7.5" r=".8" fill="#fff" opacity=".45"/>`,
   heartecg:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="p-heart" d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /><path class="p-ecg" d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" /></g>`,
   bloodo2:`<path d="M12 2.3c4 4.7 7.2 8.7 7.2 12.4a7.2 7.2 0 0 1-14.4 0C4.8 11 8 7 12 2.3z" fill="currentColor"/><text x="12" y="17.4" text-anchor="middle" font-family="-apple-system,Figtree,Arial,sans-serif" font-weight="800" font-size="7.2" fill="#fff">O₂</text>`,
@@ -11691,7 +11706,7 @@ const WL_APPEARANCE_KEY = "wl-appearance";
 const WL_STYLES = [["rounded","Rounded"],["crisp","Crisp"]];
 const WL_LANGS = [["en","English"],["es","Español"]];
 const WL_ES = {
-  "Summary":"Resumen", "Log":"Registrar", "Plan":"Planificar", "Progress":"Progreso", "Meals":"Comidas", "Snacks":"Bocadillos",
+  "Summary":"Resumen", "Learn":"Tutoriales", "Log":"Registrar", "Plan":"Planificar", "Progress":"Progreso", "Meals":"Comidas", "Snacks":"Bocadillos",
   "Workouts & imports":"Entrenamientos e importaciones", "Recipes & meal plans":"Recetas y planes de comidas",
   "Food culture":"Cultura gastronómica", "Personal coach":"Entrenador personal", "Health data":"Datos de salud",
   "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Go Premium":"Hazte Premium",
@@ -12024,7 +12039,7 @@ darkMQ?.addEventListener?.("change", () => applyLook());
 new MutationObserver(() => applyLook()).observe(document.documentElement, { attributes:true, attributeFilter:["data-theme"] });
 setInterval(() => { if (P()?.look?.accent === "dynamic") applyLook(); }, 5 * 60 * 1000);
 
-const TITLES = {home:"Summary",health:"Health data",browse:"Health data",cat:"Category",metric:"Metric",nutrition:"Daily nutrition",workouts:"Workouts",snacks:"Snack log",alcohol:"Daily nutrition",awards:"Achievements & Goals",recipes:"Recipes & meal plans",culture:"Food culture",coach:"Personal coach",premium:"Premium",settings:"Settings & profiles","privacy-policy":"Privacy Policy",terms:"Terms & Conditions",refunds:"Refunds & cancellation",contact:"Contact",credits:"Licenses & credits","404":"Page not found"};
+const TITLES = {home:"Summary",health:"Health data",browse:"Health data",cat:"Category",metric:"Metric",nutrition:"Daily nutrition",workouts:"Workouts",snacks:"Snack log",alcohol:"Daily nutrition",awards:"Achievements & Goals",recipes:"Recipes & meal plans",culture:"Food culture",coach:"Personal coach",premium:"Premium",settings:"Settings & profiles",learn:"Learn","privacy-policy":"Privacy Policy",terms:"Terms & Conditions",refunds:"Refunds & cancellation",contact:"Contact",credits:"Licenses & credits","404":"Page not found"};
 function setMeta(title, desc, jsonld){
   document.title = title === "Home" ? "Whole Life Hub" : `${title} · Whole Life Hub`;
   let m = document.querySelector('meta[name="description"]'); if (!m) { m = document.createElement("meta"); m.name = "description"; document.head.append(m); }
@@ -12176,7 +12191,7 @@ function render(){
   // Someone who set their hub up before coaches existed is asked once, politely, with a
   // coach already highlighted. Keeping it is one tap and nothing they have is touched.
   if (typeof coachPromptView === "function" && !p.coachPrompted) { morphInto(root, coachPromptView(p)); setMeta("Choose your coach", "Pick the voice your coach uses."); afterRender(); return; }
-  const view = ({health:healthView, browse:healthView, cat:catView, metric:metricView, home:homeView, nutrition:nutritionView, workouts:workoutsView, snacks:snacksView, alcohol:alcoholView, awards:awardsView, recipes:recipesView, culture:cultureView, coach:coachView, settings:settingsView, premium:premiumView, "privacy-policy":privacyPolicyView, terms:termsView, refunds:refundsView, contact:contactView, credits:creditsView, "404":notFoundView})[UI.route] || notFoundView;
+  const view = ({health:healthView, browse:healthView, cat:catView, metric:metricView, home:homeView, nutrition:nutritionView, workouts:workoutsView, snacks:snacksView, alcohol:alcoholView, awards:awardsView, recipes:recipesView, culture:cultureView, coach:coachView, settings:settingsView, learn:learnView, premium:premiumView, "privacy-policy":privacyPolicyView, terms:termsView, refunds:refundsView, contact:contactView, credits:creditsView, "404":notFoundView})[UI.route] || notFoundView;
   const titles = TITLES;
   const dish = UI.route === "recipes" && UI.param ? DISHES.find(d => d.id === UI.param) : null;
   const setTab = UI.route === "settings" && UI.param ? SET_TABS.find(t => t[0] === UI.param) : null;
@@ -12539,6 +12554,7 @@ function sideNav(){
     + group("progress", "Progress", link("#/health", inHealth, "grid", SI_GRAD.health, "Health data")
       + link("#/awards", UI.route === "awards", "medal", SI_GRAD.awards, "Achievements & Goals"));
   const tail = `<div class="navgrp navgrp-static navgrp-tail" data-grp="more"><div class="navgrp-items">${premHub}
+      ${link("#/learn", UI.route === "learn", "gradcap", SI_GRAD.coach, "Learn")}
       ${link("#/settings", UI.route === "settings", "gear", SI_GRAD.settings, "Settings")}</div></div>`;
   return link("#/home", UI.route === "home", "heartecg", SI_GRAD.summary, "Summary") + groupsHTML + tail;
 }
@@ -19111,6 +19127,44 @@ function premiumPlaceholder(p, f){
 // this replaced still exists in spirit -- every feature from the registry is still listed,
 // still links to its own placeholder -- it's just one flat, scannable list now instead of
 // five separate cards, matching the "WHAT'S INCLUDED" single-list layout asked for.
+
+// ---------- Learn: guided walkthroughs (the Finpex Learn pattern) ----------
+// Cards launch the app's real guided tours; finishing one records it in this
+// browser (wl_learn_v1), the same local-first pattern as appearance prefs.
+const LEARN_GROUPS = [["Getting started", ["quick"]], ["Everyday logging", ["logging", "meals"]], ["Coach & progress", ["coaching", "progress"]], ["Your account", ["settings", "premium", "privacy"]]];
+const LEARN_ICONS = { quick: "spark", logging: "clipboard", meals: "book", coaching: "coach", progress: "pulse", settings: "gear", premium: "crown", privacy: "lock" };
+function learnDoneSet(){ try { const a = JSON.parse(localStorage.getItem("wl_learn_v1") || "[]"); return new Set(Array.isArray(a) ? a : []); } catch { return new Set(); } }
+function learnMarkDone(id){ try { const d = learnDoneSet(); if (!d.has(id)) { d.add(id); localStorage.setItem("wl_learn_v1", JSON.stringify([...d])); } } catch {} }
+function learnView(p){
+  const done = learnDoneSet();
+  const ids = Object.keys(TOUR_DEFS);
+  const total = ids.length;
+  const n = ids.filter(id => done.has(id)).length;
+  const card = (id) => {
+    const def = TOUR_DEFS[id]; if (!def) return "";
+    const steps = def.steps.length;
+    const mins = Math.max(1, Math.round(steps / 5));
+    return `<button type="button" class="learn-card" data-act="tour-start" data-v="${id}">
+      <span class="learn-thumb">${icon(LEARN_ICONS[id] || "spark", "", 34)}<span class="learn-dur">${mins} min</span></span>
+      <span class="learn-body"><b>${esc(def.name)}</b><span class="tiny muted">${esc(def.blurb)}</span>
+      <span class="tiny muted">${steps} steps${done.has(id) ? ` \u00b7 <span class="learn-done">${icon("check", "", 12)} Watched</span>` : ""}</span></span>
+    </button>`;
+  };
+  return `<section class="card learn-page">
+    <div class="learn-head">
+      <div>
+        <div class="eyebrow">${icon("book", "", 15)} Learn</div>
+        <h2>Learn WholeLife</h2>
+        <p class="prem-sub">Short guided walkthroughs of every part of the app \u2014 how to set things up, and how to get the most out of them.</p>
+      </div>
+      <button type="button" class="btn primary" data-act="tour-start" data-v="quick">Take the tour</button>
+    </div>
+    <div class="learn-progress"><div class="row"><span class="tiny muted">Your progress</span><span class="tiny muted">${n} of ${total} watched</span></div>
+    <div class="learn-bar"><span style="width:${total ? Math.round(n / total * 100) : 0}%"></span></div></div>
+    ${LEARN_GROUPS.map(([g, ks]) => `<div class="learn-grp"><span class="grp">${esc(g)}</span><div class="learn-grid">${ks.map(card).join("")}</div></div>`).join("")}
+  </section>`;
+}
+
 function premiumHub(p){
   const on = isPremium(p);
   const plan = UI.premPlan === "monthly" ? "monthly" : "yearly";
@@ -24594,6 +24648,7 @@ function tourPlace(){
 function tourEnd(completed){
   if (!TOUR.on) return;
   const id = TOUR.id;
+  if (completed && id) learnMarkDone(id);
   TOUR.on = false; TOUR.tok++;
   TOUR.layer?.remove(); TOUR.layer = TOUR.hole = TOUR.card = null;
   document.documentElement.classList.remove("tour-on");
