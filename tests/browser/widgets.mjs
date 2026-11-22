@@ -168,8 +168,8 @@ ok("a Large chosen after the upgrade is kept on the next reload", (await sizesOf
 console.log("--- 4. edit mode");
 await seed(); await view(1440); await goto("#/home");
 await ev(`(() => { P().widgets = ["calories", "steps", "sleep", "rhr", "water"].map(k => ({ k, size: "s" })); UI.editPage = null; saveProfile(); render(); return true; })()`);
-const row = await ev(`(() => { const b = document.querySelector('.wsec[data-page="home"] [data-act="wl-edit"]'), h = document.querySelector('.wsec[data-page="home"] .sec-title'), c = getComputedStyle(b); const br = b.getBoundingClientRect(), hr = h.getBoundingClientRect(); return { right: br.left > hr.right, same: Math.abs((br.top + br.height / 2) - (hr.top + hr.height / 2)) < 8, plain: c.backgroundColor === "rgba(0, 0, 0, 0)" && c.borderTopWidth === "0px" && c.boxShadow === "none", accent: c.color === (() => { const t = document.createElement("i"); t.style.color = "var(--accent)"; document.body.append(t); const v = getComputedStyle(t).color; t.remove(); return v; })(), text: b.textContent }; })()`);
-ok("'Edit widgets' is plain accent text on the right of the section title", row.right && row.same && row.plain && row.accent && row.text === "Edit widgets", JSON.stringify(row));
+const row = await ev(`(() => { const b = document.querySelector('.wsec[data-page="home"] [data-act="wl-edit"]'), c = getComputedStyle(b); const br = b.getBoundingClientRect(), wr = document.querySelector('.wsec[data-page="home"]').getBoundingClientRect(); return { right: br.right > wr.right - 40, same: !document.querySelector('.wsec[data-page="home"] .sec-title'), plain: c.backgroundColor === "rgba(0, 0, 0, 0)" && c.borderTopWidth === "0px" && c.boxShadow === "none", accent: c.color === (() => { const t = document.createElement("i"); t.style.color = "var(--accent)"; document.body.append(t); const v = getComputedStyle(t).color; t.remove(); return v; })(), text: b.textContent }; })()`);
+ok("'Edit widgets' is plain accent text on the right, with no 'Widgets' or 'Pinned' title", row.right && row.same && row.plain && row.accent && row.text === "Edit widgets", JSON.stringify(row));
 await ev(`${editBtn("home")}.click(); true`); await sleep(300);
 const ctl = await ev(`(() => { const out = { cards: 0, bad: [] }; const vis = e => e && e.getClientRects().length > 0; for (const c of document.querySelectorAll('.wgrid[data-page="home"] .dcard')) { out.cards++; const h = c.querySelector(":scope > .mhead"); const minus = h.querySelector(".wminus"), seg = [...h.querySelectorAll(".wseg button")], drag = h.querySelector(".wdrag"), mv = [...h.querySelectorAll('[data-act="wl-move"]')];
     const big = e => { const r = e.getBoundingClientRect(); return r.width >= 43.9 && r.height >= 43.9; };
@@ -227,9 +227,9 @@ ok("375px: controls on Small cards fit inside the card and stay 44px", sm.length
 await send("Emulation.setTouchEmulationEnabled", { enabled: false }); 
 
 console.log("--- 6. other pages share the same engine");
-for (const [page, keys] of [["workouts", ["workouts", "steps", "active", "coach"]], ["nutrition", ["water", "estimate", "calories", "meals"]], ["health", ["steps", "rhr", "sleep", "weight"]], ["coach", ["coach", "workouts"]], ["awards", ["workouts", "calories", "water"]]]) {
+for (const [page, keys] of [["workouts", ["workouts", "steps", "active", "coach"]], ["nutrition", ["water", "estimate", "calories", "meals"]], ["health", ["steps", "rhr", "sleep", "weight"]], ["coach", ["coach", "workouts"]]]) {
   await view(1440); await seed(); await goto("#/" + page);
-  ok(`${page}: has the widget section with 'Edit widgets' on the title row`, await ev(`!!document.querySelector('.wsec[data-page="${page}"] .row.between .sec-title') && ${editBtn(page)}?.textContent === "Edit widgets"`));
+  ok(`${page}: has the widget section with only an 'Edit widgets' button (no title)`, await ev(`!document.querySelector('.wsec[data-page="${page}"] .sec-title') && ${editBtn(page)}?.textContent === "Edit widgets"`));
   for (const k of keys.slice(0, 2)) {
     await only(page, k); await goto("#/" + page);
     const sizes = {}; for (const s of ["s", "m", "l"]) { await uiSize(page, k, s); sizes[s] = await measure(page, k); }
@@ -243,6 +243,9 @@ for (const [page, keys] of [["workouts", ["workouts", "steps", "active", "coach"
   ok(`${page}: hiding the first card hides that card, not a neighbour`, !(await ev(`[...document.querySelectorAll('.wgrid .dcard')].some(c => c.dataset.k === ${JSON.stringify(keys[0])})`)) && (await ev(`[...document.querySelectorAll('.wgrid .dcard')].length`)) === keys.length - 2);
   await ev(`${editBtn(page)}.click(); true`);
 }
+
+await goto("#/awards");
+ok("Achievements has no widgets and no Edit widgets button", await ev(`!document.querySelector(".wsec") && !document.querySelector('[data-act="wl-edit"]')`));
 
 console.log("--- 7. leftover cards use the card header");
 for (const page of ["nutrition", "workouts", "coach", "health", "awards"]) {

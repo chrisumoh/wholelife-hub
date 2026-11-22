@@ -3875,7 +3875,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.5", build: "8.5.4", channel: "Dev Testing", date: "2026-11-21", week: "Sun 15 Nov – Sat 21 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6", channel: "Dev Testing", date: "2026-11-22", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3889,6 +3889,14 @@ const APP_VERSION = { update: "8.5", build: "8.5.4", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6",
+      area:"Layout",
+      title:"Tidy-up: no Web app view, even spacing, grouped menu with a phone bottom bar, a Next step on Today, and tighter Coach, Achievements, Health and Recipes pages",
+      bug:"On an iPad the Web app layout split the page into two columns and squeezed Settings and Coach. Pages left a wide empty strip beside the side menu, cards sat at uneven distances, the side menu listed every page at once, Today opened with a wall of cards, Coach opened on workouts and settings instead of the conversation, Achievements drew all 143 badges and a widget grid, Health repeated every category and its pinned cards twice, and recipe names were cut to one line.",
+      fix:"Web app view: removed from Settings > Appearance; a saved choice is ignored. Spacing: content now starts 20px from the side menu, left-aligned, with 12px between cards everywhere (the card gap the design rules already use), and the page header is one row (title, Snack, Log a meal, clock, bell). Side menu: Today, Log, Plan, Coach, Progress, Learn, with Premium and Settings below; Log (Meals, Snacks, Workouts & imports), Plan (Recipes & meal plans, Food culture) and Progress (Health data, Achievements & Goals) are disclosure buttons with aria-expanded and aria-controls; the group that holds the page you are on opens itself, and what you open or shut is remembered on this device only (wlh.navopen). Phones: a fixed bottom bar with Today, Log, Plan, Coach and More (44px or larger, labelled, safe-area aware); Log, Plan and More open a sheet of the real pages (focus inside, Escape and backdrop close, focus returns to the button, closes on navigation). Today: a Next step card first, built only from the same real checks as Coming up today (water still to go, planned workout, no food logged, no weigh-in in 7 days) or a plain all-caught-up line, then the rings beside Coming up today and the score. Coach: greeting, then the chat, then Ask your coach, then the questions (baseline, goals, equipment, limits), then the weekly plan and sports, with the widgets and reminders after. Achievements: no widget grid or Widgets heading (Edit widgets stays on the other pages); the badge gallery has Earned / All / Locked with exact counts, earned first, 24 at a time with Show more, and each badge shows its description as text. Health: one category at a time chosen from Browse by category, search looks in every category with a result count, clearing it brings the chosen one back, and a metric already pinned as a widget is not drawn again below. Recipes: at most three cards across (two on tablets, one on phones), names wrap to two lines with the full name on the link, the allergy line is never cut, the preview button is 44px.",
+      where:"index.html: homeView(), nextStepCard(), NEXT_STEP_CTA, coachView(), badgeGallery(), BADGE_BATCH, healthView(), sideNav(), navGroupOf(), NAV_SHEETS, bottomBarHTML(), openNavSheet(), settingsView() Appearance (Layout removed), widgetSection(), PAGE_WIDGETS, the tidy-css style block (last in the file) and the flatnav-css disclosure rules, WL_ES. tests/browser/navtidy.mjs (new, 72 checks) and run-all.mjs; finpex.mjs and widgets.mjs updated for the removed Web app layout and the removed Awards widgets, cards.mjs (the Health page floor of dashboard cards lowered from 10 to 5, because Health now shows one category), rail.mjs unchanged and passing. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/navtidy.mjs, then node tests/browser/run-all.mjs. By hand: open it on an iPad width (820 to 1180px) and on a phone. Settings > Appearance has no Layout row. The menu has six top rows; open Log, Plan and Progress. On a phone tap Log, Plan and More in the bottom bar. Summary starts with Next step. Coach starts with the chat. Achievements shows Earned / All / Locked and Show more. Health shows one category and searches all. Recipes shows three cards across on a desktop.",
+      limits:"Checked in headless Chrome at 390, 820, 1180, 1280 and 1440px in light and dark, not on a real iPad or iPhone. The medal artwork in the two UI-kit files is not ported: badges keep their current medals. Coach is ordered as one page (chat first), not split into Today / Plan / Ask / Settings tabs. Health keeps its widget row at the top as the overview. Coming up today lines with an amount in them (such as water still to go) stay in English in Spanish mode. The new bottom bar replaces the hamburger menu below 768px." },
     { id:"8.5.4",
       area:"Menu",
       title:"Flat Finpex-style side menu",
@@ -11101,6 +11109,14 @@ function comingUpItems(p){
   if (w.length && !w.some(x => x.date > addDays(t, -7))) items.push({ text: "No weigh-in in the last 7 days", href: "#/metric/weight" });
   return items;
 }
+// 8.5.5: the first card on Today answers "what should I do next". It reads the same real checks as Coming up today (water,
+// the planned workout, no food logged, no recent weigh-in) and shows the first one that applies. Nothing is made up.
+const NEXT_STEP_CTA = { "#/metric/water": "Log water", "#/coach": "Open workout", "#/nutrition": "Log food", "#/metric/weight": "Log weight" };
+function nextStepCard(p){
+  const it = comingUpItems(p)[0];
+  if (!it) return `<section class="card nextstep" aria-labelledby="wlNextH"><div class="ns-txt"><span class="ns-eyebrow">Next step</span><h2 id="wlNextH" class="ns-title">You're all caught up for today.</h2></div></section>`;
+  return `<section class="card nextstep" aria-labelledby="wlNextH"><div class="ns-txt"><span class="ns-eyebrow">Next step</span><h2 id="wlNextH" class="ns-title">${esc(it.text)}</h2></div><a class="btn primary" href="${it.href}">${esc(NEXT_STEP_CTA[it.href] || "Open")}</a></section>`;
+}
 function comingUpCard(p){
   const items = comingUpItems(p);
   return `<section class="card" id="wlComingUp" aria-labelledby="wlComingUpH"><h2 id="wlComingUpH" class="sec-title">Coming up today</h2>
@@ -11169,10 +11185,9 @@ function homeView(p){
       <span class="ps-streak" title="Current workout streak">${icon("spark","",15)} ${currentStreak(p)}d</span>
     </div>
   </div>
+  ${nextStepCard(p)}
   ${weeklyStatsRow(p)}
-  ${glanceCard(p)}
-  ${comingUpCard(p)}
-  ${scoreCard(p)}
+  <div class="today-grid">${glanceCard(p)}<div class="today-col">${comingUpCard(p)}${scoreCard(p)}</div></div>
   ${widgetSection(p, "home")}
   ${typeof isPremium === "function" && isPremium() && typeof microWidget === "function"
       ? `<div class="mgrid premrow">${microWidget(p)}${typeof recoveryWidget === "function" ? recoveryWidget(p) : ""}${typeof pantryWidget === "function" ? pantryWidget(p) : ""}</div>` : ""}
@@ -11214,16 +11229,25 @@ function highlightsSection(p){
 
 // =================== HEALTH DATA (one tab for every category) ===================
 function healthView(p){
-  const q = (UI.browseQ || "").toLowerCase();
-  const match = k => !q || METRICS[k].n.toLowerCase().includes(q) || CATS[METRICS[k].cat].n.toLowerCase().includes(q);
-  const secs = Object.entries(CATS).map(([ck, c]) => [ck, c, c.metrics.filter(match)]).filter(x => x[2].length);
+  // 8.5.5: one category at a time instead of every category in a wall. Searching looks through all of them; clearing the box
+  // brings back the chosen one. Metrics already pinned as a widget on this page are not drawn a second time below it.
+  const q = (UI.browseQ || "").trim().toLowerCase(), catKeys = Object.keys(CATS);
+  const sel = catKeys.includes(UI.healthCat) ? UI.healthCat : catKeys[0];
+  const match = k => METRICS[k].n.toLowerCase().includes(q) || CATS[METRICS[k].cat].n.toLowerCase().includes(q);
+  const pinned = new Set(UI.editPage === "health" ? [] : wlGet(p, "health").shown.map(w => w.k));
+  const secs = q ? Object.entries(CATS).map(([ck, c]) => [ck, c, c.metrics.filter(match)]).filter(x => x[2].length)
+    : [[sel, CATS[sel], CATS[sel].metrics.filter(k => !pinned.has(k))]];
+  const total = secs.reduce((a, x) => a + x[2].length, 0), es = WLA.lang === "es";
   const tools = { nutrition:[["#/nutrition","Meal log"]], snacks:[["#/snacks","Snack log"]], activity:[["#/workouts","Workouts & imports"]] };
+  const status = q ? (es ? `${total} ${total === 1 ? "resultado" : "resultados"} en todas las categorías` : `${total} ${total === 1 ? "result" : "results"} across all categories`) : "";
   return `
   <input type="search" id="browse-q" class="searchbar" value="${esc(UI.browseQ || "")}" placeholder="Search health data: blood oxygen, sleep, steps…" aria-label="Search health data">
-  <nav class="chips" aria-label="Jump to category">${Object.entries(CATS).map(([ck,c]) => `<button class="chip" data-act="jump" data-v="${ck}">${cicon(c.icon, c.color, 16)} ${c.n}</button>`).join("")}</nav>
+  <p class="small muted hs-status" role="status" aria-live="polite" data-i18n-skip>${status}</p>
+  <div class="hs-pick"><span class="hs-pick-l" id="hs-pick-l">Browse by category</span>
+  <div class="chips" role="group" aria-labelledby="hs-pick-l">${Object.entries(CATS).map(([ck,c]) => `<button type="button" class="chip" data-act="health-cat" data-v="${ck}" aria-pressed="${!q && ck === sel}">${cicon(c.icon, c.color, 16)} ${c.n}</button>`).join("")}</div></div>
   ${secs.map(([ck, c, ms]) => `<section class="health-sec" id="sec-${ck}">
     <div class="row between"><div class="shead">${cicon(c.icon, c.color, 28)}<h2>${c.n}</h2></div>${(tools[ck] || []).map(([h,l]) => `<a class="btn sm" href="${h}">${l} ${icon("chevR","go",13)}</a>`).join("")}</div>
-    <div class="mgrid">${ms.map(k => metricCard(p, k)).join("")}</div></section>`).join("") || `<div class="empty">Nothing matches "${esc(UI.browseQ)}".</div>`}
+    ${ms.length ? `<div class="mgrid">${ms.map(k => metricCard(p, k)).join("")}</div>` : `<p class="small muted">Every metric in this category is already pinned above.</p>`}</section>`).join("") || `<div class="empty">Nothing matches "${esc(UI.browseQ)}".</div>`}
   <p class="small muted">Import Apple Health on <a href="#/workouts">Workouts & imports</a> to fill these in automatically, or open any card to add data by hand.</p>`;
 }
 
@@ -11707,7 +11731,7 @@ const WL_ES = {
   "Summary":"Resumen", "Learn":"Tutoriales", "Log":"Registrar", "Plan":"Planificar", "Progress":"Progreso", "Meals":"Comidas", "Snacks":"Bocadillos",
   "Workouts & imports":"Entrenamientos e importaciones", "Recipes & meal plans":"Recetas y planes de comidas",
   "Food culture":"Cultura gastronómica", "Personal coach":"Entrenador personal", "Health data":"Datos de salud",
-  "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Go Premium":"Hazte Premium",
+  "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Today":"Hoy", "More":"Más", "Next step":"Siguiente paso", "Browse by category":"Ver por categoría", "Every metric in this category is already pinned above.":"Todas las métricas de esta categoría ya están fijadas arriba.", "Show badges":"Mostrar insignias", "Every badge is earned. Nothing is locked.":"Todas las insignias están conseguidas. Nada está bloqueado.", "You're all caught up for today.":"Hoy estás al día.", "Log water":"Registrar agua", "Log food":"Registrar comida", "Log weight":"Registrar peso", "Open workout":"Abrir entrenamiento", "No food logged yet today":"Aún no has registrado comida hoy", "No weigh-in in the last 7 days":"Sin pesaje en los últimos 7 días", "Open":"Abrir", "Mobile navigation":"Navegación móvil", "Close":"Cerrar", "Go Premium":"Hazte Premium",
   "Profile":"Perfil", "Coach":"Entrenador", "Appearance":"Apariencia", "Goals & food":"Metas y comida", "Household":"Hogar",
   "App":"Aplicación", "Settings sections":"Secciones de ajustes", "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información",
   "Display":"Pantalla", "Automatic":"Automático", "Light":"Claro", "Dark":"Oscuro", "OLED black":"Negro OLED",
@@ -12028,7 +12052,7 @@ function applyLook(p = P()){
   el.dataset.accent = look.accent === "dynamic" ? timeAccent() : (look.accent || "blue");
   el.dataset.motion = look.motion === "reduced" ? "reduced" : "full";
   el.dataset.font = FONTS.some(f => f[0] === look.font) ? look.font : "system";
-  el.dataset.layout = look.layout === "webapp" ? "webapp" : "app";
+  delete el.dataset.layout; // the Web app layout was removed in 8.5.5; saved choices are ignored
   el.style.colorScheme = scheme === "light" ? "light" : "dark";
   applyTextScale(p);
   wlaMirror(p);
@@ -12219,18 +12243,18 @@ function render(){
             <span class="ph-spacer" aria-hidden="true"></span>
             <div class="ph-right">
               <div class="ph-text">${UI.route === "home" ? "" : crumbs}<h1 class="page-title">${esc(tr(pageTitle))}</h1>${UI.route === "home" ? `<div class="date muted">${fmtLong(today())}</div>` : ""}</div>
+              <div class="page-head-actions row">
+                <a class="btn pill" href="#/snacks">${icon("plus")} Snack</a>
+                <a class="btn pill primary" href="#/nutrition">${icon("plus")} Log a meal</a>
+              </div>
               <span class="clock tab" id="live-clock" aria-label="Current time" data-morph-live></span>
               ${bellButton(p)}
             </div>
           </div>
-          <div class="page-head-actions row">
-            <a class="btn pill" href="#/snacks">${icon("plus")} Snack</a>
-            <a class="btn pill primary" href="#/nutrition">${icon("plus")} Log a meal</a>
-          </div>
           <div class="head-sentinel" aria-hidden="true"></div>
         </header>
         ${notifPanel(p)}
-        <div class="section active ${animate ? "enter " : ""}stack lg" id="sec-${UI.route}" tabindex="-1">${PAGE_WIDGETS[UI.route] ? widgetSection(p, UI.route) : ""}${view(p)}</div>
+        <div class="section active ${animate ? "enter " : ""}stack lg" id="sec-${UI.route}" tabindex="-1">${PAGE_WIDGETS[UI.route] && UI.route !== "coach" ? widgetSection(p, UI.route) : ""}${view(p)}</div>
         ${typeof siteFooter === "function" ? siteFooter() : ""}
       </div>
     </main>
@@ -12254,6 +12278,7 @@ function render(){
       const same = inner === UI._sideHTML && !!document.querySelector("#app .side .nav");
       UI._sideHTML = inner;
       return `<aside class="side${UI.menu ? " open" : ""}" id="side-menu" aria-label="Main"${same ? " data-morph-skip" : ""}>${same ? "" : inner}</aside>`; })()}
+    ${bottomBarHTML()}
   </div>`);
   afterRender();
 }
@@ -12538,24 +12563,69 @@ function sideNav(){
   // that puts each Premium feature on the page it extends (PREM_GROUP_OF already maps them).
   void prow; void inGroup;
   const inHealth = ["health","browse","cat","metric"].includes(UI.route);
-  const group = (id, label, itemsHTML) => `<div class="navgrp navgrp-static" role="group" aria-labelledby="ngl-${id}" data-grp="${id}">
-      <span class="grp grp-static" id="ngl-${id}">${esc(tr(label))}</span>
-      <div class="navgrp-items">${itemsHTML}</div>
+  // 8.5.5: Log, Plan and Progress are disclosures (a button with aria-expanded and aria-controls);
+  // the group holding the current page opens itself when you arrive, and you can open or shut any.
+  const here2 = navGroupOf(), key2 = UI.route + "/" + (UI.param || "");
+  UI.navOpen = UI.navOpen || loadNavOpen();
+  if (UI.navKey !== key2) { UI.navKey = key2; if (here2 && !UI.navOpen[here2]) { UI.navOpen[here2] = true; saveNavOpen(); } }
+  const group = (id, label, glyph, grad, itemsHTML) => {
+    const open = !!UI.navOpen[id], holds = here2 === id;
+    return `<div class="navgrp navgrp-disc${holds ? " holds" : ""}" data-grp="${id}">
+      <button type="button" class="grp navdisc" id="ngl-${id}" data-act="nav-disc" data-v="${id}" aria-expanded="${open}" aria-controls="ngi-${id}">${siTile(grad, glyph)}<span>${esc(tr(label))}</span>${icon("chevD", "navchev", 16)}</button>
+      <div class="navgrp-items" id="ngi-${id}" role="group" aria-labelledby="ngl-${id}"${open ? "" : ' data-shut="1"'}>${itemsHTML}</div>
     </div>`;
+  };
   const groupsHTML =
-    group("log", "Log", link("#/nutrition", UI.route === "nutrition", "apple", SI_GRAD.meals, "Meals")
+    group("log", "Log", icon("plus", "", 22), SI_GRAD.meals, link("#/nutrition", UI.route === "nutrition", "apple", SI_GRAD.meals, "Meals")
       + link("#/snacks", UI.route === "snacks", "cookie", SI_GRAD.snacks, "Snacks")
       + link("#/workouts", UI.route === "workouts", "dumbbell", SI_GRAD.workouts, "Workouts & imports"))
-    + group("plan", "Plan", link("#/recipes", UI.route === "recipes", "chefhat", SI_GRAD.recipes, "Recipes & meal plans")
-      + link("#/culture", UI.route === "culture", "globe", SI_GRAD.culture, "Food culture")
-      + link("#/coach", UI.route === "coach", "sparkles", SI_GRAD.coach, "Personal coach"))
-    + group("progress", "Progress", link("#/health", inHealth, "grid", SI_GRAD.health, "Health data")
-      + link("#/awards", UI.route === "awards", "medal", SI_GRAD.awards, "Achievements & Goals"));
+    + group("plan", "Plan", cicon("chefhat", "#fff", 22), SI_GRAD.recipes, link("#/recipes", UI.route === "recipes", "chefhat", SI_GRAD.recipes, "Recipes & meal plans")
+      + link("#/culture", UI.route === "culture", "globe", SI_GRAD.culture, "Food culture"))
+    + link("#/coach", UI.route === "coach", "sparkles", SI_GRAD.coach, "Coach")
+    + group("progress", "Progress", cicon("grid", "#fff", 22), SI_GRAD.health, link("#/health", inHealth, "grid", SI_GRAD.health, "Health data")
+      + link("#/awards", UI.route === "awards", "medal", SI_GRAD.awards, "Achievements & Goals"))
+    + link("#/learn", UI.route === "learn", "gradcap", SI_GRAD.coach, "Learn");
   const tail = `<div class="navgrp navgrp-static navgrp-tail" data-grp="more"><div class="navgrp-items">${premHub}
-      ${link("#/learn", UI.route === "learn", "gradcap", SI_GRAD.coach, "Learn")}
       ${link("#/settings", UI.route === "settings", "gear", SI_GRAD.settings, "Settings")}</div></div>`;
-  return link("#/home", UI.route === "home", "heartecg", SI_GRAD.summary, "Summary") + groupsHTML + tail;
+  return link("#/home", UI.route === "home", "heartecg", SI_GRAD.summary, "Today") + groupsHTML + tail;
 }
+// Which sidebar group holds the page you are on (the Today, Coach and Learn rows belong to none).
+function navGroupOf(){
+  const r = UI.route;
+  if (["nutrition","snacks","workouts"].includes(r)) return "log";
+  if (["recipes","culture"].includes(r)) return "plan";
+  if (["health","browse","cat","metric","awards"].includes(r)) return "progress";
+  return null;
+}
+const NAVOPEN_KEY = "wlh.navopen";
+function loadNavOpen(){ try { const v = JSON.parse(localStorage.getItem(NAVOPEN_KEY) || "{}"); return v && typeof v === "object" ? v : {}; } catch { return {}; } }
+function saveNavOpen(){ try { localStorage.setItem(NAVOPEN_KEY, JSON.stringify(UI.navOpen || {})); } catch {} }
+// Phone navigation: a bottom bar (Today, Log, Plan, Coach, More). Log, Plan and More open a sheet of the real destinations.
+const NAV_SHEETS = {
+  log:  ["Log",  [["#/nutrition","nutrition","Meals"],["#/snacks","snacks","Snacks"],["#/workouts","workouts","Workouts & imports"]]],
+  plan: ["Plan", [["#/recipes","recipes","Recipes & meal plans"],["#/culture","culture","Food culture"]]],
+  more: ["More", [["#/health","health","Health data"],["#/awards","awards","Achievements & Goals"],["#/learn","learn","Learn"],["#/premium","premium","Premium"],["#/settings","settings","Settings"]]]
+};
+function bottomBarHTML(){
+  const r = UI.route, onG = navGroupOf(), btn = (id, label, ic) => {
+    const on = id === "more" ? ["health","browse","cat","metric","awards","learn","premium","settings"].includes(r) : onG === id;
+    return `<button type="button" class="bb-item${on ? " on" : ""}" data-act="sheet" data-v="${id}" aria-haspopup="dialog" aria-expanded="false">${icon(ic, "", 22)}<span>${esc(tr(label))}</span></button>`;
+  };
+  const lnk = (href, on, ic, label) => `<a class="bb-item" href="${href}"${on ? ' aria-current="page"' : ""}>${icon(ic, "", 22)}<span>${esc(tr(label))}</span></a>`;
+  return `<nav class="bottombar" aria-label="${esc(tr("Mobile navigation"))}">${lnk("#/home", r === "home", "home", "Today")}${btn("log", "Log", "plus")}${btn("plan", "Plan", "book")}${lnk("#/coach", r === "coach", "coach", "Coach")}${btn("more", "More", "menu")}</nav>`;
+}
+function openNavSheet(id, trigger){
+  const [title, rows] = NAV_SHEETS[id] || NAV_SHEETS.more;
+  const cur = r => r === UI.route || (r === "health" && ["browse","cat","metric"].includes(UI.route));
+  const body = `<div class="sheet-head"><h2 id="navsheet-h">${esc(tr(title))}</h2><button type="button" class="btn icon-btn sheet-x" data-pop="close" aria-label="${esc(tr("Close"))}">${icon("x", "", 20)}</button></div>
+    <div class="sheet-list">${rows.map(([href, rt, label]) => `<a class="sheet-link" href="${href}" data-sheet-link${cur(rt) ? ' aria-current="page"' : ""}>${esc(tr(label))}${icon("chevR", "row-chev", 16)}</a>`).join("")}</div>`;
+  const pop = openPopover("navsheet", { labelledby: "navsheet-h", width: "min(520px, 100vw)", bodyHTML: body, triggerEl: trigger, returnSel: `[data-act="sheet"][data-v="${id}"]`, focusSel: ".sheet-link" });
+  pop.wrap.classList.add("navsheet");
+}
+window.addEventListener("hashchange", () => { if (POPOVERS.navsheet) POPOVERS.navsheet.shut(); });
+// Past the phone width the bottom bar is gone, so a sheet left open (rotating a tablet, resizing a window) closes with it.
+matchMedia("(min-width:768px)").addEventListener?.("change", e => { if (e.matches && POPOVERS.navsheet) POPOVERS.navsheet.shut(); });
+document.addEventListener("click", e => { if (e.target.closest?.("[data-sheet-link]") && POPOVERS.navsheet) POPOVERS.navsheet.shut(); });
 
 // =================== LOADER & ONBOARDING ===================
 function wlRing(labels){
@@ -13542,8 +13612,18 @@ function coachView(p){
     <div class="row small muted"><span>Goal: <b>${esc(GOALS.find(g=>g[0]===p.goal)?.[1] || "Not set")}</b></span><span>Style: <b>${esc(STYLES.find(g=>g[0]===p.style)?.[1] || "Not set")}</b></span><span>Level: <b>${esc(LEVELS.find(g=>g[0]===p.level)?.[1])}</b></span><span>${p.freq ? `${p.freq} days a week` : "Frequency not set"}</span></div>
   </section>
 
-  ${typeof coachAdviceCard === "function" ? coachAdviceCard(p) : ""}
-  ${typeof dailyCheckinCard === "function" ? dailyCheckinCard(p) : ""}
+  ${coachChatCard()}
+
+  <section class="card"${UI.sampleOk === false ? " hidden" : ""}>
+    <div class="eyebrow">Ask your coach</div><h2>Questions about training or food</h2>
+    <p class="small muted">Claude answers using your profile and this week's logs. It uses your own Claude usage and asks permission the first time.</p>
+    <div class="chips">${(WLA.lang === "es" ? ["¿Qué debería entrenar esta semana?","¿Cómo puedo incluir jollof y fufu en mi objetivo?","Me salté tres días. ¿Cómo retomo el entrenamiento?","¿Qué debería comer antes de entrenar por la mañana?"] : ["What should I train this week?","How do I fit jollof and fufu into my goal?","I missed three days. How do I restart?","What should I eat before a morning workout?"]).map(q => `<button class="chip" data-act="coach-q" data-q="${esc(q)}">${esc(q)}</button>`).join("")}</div>
+    <label class="f">Your question<textarea id="coach-q" placeholder="Ask anything about your workouts, meals or goals">${esc(A.q || "")}</textarea></label>
+    <div class="row"><button class="btn primary" data-act="ask-coach"${A.busy ? " disabled" : ""}>${A.busy ? `${smHTML({ status: "running", size: 16 })} Thinking…` : "Ask"}</button>${A.busy ? `<button class="btn" data-act="ask-stop">Stop</button>` : ""}</div>
+    ${A.err ? `<div class="note">${esc(A.err)}</div>` : ""}
+    <div id="coach-out" class="streaming well"${A.text ? "" : " hidden"}>${esc(A.text || "")}</div>
+  </section>
+
   ${coachContextCard(p)}
   ${baselineCard(p)}
   ${goalPlanCard(p)}
@@ -13572,19 +13652,11 @@ function coachView(p){
       <p class="small muted">Rebuild your weekly plan and these sessions replace some of the general ones.</p>` : `<p class="small muted">Soccer, basketball, running, American football, swimming or tennis: get conditioning and skill sessions for it.</p>`}
   </section>
 
-  ${coachChatCard()}
-
-  <section class="card"${UI.sampleOk === false ? " hidden" : ""}>
-    <div class="eyebrow">Ask your coach</div><h2>Questions about training or food</h2>
-    <p class="small muted">Claude answers using your profile and this week's logs. It uses your own Claude usage and asks permission the first time.</p>
-    <div class="chips">${(WLA.lang === "es" ? ["¿Qué debería entrenar esta semana?","¿Cómo puedo incluir jollof y fufu en mi objetivo?","Me salté tres días. ¿Cómo retomo el entrenamiento?","¿Qué debería comer antes de entrenar por la mañana?"] : ["What should I train this week?","How do I fit jollof and fufu into my goal?","I missed three days. How do I restart?","What should I eat before a morning workout?"]).map(q => `<button class="chip" data-act="coach-q" data-q="${esc(q)}">${esc(q)}</button>`).join("")}</div>
-    <label class="f">Your question<textarea id="coach-q" placeholder="Ask anything about your workouts, meals or goals">${esc(A.q || "")}</textarea></label>
-    <div class="row"><button class="btn primary" data-act="ask-coach"${A.busy ? " disabled" : ""}>${A.busy ? `${smHTML({ status: "running", size: 16 })} Thinking…` : "Ask"}</button>${A.busy ? `<button class="btn" data-act="ask-stop">Stop</button>` : ""}</div>
-    ${A.err ? `<div class="note">${esc(A.err)}</div>` : ""}
-    <div id="coach-out" class="streaming well"${A.text ? "" : " hidden"}>${esc(A.text || "")}</div>
-  </section>
-
   ${typeof checkinCard === "function" ? checkinCard(p) : ""}
+
+  ${typeof coachAdviceCard === "function" ? coachAdviceCard(p) : ""}
+  ${typeof dailyCheckinCard === "function" ? dailyCheckinCard(p) : ""}
+  ${widgetSection(p, "coach")}
   ${remindersCard(p)}
   ${typeof medicalNote === "function" ? medicalNote() : ""}`;
 }
@@ -13904,9 +13976,6 @@ function settingsView(p){
     <div class="setgroup"><div class="setlabel">${tr("Motion")}</div>
       <div class="seg" role="group" aria-label="Motion"><button data-act="look-motion" data-v="full" aria-pressed="${(p.look?.motion||"full")==="full"}">Bouncy</button><button data-act="look-motion" data-v="reduced" aria-pressed="${p.look?.motion==="reduced"}">Reduced</button></div>
       <span class="tiny muted">Bouncy adds the spring animations. Reduced turns them off, and your device's own "reduce motion" setting always wins.</span></div>
-    <div class="setgroup"><div class="setlabel">Layout</div>
-      <div class="seg" role="group" aria-label="Layout"><button data-act="look-layout" data-v="app" aria-pressed="${(p.look?.layout||"app")!=="webapp"}">App</button><button data-act="look-layout" data-v="webapp" aria-pressed="${p.look?.layout==="webapp"}">Web app</button></div>
-      <span class="tiny muted">App keeps the single column. Web app spreads cards across the screen on a wide display (900px and up) and uses the sidebar layout fully. On a phone both look the same.</span></div>
     ${reviewBar(p)}
   </section>`,
     goals: `<section class="card">
@@ -14020,6 +14089,8 @@ document.addEventListener("click", async e => {
   const a = t.dataset.act, p = P();
   switch (a) {
     case "menu": setMenu(!UI.menu); break;
+    case "nav-disc": { UI.navOpen = UI.navOpen || loadNavOpen(); UI.navOpen[t.dataset.v] = !UI.navOpen[t.dataset.v]; saveNavOpen(); render(); break; }
+    case "sheet": openNavSheet(t.dataset.v, t); break;
     case "legal-more": openLegalMore(t.dataset.id, t); break;
     case "skip-main": { const m = document.querySelector(".section.active"); if (m) { m.focus({ preventScroll:true }); m.scrollIntoView({ block:"start" }); } break; }
     // onboarding
@@ -14167,7 +14238,7 @@ document.addEventListener("click", async e => {
       } catch { toast("This browser wouldn't save the file."); }
       break; }
     case "theme-toggle": toggleTheme(); break;
-    case "jump": e.preventDefault(); document.getElementById("sec-" + t.dataset.v)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"start" }); break;
+    case "health-cat": UI.healthCat = t.dataset.v; UI.browseQ = ""; render(); break;
     case "m-range": UI.mRange = +t.dataset.v; render(); break;
     case "del-metric": deleteMetric(t.dataset.k, t.dataset.d); render(); toast("Deleted"); break;
     case "photo-remove": p.photo = null; saveProfile(); render(); toast("Photo removed"); break;
@@ -14185,7 +14256,7 @@ document.addEventListener("click", async e => {
     case "ui-lang": wlaSetLang(t.dataset.v); break;
     case "look-save": wlaSave(p); break;
     case "look-discard": wlaDiscard(p); break;
-    case "look-scene": case "look-motion": case "look-font": case "look-layout": {
+    case "look-scene": case "look-motion": case "look-font": {
       p.look = { mode:"auto", accent:"blue", motion:"full", font:"system", ...(p.look||{}) }; p.look[a.slice(5)] = t.dataset.v; saveProfile(); render();
       // The accent popup lives outside #app (so render() above never touches it); repaint its
       // own swatches right away so the tapped one shows selected in well under 100ms.
@@ -16680,13 +16751,33 @@ function awardsView(p){
       : `<p class="small muted">Challenges run between the profiles in your own hub. Add one in <a href="#/settings/household">Household</a> and you'll get a scoreboard here.</p>`}
   </section>
 
-  <section class="card">
-    <div class="setrow"><h2 class="setlabel">Badge gallery</h2><span class="small muted setctl">${earnedCount} earned · ${BADGES.length - earnedCount} locked</span></div>
-    ${earnedCount === 0 ? emptyState("awards", "No badges yet. They come from what you actually log, so the first one is usually a single workout away.", ["Log a workout","#/workouts"]) : ""}
-    <div class="badges">${BADGES.map(b => { const on = badgeEarned(p, b.k); return `<div class="badge${on ? " earned" : ""}" title="${esc(b.d)}">
+  ${badgeGallery(p, earnedCount)}`;
+}
+// 8.5.5: the gallery no longer draws every badge at once. Earned / All / Locked filter, at most BADGE_BATCH at a time and a
+// Show more button. Earned badges come first (newest first), then the rest in catalogue order, so the list never reshuffles.
+const BADGE_BATCH = 24;
+function badgeGallery(p, earnedCount){
+  const f = ["earned","all","locked"].includes(UI.badgeFilter) ? UI.badgeFilter : (earnedCount ? "earned" : "all");
+  const rows = BADGES.map((b, i) => ({ b, i, on: badgeEarned(p, b.k) }));
+  const earned = rows.filter(r => r.on).sort((x, y) => (x.on < y.on ? 1 : x.on > y.on ? -1 : x.i - y.i));
+  const locked = rows.filter(r => !r.on);
+  const list = f === "earned" ? earned : f === "locked" ? locked : earned.concat(locked);
+  const shown = Math.min(list.length, Math.max(BADGE_BATCH, UI.badgeShown || BADGE_BATCH));
+  const counts = { earned: earned.length, all: BADGES.length, locked: locked.length };
+  const es = WLA.lang === "es";
+  const label = es ? { earned: "Conseguidas", all: "Todas", locked: "Bloqueadas" } : { earned: "Earned", all: "All", locked: "Locked" };
+  const empty = f === "earned" ? emptyState("awards", "No badges yet. They come from what you actually log, so the first one is usually a single workout away.", ["Log a workout","#/workouts"])
+    : f === "locked" ? `<p class="small muted">Every badge is earned. Nothing is locked.</p>` : "";
+  return `<section class="card" id="badgeGallery" aria-labelledby="badgeH">
+    <div class="setrow"><h2 class="setlabel" id="badgeH">Badge gallery</h2><span class="small muted setctl">${earnedCount} earned · ${BADGES.length - earnedCount} locked</span></div>
+    <div class="seg" role="group" aria-label="Show badges">${["earned","all","locked"].map(k => `<button type="button" data-act="badge-filter" data-v="${k}" aria-pressed="${f === k}" data-i18n-skip>${label[k]} (${counts[k]})</button>`).join("")}</div>
+    ${list.length ? `<p class="tiny muted" role="status" aria-live="polite" data-i18n-skip>${es ? `Mostrando ${shown} de ${list.length}` : `Showing ${shown} of ${list.length}`}</p>` : empty}
+    <ul class="badges" role="list">${list.slice(0, shown).map(({ b, i, on }) => `<li class="badge${on ? " earned" : ""}" data-i="${i}">
       ${medallion(b, !!on)}
       <b>${esc(b.n)}</b>
-      <span class="tiny muted">${on ? `Earned ${fmtDay(on)}` : esc(b.d)}</span></div>`; }).join("")}</div>
+      <span class="tiny muted">${esc(b.d)}</span>
+      <span class="tiny ${on ? "bd-on" : "muted"}">${on ? `${es ? "Conseguida" : "Earned"} ${fmtDay(on)}` : (es ? "Bloqueada" : "Locked")}</span></li>`).join("")}</ul>
+    ${shown < list.length ? `<button type="button" class="btn ghost badge-more" data-act="badge-more" data-i18n-skip>${es ? `Mostrar más (${list.length - shown})` : `Show more (${list.length - shown} left)`}</button>` : ""}
   </section>`;
 }
 // --- ring-closing celebration ---
@@ -16723,6 +16814,9 @@ document.addEventListener("click", e => {
   const p = P(); if (!p) return;
   switch (t.dataset.act) {
     case "board-days": UI.boardDays = +t.dataset.v; render(); break;
+    case "badge-filter": UI.badgeFilter = t.dataset.v; UI.badgeShown = BADGE_BATCH; render(); break;
+    case "badge-more": { const from = Math.max(BADGE_BATCH, UI.badgeShown || BADGE_BATCH); UI.badgeShown = from + BADGE_BATCH; render();
+      requestAnimationFrame(() => { const el = document.querySelectorAll("#badgeGallery .badge")[from]; if (el) { el.tabIndex = -1; el.focus({ preventScroll: false }); } }); break; }
     case "cel-close": closeCelebration(); break;
     case "season": { p.look = { ...(p.look || {}), season: t.dataset.v }; saveProfile(); render();
       toast(t.dataset.v === "none" ? "Seasonal theme off" : `${SEASONS.find(s => s[0] === t.dataset.v)?.[1]} theme on`, "success"); break; }
@@ -17241,8 +17335,7 @@ const PAGE_WIDGETS = {
   nutrition: ["water","estimate","calories","meals"],
   workouts:  ["workouts","steps","active","coach"],
   coach:     ["coach","workouts","calories","estimate"],
-  health:    ["steps","active","rhr","spo2","sleep","weight","water"],
-  awards:    ["workouts","calories","water"]
+  health:    ["steps","active","rhr","spo2","sleep","weight","water"]
 };
 const WIDGET_SIZES = [["s","S","Small"],["m","M","Medium"],["l","L","Large"]];
 const widgetName = k => METRICS[k]?.n || EXTRA_WIDGETS[k]?.n || k;
@@ -17310,8 +17403,8 @@ document.addEventListener("click", e => { const b = e.target.closest('[data-act=
 document.addEventListener("keydown", e => { if (e.key !== "Escape") return; const w = e.target.closest?.(".flipwrap.flipped"); if (!w) return; flipSet(w, false); w.querySelector(".flipbtn")?.focus({ preventScroll:true }); });
 function widgetSection(p, page){
   const { shown, hidden } = wlGet(p, page), editing = UI.editPage === page, asking = UI.resetAsk === page;
-  return `<div class="wsec" data-page="${page}">
-    <div class="row between"><h2 class="sec-title">${page === "home" ? "Pinned" : "Widgets"}</h2><button class="link-btn" data-act="wl-edit" data-p="${page}">${editing ? "Done" : "Edit widgets"}</button></div>
+  return `<div class="wsec" data-page="${page}" role="group" aria-label="${tr("Widgets")}">
+    <div class="wsec-bar"><button class="link-btn" data-act="wl-edit" data-p="${page}">${editing ? "Done" : "Edit widgets"}</button></div>
     <div class="wgrid${editing ? " editing" : ""}" data-page="${page}">${shown.map((w, i) => wcard(p, page, w, i, shown.length, editing)).join("") || `<div class="empty">No widgets. Tap Edit widgets to add some.</div>`}</div>
     ${editing ? `<section class="card wlist" aria-label="Hidden widgets"><b class="wlist-h">Hidden widgets</b>
       ${hidden.length ? `<ul class="wlist-rows">${hidden.map(k => `<li><span class="wlist-n">${widgetIcon(k)} ${esc(widgetName(k))}</span><button class="wadd" data-act="wl-add" data-p="${page}" data-k="${esc(k)}" aria-label="Add ${esc(widgetName(k))}"><span aria-hidden="true">+</span></button></li>`).join("")}</ul>` : `<span class="small muted">Nothing is hidden. Every widget for this page is showing.</span>`}</section>
@@ -25487,17 +25580,6 @@ h2.sec-title + .mgrid .mhead svg.ci{
 .wl-faq{border-top:1px solid rgba(127,127,127,.35)}
 .wl-faq summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
 .wl-faq p{margin:0 0 12px}
-/* ================================================================
-   FINPEX PASS 2 - Web App layout. Settings > Appearance > Layout
-   (profile look.layout, applied as html[data-layout] in applyLook).
-   Opt-in, wide screens only: below 900px Web app behaves exactly
-   like App. Cards become a two-column grid; page furniture spans.
-   ================================================================ */
-@media (min-width:900px){
-  html[data-layout="webapp"] .wrap{max-width:1280px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
-  html[data-layout="webapp"] .wrap>*{min-width:0}
-  html[data-layout="webapp"] .wrap>header,html[data-layout="webapp"] .wrap>.compact-head,html[data-layout="webapp"] .wrap>.profstrip{grid-column:1/-1}
-}
 </style>
 
 <style>
@@ -25551,5 +25633,107 @@ html .side .nav a[aria-current="page"],html .side .nav button.prem-trigger[aria-
 html .side .nav .grp{color:var(--faint);font-size:calc(11px * var(--text-scale,1));font-weight:700;letter-spacing:.08em}
 /* the Settings rail: pill only, no accent edge */
 .set-layout .setrail a.setrail-item[aria-current="page"]{box-shadow:none}
+</style>
+<style id="tidy-css">
+/* Build 8.5.5 tidy: one spacing rhythm, content that sits next to the menu, a one-row page header. */
+.wrap{gap:12px}
+.stack.lg,.section.active.stack.lg{gap:12px}
+/* Small widgets stay 4 per row and square-ish (docs/CONTEXT.md), a touch shorter on a wide page so they do not balloon. */
+@media (min-width:1000px){.app .wgrid>.ws-s{aspect-ratio:10/9}}
+@media (min-width:769px){
+  .main{padding-inline:20px;padding-block:16px 48px}
+  .wrap{max-width:1400px;margin-inline:0}
+}
+@media (min-width:701px){
+  .page-head{gap:0}
+  .ph-row{display:flex;align-items:center;gap:12px;min-height:56px}
+  .ph-spacer{display:none}
+  .ph-right{flex:1 1 auto;display:flex;align-items:center;justify-self:stretch;text-align:left;gap:12px;min-width:0;max-width:none}
+  .ph-text{align-items:flex-start;flex:1 1 auto;min-width:0}
+  .ph-text .crumbs{justify-content:flex-start;align-self:flex-start}
+  .ph-right .page-head-actions{flex:none;flex-wrap:nowrap;margin:0}
+  .ph-right .clock,.ph-right .bell-btn{margin-left:0}
+}
+@media (max-width:700px){
+  .ph-right .page-head-actions{grid-area:auto;grid-column:1/-1;margin-top:8px}
+}
+.wsec-bar{display:flex;justify-content:flex-end}
+.badges{list-style:none;margin:0;padding:0}
+.badge:focus{outline:2px solid var(--accent);outline-offset:2px}
+.badge-more{align-self:center;margin-top:12px;min-height:44px}
+#badgeGallery{display:flex;flex-direction:column;gap:12px}
+#badgeGallery .seg{align-self:flex-start;max-width:100%;flex-wrap:wrap}
+.hs-pick{display:flex;flex-direction:column;gap:8px}
+.hs-pick-l{font-size:calc(11px * var(--text-scale,1));font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.hs-status:empty{display:none}
+.hs-pick .chip{min-height:44px;padding-inline:14px}
+.chip[aria-pressed="true"]{background:var(--raise);color:var(--text);font-weight:700;box-shadow:inset 0 0 0 1px var(--line)}
+/* Recipes: names get two readable lines, the allergy line is never cut, three cards across at most (two on tablets, one on phones). */
+.dpvgrid{grid-template-columns:repeat(3,minmax(0,1fr));align-items:start}
+@media (max-width:999px){.dpvgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:559px){.dpvgrid{grid-template-columns:minmax(0,1fr)}}
+.dpv-main{padding-right:44px}
+.dpv-main h3{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;line-height:1.3;min-height:2.6em}
+.dpv-main .small{white-space:normal;overflow:visible;text-overflow:clip}
+.dpv-btn{top:0;right:0;width:44px;height:44px}
+/* Today: a next-step card first, then the rings beside the coming-up and score cards on a wide screen. */
+html .app .card.nextstep{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;height:auto;min-height:0;aspect-ratio:auto;margin:0;text-align:left}
+.nextstep .ns-txt{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 220px}
+.nextstep .ns-eyebrow{font-size:calc(11px * var(--text-scale,1));font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.nextstep .ns-title{margin:0;font-size:calc(17px * var(--text-scale,1));font-weight:600}
+.nextstep .btn{flex:none;min-height:44px}
+.mgrid.premrow{margin-top:0}
+.today-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
+.today-col{display:flex;flex-direction:column;gap:12px;min-width:0}
+@media (min-width:1100px){.today-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+/* The collapsed title bar sticks over the page when you scroll; at rest it must not push the page down. */
+.compact-head{margin-bottom:-80px}
+
+/* ---- 8.5.5 navigation: disclosure groups in the side menu, bottom bar and sheet on phones ---- */
+.navgrp-disc{display:flex;flex-direction:column;gap:2px}
+.navgrp-disc>.navdisc{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0 12px;border:0;background:none;color:var(--muted);font:inherit;font-weight:500;font-size:calc(15px * var(--text-scale,1));text-align:left;border-radius:8px;cursor:pointer;text-transform:none;letter-spacing:0}
+.navgrp-disc>.navdisc>span:not(.si-tile){flex:1;min-width:0}
+.navgrp-disc>.navdisc .navchev{flex:none;transition:transform var(--dur-tap) var(--ease-smooth)}
+.navgrp-disc>.navdisc[aria-expanded="true"] .navchev{transform:rotate(180deg)}
+@media (hover:hover) and (pointer:fine){.navgrp-disc>.navdisc:hover{background:var(--raise);color:var(--text)}}
+.navgrp-disc.holds>.navdisc{color:var(--text);font-weight:600}
+.navgrp-disc .navgrp-items{display:flex;flex-direction:column;gap:2px;padding-left:14px}
+.navgrp-disc .navgrp-items[data-shut]{display:none}
+.navgrp-disc>.navdisc:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.navgrp-disc>.navdisc:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+/* the disclosure rows match the flat link rows: line icon, no gradient tile, same type (the shared .grp rules would shrink them) */
+html .side .nav a,html .side .nav button.prem-trigger,html .side .nav a.upsell{min-height:44px}
+html .side .nav .navgrp-disc>.navdisc{color:var(--muted);font-size:calc(15px * var(--text-scale,1));font-weight:500;letter-spacing:0;text-transform:none}
+html .side .nav .navgrp-disc.holds>.navdisc{color:var(--text);font-weight:600}
+@media (hover:hover) and (pointer:fine){html .side .nav .navgrp-disc>.navdisc:hover{background:var(--raise);color:var(--text)}}
+html .side .nav .navgrp-disc>.navdisc .si-tile{background:none;box-shadow:none;border-radius:0;color:currentColor}
+html:root .side .nav .navgrp-disc>.navdisc .si-tile svg{color:currentColor!important;width:18px;height:18px;stroke-width:1.8}
+.app.rail .navgrp-disc>.navdisc{display:none}
+.app.rail .navgrp-disc .navgrp-items,.app.rail .navgrp-disc .navgrp-items[data-shut]{display:flex;padding-left:0}
+.bottombar{display:none}
+.pop-wrap.navsheet{place-items:end center;padding:0}
+.pop-wrap.navsheet .pop-card{width:min(520px,100vw);background:var(--surface);opacity:1;border-radius:var(--r-lg) var(--r-lg) 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:80vh;transform:translateY(16px)}
+.pop-wrap.navsheet.on .pop-card{transform:none}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.sheet-head h2{margin:0;font-size:calc(20px * var(--text-scale,1))}
+.sheet-list{display:flex;flex-direction:column}
+.sheet-link{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:0 4px;border-top:1px solid var(--line);color:var(--text);text-decoration:none;font-weight:600;font-size:calc(16px * var(--text-scale,1))}
+.sheet-link[aria-current="page"]{color:var(--accent)}
+.sheet-link:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+@media (max-width:767px){
+  .menu-toggle,.scrim,.side{display:none!important}
+  .app{grid-template-columns:1fr}
+  .main{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  .bottombar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--surface);border-top:1px solid var(--line);padding:4px 4px calc(4px + env(safe-area-inset-bottom))}
+  .bottombar .bb-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;min-width:44px;border:0;background:none;color:var(--muted);font:inherit;font-size:calc(11.5px * var(--text-scale,1));font-weight:600;border-radius:var(--r-sm);text-decoration:none;cursor:pointer}
+  .bottombar .bb-item.on,.bottombar .bb-item[aria-current="page"]{color:var(--text);background:var(--raise)}
+  .bottombar .bb-item:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .toast{bottom:calc(76px + env(safe-area-inset-bottom))}
+  .ph-row{display:flex;align-items:center;gap:12px;min-height:56px}
+  .ph-spacer{display:none}
+  .ph-right{flex:1 1 auto;min-width:0}
+  .ph-text{align-items:flex-start}
+  .ph-text .crumbs{justify-content:flex-start;align-self:flex-start}
+}
 </style>
 </body></html>

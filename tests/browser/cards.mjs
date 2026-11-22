@@ -106,7 +106,7 @@ const goto = async h => { await ev(`location.hash = ${JSON.stringify(h)}; true`)
 const expectFor = (mode, theme) => { const eff = theme === "midnight" ? (mode === "oled" ? "oled" : "dark") : mode; return { ground: SCHEMES[eff][0], card: SCHEMES[eff][1] }; };
 
 console.log("--- 1. pattern, every width, scheme and theme");
-const PAGES = [["#/home", 12], ["#/nutrition", 2], ["#/health", 10]];
+const PAGES = [["#/home", 12], ["#/nutrition", 2], ["#/health", 5]]; // 8.6: Health shows the pinned widgets plus one category, so the floor is 5, not 10;
 for (const w of [375, 820, 1440]) {
   await view(w);
   for (const mode of ["light", "dark", "oled"]) for (const theme of ["forest", "ocean", "sunset", "midnight"]) {

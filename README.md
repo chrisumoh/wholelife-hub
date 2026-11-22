@@ -1,6 +1,6 @@
 # Whole Life Hub
 
-A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.5 (Dev Testing), build 8.5.4**. A Web app layout option, a Coming up today card and a daily score are new. Spanish now covers logging, the 291 catalog recipes, snack preparation, coaching controls and settings; WL Coach replies follow the chosen language once the updated server function is deployed.
+A health and fitness web app: meal and snack logging, workouts, health metrics, a personal coach, food-culture meal plans and household profiles. Current build: **Update 8.6 (Dev Testing), build 8.6**. A grouped side menu with a phone bottom bar, a Next step on Today, a Coming up today card and a daily score are new; the Web app layout was removed. Spanish now covers logging, the 291 catalog recipes, snack preparation, coaching controls and settings; WL Coach replies follow the chosen language once the updated server function is deployed.
 
 ## What's in this repository
 
