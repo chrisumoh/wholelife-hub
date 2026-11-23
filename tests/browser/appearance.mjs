@@ -103,7 +103,10 @@ ok("the Spanish catalog covers every dish and snack, with the same step and way 
 await goto("#/recipes/jollof");
 ok("recipe detail: Spanish steps, ingredients and units, English dish name", await ev(`(() => { const t = document.querySelector("main")?.innerText || ""; return /Preparación/.test(t) && /Sazona el pollo/.test(t) && /arroz de grano largo/.test(t) && /tazas/.test(t) && /Jollof rice with chicken/.test(t) && !/Season the chicken/.test(t); })()`));
 await goto("#/snacks");
-ok("snack preparation text is Spanish", await ev(`(() => { const t = document.querySelector("main")?.textContent || ""; return /Mezcla 2 tazas de harina/.test(t) && !/Mix 2 cups flour/.test(t); })()`));
+// 8.6.2: the how-to text moved from every card into the Recipe drawer, which is added to the page body, not <main>.
+await ev(`document.querySelector('[data-act="snack-recipe"][data-id="chinchin"]')?.click(); true`); await sleep(400);
+ok("snack preparation text is Spanish", await ev(`(() => { const t = document.getElementById("pop-snackrecipe")?.textContent || ""; return /Mezcla 2 tazas de harina/.test(t) && !/Mix 2 cups flour/.test(t); })()`));
+await ev(`closePopover("snackrecipe"); true`); await sleep(300);
 await goto("#/coach");
 ok("coach controls are Spanish", await ev(`document.querySelector('[data-act="build-wplan"]')?.textContent.includes("Crear mi plan") && document.querySelector("#wlc")?.textContent.includes("Pregunta a WL Coach")`));
 await goto("#/settings/goals");

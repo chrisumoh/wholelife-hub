@@ -3875,7 +3875,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.1", channel: "Dev Testing", date: "2026-11-23", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.2", channel: "Dev Testing", date: "2026-11-23", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3889,6 +3889,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.1", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.2",
+      area:"Snacks",
+      title:"Snacks: a Recipe drawer, servings that show on the card, No allergens, sort and a logged-today pill",
+      bug:"The Snack ideas list was long and uneven: every card carried a folded how-to, so one open card pushed its row apart. The calories on a card stayed at one serving even after you chose 2 or 3, so the number you saw was not the number that was logged. There was no way to hide snacks with allergens or to sort by calories, nothing said how many snacks matched, and you could not see what you had already logged without scrolling back up.",
+      fix:"Each snack card now has a Recipe button, a servings choice (½, 1, 1½, 2 or 3) and Add to today on one tidy footer; the cards in a row are the same height. The calories on the card follow the serving you pick, the choice is kept for that snack while the app is open, and Add to today logs that quantity and those calories once. Recipe opens a drawer (a bottom sheet on a phone, docked to the right on a tablet or computer) with the snack's region, serving, calories, allergens (any that match the profile are marked), the how-to the app already had, the same servings choice and Add to today. It is a dialog: focus moves in and stays in, Escape, the dark area outside or changing page closes it, and focus goes back to the Recipe button. Above the list: a No allergens chip (only snacks with no allergen listed; it is pressed or not, so it is not colour alone), a Sort choice (Default order, Lowest calories, Highest calories), Clear filters when anything is on, and a line that says how many snacks match, such as Showing 23 snacks in West Africa, read out politely to screen readers. A pill beside the search box shows N logged and the calories so far today and takes you to Today's snacks. The snack list, its calories and allergens, and the logging code are the app's own: nothing was added to the food data, and the how-to text is the paragraph already in the app, in English or Spanish. Food stays text only: no pictures or icons on snacks. Spanish covers the new labels, the results line and the pill.",
+      where:"index.html: SNACK_MULTS, snackMult(), snacksView(), logSnack(), setSnackMult(), openSnackRecipe(), the hashchange and change listeners just after them, the click cases add-snack, snack-recipe, snack-recipe-add, snack-noal, snack-reset and snack-today, the 8.6.2 Snacks block in the tidy-css style (.snack-opts, .snack-sort, .snack-foot, .pop-wrap.snackdrawer), nine new WL_ES strings, APP_VERSION, WLH.changelog. tests/browser/snacks.mjs (new, 52 checks), a11y.mjs (the drawer is now one of the popup screens axe checks), appearance.mjs (the Spanish snack how-to is now read from the drawer), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/snacks.mjs, then node tests/browser/run-all.mjs. By hand: open Log > Snacks, choose All, tick No allergens and see the list shrink and the line under the chips change; set Sort to Lowest calories; pick 2 servings on a card and watch its calories double; press Add to today and see the pill and Today's snacks update; press the pill and focus lands on Today's snacks; press Recipe, change the servings in the drawer, press Add to today, then try Escape, the dark area and the Recipe button again. Switch to Spanish in Settings > Appearance and look again. Check 375, 820 and 1440px, light, dark and OLED.",
+      limits:"Checked in headless Chrome at 375, 820, 1280 and 1440px, not on a real iPad or iPhone. The drawer shows the one paragraph of how-to the app already holds for each snack, not an ingredient list and numbered steps, because the app has no per-snack ingredients or steps and none were invented; the idea file's own ingredients, steps and regional numbers were not imported. No allergens means the app lists no allergen for that snack, not a guarantee; check the label of anything you did not make. The serving choice, filters and sort are kept while the app is open and start over after a reload. The old inline How to make it dropdown on each card is gone (the drawer replaces it)." },
     { id:"8.6.1",
       area:"Coach",
       title:"Coach in four tabs (Ask, Today, Plan, Settings) and the revamped achievement medals",
@@ -11743,7 +11751,7 @@ const WL_ES = {
   "Summary":"Resumen", "Learn":"Tutoriales", "Log":"Registrar", "Plan":"Planificar", "Progress":"Progreso", "Meals":"Comidas", "Snacks":"Bocadillos",
   "Workouts & imports":"Entrenamientos e importaciones", "Recipes & meal plans":"Recetas y planes de comidas",
   "Food culture":"Cultura gastronómica", "Personal coach":"Entrenador personal", "Health data":"Datos de salud",
-  "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Today":"Hoy", "More":"Más", "Next step":"Siguiente paso", "Browse by category":"Ver por categoría", "Every metric in this category is already pinned above.":"Todas las métricas de esta categoría ya están fijadas arriba.", "Show badges":"Mostrar insignias", "Every badge is earned. Nothing is locked.":"Todas las insignias están conseguidas. Nada está bloqueado.", "You're all caught up for today.":"Hoy estás al día.", "Log water":"Registrar agua", "Log food":"Registrar comida", "Log weight":"Registrar peso", "Open workout":"Abrir entrenamiento", "No food logged yet today":"Aún no has registrado comida hoy", "No weigh-in in the last 7 days":"Sin pesaje en los últimos 7 días", "Open":"Abrir", "Mobile navigation":"Navegación móvil", "Coach sections":"Secciones del entrenador", "Five quick questions":"Cinco preguntas rápidas", "Answer them":"Responder", "No plan yet":"Aún no hay plan", "See my week":"Ver mi semana", "Go to the questions":"Ir a las preguntas", "Pick how many days you can train and build a plan on the Plan tab.":"Elige cuántos días puedes entrenar y crea un plan en la pestaña Planificar.", "Nothing is planned for today. The whole week is on the Plan tab.":"Hoy no hay nada planeado. Toda la semana está en la pestaña Planificar.", "Every one is optional. They take about a minute and live on the Settings tab.":"Todas son opcionales. Toman un minuto y están en la pestaña Ajustes.", "Answer the five questions on the Settings tab first and the plan fits you better.":"Responde primero las cinco preguntas de la pestaña Ajustes y el plan se ajustará mejor a ti.", "Close":"Cerrar", "Go Premium":"Hazte Premium",
+  "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Today":"Hoy", "More":"Más", "Next step":"Siguiente paso", "Browse by category":"Ver por categoría", "Every metric in this category is already pinned above.":"Todas las métricas de esta categoría ya están fijadas arriba.", "Show badges":"Mostrar insignias", "Every badge is earned. Nothing is locked.":"Todas las insignias están conseguidas. Nada está bloqueado.", "You're all caught up for today.":"Hoy estás al día.", "Log water":"Registrar agua", "Log food":"Registrar comida", "Log weight":"Registrar peso", "Open workout":"Abrir entrenamiento", "No food logged yet today":"Aún no has registrado comida hoy", "No weigh-in in the last 7 days":"Sin pesaje en los últimos 7 días", "Open":"Abrir", "Mobile navigation":"Navegación móvil", "1½ servings":"1½ porciones", "No allergens":"Sin alérgenos", "Sort":"Ordenar", "Default order":"Orden predeterminado", "Lowest calories":"Menos calorías", "Highest calories":"Más calorías", "Clear filters":"Quitar filtros", "Recipe":"Receta", "Servings":"Porciones", "Coach sections":"Secciones del entrenador", "Five quick questions":"Cinco preguntas rápidas", "Answer them":"Responder", "No plan yet":"Aún no hay plan", "See my week":"Ver mi semana", "Go to the questions":"Ir a las preguntas", "Pick how many days you can train and build a plan on the Plan tab.":"Elige cuántos días puedes entrenar y crea un plan en la pestaña Planificar.", "Nothing is planned for today. The whole week is on the Plan tab.":"Hoy no hay nada planeado. Toda la semana está en la pestaña Planificar.", "Every one is optional. They take about a minute and live on the Settings tab.":"Todas son opcionales. Toman un minuto y están en la pestaña Ajustes.", "Answer the five questions on the Settings tab first and the plan fits you better.":"Responde primero las cinco preguntas de la pestaña Ajustes y el plan se ajustará mejor a ti.", "Close":"Cerrar", "Go Premium":"Hazte Premium",
   "Profile":"Perfil", "Coach":"Entrenador", "Appearance":"Apariencia", "Goals & food":"Metas y comida", "Household":"Hogar",
   "App":"Aplicación", "Settings sections":"Secciones de ajustes", "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información",
   "Display":"Pantalla", "Automatic":"Automático", "Light":"Claro", "Dark":"Oscuro", "OLED black":"Negro OLED",
@@ -13460,16 +13468,26 @@ WLUpload.reg.workoutFile = { label:"Choose file", accept:".csv,.json,.tcx,text/c
 function wluScan(){ for (const el of document.querySelectorAll("[data-wlu]")) WLUpload.attach(el, WLUpload.reg[el.dataset.wlu]); }
 
 // =================== SNACKS ===================
+// ---- Snacks (8.6.2): serving multiplier on every card, No allergens, sort, a results line and a recipe drawer. The snack data and
+// the logging are the app's own; the drawer shows the app's how-to text, so nothing here adds food or nutrition data. Food stays text only.
+const SNACK_MULTS = [["0.5", "½ serving"], ["1", "1 serving"], ["1.5", "1½ servings"], ["2", "2 servings"], ["3", "3 servings"]];
+const snackMult = id => UI.snackMult?.[id] || 1;
 function snacksView(p){
   const date = today(); const log = onDate("snacks", date);
   const regs = [["west","West Africa"],["africa","Rest of Africa"],["americas","Americas & Caribbean"],["europe","Europe"],["asia","Asia & Middle East"],["all","All"]];
   const inGroup = (s, g) => g === "all" || s.r === g || (g === "africa" && AFRICA.includes(s.r) && s.r !== "west") || (g === "americas" && ["caribbean","latam","namerica"].includes(s.r)) || (g === "asia" && ["mideast","sasia","easia","seasia","casia"].includes(s.r));
-  const q = UI.snackQ.toLowerCase();
-  const list = SNACKS.filter(s => inGroup(s, UI.snackRegion) && (!q || (s.n + s.c).toLowerCase().includes(q)));
+  const q = UI.snackQ.toLowerCase(), es = WLA.lang === "es", noAl = !!UI.snackNoAl, sort = ["low","high"].includes(UI.snackSort) ? UI.snackSort : "default";
+  let list = SNACKS.filter(s => inGroup(s, UI.snackRegion) && (!q || (s.n + s.c).toLowerCase().includes(q)) && (!noAl || !s.al.length));
+  if (sort !== "default") list = [...list].sort((x, y) => sort === "low" ? x.cal - y.cal : y.cal - x.cal);
+  const dirty = !!(q || noAl || sort !== "default"), logCal = log.reduce((a, s) => a + s.cal, 0);
+  const regName = tr(regs.find(r => r[0] === UI.snackRegion)?.[1] || "All"), all = UI.snackRegion === "all";
+  const status = es ? `Mostrando ${list.length} bocadillo${list.length === 1 ? "" : "s"} en ${all ? "todas las regiones" : regName}${noAl ? " · sin alérgenos" : ""}`
+    : `Showing ${list.length} snack${list.length === 1 ? "" : "s"} in ${all ? "all regions" : regName}${noAl ? " · no allergens listed" : ""}`;
+  const pill = es ? `${log.length} registrado${log.length === 1 ? "" : "s"} · ${logCal.toLocaleString("es")} cal` : `${log.length} logged · ${logCal.toLocaleString()} cal`;
   return `
-  <section class="card cathead" style="--cc:var(--c-snack)">${cicon("cookie","var(--c-snack)",44)}<div><h2>Snacks</h2><p class="small muted">${log.length ? (WLA.lang === "es" ? `${log.reduce((a,s)=>a+s.cal,0).toLocaleString("es")} cal de ${log.length} bocadillo${log.length===1?"":"s"} hoy` : `${log.reduce((a,s)=>a+s.cal,0).toLocaleString()} cal from ${log.length} snack${log.length===1?"":"s"} today`) : tr("Nothing logged yet today")}</p></div></section>
+  <section class="card cathead" style="--cc:var(--c-snack)">${cicon("cookie","var(--c-snack)",44)}<div><h2>Snacks</h2><p class="small muted">${log.length ? (es ? `${logCal.toLocaleString("es")} cal de ${log.length} bocadillo${log.length===1?"":"s"} hoy` : `${logCal.toLocaleString()} cal from ${log.length} snack${log.length===1?"":"s"} today`) : tr("Nothing logged yet today")}</p></div></section>
   <div class="grid g2">
-    <section class="card"><div class="setrow"><div class="setlabel"><div class="eyebrow">Separate from meals</div><h2 style="margin-top:4px">Today's snacks</h2></div><span class="num mid">${log.reduce((a,s)=>a+s.cal,0)} <span class="small muted">cal</span></span></div>
+    <section class="card" id="snack-today" tabindex="-1"><div class="setrow"><div class="setlabel"><div class="eyebrow">Separate from meals</div><h2 style="margin-top:4px">Today's snacks</h2></div><span class="num mid">${logCal} <span class="small muted">cal</span></span></div>
       ${log.length ? `<div class="list">${log.map(s => `<div class="li"><span class="grow">${esc(s.name)} <span class="muted small">× ${s.qty||1}</span></span><span class="tab">${s.cal} cal</span><button class="btn sm ghost" data-act="del-snack" data-id="${s.id}" aria-label="Delete">${icon("x")}</button></div>`).join("")}</div>` : `<div class="empty small">Nothing logged yet. Pick from the list or add your own.</div>`}
     </section>
     <section class="card"><h2>Add your own snack</h2>
@@ -13477,18 +13495,55 @@ function snacksView(p){
       <button class="btn primary" data-act="log-manual-snack">Add to today</button>
     </section>
   </div>
-  <section class="card">
-    <div class="setrow"><h2 class="setlabel">Snack ideas</h2><input type="search" id="s-q" aria-label="Search snacks" value="${esc(UI.snackQ)}" placeholder="Search snacks" style="max-width:240px"></div>
+  <section class="card" id="snack-ideas">
+    <div class="setrow"><h2 class="setlabel">Snack ideas</h2>
+      <div class="setctl snack-head"><button type="button" class="chip snack-pill" data-act="snack-today" data-i18n-skip>${pill}</button><input type="search" id="s-q" aria-label="Search snacks" value="${esc(UI.snackQ)}" placeholder="Search snacks" style="max-width:240px"></div></div>
     <div class="chips" role="group" aria-label="Region" data-ring>${regs.map(([k,l]) => `<button class="chip" data-act="snack-region" data-v="${k}" aria-pressed="${UI.snackRegion===k}">${l}</button>`).join("")}</div>
-    <div class="grid g3">${list.map(s => { const hits = allergyHits(s,p); return `<div class="dish">
+    <div class="snack-opts"><button type="button" class="chip" data-act="snack-noal" aria-pressed="${noAl}">No allergens</button>
+      <label class="f snack-sort">Sort<select id="s-sort">${opt([["default","Default order"],["low","Lowest calories"],["high","Highest calories"]], sort)}</select></label>
+      ${dirty ? `<button type="button" class="btn sm ghost" data-act="snack-reset">Clear filters</button>` : ""}</div>
+    <p class="tiny muted" role="status" aria-live="polite" data-i18n-skip>${status}</p>
+    <div class="grid g3">${list.map(s => { const hits = allergyHits(s,p), m = snackMult(s.id); return `<div class="dish" data-snack="${s.id}">
       <span class="slot">${esc(s.c)}</span><h3>${esc(s.n)}</h3>
-      <span class="small muted">${esc(esCat()?.snacks[s.id]?.v || s.sv)} · <b class="tab" style="color:var(--text)">${s.cal} cal</b></span>
-      <span class="tiny ${hits.length ? "" : "muted"}">${hits.length ? `<span class="tag bad">${WLA.lang === "es" ? "Contiene" : "Contains"} ${esc(hits.join(", "))}</span>` : s.al.length ? `${WLA.lang === "es" ? "Alérgenos" : "Allergens"}: ${esc(s.al.map(esAllergen).join(", "))}` : "No common allergens"}</span>
-      <details class="how"><summary>How to make it</summary><p class="small">${esc(esCat()?.snacks[s.id]?.h || s.how)}</p></details>
-      <div class="row" style="gap:6px;margin-top:auto"><select id="sq-${s.id}" aria-label="Servings" style="width:auto">${opt([["1","1 serving"],["2","2 servings"],["0.5","½ serving"],["3","3 servings"]],"1")}</select><button class="btn sm primary" data-act="add-snack" data-id="${s.id}">Add to today</button></div>
-    </div>`; }).join("") || `<div class="empty">No snacks match.</div>`}</div>
+      <span class="small muted">${esc(esCat()?.snacks[s.id]?.v || s.sv)} · <b class="tab" data-snack-cal="${s.id}" style="color:var(--text)">${Math.round(s.cal * m)} cal</b></span>
+      <span class="tiny ${hits.length ? "" : "muted"}">${hits.length ? `<span class="tag bad">${es ? "Contiene" : "Contains"} ${esc(hits.join(", "))}</span>` : s.al.length ? `${es ? "Alérgenos" : "Allergens"}: ${esc(s.al.map(esAllergen).join(", "))}` : "No common allergens"}</span>
+      <div class="snack-foot"><button type="button" class="btn sm" data-act="snack-recipe" data-id="${s.id}" aria-haspopup="dialog" aria-label="${esc(tr("How to make it"))}: ${esc(s.n)}">Recipe</button><select id="sq-${s.id}" aria-label="Servings">${opt(SNACK_MULTS, String(m))}</select><button class="btn sm primary" data-act="add-snack" data-id="${s.id}">Add to today</button></div>
+    </div>`; }).join("") || `<div class="empty">No snacks match.${dirty ? ` <button type="button" class="btn sm" data-act="snack-reset">Clear filters</button>` : ""}</div>`}</div>
   </section>`;
 }
+function logSnack(s, q){
+  addEntry("snacks", { id: uid(), date: today(), name: s.n, qty: q, cal: Math.round(s.cal*q) }); render(); toast(`${s.n} added`, "success"); checkCelebrations(); checkAwards();
+}
+// The chosen serving count is kept per snack and shown wherever that snack's calories are: the card, the drawer and the Add buttons.
+function setSnackMult(id, m){
+  const s = SNACKS.find(x => x.id === id); if (!s) return;
+  (UI.snackMult = UI.snackMult || {})[id] = m;
+  const cal = `${Math.round(s.cal * m)} cal`;
+  document.querySelectorAll("[data-snack-cal]").forEach(e => { if (e.dataset.snackCal === id) e.textContent = cal; });
+  const c = document.getElementById("sq-" + id); if (c && +c.value !== m) c.value = String(m);
+  const d = document.getElementById("sr-mult"); if (d && d.dataset.id === id && +d.value !== m) d.value = String(m);
+  const dc = document.getElementById("sr-cal"); if (dc && d?.dataset.id === id) dc.textContent = cal;
+}
+function openSnackRecipe(id, trigger){
+  const s = SNACKS.find(x => x.id === id); if (!s) return;
+  const es = WLA.lang === "es", x = esCat()?.snacks[s.id], hits = allergyHits(s, P()), m = snackMult(id);
+  const allergy = hits.length ? `<span class="tag bad">${es ? "Contiene" : "Contains"} ${esc(hits.join(", "))}</span>` : s.al.length ? `${es ? "Alérgenos" : "Allergens"}: ${esc(s.al.map(esAllergen).join(", "))}` : esc(tr("No common allergens"));
+  const body = `<div class="sheet-head"><div><div class="eyebrow">${esc(s.c)}</div><h2 id="snackrecipe-h">${esc(s.n)}</h2></div><button type="button" class="btn icon-btn sheet-x" data-pop="close" aria-label="${esc(tr("Close"))}">${icon("x", "", 20)}</button></div>
+    <p class="small muted">${esc(x?.v || s.sv)} · <b class="tab" id="sr-cal" data-i18n-skip style="color:var(--text)">${Math.round(s.cal * m)} cal</b></p>
+    <p class="tiny">${allergy}</p>
+    <h3 class="sr-h">${esc(tr("How to make it"))}</h3>
+    <p class="small">${esc(x?.h || s.how)}</p>
+    <div class="sr-foot"><select id="sr-mult" data-id="${s.id}" aria-label="${esc(tr("Servings"))}">${opt(SNACK_MULTS, String(m))}</select><button type="button" class="btn primary" data-act="snack-recipe-add" data-id="${s.id}">${esc(tr("Add to today"))}</button></div>`;
+  const pop = openPopover("snackrecipe", { labelledby: "snackrecipe-h", width: "min(440px, 100vw)", bodyHTML: body, triggerEl: trigger, returnSel: `[data-act="snack-recipe"][data-id="${id}"]`, focusSel: ".sheet-x" });
+  pop.wrap.classList.add("snackdrawer");
+}
+window.addEventListener("hashchange", () => { if (POPOVERS.snackrecipe) POPOVERS.snackrecipe.shut(); });
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.id === "s-sort") { UI.snackSort = t.value; render(); }
+  else if (t.id === "sr-mult") setSnackMult(t.dataset.id, parseFloat(t.value) || 1);
+  else if (t.matches?.('select[id^="sq-"]')) setSnackMult(t.id.slice(3), parseFloat(t.value) || 1);
+});
 
 // =================== RECIPES ===================
 // ---- pager ----
@@ -14269,7 +14324,12 @@ document.addEventListener("click", async e => {
     case "imp-close": UI.import = null; render(); break;
     // snacks
     case "snack-region": UI.snackRegion = t.dataset.v; render(); break;
-    case "add-snack": { const s = SNACKS.find(x => x.id === t.dataset.id); const q = parseFloat(val("sq-"+s.id)) || 1; addEntry("snacks", { id: uid(), date: today(), name: s.n, qty: q, cal: Math.round(s.cal*q) }); render(); toast(`${s.n} added`, "success"); checkCelebrations(); checkAwards(); break; }
+    case "add-snack": { const s = SNACKS.find(x => x.id === t.dataset.id); logSnack(s, parseFloat(val("sq-"+s.id)) || 1); break; }
+    case "snack-recipe": openSnackRecipe(t.dataset.id, t); break;
+    case "snack-recipe-add": { const s = SNACKS.find(x => x.id === t.dataset.id); if (!s) break; closePopover("snackrecipe"); logSnack(s, snackMult(s.id)); break; }
+    case "snack-noal": UI.snackNoAl = !UI.snackNoAl; render(); break;
+    case "snack-reset": { UI.snackQ = ""; UI.snackNoAl = false; UI.snackSort = "default"; const q = document.getElementById("s-q"); if (q) q.value = ""; render(); break; }
+    case "snack-today": { const el = document.getElementById("snack-today"); if (el) { el.scrollIntoView({ block: "start" }); el.focus({ preventScroll: true }); } break; }
     case "log-manual-snack": { const n = val("s-name"), c = numv("s-cal"); if (!n || c == null) { toast("Add a snack name and calories."); return; } addEntry("snacks", { id: uid(), date: today(), name: n, qty: 1, cal: Math.round(c) }); render(); toast("Snack added"); break; }
     case "del-snack": removeEntry("snacks", t.dataset.id); render(); break;
     // recipes
@@ -26113,5 +26173,32 @@ html:root .side .nav .navgrp-disc>.navdisc .si-tile svg{color:currentColor!impor
 .cpanel{display:flex;flex-direction:column;gap:12px;min-width:0}
 .cpanel[hidden]{display:none!important}
 #today-workout .clean{margin:0}
+/* ---- 8.6.2 Snacks: serving multiplier, filters, results line and the recipe drawer ---- */
+#snack-today:focus{outline:2px solid var(--accent);outline-offset:2px}
+#snack-ideas .snack-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+#snack-ideas .snack-head input[type="search"],#snack-ideas .chip,#snack-ideas .snack-opts select{min-height:44px}
+.snack-pill{font-variant-numeric:tabular-nums}
+.snack-opts{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+label.f.snack-sort{flex-direction:row;align-items:center;gap:8px}
+.snack-sort select,.snack-sort .wl-sel{width:auto;min-width:170px}
+#snack-ideas .grid{align-items:stretch}
+.dish .snack-foot{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px;margin-top:auto;padding-top:4px}
+.dish .snack-foot .btn,.dish .snack-foot select,.dish .snack-foot .wl-sel{min-height:44px}
+.dish .snack-foot select,.dish .snack-foot .wl-sel{width:100%;min-width:0}
+.dish .snack-foot .btn.primary{grid-column:1 / -1}
+.pop-wrap.snackdrawer{place-items:end center;padding:0}
+.pop-wrap.snackdrawer .pop-card{width:min(440px,100vw);max-height:88vh;background:var(--surface);opacity:1;border-radius:var(--r-lg) var(--r-lg) 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));transform:translateY(16px);display:flex;flex-direction:column;gap:10px}
+.pop-wrap.snackdrawer.on .pop-card{transform:none}
+.snackdrawer .sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.snackdrawer .sheet-head h2{margin:2px 0 0}
+.snackdrawer .sr-h{margin:6px 0 0;font-size:calc(15px * var(--text-scale,1))}
+.snackdrawer .sr-foot{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:8px}
+.snackdrawer .sr-foot select{width:auto;min-height:44px}
+.snackdrawer .sr-foot .btn{flex:1 1 auto;min-height:44px}
+@media (min-width:768px){
+  .pop-wrap.snackdrawer{place-items:stretch end}
+  .pop-wrap.snackdrawer .pop-card{height:100%;max-height:none;border-radius:var(--r-lg) 0 0 var(--r-lg);transform:translateX(24px)}
+  .pop-wrap.snackdrawer.on .pop-card{transform:none}
+}
 </style>
 </body></html>

@@ -65,7 +65,8 @@ const STATES = {
   "age screen": { js: `(() => { UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = "next"; UI.obGateOk = false; render(); return true; })()`, out: true, see: `form[data-form="age-gate"] #ag-y` },
   "setup step 1 (coach)": { js: `(() => { UI.obDraft = newProfile(""); UI.obGate = null; UI.obGateOk = true; UI.obStep = 1; render(); return true; })()`, out: true, see: `.wl-stepper[data-step="1"] [data-act="coach-continue"]` },
   "setup step 3": { js: `(() => { UI.obDraft = newProfile(""); UI.obGate = null; UI.obGateOk = true; UI.obStep = 3; render(); return true; })()`, out: true, see: `.wl-stepper[data-step="3"] #ob-diet` },
-  "setup step 4": { js: `(() => { UI.obDraft = newProfile(""); UI.obGate = null; UI.obGateOk = true; UI.obStep = 4; render(); return true; })()`, out: true, see: `.wl-stepper[data-step="4"] [data-act="ob-choice"]` }
+  "setup step 4": { js: `(() => { UI.obDraft = newProfile(""); UI.obGate = null; UI.obGateOk = true; UI.obStep = 4; render(); return true; })()`, out: true, see: `.wl-stepper[data-step="4"] [data-act="ob-choice"]` },
+  "Snack recipe drawer": { js: `(() => { location.hash = "#/snacks"; render(); setTimeout(() => document.querySelector('[data-act="snack-recipe"]')?.click(), 200); return true; })()`, see: `#pop-snackrecipe .pop-card #sr-mult` }
 };
 console.log("--- 1. axe on every screen, 375 and 1440px, light and dark");
 for (const w of [375, 1440]) for (const mode of ["light", "dark"]) {
