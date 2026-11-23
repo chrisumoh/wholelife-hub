@@ -3875,7 +3875,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6", channel: "Dev Testing", date: "2026-11-22", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.1", channel: "Dev Testing", date: "2026-11-23", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3889,6 +3889,14 @@ const APP_VERSION = { update: "8.6", build: "8.6", channel: "Dev Testing", date:
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.1",
+      area:"Coach",
+      title:"Coach in four tabs (Ask, Today, Plan, Settings) and the revamped achievement medals",
+      bug:"Coach was one long page: the chat, check-ins, the weekly plan, sports, equipment, limits and reminders were stacked, so the thing someone came for was a long scroll away. Every badge used the same plain medal, so a first workout and a 50-workout milestone looked alike.",
+      fix:"Coach is now four tabs under the greeting card. Ask: the chat, the question box and the coach's own question. Today: the daily check-in, today's session with Mark done, coach advice, the weekly check-in and the coach widgets. Plan: the weekly plan, sports and your own goal. Settings: the five starting-point questions, equipment, things to train around and reminders. #/coach opens Ask, so the chat is first; #/coach/today, #/coach/plan and #/coach/settings open a tab, and an unknown tab name is a not-found page. Every panel is drawn and the others are hidden, and changing tab does not redraw the page, so a half-typed question or an unsaved answer is still there when you come back; the two question boxes and the goal box also keep what was typed across any redraw. The tabs follow the ARIA tabs pattern (tablist, tab and tabpanel, one tab in the tab order, arrow keys, Home and End, 44px tall, own ctab classes rather than the shared .tabs). Until the five starting-point questions are answered or skipped, Ask shows a card that opens Settings at the first question. Links that meant one part of Coach now go to it: Next step and Coming up today to Today, the skipped-questions note to Settings, Plan tomorrow to Plan. Medals: the 143 badges use the artwork from the two UI-kit files: hexagons for workout milestones, shields for streaks, seals for ring days and round medals for every activity, bronze for the first session, silver for 10 and gold with laurels for 50, each with its own colour, one of 56 icons and a star count. Locked badges have their own pale (light) or slate (dark and OLED) look and a dashed inner ring, so locked is not shown by colour alone. The artwork is hidden from screen readers (the name and the Earned / Locked line stay as text), gives each medal its own SVG ids, and does not animate under reduced motion.",
+      where:"index.html: COACH_TABS, readRoute(), coachView(), coachTabSet(), todayWorkoutCard(), coachNudgeCard(), the coach-tab click case, the .ctab keydown handler, the input mirrors for coach-q, wlc-q and goal-text, goalPlanCard() wording, comingUpItems(), NEXT_STEP_CTA, the baseline-skip note, the two coach advice actions, MEDAL_METALS, MEDAL_THEMES, MEDAL_ICONS, MEDAL_SPECIAL, MEDAL_SPORT, medalSpec(), medalSVG(), medallion(), the tidy-css block (.ctabs, .ctab, .cpanel, .mk and the --mk-* colours), WL_ES, APP_VERSION, WLH.changelog. tests/browser/navtidy.mjs (Coach section rewritten for the tabs, new medals section), run-all.mjs unchanged. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/navtidy.mjs, then node tests/browser/run-all.mjs. By hand: open Coach and it starts on Ask with the chat. Type a question, tap Plan and Ask again: the text is still there. Tap Today, Plan and Settings; use the arrow keys, Home and End on the tab row; open #/coach/plan in the address bar. On a new profile Ask shows Five quick questions and Answer them opens Settings at the first one. Open Achievements and choose All: each activity has its own medal, and Locked ones are pale with a dashed ring. Check light, dark and OLED.",
+      limits:"Checked in headless Chrome at 390, 820 and 1280px, not on a real iPad or iPhone. The tab row sits under the greeting card, so on a phone the chat starts about halfway down the first screen. The side menu keeps Coach as one entry and does not show which tab is open (the address does). Spanish covers the tab names and the new cards; most other Coach text was already English-only. The old .medal CSS is left in place, now unused." },
     { id:"8.6",
       area:"Layout",
       title:"Tidy-up: no Web app view, even spacing, grouped menu with a phone bottom bar, a Next step on Today, and tighter Coach, Achievements, Health and Recipes pages",
@@ -3896,7 +3904,7 @@ const APP_VERSION = { update: "8.6", build: "8.6", channel: "Dev Testing", date:
       fix:"Web app view: removed from Settings > Appearance; a saved choice is ignored. Spacing: content now starts 20px from the side menu, left-aligned, with 12px between cards everywhere (the card gap the design rules already use), and the page header is one row (title, Snack, Log a meal, clock, bell). Side menu: Today, Log, Plan, Coach, Progress, Learn, with Premium and Settings below; Log (Meals, Snacks, Workouts & imports), Plan (Recipes & meal plans, Food culture) and Progress (Health data, Achievements & Goals) are disclosure buttons with aria-expanded and aria-controls; the group that holds the page you are on opens itself, and what you open or shut is remembered on this device only (wlh.navopen). Phones: a fixed bottom bar with Today, Log, Plan, Coach and More (44px or larger, labelled, safe-area aware); Log, Plan and More open a sheet of the real pages (focus inside, Escape and backdrop close, focus returns to the button, closes on navigation). Today: a Next step card first, built only from the same real checks as Coming up today (water still to go, planned workout, no food logged, no weigh-in in 7 days) or a plain all-caught-up line, then the rings beside Coming up today and the score. Coach: greeting, then the chat, then Ask your coach, then the questions (baseline, goals, equipment, limits), then the weekly plan and sports, with the widgets and reminders after. Achievements: no widget grid or Widgets heading (Edit widgets stays on the other pages); the badge gallery has Earned / All / Locked with exact counts, earned first, 24 at a time with Show more, and each badge shows its description as text. Health: one category at a time chosen from Browse by category, search looks in every category with a result count, clearing it brings the chosen one back, and a metric already pinned as a widget is not drawn again below. Recipes: at most three cards across (two on tablets, one on phones), names wrap to two lines with the full name on the link, the allergy line is never cut, the preview button is 44px.",
       where:"index.html: homeView(), nextStepCard(), NEXT_STEP_CTA, coachView(), badgeGallery(), BADGE_BATCH, healthView(), sideNav(), navGroupOf(), NAV_SHEETS, bottomBarHTML(), openNavSheet(), settingsView() Appearance (Layout removed), widgetSection(), PAGE_WIDGETS, the tidy-css style block (last in the file) and the flatnav-css disclosure rules, WL_ES. tests/browser/navtidy.mjs (new, 72 checks) and run-all.mjs; finpex.mjs and widgets.mjs updated for the removed Web app layout and the removed Awards widgets, cards.mjs (the Health page floor of dashboard cards lowered from 10 to 5, because Health now shows one category), rail.mjs unchanged and passing. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
       test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/navtidy.mjs, then node tests/browser/run-all.mjs. By hand: open it on an iPad width (820 to 1180px) and on a phone. Settings > Appearance has no Layout row. The menu has six top rows; open Log, Plan and Progress. On a phone tap Log, Plan and More in the bottom bar. Summary starts with Next step. Coach starts with the chat. Achievements shows Earned / All / Locked and Show more. Health shows one category and searches all. Recipes shows three cards across on a desktop.",
-      limits:"Checked in headless Chrome at 390, 820, 1180, 1280 and 1440px in light and dark, not on a real iPad or iPhone. The medal artwork in the two UI-kit files is not ported: badges keep their current medals. Coach is ordered as one page (chat first), not split into Today / Plan / Ask / Settings tabs. Health keeps its widget row at the top as the overview. Coming up today lines with an amount in them (such as water still to go) stay in English in Spanish mode. The new bottom bar replaces the hamburger menu below 768px." },
+      limits:"Checked in headless Chrome at 390, 820, 1180, 1280 and 1440px in light and dark, not on a real iPad or iPhone. The medal artwork and the Coach tabs followed in 8.6.1. Health keeps its widget row at the top as the overview. Coming up today lines with an amount in them (such as water still to go) stay in English in Spanish mode. The new bottom bar replaces the hamburger menu below 768px." },
     { id:"8.5.4",
       area:"Menu",
       title:"Flat Finpex-style side menu",
@@ -11103,7 +11111,7 @@ function comingUpItems(p){
   const water = vitalsOf(t)?.water;
   if (water == null || water < WATER_GOAL_ML) items.push({ text: `Water: ${fmtW(WATER_GOAL_ML - (water || 0))} to go`, href: "#/metric/water" });
   const day = p.workoutPlan?.days?.find(d => d.dow === new Date().getDay());
-  if (day && !onDate("workouts", t).length) items.push({ text: `Workout planned: ${day.title || day.type} · ${day.minutes} min`, href: "#/coach" });
+  if (day && !onDate("workouts", t).length) items.push({ text: `Workout planned: ${day.title || day.type} · ${day.minutes} min`, href: "#/coach/today" });
   if (!loggedFood(t)) items.push({ text: "No food logged yet today", href: "#/nutrition" });
   const w = entries("weights", p.id);
   if (w.length && !w.some(x => x.date > addDays(t, -7))) items.push({ text: "No weigh-in in the last 7 days", href: "#/metric/weight" });
@@ -11111,7 +11119,7 @@ function comingUpItems(p){
 }
 // 8.5.5: the first card on Today answers "what should I do next". It reads the same real checks as Coming up today (water,
 // the planned workout, no food logged, no recent weigh-in) and shows the first one that applies. Nothing is made up.
-const NEXT_STEP_CTA = { "#/metric/water": "Log water", "#/coach": "Open workout", "#/nutrition": "Log food", "#/metric/weight": "Log weight" };
+const NEXT_STEP_CTA = { "#/metric/water": "Log water", "#/coach/today": "Open workout", "#/nutrition": "Log food", "#/metric/weight": "Log weight" };
 function nextStepCard(p){
   const it = comingUpItems(p)[0];
   if (!it) return `<section class="card nextstep" aria-labelledby="wlNextH"><div class="ns-txt"><span class="ns-eyebrow">Next step</span><h2 id="wlNextH" class="ns-title">You're all caught up for today.</h2></div></section>`;
@@ -11642,13 +11650,17 @@ const NAV = [
 
 // =================== ROUTER ===================
 const UI = { route:"home", param:null, menu:false, rail:false, bell:false, nTab:"all", obStep:0, obDraft:null, obChoice:null, loading:false, pendingExtras:null, navDate:null, recipeServ:4, drinkOpen:false, recFilter:{q:"",r:"",s:"",d:""}, snackRegion:"west", snackQ:"", confirmDel:null, planDays:7, premPlan:"yearly", actOpen:false, impOpen:false, planPg:1, recPg:1, dpv:null };
+// 8.6.1: the Coach page is four tabs. #/coach opens Ask (the chat) first; #/coach/today, /plan and /settings are deep links.
+const COACH_TABS = [["ask", "Ask"], ["today", "Today"], ["plan", "Plan"], ["settings", "Settings"]];
 function readRoute(){
   const h = location.hash.replace(/^#\/?/,""); const [r, p, extra] = h.split("/");
   const known = NAV.flatMap(g=>g[1]).some(n=>n[0]===r);
   UI.route = !r ? "home" : known ? r : "404"; UI.param = p ? decodeURIComponent(p) : null;
   // Alcohol is no longer its own dashboard: drinks are logged inside Meals. Old links still work.
   if (UI.route === "alcohol") { UI.route = "nutrition"; UI.param = null; }
-  if (known && (extra || (UI.param && !["recipes","settings","cat","metric","premium"].includes(r)))) UI.route = "404";
+  if (known && (extra || (UI.param && !["recipes","settings","cat","metric","premium","coach"].includes(r)))) UI.route = "404";
+  if (r === "coach" && UI.param && !COACH_TABS.some(t => t[0] === UI.param)) UI.route = "404";
+  if (UI.route === "coach") UI.coachTab = UI.param || "ask";
   if (r === "cat" && !CATS[UI.param]) UI.route = "404";
   if (r === "metric" && !METRICS[UI.param]?.fields) UI.route = "404";
   if (r === "settings" && UI.param && !SET_TABS.some(t => t[0] === UI.param)) UI.route = "404";
@@ -11731,7 +11743,7 @@ const WL_ES = {
   "Summary":"Resumen", "Learn":"Tutoriales", "Log":"Registrar", "Plan":"Planificar", "Progress":"Progreso", "Meals":"Comidas", "Snacks":"Bocadillos",
   "Workouts & imports":"Entrenamientos e importaciones", "Recipes & meal plans":"Recetas y planes de comidas",
   "Food culture":"Cultura gastronómica", "Personal coach":"Entrenador personal", "Health data":"Datos de salud",
-  "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Today":"Hoy", "More":"Más", "Next step":"Siguiente paso", "Browse by category":"Ver por categoría", "Every metric in this category is already pinned above.":"Todas las métricas de esta categoría ya están fijadas arriba.", "Show badges":"Mostrar insignias", "Every badge is earned. Nothing is locked.":"Todas las insignias están conseguidas. Nada está bloqueado.", "You're all caught up for today.":"Hoy estás al día.", "Log water":"Registrar agua", "Log food":"Registrar comida", "Log weight":"Registrar peso", "Open workout":"Abrir entrenamiento", "No food logged yet today":"Aún no has registrado comida hoy", "No weigh-in in the last 7 days":"Sin pesaje en los últimos 7 días", "Open":"Abrir", "Mobile navigation":"Navegación móvil", "Close":"Cerrar", "Go Premium":"Hazte Premium",
+  "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Today":"Hoy", "More":"Más", "Next step":"Siguiente paso", "Browse by category":"Ver por categoría", "Every metric in this category is already pinned above.":"Todas las métricas de esta categoría ya están fijadas arriba.", "Show badges":"Mostrar insignias", "Every badge is earned. Nothing is locked.":"Todas las insignias están conseguidas. Nada está bloqueado.", "You're all caught up for today.":"Hoy estás al día.", "Log water":"Registrar agua", "Log food":"Registrar comida", "Log weight":"Registrar peso", "Open workout":"Abrir entrenamiento", "No food logged yet today":"Aún no has registrado comida hoy", "No weigh-in in the last 7 days":"Sin pesaje en los últimos 7 días", "Open":"Abrir", "Mobile navigation":"Navegación móvil", "Coach sections":"Secciones del entrenador", "Five quick questions":"Cinco preguntas rápidas", "Answer them":"Responder", "No plan yet":"Aún no hay plan", "See my week":"Ver mi semana", "Go to the questions":"Ir a las preguntas", "Pick how many days you can train and build a plan on the Plan tab.":"Elige cuántos días puedes entrenar y crea un plan en la pestaña Planificar.", "Nothing is planned for today. The whole week is on the Plan tab.":"Hoy no hay nada planeado. Toda la semana está en la pestaña Planificar.", "Every one is optional. They take about a minute and live on the Settings tab.":"Todas son opcionales. Toman un minuto y están en la pestaña Ajustes.", "Answer the five questions on the Settings tab first and the plan fits you better.":"Responde primero las cinco preguntas de la pestaña Ajustes y el plan se ajustará mejor a ti.", "Close":"Cerrar", "Go Premium":"Hazte Premium",
   "Profile":"Perfil", "Coach":"Entrenador", "Appearance":"Apariencia", "Goals & food":"Metas y comida", "Household":"Hogar",
   "App":"Aplicación", "Settings sections":"Secciones de ajustes", "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información",
   "Display":"Pantalla", "Automatic":"Automático", "Light":"Claro", "Dark":"Oscuro", "OLED black":"Negro OLED",
@@ -13602,6 +13614,8 @@ function coachView(p){
   const dateFor = d => addDays(ws, (d + 6) % 7);
   const A = UI.askCoach || {};
   const sport = p.sport && SPORTS[p.sport];
+  const tab = COACH_TABS.some(t => t[0] === UI.coachTab) ? UI.coachTab : "ask";
+  const panel = (k, html) => `<div class="cpanel stack lg" role="tabpanel" id="cpanel-${k}" data-v="${k}" aria-labelledby="ctab-${k}"${tab === k ? "" : " hidden"}>${html}</div>`;
   return `
   <section class="card hero" style="--hero-tint:var(--c-coach)">
     <div class="row between"><div class="row" style="gap:6px;align-items:center"><span class="eyebrow" style="color:var(--c-coach)">${esc(coachName(p))}</span></div>
@@ -13612,8 +13626,9 @@ function coachView(p){
     <div class="row small muted"><span>Goal: <b>${esc(GOALS.find(g=>g[0]===p.goal)?.[1] || "Not set")}</b></span><span>Style: <b>${esc(STYLES.find(g=>g[0]===p.style)?.[1] || "Not set")}</b></span><span>Level: <b>${esc(LEVELS.find(g=>g[0]===p.level)?.[1])}</b></span><span>${p.freq ? `${p.freq} days a week` : "Frequency not set"}</span></div>
   </section>
 
-  ${coachChatCard()}
+  <div class="ctabs" role="tablist" aria-label="${esc(tr("Coach sections"))}">${COACH_TABS.map(([k, l]) => `<button type="button" class="ctab" role="tab" id="ctab-${k}" data-act="coach-tab" data-v="${k}" aria-controls="cpanel-${k}" aria-selected="${tab === k}" tabindex="${tab === k ? 0 : -1}">${l}</button>`).join("")}</div>
 
+  ${panel("ask", `${coachChatCard()}
   <section class="card"${UI.sampleOk === false ? " hidden" : ""}>
     <div class="eyebrow">Ask your coach</div><h2>Questions about training or food</h2>
     <p class="small muted">Claude answers using your profile and this week's logs. It uses your own Claude usage and asks permission the first time.</p>
@@ -13623,14 +13638,16 @@ function coachView(p){
     ${A.err ? `<div class="note">${esc(A.err)}</div>` : ""}
     <div id="coach-out" class="streaming well"${A.text ? "" : " hidden"}>${esc(A.text || "")}</div>
   </section>
-
   ${coachContextCard(p)}
-  ${baselineCard(p)}
-  ${goalPlanCard(p)}
-  ${gearCard(p)}
-  ${limitsCard(p)}
+  ${coachNudgeCard(p)}`)}
 
-  <section class="card">
+  ${panel("today", `${typeof dailyCheckinCard === "function" ? dailyCheckinCard(p) : ""}
+  ${todayWorkoutCard(p)}
+  ${typeof coachAdviceCard === "function" ? coachAdviceCard(p) : ""}
+  ${typeof checkinCard === "function" ? checkinCard(p) : ""}
+  ${widgetSection(p, "coach")}`)}
+
+  ${panel("plan", `<section class="card">
     <div class="setrow"><div class="setlabel"><div class="eyebrow">Workout advice</div><h2 style="margin-top:4px">Your weekly plan</h2></div>
       <div class="setctl">
         <label class="f" style="flex-direction:row;align-items:center;gap:8px">Days<input type="number" id="c-freq" min="1" max="6" value="${p.freq || 3}" style="width:70px"></label>
@@ -13651,14 +13668,59 @@ function coachView(p){
     ${sport ? `<div class="grid g3">${sport.days.map(([t, items]) => `<div class="well stack" style="gap:6px"><b>${esc(t)}</b><ul class="clean small">${items.map(([n,r]) => `<li>${esc(n)} <span class="muted">${esc(r)}</span></li>`).join("")}</ul></div>`).join("")}</div>
       <p class="small muted">Rebuild your weekly plan and these sessions replace some of the general ones.</p>` : `<p class="small muted">Soccer, basketball, running, American football, swimming or tennis: get conditioning and skill sessions for it.</p>`}
   </section>
+  ${goalPlanCard(p)}`)}
 
-  ${typeof checkinCard === "function" ? checkinCard(p) : ""}
+  ${panel("settings", `${baselineCard(p)}
+  ${gearCard(p)}
+  ${limitsCard(p)}
+  ${remindersCard(p)}`)}
 
-  ${typeof coachAdviceCard === "function" ? coachAdviceCard(p) : ""}
-  ${typeof dailyCheckinCard === "function" ? dailyCheckinCard(p) : ""}
-  ${widgetSection(p, "coach")}
-  ${remindersCard(p)}
   ${typeof medicalNote === "function" ? medicalNote() : ""}`;
+}
+// ---- Coach tabs (8.6.1) ----
+// Ask is the chat and the coach's own questions, Today is the check-in, today's session and advice, Plan is the week and sports,
+// Settings is the starting point, equipment, limits and reminders. Every panel is rendered and the inactive ones are hidden, so a
+// half-typed question or an unsaved answer is still there when someone comes back to the tab. Switching does not call render().
+function coachTabSet(k, focus){
+  if (!COACH_TABS.some(t => t[0] === k)) return;
+  UI.coachTab = k;
+  const root = document.getElementById("sec-coach"); if (!root) return;
+  root.querySelectorAll(".ctab").forEach(b => { const on = b.dataset.v === k; b.setAttribute("aria-selected", on ? "true" : "false"); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+  root.querySelectorAll(".cpanel").forEach(pn => { pn.hidden = pn.dataset.v !== k; });
+  try { history.replaceState(history.state, "", k === "ask" ? "#/coach" : `#/coach/${k}`); UI.lastKey = location.hash; } catch {}
+  // things that measure the page (the sliding selection ring, edge fades, widget flip state) skip hidden panels, so run them for the one just shown
+  try { ringSync(); flipSync(); initFx(); } catch {}
+  const bar = root.querySelector(".ctabs"); if (bar && bar.getBoundingClientRect().top < 0) bar.scrollIntoView({ block: "start" });
+}
+document.addEventListener("keydown", e => {
+  const t = e.target.closest?.(".ctab"); if (!t || e.altKey || e.ctrlKey || e.metaKey) return;
+  const tabs = [...t.parentElement.querySelectorAll(".ctab")], n = tabs.length; let i = tabs.indexOf(t);
+  if (e.key === "ArrowRight") i = (i + 1) % n; else if (e.key === "ArrowLeft") i = (i + n - 1) % n; else if (e.key === "Home") i = 0; else if (e.key === "End") i = n - 1; else return;
+  e.preventDefault(); coachTabSet(tabs[i].dataset.v, true);
+});
+function todayWorkoutCard(p){
+  const day = p.workoutPlan?.days?.find(d => d.dow === new Date().getDay());
+  const head = `<div class="eyebrow" style="color:var(--c-coach)">Today's workout</div>`;
+  if (!p.workoutPlan) return `<section class="card" id="today-workout"><div class="setrow"><div class="setlabel">${head}<h2 style="margin-top:4px">No plan yet</h2>
+    <span class="small muted">Pick how many days you can train and build a plan on the Plan tab.</span></div>
+    <button class="btn primary setctl" data-act="coach-tab" data-v="plan" data-go='[data-act="build-wplan"]'>Build my plan</button></div></section>`;
+  if (!day) return `<section class="card" id="today-workout"><div class="setrow"><div class="setlabel">${head}<h2 style="margin-top:4px">Rest day</h2>
+    <span class="small muted">Nothing is planned for today. The whole week is on the Plan tab.</span></div>
+    <button class="btn setctl" data-act="coach-tab" data-v="plan">See my week</button></div></section>`;
+  const done = entries("workouts").some(w => w.date === today() && w.type === day.type);
+  return `<section class="card" id="today-workout"><div class="setrow"><div class="setlabel">${head}
+      <h2 style="margin-top:4px">${esc(day.title)}</h2><span class="small muted">${day.minutes} min · ${esc(ACT[day.type]?.n || "")}</span></div>
+    <div class="setctl">${done ? `<span class="tag good">Done</span>` : `<button class="btn primary" data-act="mark-done" data-dow="${day.dow}">Mark done</button>`}</div></div>
+    <ul class="clean small">${applySubs(day.items, p).map(([n, r, was]) => `<li>${esc(n)} <span class="muted">${esc(r)}</span>${was ? ` <span class="tiny faint">(instead of ${esc(was)})</span>` : ""}</li>`).join("")}</ul>
+  </section>`;
+}
+// The five starting-point questions live on Settings. Until they are answered (or skipped) the chat page points to them, so the flow
+// still runs conversation, then questions, then workouts.
+function coachNudgeCard(p){
+  if (hasBaseline(baselineOf(p)) || p.coach?.skipped) return "";
+  return `<section class="card" id="coach-nudge"><div class="setrow"><div class="setlabel"><div class="eyebrow" style="color:var(--c-coach)">Five quick questions</div>
+    <h2 style="margin-top:4px">So the coach knows where to start you</h2><span class="small muted">Every one is optional. They take about a minute and live on the Settings tab.</span></div>
+    <button class="btn primary setctl" data-act="coach-tab" data-v="settings" data-go="#baseline [data-st-focus]">Answer them</button></div></section>`;
 }
 function buildICS(p){
   const r = p.reminders; const BY = ["SU","MO","TU","WE","TH","FR","SA"];
@@ -14223,6 +14285,7 @@ document.addEventListener("click", async e => {
     // coach
     case "build-wplan": p.freq = Math.max(1, Math.min(6, numv("c-freq") || p.freq || 3)); p.level = val("c-level") || p.level; if (!p.workoutGoal) p.workoutGoal = p.freq; p.workoutPlan = { created: today(), days: buildWorkoutPlan(p) }; saveProfile(); render(); toast("Workout plan ready"); break;
     case "mark-done": { const d = p.workoutPlan.days.find(x => x.dow === +t.dataset.dow); const date = addDays(weekStart(today()), (d.dow + 6) % 7); addEntry("workouts", { id: uid(), date, type: d.type, minutes: d.minutes, note: d.title, src: "Plan" }); render(); toast("Nice work. Logged.", "success"); checkCelebrations(); checkAwards(); break; }
+    case "coach-tab": { coachTabSet(t.dataset.v, !t.dataset.go); const el = t.dataset.go && document.querySelector(t.dataset.go); if (el) { el.scrollIntoView({ block: "center" }); el.focus?.({ preventScroll: true }); } break; }
     case "coach-q": UI.askCoach = { ...(UI.askCoach||{}), q: t.dataset.q }; render(); document.getElementById("coach-q")?.focus(); break;
     case "wlc-optin": coachConsentChange(true); break;
     case "wlc-send": wlCoachSend(); break;
@@ -15613,7 +15676,7 @@ function goalPlanCard(p){
     <div class="setrow"><div class="setlabel small muted">How long should the first plan be?</div>
       <div class="seg setctl" role="group" aria-label="Plan length">${[[7,"7 days"],[14,"14 days"],[21,"21 days"],[0,"Coach decides"]].map(([v, l]) => `<button data-act="plan-len" data-v="${v}" aria-pressed="${(st.len ?? 0) === v}">${l}</button>`).join("")}</div></div>
     <div class="row"><button class="btn primary" data-act="plan-make"${st.busy ? " disabled" : ""}>${st.busy ? `${smHTML({ status: "running", size: 16 })} Working it out…` : "Design my plan"}</button>
-      ${hasBaseline(baselineOf(p)) ? "" : `<span class="small muted">Answer the five questions above first and the plan fits you better.</span>`}</div>
+      ${hasBaseline(baselineOf(p)) ? "" : `<span class="small muted">Answer the five questions on the Settings tab first and the plan fits you better.</span> <button class="btn sm ghost" data-act="coach-tab" data-v="settings" data-go="#baseline [data-st-focus]">Go to the questions</button>`}</div>
   </section>`;
 }
 function proposalCard(p, pl){
@@ -15883,7 +15946,7 @@ document.addEventListener("click", async e => {
       const cur = UI.baselineStep || 1, n = COACH_Q.length;
       const to = a === "st-next" ? cur + 1 : a === "st-prev" ? cur - 1 : +t.dataset.v;
       UI.baselineStep = Math.min(n, Math.max(1, to)); render(); break; }
-    case "baseline-skip": { p.coach = p.coach || {}; p.coach.skipped = true; UI.editBaseline = false; UI.baselineDraft = null; UI.baselineStep = null; saveProfile(); render(); bellNote("Skipped. You can answer the coach's questions any time.", "#/coach"); break; }
+    case "baseline-skip": { p.coach = p.coach || {}; p.coach.skipped = true; UI.editBaseline = false; UI.baselineDraft = null; UI.baselineStep = null; saveProfile(); render(); bellNote("Skipped. You can answer the coach's questions any time.", "#/coach/settings"); break; }
     // ---- B6 plans ----
     case "plan-len": UI.planUI = { ...(UI.planUI || {}), len: +t.dataset.v, text: document.getElementById("goal-text")?.value ?? UI.planUI?.text }; render(); break;
     case "plan-make": {
@@ -16298,6 +16361,10 @@ document.addEventListener("input", e => {
   const t = e.target;
   if (t.classList?.contains("mb-grams")) { readBuilder(); paintBuilder(); }
   if (t.id === "coach-ans") UI.coachAns = { text: t.value };
+  // 8.6.1: the two coach question boxes and the goal box keep what was typed in the page state, so a re-render never empties them
+  if (t.id === "coach-q") UI.askCoach = { ...(UI.askCoach || {}), q: t.value };
+  if (t.id === "wlc-q") UI.wlc = { ...(UI.wlc || {}), q: t.value };
+  if (t.id === "goal-text") UI.planUI = { ...(UI.planUI || {}), text: t.value };
   if (t.id === "dr-qty") { const v = Number(t.value); if (v > 0) { UI.drinkQty = v; const d = drinkById(UI.drinkPick || document.getElementById("dr-k")?.value);
     const box = t.closest(".card")?.querySelector(".well .next"); if (d && box) box.textContent = `${Math.round(d.kcal * v).toLocaleString()} cal`; } }
 });
@@ -16686,21 +16753,316 @@ function challengeBoard(days = 7){
 }
 
 // =================== v7.4 AWARDS VIEW ===================
+// ---- medals (8.6): the revamped medal artwork. Each badge has a shape, an enamel colour, a metal tier and a line icon. ----
+// Ported from the supplied medal kit (143 medals: 14 milestones, then a first, a 10 and a 50 for each of the 43 activities).
+// Locked medals take their colours from --mk-* custom properties so they follow light, dark and OLED without a re-render.
+const MEDAL_METALS = {
+  bronze: {
+    stops: ["#f7c9a0", "#d48246", "#7c3f16", "#e6a06a", "#9c5222"],
+    accent: "#fbd2ab",
+    stars: 1,
+    label: "Bronze",
+  },
+  silver: {
+    stops: ["#ffffff", "#dce4ee", "#778599", "#ecf2f8", "#98a6b8"],
+    accent: "#f8fafc",
+    stars: 2,
+    label: "Silver",
+  },
+  gold: {
+    stops: ["#fff3a1", "#f5b226", "#9e5404", "#fde05c", "#d97706"],
+    accent: "#fef08a",
+    stars: 3,
+    label: "Gold",
+  },
+  platinum: {
+    stops: ["#ffffff", "#c7e3ff", "#64748b", "#e0f2fe", "#94a3b8"],
+    accent: "#e0f2fe",
+    stars: 3,
+    crownGlint: true,
+    label: "Platinum",
+  },
+  lockedDark: {
+    stops: ["#475569", "#334155", "#1e293b", "#3b475c", "#273142"],
+    accent: "#64748b",
+  },
+  lockedLight: {
+    stops: ["#e5e7eb", "#cbd5e1", "#94a3b8", "#dce3ec", "#b6c1cf"],
+    accent: "#94a3b8",
+  },
+};
+const MEDAL_THEMES = {
+  coral:      ["#fb7185", "#f43f5e", "#be123c"],
+  purple:     ["#c084fc", "#9333ea", "#581c87"],
+  rose:       ["#f472b6", "#e11d48", "#881337"],
+  blue:       ["#60a5fa", "#2563eb", "#1e3a8a"],
+  amber:      ["#fbbf24", "#d97706", "#92400e"],
+  red:        ["#f87171", "#dc2626", "#7f1d1d"],
+  emerald:    ["#34d399", "#10b981", "#047857"],
+  sky:        ["#38bdf8", "#0284c7", "#075985"],
+  indigo:     ["#818cf8", "#4f46e5", "#312e81"],
+  cyan:       ["#22d3ee", "#0891b2", "#155e75"],
+  gold:       ["#facc15", "#ca8a04", "#854d0e"],
+  slate:      ["#64748b", "#334155", "#0f172a"],
+  pink:       ["#f472b6", "#db2777", "#831843"],
+  violet:     ["#a78bfa", "#7c3aed", "#4c1d95"],
+  teal:       ["#2dd4bf", "#0d9488", "#115e59"],
+  orange:     ["#fb923c", "#ea580c", "#9a3412"],
+  royal:      ["#60a5fa", "#1d4ed8", "#172554"],
+  ochre:      ["#e5a93c", "#b47418", "#71430a"],
+  crimson:    ["#fb7185", "#be123c", "#6b0f26"],
+  turquoise:  ["#2dd4bf", "#06b6d4", "#0e7490"],
+  mint:       ["#34d399", "#059669", "#065f46"],
+  magenta:    ["#e879f9", "#c026d3", "#701a75"],
+  orchid:     ["#d946ef", "#a21caf", "#581c87"],
+  fuchsia:    ["#f0abfc", "#d946ef", "#86198f"],
+  green:      ["#4ade80", "#16a34a", "#14532d"],
+  brown:      ["#b07d52", "#7c4a26", "#4a2912"],
+  copper:     ["#e08e5a", "#b4532a", "#6c2d13"],
+  terracotta: ["#ed7d5c", "#c84b2b", "#7c2814"],
+  jade:       ["#34d399", "#0f9d76", "#065f46"],
+  lime:       ["#a3e635", "#65a30d", "#365314"],
+  chartreuse: ["#bef264", "#84cc16", "#3f6212"],
+  olive:      ["#a3b84b", "#6b7f23", "#3f4d12"],
+  forest:     ["#22c55e", "#15803d", "#14532d"],
+  ruby:       ["#f43f5e", "#9f1239", "#4c0519"],
+  rust:       ["#ea7243", "#b83c17", "#6c1f0a"],
+  ocean:      ["#38bdf8", "#0369a1", "#0c4a6e"],
+  bronze:     ["#d9935a", "#9c5a27", "#5c3111"],
+  ice:        ["#7dd3fc", "#0ea5e9", "#0369a1"],
+  frost:      ["#93c5fd", "#3b82f6", "#1d4ed8"],
+  lavender:   ["#a78bfa", "#6d28d9", "#3b0764"],
+  saddle:     ["#c68b59", "#8b5428", "#4e2c11"],
+};
+const MEDAL_ICONS = {
+  sprint: `<circle cx="15.5" cy="4.5" r="2.2" fill="currentColor"/><path d="M3 10h4M2 13.5h3.5M8.5 9.5l4-1 3.2 2.8 3.3-1.3M12.5 8.5l-2.3 5.2 4.3 2.5-1.2 4.8M10.2 13.7l-3.7 3.3-2.5-.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  dumbbell: `<rect x="8.5" y="10.5" width="7" height="3" rx="1" fill="currentColor"/><rect x="5" y="6.5" width="3" height="11" rx="1.4" fill="currentColor"/><rect x="16" y="6.5" width="3" height="11" rx="1.4" fill="currentColor"/><rect x="2" y="8.2" width="2.3" height="7.6" rx="1.1" fill="currentColor" opacity="0.88"/><rect x="19.7" y="8.2" width="2.3" height="7.6" rx="1.1" fill="currentColor" opacity="0.88"/>`,
+  hiit: `<circle cx="12" cy="4.5" r="2.1" fill="currentColor"/><path d="M5.5 7.5 12 10l6.5-2.5M12 10v5.2M12 15.2 7.5 21M12 15.2l4.5 5.8" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>`,
+  trophy: `<path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" fill="currentColor"/><path d="M7 6H4.5a1.5 1.5 0 0 0 0 3H7M17 6h2.5a1.5 1.5 0 0 1 0 3H17M12 14v4M8.5 20h7M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  flame: `<path d="M12.4 2.5S18.5 7.2 18.5 13a6.5 6.5 0 1 1-13 0c0-2.5 1.2-4.6 2.8-6.1-.1 1.7.9 2.7 1.8 2.7-.4-2.8 1-5.4 2.3-7.1Z" fill="currentColor"/><path d="M12.2 11.2s2.6 2.1 2.6 4.5a2.8 2.8 0 0 1-5.6 0c0-1.8 1.4-3.4 3-4.5Z" fill="#0f172a" opacity="0.28"/>`,
+  flameDouble: `<path d="M12.5 2S19.5 7 19.5 13.2a7.5 7.5 0 0 1-15 0c0-3 1.5-5.6 3.3-7.3-.1 2 1 3.1 2 3.2-.4-2.8 1.2-5.4 2.7-7.1Z" fill="currentColor"/><path d="M12 9.5s3.6 2.8 3.6 6a3.6 3.6 0 0 1-7.2 0c0-2.3 1.7-4.5 3.6-6Z" fill="#0f172a" opacity="0.3"/><circle cx="5.5" cy="6" r="1.1" fill="currentColor"/><circle cx="19" cy="5.2" r="1" fill="currentColor"/>`,
+  rings: `<circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="2.1"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-width="2.1" opacity="0.82"/><circle cx="12" cy="12" r="2.5" fill="none" stroke="currentColor" stroke-width="2.1" opacity="0.65"/>`,
+  calendarCheck: `<rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3v3.5M16 3v3.5M3.5 9.5h17M8.8 14.8l2.2 2.2 4.3-4.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  calendarStar: `<rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3v3.5M16 3v3.5M3.5 9.5h17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polygon points="12,11.2 13.2,13.6 15.8,14 13.9,15.8 14.4,18.4 12,17.1 9.6,18.4 10.1,15.8 8.2,14 10.8,13.6" fill="currentColor"/>`,
+  droplet: `<path d="M12 2.8S18.2 9.8 18.2 14.4a6.2 6.2 0 1 1-12.4 0C5.8 9.8 12 2.8 12 2.8Z" fill="currentColor"/><path d="M9.2 13.6c-.4 1.6.1 3.3 1.4 4.3" fill="none" stroke="#0f172a" stroke-opacity="0.28" stroke-width="1.8" stroke-linecap="round"/>`,
+  clipboard: `<rect x="5" y="4.5" width="14" height="16.5" rx="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 4.5V3.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 3.5v1M8.5 11h7M8.5 14.8h7M8.5 18.2h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>`,
+  flag: `<path d="M6 21V4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M6 4.5h12l-2.6 4.2L18 13H6Z" fill="currentColor"/>`,
+  target: `<circle cx="12" cy="12" r="8.8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><path d="M19.5 4.5 13.5 10.5M17 4.5h2.5V7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>`,
+  quarter: `<path d="M12 3.2A8.8 8.8 0 0 1 20 8.5M20 15.5a8.8 8.8 0 0 1-12 4.3M4 15.5A8.8 8.8 0 0 1 8 4.2" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><rect x="7.5" y="13" width="2.4" height="4.5" rx="1" fill="currentColor" opacity="0.8"/><rect x="10.8" y="10.2" width="2.4" height="7.3" rx="1" fill="currentColor"/><rect x="14.1" y="7.5" width="2.4" height="10" rx="1" fill="currentColor"/>`,
+  walk: `<circle cx="13" cy="4.5" r="2.1" fill="currentColor"/><path d="M12.5 7.8 11.4 13.5M12.2 8.8l-3.6 2.6-.9 2.6M12.4 8.8l3.2 2.2 1.8 1.5M11.4 13.5l3.2 3.2 1.2 4.3M11.4 13.5l-2.2 3.8-1.7 3.5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>`,
+  run: `<circle cx="15" cy="4.6" r="2.1" fill="currentColor"/><path d="M13.5 8 10.8 13.2M13.2 8.7 9 9.5 7 12M13.2 8.7l3 2.7 2.6-.9M10.8 13.2l4.2 2.4-1 5M10.8 13.2l-3.1 3.1-3.2-.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>`,
+  ride: `<circle cx="6.2" cy="16.2" r="3.6" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="17.8" cy="16.2" r="3.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M6.2 16.2 11 16.2 15 10.2 9.4 10.2Z M11 16.2 8.6 8.2M7 8.2h3.4M17.8 16.2 14.5 7.8h2.6c1.2 0 1.4 1.8.2 2.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+  spin: `<path d="M4.5 19.2h15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="16.5" cy="14.5" r="3.6" fill="currentColor" fill-opacity="0.22" stroke="currentColor" stroke-width="1.9"/><path d="M6.5 19.2 10 14.5h6.5M10 14.5 8 8.5M6.2 8.5h3.8M14.8 11 16 7h2.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="14.5" r="1.5" fill="currentColor"/>`,
+  hike: `<path d="M2.5 19 8.2 9.5 12 15.5 14.8 11 21.5 19Z" fill="currentColor" opacity="0.9"/><path d="M14.8 11V5.2l4 1.5-4 1.5" fill="currentColor" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/>`,
+  elliptical: `<path d="M4 19.2h16" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><circle cx="7.5" cy="15.5" r="3.1" fill="currentColor" fill-opacity="0.22" stroke="currentColor" stroke-width="1.9"/><path d="M18 19.2 16.8 7.5M14.8 6.8l3.6-1M13.5 7.5l2.2 8.2M7.5 15.5h8.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>`,
+  stair: `<path d="M4 19h4v-4h4v-4h4V7h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11.5" cy="5.5" r="1.8" fill="currentColor"/><path d="M11.2 8.2 9.5 11.8l2.5 1.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+  jumprope: `<circle cx="12" cy="5.2" r="2" fill="currentColor"/><path d="M12 8.2v5.4M8.5 11l3.5-1.5 3.5 1.5M10.2 17.5 12 13.6l1.8 3.9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 11.2C4.2 13.5 4.5 20.5 12 20.5s7.8-7 4.5-9.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>`,
+  row: `<path d="M3 17.8c2.2 1.2 4.2 1.2 6.4 0 2.2-1.2 4.2-1.2 6.4 0 1.8 1 3.4 1.1 5.2.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="15" cy="6.2" r="2" fill="currentColor"/><path d="M14.2 9.2 10.8 13.2 6 13.2M13.2 10.2 8.5 11M11.5 10.2 16 16.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  track: `<rect x="3.5" y="6.2" width="17" height="11.6" rx="5.8" fill="none" stroke="currentColor" stroke-width="2"/><rect x="7" y="9.4" width="10" height="5.2" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.6" opacity="0.8"/><path d="M12 6.2v3.2" stroke="currentColor" stroke-width="1.6"/>`,
+  strength: `<path d="M3 12h18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><rect x="5.2" y="6" width="2.6" height="12" rx="1.2" fill="currentColor"/><rect x="16.2" y="6" width="2.6" height="12" rx="1.2" fill="currentColor"/><rect x="2.6" y="8" width="2" height="8" rx="1" fill="currentColor" opacity="0.85"/><rect x="19.4" y="8" width="2" height="8" rx="1" fill="currentColor" opacity="0.85"/>`,
+  bodyweight: `<circle cx="18.2" cy="11.2" r="2" fill="currentColor"/><path d="M4.5 17.5 15.2 12.2M14.5 12.6v5.2M4.5 17.5l-1.5.5M14.5 17.8h2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 20h18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>`,
+  yoga: `<circle cx="12" cy="5.2" r="2.1" fill="currentColor"/><path d="M12 8.5v5.5M7.2 12.5 12 10l4.8 2.5M6.2 17.8c2-2.2 4.2-3.2 5.8-3.2s3.8 1 5.8 3.2M6.2 17.8h11.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  pilates: `<circle cx="17.5" cy="7.5" r="2" fill="currentColor"/><path d="M5 17.5 12 15.2 15.8 10.5M12 15.2 6.5 9.5M12 15.2l5 3.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7.5" cy="15.8" r="2.2" fill="none" stroke="currentColor" stroke-width="1.6" opacity="0.7"/>`,
+  stretch: `<circle cx="15.5" cy="10.2" r="2" fill="currentColor"/><path d="M4.5 18.5h15M5.5 18.5l5.5-5.2 5.5 2.4M11 13.3l-2.5-5.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  aerobics: `<circle cx="12" cy="4.6" r="2.1" fill="currentColor"/><path d="M6.5 7.5 12 9.8l5.5-2.3M12 9.8v5M12 14.8l-3.8 5.2M12 14.8l4.2 1.8 1.5-2.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  dance: `<circle cx="13.5" cy="4.5" r="2.1" fill="currentColor"/><path d="M6.5 8.5c2 1.2 4.2 1.5 6.2.8l3.8-2.3M12.2 9.5 10.8 14.2 7.5 19.5M10.8 14.2l4.8 1.6 1.2 4.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 5.5v4.5M18.5 5.5l2.2-.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>`,
+  gymnastics: `<circle cx="12" cy="14.5" r="2" fill="currentColor"/><path d="M12 11.8V6.5M12 6.5 6.5 4.2M12 6.5l5.5-2.3M12 11.8l-3.5 7.5M12 11.8l3.5 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  soccer: `<circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="12,8 15.6,10.6 14.2,14.8 9.8,14.8 8.4,10.6" fill="currentColor"/><path d="M12 8V3.5M15.6 10.6l4.6-1.5M14.2 14.8l2.8 4M9.8 14.8l-2.8 4M8.4 10.6l-4.6-1.5" fill="none" stroke="currentColor" stroke-width="1.5"/>`,
+  basketball: `<circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.4 12h17.2M12 3.4v17.2M6 5.8c2.6 2.8 2.6 9.6 0 12.4M18 5.8c-2.6 2.8-2.6 9.6 0 12.4" fill="none" stroke="currentColor" stroke-width="1.7"/>`,
+  football: `<ellipse cx="12" cy="12" rx="9" ry="5.5" transform="rotate(-35 12 12)" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.8 15.2 15.2 8.8M9.5 11.2l3.3 3.3M11.2 9.5l3.3 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>`,
+  rugby: `<ellipse cx="12" cy="12" rx="9" ry="5.8" transform="rotate(-38 12 12)" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7.2 8.5c2.2 2.4 4.8 4.9 7.3 7.2M9.5 6.8c2.1 2.2 4.6 4.6 7.2 6.8" fill="none" stroke="currentColor" stroke-width="1.6" opacity="0.8"/>`,
+  volleyball: `<circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 12c0-4.2 2.5-7.4 5.5-8.1M12 12c3.6 2.1 5.2 5.6 4.2 8.4M12 12c-3.6 2.1-7.4 1.6-9.1-.8M7.5 4.8c2.4 1.6 3.8 4.1 4.5 7.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>`,
+  cricket: `<path d="M15.8 3.8 18.8 6.8 9.8 15.8 6.8 12.8Z" fill="currentColor"/><path d="M8.3 14.3 4.8 17.8M4 18.6l1.4-1.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="17.2" cy="16.8" r="2.3" fill="currentColor"/>`,
+  baseball: `<circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6.8 5.6c2.4 2.8 2.4 10 0 12.8M17.2 5.6c-2.4 2.8-2.4 10 0 12.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-dasharray="2.2 1.8"/>`,
+  handball: `<circle cx="13" cy="4.8" r="2" fill="currentColor"/><path d="M12.5 8 10.5 13.5M12.2 8.8 8 10.5 6.2 8.2M12.4 8.8l3.8-2 2.2-1.8M10.5 13.5l3.8 2.8-.6 4.2M10.5 13.5l-3 3.5-2.2 2.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="19.5" cy="4.2" r="1.5" fill="currentColor"/>`,
+  hockey: `<path d="M6 4.5 14.5 18c.8 1.3 2.5 1.8 4.2 1.2l1.3-.5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="7.5" cy="18.2" rx="2.6" ry="1.3" fill="currentColor"/>`,
+  tennis: `<ellipse cx="14.2" cy="9.2" rx="4.8" ry="5.8" transform="rotate(35 14.2 9.2)" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10.4 13.8 5.2 19.5M12 7l4.4 4.4M10.6 9.8l3.8 3.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="6.2" cy="8.2" r="1.8" fill="currentColor"/>`,
+  badminton: `<path d="M12 16.5 6.8 6.5h10.4Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9.5 6.5 11.2 15.5M14.5 6.5 12.8 15.5M8.2 10h7.6" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="18.2" r="2.2" fill="currentColor"/>`,
+  tabletennis: `<circle cx="13.5" cy="9.5" r="5.5" fill="currentColor"/><path d="M9.6 13.4 5.2 18.2c-.6.6-.6 1.5 0 2.1.6.6 1.5.6 2.1 0l4.6-4.6" fill="currentColor"/><circle cx="6.2" cy="7.5" r="1.9" fill="currentColor"/>`,
+  squash: `<ellipse cx="14.4" cy="8.6" rx="4.2" ry="5.4" transform="rotate(38 14.4 8.6)" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M11 12.8 5.2 19.5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><circle cx="17.8" cy="17.2" r="2" fill="currentColor"/>`,
+  golf: `<path d="M9.5 20V4.5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><path d="M9.5 4.8 18 8.2 9.5 11.8Z" fill="currentColor"/><ellipse cx="11.5" cy="19.5" rx="6.2" ry="1.8" fill="none" stroke="currentColor" stroke-width="1.7"/>`,
+  boxing: `<path d="M7.5 14.5V9.5a4.5 4.5 0 0 1 9 0v2.2h1.2a2 2 0 0 1 0 4H16.5v1.8a2 2 0 0 1-2 2h-5a2 2 0 0 1-2-2v-3Z" fill="currentColor"/><path d="M7.5 16h9" stroke="#0f172a" stroke-opacity="0.32" stroke-width="1.8"/>`,
+  martialarts: `<circle cx="11.5" cy="4.6" r="2" fill="currentColor"/><path d="M11.5 7.8v5.8M6 10.2h11M11.5 13.6l-3.2 6.8M11.5 13.6l7.5-3.2" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>`,
+  wrestling: `<circle cx="8" cy="6.2" r="1.9" fill="currentColor"/><circle cx="16" cy="6.2" r="1.9" fill="currentColor"/><path d="M8.5 9.2 12 11.2 15.5 9.2M8.5 9.2 7.5 14.5 5.5 19.5M15.5 9.2 16.5 14.5 18.5 19.5M7.5 14.5l2.5 5M16.5 14.5l-2.5 5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>`,
+  swim: `<circle cx="16.2" cy="7.5" r="2" fill="currentColor"/><path d="M5.5 12.2 10 9l4.5 2.5 2.5-1.2M3 16c2 1.3 4 1.3 6 0s4-1.3 6 0 4 1.3 6 0M3 19.6c2 1.3 4 1.3 6 0s4-1.3 6 0 4 1.3 6 0" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>`,
+  kayak: `<path d="M3.5 14.5h17c-1.8 2.4-4.8 3.5-8.5 3.5s-6.7-1.1-8.5-3.5Z" fill="currentColor"/><circle cx="12" cy="7.2" r="1.9" fill="currentColor"/><path d="M6.5 18.8 17.5 7.8M5 17.8l2.5 2M16.5 6.8l2.5 2M12 9.8v4.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>`,
+  climb: `<path d="M4.5 20 13.5 4.5M13.5 4.5 19.5 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/><circle cx="12.2" cy="7.5" r="1.9" fill="currentColor"/><path d="M11.6 10.4 9.5 14.5l3 1.5-1 4M11.6 10.4l3.5-1.5M9.5 14.5l-2.5 3.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  ski: `<circle cx="14.2" cy="5.2" r="2" fill="currentColor"/><path d="M12.8 8.2 9.5 12.2l3.8 2.2-1.2 3.2M12.8 8.2l3.2 2.2 2.5-.5M4 17.8l14.5 3.2c1 .2 1.8-.3 2.2-1.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  iceskate: `<path d="M7 5.5v7.5c0 1.4 1.1 2.5 2.5 2.5h7.2c1.2 0 1.8-.8 1.5-1.8-.4-1.3-2-2.2-4.2-2.7l-1.5-5.5Z" fill="currentColor"/><path d="M5 19h13.5c1.2 0 2-.7 2.4-1.6M9 15.5V19M15 15.5V19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>`,
+  skate: `<path d="M4.5 14.5h15c1 0 1.8-.5 2.2-1.3M4.5 14.5c-1 0-1.8-.5-2.2-1.3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="7.8" cy="18" r="1.7" fill="currentColor"/><circle cx="16.2" cy="18" r="1.7" fill="currentColor"/><circle cx="12" cy="5.2" r="1.9" fill="currentColor"/><path d="M12 8v4.2M8.5 9.5h7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>`,
+  horse: `<path d="M14.5 4.2 16 6l3 2.2c.6.5.6 1.5-.1 2l-1.8 1.2-1.8-.6-1.2 2.4 2.4 5.8h-2.2l-2-4.4H9l-1.8 4.4H5l1.6-6.2c.3-1.4 1.3-2.6 2.8-3l2.6-.7 1.2-3.4Z" fill="currentColor"/>`,
+};
+function mkHexPath(cx, cy, r, cr) {
+  const pts = [];
+  for (let i = 0; i < 6; i++) {
+    const a = ((-90 + i * 60) * Math.PI) / 180;
+    pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+  }
+  let d = "";
+  for (let i = 0; i < 6; i++) {
+    const p = pts[(i + 5) % 6], c = pts[i], n = pts[(i + 1) % 6];
+    const d1 = Math.hypot(p.x - c.x, p.y - c.y);
+    const d2 = Math.hypot(n.x - c.x, n.y - c.y);
+    const x1 = c.x + ((p.x - c.x) / d1) * cr, y1 = c.y + ((p.y - c.y) / d1) * cr;
+    const x2 = c.x + ((n.x - c.x) / d2) * cr, y2 = c.y + ((n.y - c.y) / d2) * cr;
+    d += (i === 0 ? `M${x1.toFixed(2)},${y1.toFixed(2)} ` : `L${x1.toFixed(2)},${y1.toFixed(2)} `) +
+         `Q${c.x.toFixed(2)},${c.y.toFixed(2)} ${x2.toFixed(2)},${y2.toFixed(2)} `;
+  }
+  return d.trim() + " Z";
+}
+
+function mkShieldPath(inset = 0) {
+  const cx = 50, cy = 49.5, s = (44 - inset) / 44;
+  const tx = (x) => (cx + (x - cx) * s).toFixed(2);
+  const ty = (y) => (cy + (y - cy) * s).toFixed(2);
+  return [
+    `M${tx(50)},${ty(6.5)}`,
+    `C${tx(63)},${ty(6.5)} ${tx(77)},${ty(11.2)} ${tx(86.2)},${ty(16.8)}`,
+    `C${tx(88.4)},${ty(18.2)} ${tx(89.5)},${ty(20.6)} ${tx(89.5)},${ty(23.6)}`,
+    `L${tx(89.5)},${ty(47.5)}`,
+    `C${tx(89.5)},${ty(70.2)} ${tx(73.4)},${ty(85.6)} ${tx(52.4)},${ty(93.6)}`,
+    `C${tx(50.9)},${ty(94.2)} ${tx(49.1)},${ty(94.2)} ${tx(47.6)},${ty(93.6)}`,
+    `C${tx(26.6)},${ty(85.6)} ${tx(10.5)},${ty(70.2)} ${tx(10.5)},${ty(47.5)}`,
+    `L${tx(10.5)},${ty(23.6)}`,
+    `C${tx(10.5)},${ty(20.6)} ${tx(11.6)},${ty(18.2)} ${tx(13.8)},${ty(16.8)}`,
+    `C${tx(23)},${ty(11.2)} ${tx(37)},${ty(6.5)} ${tx(50)},${ty(6.5)} Z`,
+  ].join(" ");
+}
+
+function mkSealPath(cx, cy, lobes, rOuter, rInner) {
+  const step = (Math.PI * 2) / lobes;
+  let d = "";
+  for (let i = 0; i < lobes; i++) {
+    const a0 = -Math.PI / 2 + i * step;
+    const aMid = a0 + step / 2;
+    const a1 = a0 + step;
+    const x0 = cx + rInner * Math.cos(a0), y0 = cy + rInner * Math.sin(a0);
+    const xc = cx + rOuter * Math.cos(aMid), yc = cy + rOuter * Math.sin(aMid);
+    const x1 = cx + rInner * Math.cos(a1), y1 = cy + rInner * Math.sin(a1);
+    d += (i === 0 ? `M${x0.toFixed(2)},${y0.toFixed(2)} ` : "") +
+         `Q${xc.toFixed(2)},${yc.toFixed(2)} ${x1.toFixed(2)},${y1.toFixed(2)} `;
+  }
+  return d.trim() + " Z";
+}
+
+function mkStarPoints(cx, cy, outerR, innerR) {
+  const pts = [];
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 === 0 ? outerR : innerR;
+    const a = ((-90 + i * 36) * Math.PI) / 180;
+    pts.push(`${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`);
+  }
+  return pts.join(" ");
+}
+
+function mkCoinTicks(cx, cy, r1, r2, count, strokeColor) {
+  let out = "";
+  for (let i = 0; i < count; i++) {
+    const a = (i * 360 / count) * (Math.PI / 180);
+    const x1 = (cx + r1 * Math.cos(a)).toFixed(1);
+    const y1 = (cy + r1 * Math.sin(a)).toFixed(1);
+    const x2 = (cx + r2 * Math.cos(a)).toFixed(1);
+    const y2 = (cy + r2 * Math.sin(a)).toFixed(1);
+    out += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${strokeColor}" stroke-width="1.15" stroke-linecap="round"/>`;
+  }
+  return out;
+}
+
+function mkLaurels(rimGradId, isLocked) {
+  const fill = isLocked ? "rgba(148,163,184,0.35)" : `url(#${rimGradId})`;
+  const stroke = isLocked ? "rgba(148,163,184,0.45)" : "rgba(120,53,15,0.35)";
+  // Symmetrical laurel leaves curving along lower-left and lower-right rim
+  const anglesLeft = [132, 148, 164, 180, 196];
+  let leaves = "";
+  anglesLeft.forEach((deg) => {
+    const rad = (deg * Math.PI) / 180;
+    const lx = 50 + 44.5 * Math.cos(rad);
+    const ly = 50 + 44.5 * Math.sin(rad);
+    leaves += `<ellipse cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" rx="4.2" ry="2.1" transform="rotate(${deg + 55} ${lx.toFixed(1)} ${ly.toFixed(1)})" fill="${fill}" stroke="${stroke}" stroke-width="0.45"/>`;
+    // Mirrored right side
+    const rDeg = 180 - deg;
+    const rx = 50 + 44.5 * Math.cos((rDeg * Math.PI) / 180);
+    const ry = 50 + 44.5 * Math.sin((rDeg * Math.PI) / 180);
+    leaves += `<ellipse cx="${rx.toFixed(1)}" cy="${ry.toFixed(1)}" rx="4.2" ry="2.1" transform="rotate(${rDeg - 55} ${rx.toFixed(1)} ${ry.toFixed(1)})" fill="${fill}" stroke="${stroke}" stroke-width="0.45"/>`;
+  });
+  return `<g>${leaves}</g>`;
+}
+
+const MEDAL_SPECIAL = {
+  "first-workout": ["hex", "coral", "bronze", "sprint"], "ten-workouts": ["hex", "purple", "silver", "dumbbell"],
+  "fifty-workouts": ["hex", "rose", "gold", "hiit"], hundred: ["hex", "blue", "platinum", "trophy"],
+  "streak-7": ["shield", "amber", "silver", "flame"], "streak-30": ["shield", "red", "gold", "flameDouble"],
+  "perfect-day": ["seal", "emerald", "gold", "rings"], "perfect-week": ["seal", "sky", "silver", "calendarCheck"],
+  "month-rings": ["seal", "indigo", "gold", "calendarStar"], hydrated: ["seal", "cyan", "silver", "droplet"],
+  "food-logger": ["seal", "gold", "silver", "clipboard"], "early-bird": ["shield", "slate", "gold", "flag"],
+  challenge: ["shield", "pink", "gold", "target"], "three-months": ["seal", "violet", "silver", "quarter"]
+};
+// app activity key -> [enamel colour, icon]
+const MEDAL_SPORT = {
+  walk: ["teal", "walk"], run: ["orange", "run"], cycle: ["sky", "ride"], spin: ["royal", "spin"], hike: ["ochre", "hike"],
+  elliptical: ["indigo", "elliptical"], stairs: ["amber", "stair"], jumprope: ["orange", "jumprope"], row: ["emerald", "row"],
+  athletics: ["red", "track"], strength: ["purple", "strength"], calisthenics: ["violet", "bodyweight"], hiit: ["crimson", "hiit"],
+  yoga: ["teal", "yoga"], pilates: ["turquoise", "pilates"], stretch: ["mint", "stretch"], aerobics: ["magenta", "aerobics"],
+  dance: ["orchid", "dance"], gymnastics: ["fuchsia", "gymnastics"], soccer: ["green", "soccer"], basketball: ["orange", "basketball"],
+  football: ["brown", "football"], rugby: ["copper", "rugby"], volleyball: ["gold", "volleyball"], cricket: ["terracotta", "cricket"],
+  baseball: ["coral", "baseball"], handball: ["jade", "handball"], hockey: ["blue", "hockey"], tennis: ["lime", "tennis"],
+  badminton: ["chartreuse", "badminton"], tabletennis: ["rose", "tabletennis"], squash: ["olive", "squash"], golf: ["forest", "golf"],
+  boxing: ["crimson", "boxing"], martial: ["ruby", "martialarts"], wrestling: ["rust", "wrestling"], swim: ["ocean", "swim"],
+  kayak: ["cyan", "kayak"], climb: ["bronze", "climb"], ski: ["ice", "ski"], iceskate: ["frost", "iceskate"],
+  skate: ["lavender", "skate"], horse: ["saddle", "horse"]
+};
+function medalSpec(b){
+  const sp = MEDAL_SPECIAL[b.k];
+  if (sp) return { shape: sp[0], theme: sp[1], tier: sp[2], icon: sp[3] };
+  const m = /^first-(.+)$/.exec(b.k) || /^(.+)-10$/.exec(b.k) || /^(.+)-50$/.exec(b.k), s = m && MEDAL_SPORT[m[1]];
+  const tier = /^first-/.test(b.k) ? "bronze" : /-10$/.test(b.k) ? "silver" : "gold";
+  return s ? { shape: "medal", theme: s[0], tier, icon: s[1] } : { shape: "medal", theme: "blue", tier: "bronze", icon: "trophy" };
+}
+let MEDAL_SEQ = 0;
+function medalSVG(b, on, size){
+  const sp = medalSpec(b), locked = !on, uid = `mk${++MEDAL_SEQ}`, tier = MEDAL_METALS[sp.tier] || MEDAL_METALS.bronze;
+  const rim = locked ? [0, 1, 2, 3, 4].map(i => `var(--mk-r${i})`) : tier.stops;
+  const core = locked ? [0, 1, 2].map(i => `var(--mk-c${i})`) : (MEDAL_THEMES[sp.theme] || MEDAL_THEMES.blue);
+  const rimStops = rim.map((c, i) => `<stop offset="${Math.round(i / (rim.length - 1) * 100)}%" style="stop-color:${c}"/>`).join("");
+  const hair = locked ? "var(--mk-hl)" : "rgba(255,255,255,0.34)", dash = locked ? ' stroke-dasharray="3.4 2.4"' : "";
+  const groove = `rgba(15,23,42,${locked ? "0.18" : "0.28"})`, edge = "rgba(15,23,42,0.22)", ring = (r, fill) => `<circle cx="50" cy="50" r="${r}" fill="${fill}"/>`;
+  let decor = "", outer, groov, coreS, hairS, clip;
+  if (sp.shape === "hex" || sp.shape === "shield") {
+    const path = sp.shape === "hex" ? [mkHexPath(50, 50, 45.2, 7.2), mkHexPath(50, 50, 38.6, 5.8), mkHexPath(50, 50, 36.8, 5.4), mkHexPath(50, 50, 33.4, 4.6)]
+      : [mkShieldPath(0), mkShieldPath(6.2), mkShieldPath(7.9), mkShieldPath(11.2)];
+    outer = `<path d="${path[0]}" fill="url(#${uid}-rim)" stroke="${edge}" stroke-width="0.9"/>`;
+    groov = `<path d="${path[1]}" fill="${groove}"/>`; coreS = `<path d="${path[2]}" fill="url(#${uid}-bg)"/>`;
+    hairS = `<path d="${path[3]}" fill="none" style="stroke:${hair}" stroke-width="1.1"${dash.replace("3.4 2.4", "3.5 2.5")}/>`; clip = `<path d="${path[2]}"/>`;
+  } else if (sp.shape === "seal") {
+    outer = `<path d="${mkSealPath(50, 50, 12, 48.2, 41.4)}" fill="url(#${uid}-rim)" stroke="${edge}" stroke-width="0.9"/>`;
+    groov = ring(36.4, groove); coreS = ring(34.6, `url(#${uid}-bg)`);
+    hairS = `<circle cx="50" cy="50" r="31.2" fill="none" style="stroke:${hair}" stroke-width="1.1"${dash.replace("3.4 2.4", "3.5 2.5")}/>`; clip = `<circle cx="50" cy="50" r="34.6"/>`;
+  } else {
+    // activity medals differ by tier: bronze plain, silver notched coin, gold and platinum with laurels
+    const g = sp.tier === "gold" || sp.tier === "platinum" ? [41.8, 35.6, 34, 30.8] : sp.tier === "silver" ? [44, 36.8, 35, 31.8] : [43.5, 36.8, 35.2, 32];
+    if (g[0] === 41.8) decor = mkLaurels(`${uid}-rim`, locked);
+    outer = `<circle cx="50" cy="50" r="${g[0]}" fill="url(#${uid}-rim)" stroke="${edge}" stroke-width="0.9"/>`
+      + (sp.tier === "silver" ? `<g opacity="${locked ? "0.25" : "0.42"}">${mkCoinTicks(50, 50, 39.2, 42.4, 32, locked ? "#64748b" : "#334155")}</g>` : "");
+    groov = ring(g[1], groove); coreS = ring(g[2], `url(#${uid}-bg)`);
+    hairS = `<circle cx="50" cy="50" r="${g[3]}" fill="none" style="stroke:${hair}" stroke-width="1.1"${dash}/>`; clip = `<circle cx="50" cy="50" r="${g[2]}"/>`;
+  }
+  const n = tier.stars || 1, y = sp.shape === "shield" ? 77.5 : 75.2;
+  const pos = n === 1 ? [[50, y, 4.2]] : n === 2 ? [[43.8, y - 0.5, 3.9], [56.2, y - 0.5, 3.9]] : [[39.2, y - 1.8, 3.5], [50, y + 0.6, 4.3], [60.8, y - 1.8, 3.5]];
+  const stars = pos.map(([x, yy, r]) => `<polygon points="${mkStarPoints(x, yy, r, r * 0.46)}" style="fill:${locked ? "var(--mk-st)" : tier.accent}" stroke="${locked ? "none" : "rgba(15,23,42,0.24)"}" stroke-width="0.5"/>`).join("");
+  const crown = tier.crownGlint && !locked ? `<path d="M50 8.5 L51.6 12.6 L55.7 14.2 L51.6 15.8 L50 19.9 L48.4 15.8 L44.3 14.2 L48.4 12.6 Z" fill="#ffffff" stroke="rgba(14,165,233,0.45)" stroke-width="0.5"/>` : "";
+  const ticks = sp.tier === "gold" && sp.shape !== "medal" && !locked ? `<g stroke="#fef08a" stroke-width="1.35" stroke-linecap="round" opacity="0.65"><path d="M23.5 42.5c-1.5 5-1.5 10 0 15"/><path d="M76.5 42.5c1.5 5 1.5 10 0 15"/></g>` : "";
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" aria-hidden="true" focusable="false">
+    <defs><linearGradient id="${uid}-rim" x1="12%" y1="8%" x2="88%" y2="92%">${rimStops}</linearGradient>
+      <linearGradient id="${uid}-bg" x1="16%" y1="10%" x2="84%" y2="92%"><stop offset="0%" style="stop-color:${core[0]}"/><stop offset="52%" style="stop-color:${core[1]}"/><stop offset="100%" style="stop-color:${core[2]}"/></linearGradient>
+      <linearGradient id="${uid}-gl" x1="50%" y1="0%" x2="50%" y2="100%"><stop offset="0%" stop-color="#fff" stop-opacity="${locked ? "0.16" : "0.38"}"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <filter id="${uid}-sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="1.8" stdDeviation="1.4" flood-color="#020617" flood-opacity="${locked ? "0.14" : "0.36"}"/></filter>
+      <clipPath id="${uid}-cl">${clip}</clipPath></defs>
+    ${decor}${outer}${groov}${coreS}<g clip-path="url(#${uid}-cl)"><ellipse cx="50" cy="21" rx="35" ry="20" fill="url(#${uid}-gl)"/></g>${hairS}${ticks}
+    <g transform="translate(29,25.5) scale(1.75)" style="color:${locked ? "var(--mk-ic)" : "#ffffff"}" filter="url(#${uid}-sh)">${MEDAL_ICONS[sp.icon] || MEDAL_ICONS.trophy}</g>
+    <g>${stars}</g>${crown}</svg>`;
+}
 function medallion(b, earned, size = 78){
-  const [c1, c2] = WI_COLOR[b.icon] || WI_COLOR.other;
-  const u = `${b.k}-${++WI_SEQ}`;                 // one set of gradient ids per medal drawn
-  return `<span class="medal${earned ? " on" : ""}" style="--m1:${c1};--m2:${c2};width:${size}px;height:${size}px">
-    <svg viewBox="0 0 80 80" width="${size}" height="${size}" aria-hidden="true" focusable="false">
-      <defs><linearGradient id="md-${u}" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="${c2}"/><stop offset="55%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2}"/></linearGradient>
-        <linearGradient id="ms-${u}" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#fff" stop-opacity="0"/><stop offset="45%" stop-color="#fff" stop-opacity=".65"/><stop offset="60%" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
-      <circle class="md-ring" cx="40" cy="40" r="36" fill="none" stroke="url(#md-${u})" stroke-width="5"/>
-      <circle class="md-face" cx="40" cy="40" r="31" fill="url(#md-${u})" opacity=".22"/>
-      <circle cx="40" cy="40" r="31" fill="none" stroke="url(#md-${u})" stroke-width="1.5" opacity=".7"/>
-      <g transform="translate(16,16) scale(1)">${(WI_ART[b.icon] || WI_ART.other).replace(/class="/g, 'class="md-')}</g>
-      <circle class="md-shine" cx="40" cy="40" r="36" fill="none" stroke="url(#ms-${u})" stroke-width="5"/>
-    </svg></span>`;
+  return `<span class="mk${earned ? " on" : ""}" style="width:${size}px;height:${size}px">${medalSVG(b, earned, size)}</span>`;
 }
 function awardsView(p){
   refreshAwards(p);
@@ -16729,7 +17091,7 @@ function awardsView(p){
   <section class="card challenge-card">
     <div class="setrow"><div class="setlabel"><div class="eyebrow" style="color:var(--gold)">${esc(monthName)} challenge</div>
       <h2 style="margin-top:4px">${esc(ch.c.n)}</h2><span class="small muted">${esc(ch.c.d)}</span></div>
-      <div class="setctl">${medallion({k:"ch",icon:"dance"}, ch.done, 62)}</div></div>
+      <div class="setctl">${medallion({ k: "challenge" }, ch.done, 62)}</div></div>
     <div class="chal-bar"><i style="width:${Math.round(ch.pct*100)}%"></i></div>
     <div class="setrow"><span class="setlabel small">${ch.have} of ${ch.goal}${ch.done ? " · done" : ` · ${Math.round(ch.pct*100)}%`}</span>
       ${ch.done ? `<span class="tag good setctl">Badge earned ${fmtDay(p.awards.challenges[mk])}</span>` : `<span class="small muted setctl">${st.days - st.counted} day${st.days-st.counted===1?"":"s"} left</span>`}</div>
@@ -18619,7 +18981,7 @@ function coachAdviceItems(p = P()){
       const tmr = dow(addDays(today(), 1));
       items.push({ k:"evening", sig: `${inToday}|${lunch?.name || ""}|${doneToday?.id || ""}`,
         text: `${addr}today: ${bits.join(", ")}.${next} Set up ${tmr} now: decide what you'll eat first and when you'll move.`,
-        note: "From today's log.", action: { label:"Plan tomorrow", href:"#/coach" } });
+        note: "From today's log.", action: { label:"Plan tomorrow", href:"#/coach/plan" } });
     }
   }
 
@@ -18720,7 +19082,7 @@ function coachAdviceItems(p = P()){
           : id === "motivator" ? `${addr}${wDone} of ${wGoal} workouts in so far. Today didn't have one, and that's fine — tomorrow's a fresh shot at it.`
           : `${addr}${wDone}/${wGoal} done this week. Tomorrow's plan should account for the one you're behind.`,
         note: "From this week's log.",
-        action: { label:"Open tomorrow's plan", href:"#/coach" } });
+        action: { label:"Open tomorrow's plan", href:"#/coach/plan" } });
     } else if (m.days >= 3) {
       items.push({ k:"streak", sig: String(m.days),
         text: id === "enforcer" ? `${addr}${m.days}-day run, no gaps. Keep the standard where it is.`
@@ -25676,6 +26038,13 @@ html .side .nav .grp{color:var(--faint);font-size:calc(11px * var(--text-scale,1
 .dpv-main h3{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;line-height:1.3;min-height:2.6em}
 .dpv-main .small{white-space:normal;overflow:visible;text-overflow:clip}
 .dpv-btn{top:0;right:0;width:44px;height:44px}
+/* Medals (8.6): the revamped artwork carries its own locked look, so it does not use the old grey filter. */
+.mk{display:inline-grid;place-items:center;flex:none;line-height:0}
+.mk.on{animation:medalIn var(--dur-page) var(--ease-spring) both}
+.mk svg{display:block;overflow:visible}
+:root{--mk-r0:#e5e7eb;--mk-r1:#cbd5e1;--mk-r2:#94a3b8;--mk-r3:#dce3ec;--mk-r4:#b6c1cf;--mk-c0:#eef2f6;--mk-c1:#e2e8f0;--mk-c2:#cbd5e1;--mk-ic:#94a3b8;--mk-hl:rgba(100,116,139,.36);--mk-st:#94a3b8}
+:root[data-scheme="dark"],:root[data-scheme="oled"]{--mk-r0:#475569;--mk-r1:#334155;--mk-r2:#1e293b;--mk-r3:#3b475c;--mk-r4:#273142;--mk-c0:#252b3b;--mk-c1:#1b202d;--mk-c2:#131722;--mk-ic:#64748b;--mk-hl:rgba(148,163,184,.28);--mk-st:#475569}
+:root[data-motion="reduced"] .mk.on{animation:none}
 /* Today: a next-step card first, then the rings beside the coming-up and score cards on a wide screen. */
 html .app .card.nextstep{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;height:auto;min-height:0;aspect-ratio:auto;margin:0;text-align:left}
 .nextstep .ns-txt{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 220px}
@@ -25735,5 +26104,14 @@ html:root .side .nav .navgrp-disc>.navdisc .si-tile svg{color:currentColor!impor
   .ph-text{align-items:flex-start}
   .ph-text .crumbs{justify-content:flex-start;align-self:flex-start}
 }
+/* ---- 8.6.1 Coach tabs: Ask, Today, Plan, Settings. Own classes (never the shared .tabs), 44px targets, flat like the rest of the page. ---- */
+.ctabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:4px;background:var(--surface);border-radius:var(--r)}
+.ctab{display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 8px;border:0;border-radius:calc(var(--r) - 4px);background:none;color:var(--muted);font:inherit;font-size:calc(15px * var(--text-scale,1));font-weight:600;cursor:pointer;min-width:0;overflow-wrap:anywhere;text-align:center}
+.ctab[aria-selected="true"]{background:var(--raise);color:var(--text);font-weight:700}
+@media (hover:hover) and (pointer:fine){.ctab:not([aria-selected="true"]):hover{background:var(--raise);color:var(--text)}}
+.ctab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.cpanel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.cpanel[hidden]{display:none!important}
+#today-workout .clean{margin:0}
 </style>
 </body></html>

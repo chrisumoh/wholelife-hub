@@ -228,10 +228,12 @@ await send("Emulation.setTouchEmulationEnabled", { enabled: false });
 
 console.log("--- 6. other pages share the same engine");
 for (const [page, keys] of [["workouts", ["workouts", "steps", "active", "coach"]], ["nutrition", ["water", "estimate", "calories", "meals"]], ["health", ["steps", "rhr", "sleep", "weight"]], ["coach", ["coach", "workouts"]]]) {
-  await view(1440); await seed(); await goto("#/" + page);
+  // the Coach page keeps its widgets on the Today tab (8.6.1); the other tabs are hidden and have no size to measure
+  const at = "#/" + page + (page === "coach" ? "/today" : "");
+  await view(1440); await seed(); await goto(at);
   ok(`${page}: has the widget section with only an 'Edit widgets' button (no title)`, await ev(`!document.querySelector('.wsec[data-page="${page}"] .sec-title') && ${editBtn(page)}?.textContent === "Edit widgets"`));
   for (const k of keys.slice(0, 2)) {
-    await only(page, k); await goto("#/" + page);
+    await only(page, k); await goto(at);
     const sizes = {}; for (const s of ["s", "m", "l"]) { await uiSize(page, k, s); sizes[s] = await measure(page, k); }
     ok(`${page}/${k}: S, M and L differ in layout and content`, sizes.s.cls === "ws-s" && sizes.m.cls === "ws-m" && sizes.l.cls === "ws-l" && sizes.s.h < sizes.m.h + 100 && sizes.l.h > sizes.m.h * 1.4 && new Set([sizes.s.html, sizes.m.html, sizes.l.html]).size === 3, `${sizes.s.h}/${sizes.m.h}/${sizes.l.h}`);
   }

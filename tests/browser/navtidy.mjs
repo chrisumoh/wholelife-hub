@@ -212,10 +212,98 @@ await ev(`(() => { const hits = DISHES.filter(d => allergyHits(d, P()).length); 
 const al = await ev(`(() => { const small = [...document.querySelectorAll(".dpv-main .small")].find(s => /Contains/.test(s.textContent)); return small ? { text: small.textContent, whole: small.scrollWidth <= small.clientWidth + 1, h: small.getBoundingClientRect().height } : null; })()`).catch(() => null);
 ok("an allergy line is shown whole (peanut allergy, a dish that has it)", al !== null && al.whole && al.h > 0, JSON.stringify(al));
 
-console.log("--- 8. Coach opens with the conversation, then the questionnaire, then the plan");
-await view(1280, 900); await goto("#/coach"); await sleep(600);
-ok("order: greeting, chat, ask your coach, then the weekly plan; widgets after the plan", await ev(`(() => { const t = document.querySelector(".wrap").innerText; const i = s => t.indexOf(s); return i("Chat with your coach") >= 0 && i("Chat with your coach") < i("Questions about training or food") && i("Questions about training or food") < i("Your weekly plan") && (i("Edit widgets") < 0 || i("Your weekly plan") < i("Edit widgets")); })()`));
-ok("the Coach page does not open with the widgets", await ev(`(() => { const w = document.querySelector(".wsec"), c = document.getElementById("wlc"); return !w || (c && (c.compareDocumentPosition(w) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0); })()`));
+console.log("--- 8. Coach: four tabs, the chat opens first");
+const cp = () => ev(`(() => { const tabs = [...document.querySelectorAll("#sec-coach .ctab")], vis = id => { const e = document.getElementById(id); return !!e && getComputedStyle(e).display !== "none" && !e.hidden; };
+  return { tabs: tabs.map(t => t.textContent.trim()).join("|"), sel: tabs.filter(t => t.getAttribute("aria-selected") === "true").map(t => t.dataset.v).join(), tab0: tabs.filter(t => t.tabIndex === 0).map(t => t.dataset.v).join(),
+    shown: ["ask", "today", "plan", "settings"].filter(k => vis("cpanel-" + k)).join(), hash: location.hash, active: document.activeElement?.id || "" }; })()`);
+await view(1280, 900); await ev(`(() => { const p = P(); Object.assign(p, { freq: 3, level: "beginner" }); const days = buildWorkoutPlan(p), dow = new Date().getDay(); if (!days.some(d => d.dow === dow)) days.push({ ...days[0], dow }); p.workoutPlan = { created: today(), days }; p.coach = {}; saveProfile(); render(); return true; })()`);
+await goto("#/coach"); await sleep(500);
+let ct = await cp();
+ok("Coach has the tabs Ask, Today, Plan, Settings and opens on Ask", ct.tabs === "Ask|Today|Plan|Settings" && ct.sel === "ask" && ct.shown === "ask", JSON.stringify(ct));
+ok("only the chosen tab is in the tab order (roving tabindex)", ct.tab0 === "ask", JSON.stringify(ct));
+ok("each tab names a panel that exists, and the panel names the tab back", await ev(`[...document.querySelectorAll("#sec-coach .ctab")].every(t => { const pn = document.getElementById(t.getAttribute("aria-controls")); return t.getAttribute("role") === "tab" && pn && pn.getAttribute("role") === "tabpanel" && pn.getAttribute("aria-labelledby") === t.id && pn.dataset.v === t.dataset.v; }) && document.querySelector("#sec-coach .ctabs").getAttribute("role") === "tablist" && !!document.querySelector("#sec-coach .ctabs").getAttribute("aria-label")`));
+ok("the greeting card is above the tabs, the chat is the first thing under them", await ev(`(() => { const h = document.querySelector("#sec-coach .hero"), bar = document.querySelector("#sec-coach .ctabs"), c = document.getElementById("wlc"); const f = Node.DOCUMENT_POSITION_FOLLOWING; return (h.compareDocumentPosition(bar) & f) !== 0 && (bar.compareDocumentPosition(c) & f) !== 0 && c.closest("#cpanel-ask") && !document.querySelector("#cpanel-ask > :first-child:not(#wlc)"); })()`));
+ok("Ask holds the chat, the question box and the coach's question; the weekly plan is not on this tab", await ev(`(() => { const a = document.getElementById("cpanel-ask"); return !!a.querySelector("#wlc") && !!a.querySelector("#coach-q") && !!a.querySelector("#coach-context") && !a.querySelector('[data-act="build-wplan"]'); })()`));
+ok("every tab is at least 44px tall and the bar does not scroll sideways", await ev(`[...document.querySelectorAll("#sec-coach .ctab")].every(t => t.getBoundingClientRect().height >= 43.5) && document.querySelector("#sec-coach .ctabs").scrollWidth <= document.querySelector("#sec-coach .ctabs").clientWidth + 1`));
+await shot("coach-ask");
+
+await ev(`window.__panel = document.getElementById("cpanel-ask"); window.__sec = document.getElementById("sec-coach"); true`);
+await ev(`document.querySelector('#sec-coach .ctab[data-v="today"]').click(); true`); await sleep(250); ct = await cp();
+ok("clicking Today shows that panel only, selects the tab and puts #/coach/today in the address", ct.sel === "today" && ct.shown === "today" && ct.tab0 === "today" && ct.hash === "#/coach/today", JSON.stringify(ct));
+ok("switching tabs did not redraw the page (the same panel element is still there)", await ev(`document.getElementById("cpanel-ask") === window.__panel && document.getElementById("sec-coach") === window.__sec`));
+await ev(`render(); true`); await sleep(200);
+ok("a later redraw keeps the chosen tab and does not replay the page-enter animation", await ev(`(() => { const t = document.querySelector('#sec-coach .ctab[data-v="today"]'); return t.getAttribute("aria-selected") === "true" && !document.getElementById("sec-coach").classList.contains("enter") && getComputedStyle(document.getElementById("cpanel-today")).display !== "none"; })()`));
+ok("Today starts with the daily check-in, then today's workout, then the weekly check-in", await ev(`(() => { const t = document.getElementById("cpanel-today"), i = id => { const e = t.querySelector(id); return e ? [...t.children].indexOf(e.closest("#cpanel-today > *")) : -1; }; const ci = [...t.children].findIndex(c => /check|Four questions|Three quick|Plan set|Logged/i.test(c.textContent) && c.id !== "today-workout" && c.id !== "checkin"), w = i("#today-workout"), wk = i("#checkin");
+  return ci >= 0 && w > ci && wk > w; })()`));
+ok("today's session shows with a Mark done button when the plan has one for today", await ev(`(() => { const c = document.getElementById("today-workout"); return !!c && /Today's workout/.test(c.textContent) && !!c.querySelector('[data-act="mark-done"]') && c.querySelectorAll("li").length > 0; })()`));
+ok("the coach's widgets (Edit widgets) are on Today, not on the other tabs", await ev(`!!document.querySelector("#cpanel-today .wsec") && !document.querySelector("#cpanel-ask .wsec, #cpanel-plan .wsec, #cpanel-settings .wsec")`));
+const wo0 = await ev(`entries("workouts").length`);
+await ev(`document.querySelector('#today-workout [data-act="mark-done"]').click(); true`); await sleep(400);
+ok("Mark done on Today logs the session once and the card turns to Done; the tab stays", await ev(`entries("workouts").length`) === wo0 + 1 && await ev(`!!document.querySelector("#today-workout .tag.good") && document.querySelector('#sec-coach .ctab[data-v="today"]').getAttribute("aria-selected") === "true"`));
+await shot("coach-today");
+
+await ev(`document.querySelector('#sec-coach .ctab[data-v="plan"]').click(); true`); await sleep(250); ct = await cp();
+ok("the sliding selection ring is drawn on the plan-length choice as soon as Plan is shown (no redraw needed)", await ev(`(() => { const box = document.querySelector("#cpanel-plan .seg"), on = box?.querySelector('[aria-pressed="true"]'), r = box?.querySelector(":scope > .focus-ring"); if (!box || !on || !r) return false; const a = on.getBoundingClientRect(), b = r.getBoundingClientRect(); return Math.abs(a.left - b.left) < 1.5 && Math.abs(a.width - b.width) < 1.5; })()`));
+ok("Plan holds the weekly plan, sports and the goal card", ct.shown === "plan" && await ev(`(() => { const p = document.getElementById("cpanel-plan"); return !!p.querySelector('[data-act="build-wplan"]') && !!p.querySelector("#c-sport") && !!p.querySelector("#goalplan"); })()`), JSON.stringify(ct));
+await shot("coach-plan");
+await ev(`document.querySelector('#sec-coach .ctab[data-v="settings"]').click(); true`); await sleep(250); ct = await cp();
+ok("Settings holds the starting point, equipment, limits and reminders", ct.shown === "settings" && await ev(`(() => { const p = document.getElementById("cpanel-settings"); return ["#baseline", "#gear", "#limits", "#reminders"].every(s => !!p.querySelector(s)); })()`), JSON.stringify(ct));
+await shot("coach-settings");
+
+console.log("    keyboard: arrows, Home and End move between the tabs and select as they go");
+await ev(`document.querySelector('#sec-coach .ctab[data-v="ask"]').click(); document.getElementById("ctab-ask").focus(); true`); await sleep(150);
+await key("ArrowRight", "ArrowRight", 39); ct = await cp();
+ok("ArrowRight from Ask selects and focuses Today", ct.sel === "today" && ct.active === "ctab-today", JSON.stringify(ct));
+await key("End", "End", 35); ct = await cp();
+ok("End goes to Settings", ct.sel === "settings" && ct.active === "ctab-settings", JSON.stringify(ct));
+await key("ArrowRight", "ArrowRight", 39); ct = await cp();
+ok("ArrowRight from the last tab wraps to Ask", ct.sel === "ask" && ct.active === "ctab-ask", JSON.stringify(ct));
+await key("ArrowLeft", "ArrowLeft", 37); ct = await cp();
+ok("ArrowLeft from Ask wraps to Settings", ct.sel === "settings" && ct.active === "ctab-settings", JSON.stringify(ct));
+await key("Home", "Home", 36); ct = await cp();
+ok("Home goes to Ask", ct.sel === "ask" && ct.active === "ctab-ask", JSON.stringify(ct));
+
+console.log("    drafts: nothing typed is lost or sent by changing tab");
+const typeIn = (id, v) => ev(`(() => { const e = document.getElementById(${JSON.stringify(id)}); e.focus(); e.value = ${JSON.stringify(v)}; e.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`);
+await typeIn("coach-q", "What should I eat before a run?");
+await ev(`document.querySelector('#sec-coach .ctab[data-v="plan"]').click(); true`); await sleep(200);
+await ev(`document.querySelector('#sec-coach .ctab[data-v="ask"]').click(); true`); await sleep(200);
+ok("the question typed on Ask is still there after visiting Plan and coming back", await ev(`document.getElementById("coach-q").value`) === "What should I eat before a run?");
+await ev(`document.querySelector('#sec-coach .ctab[data-v="settings"]').click(); true`); await sleep(150);
+await ev(`render(); true`); await sleep(250);
+ok("it also survives a redraw while another tab is showing", await ev(`document.getElementById("coach-q").value`) === "What should I eat before a run?");
+ok("switching tabs sent nothing and saved nothing", await ev(`!UI.askCoach?.busy && !UI.askCoach?.text && !UI.wlc?.busy && !(UI.wlc?.msgs || []).length`));
+await ev(`document.querySelector('#sec-coach .ctab[data-v="ask"]').click(); true`); await sleep(150);
+await ev(`UI.askCoach = {}; render(); true`); await sleep(150);
+
+console.log("    deep links and the questions nudge");
+await goto("#/coach/plan"); await sleep(400); ct = await cp();
+ok("#/coach/plan opens on the Plan tab", ct.sel === "plan" && ct.shown === "plan" && !(await ev(`!!document.querySelector(".nf, .notfound")`)), JSON.stringify(ct));
+await goto("#/coach/settings"); await sleep(300); ct = await cp();
+ok("#/coach/settings opens on Settings", ct.sel === "settings" && ct.shown === "settings", JSON.stringify(ct));
+await goto("#/coach"); await sleep(300); ct = await cp();
+ok("#/coach after a deep link opens on Ask again (the chat first)", ct.sel === "ask" && ct.shown === "ask", JSON.stringify(ct));
+await goto("#/coach/nonsense"); await sleep(300);
+ok("an unknown tab name is a not-found page, not a blank Coach", await ev(`UI.route === "404" && !document.querySelector("#sec-coach .ctabs")`));
+ok("the side menu still marks Coach as current on a tab address", await (async () => { await goto("#/coach/today"); await sleep(300); return ev(`[...document.querySelectorAll('.side .nav [aria-current="page"]')].map(a => a.textContent.trim()).join() === "Coach"`); })());
+await goto("#/coach"); await sleep(300);
+ok("until the five questions are answered the Ask tab points to them", await ev(`!!document.querySelector("#cpanel-ask #coach-nudge")`));
+await ev(`document.querySelector('#coach-nudge [data-act="coach-tab"]').click(); true`); await sleep(400); ct = await cp();
+ok("Answer them opens Settings and puts the cursor in the first question", ct.sel === "settings" && await ev(`document.activeElement?.id === "bq-pushups" || !!document.activeElement?.closest?.("#baseline")`), JSON.stringify(ct) + " " + await ev(`document.activeElement?.outerHTML?.slice(0, 80)`));
+await ev(`P().coach = { skipped: true }; render(); true`); await goto("#/coach"); await sleep(300);
+ok("once the questions are skipped the nudge is gone", await ev(`!document.querySelector("#coach-nudge")`));
+await ev(`P().workoutPlan = null; render(); true`); await goto("#/coach/today"); await sleep(300);
+ok("with no plan, Today offers Build my plan and it opens the Plan tab at the button", await ev(`!!document.querySelector("#today-workout") && /No plan yet/.test(document.getElementById("today-workout").textContent)`));
+await ev(`document.querySelector('#today-workout [data-act="coach-tab"]').click(); true`); await sleep(400); ct = await cp();
+ok("…and the focus lands on the Build my plan button", ct.sel === "plan" && await ev(`document.activeElement?.dataset?.act === "build-wplan"`), JSON.stringify(ct));
+
+console.log("    phone width and Spanish");
+await view(390, 800); await goto("#/coach"); await sleep(500);
+ok("phone: four tabs in one row, 44px tall, no sideways scroll", await ev(`(() => { const t = [...document.querySelectorAll("#sec-coach .ctab")], tops = new Set(t.map(x => Math.round(x.getBoundingClientRect().top))); return t.length === 4 && tops.size === 1 && t.every(x => x.getBoundingClientRect().height >= 43.5) && document.documentElement.scrollWidth <= innerWidth + 1; })()`));
+await ev(`wlaSetLang("es"); true`); await sleep(500); await goto("#/coach"); await sleep(500);
+ok("Spanish: tab names and the tab list label are translated", await ev(`[...document.querySelectorAll("#sec-coach .ctab")].map(t => t.textContent.trim()).join("|")`) === "Preguntar|Hoy|Planificar|Ajustes" && await ev(`document.querySelector("#sec-coach .ctabs").getAttribute("aria-label")`) === "Secciones del entrenador");
+await ev(`wlaSetLang("en"); true`); await sleep(400);
+await view(1280, 900);
 
 console.log("--- 9. Icon-only rail keeps every page reachable");
 await view(1280, 900); await ev(`UI.rail = true; saveRail(true); render(); true`); await sleep(500);
@@ -224,6 +312,35 @@ ok("every destination shows as an icon (12 rows) even when a group was left shut
 ok("each icon-only link has a name (label or tooltip text)", rl.names.every(n => n && n.length > 1), JSON.stringify(rl.names));
 ok("the group header buttons are not drawn in the icon-only rail", rl.shown === "none", JSON.stringify(rl));
 await ev(`UI.rail = false; saveRail(false); render(); true`);
+
+console.log("--- 10. Medals: every badge has its own artwork, earned and locked, in all three looks");
+await view(1280, 900); await ev(`UI.badgeFilter = "all"; UI.badgeShown = 500; render(); true`); await goto("#/awards"); await sleep(500);
+const md = await ev(`(() => { const bad = [], seen = new Set();
+  for (const b of BADGES) { const sp = medalSpec(b); const fallback = !MEDAL_SPECIAL[b.k] && !(/^(?:first-(.+)|(.+)-10|(.+)-50)$/.exec(b.k) && MEDAL_SPORT[/^first-(.+)$/.exec(b.k)?.[1] || /^(.+)-10$/.exec(b.k)?.[1] || /^(.+)-50$/.exec(b.k)?.[1]]);
+    if (fallback || !MEDAL_ICONS[sp.icon] || !MEDAL_THEMES[sp.theme] || !MEDAL_METALS[sp.tier]) bad.push(b.k + ":" + JSON.stringify(sp)); }
+  const g = document.getElementById("badgeGallery"), ids = [...g.querySelectorAll("svg [id]")].map(e => e.id), dup = ids.filter((x, i) => ids.indexOf(x) !== i);
+  const lis = [...g.querySelectorAll(".badge")];
+  const earned = lis.filter(l => l.classList.contains("earned")), locked = lis.filter(l => !l.classList.contains("earned"));
+  return { total: BADGES.length, bad, shown: lis.length, dup: dup.length, svgHidden: lis.every(l => l.querySelector(".mk svg")?.getAttribute("aria-hidden") === "true"), named: lis.every(l => (l.querySelector("b")?.textContent || "").length > 2),
+    earnedN: earned.length, lockedN: locked.length, earnedOn: earned.every(l => l.querySelector(".mk.on")), lockedOff: locked.every(l => !l.querySelector(".mk.on")),
+    dashedLocked: locked.every(l => /stroke-dasharray/.test(l.querySelector(".mk svg").innerHTML)), dashedEarned: earned.some(l => /stroke-dasharray/.test(l.querySelector(".mk svg").innerHTML)), size: lis[0].querySelector(".mk").getBoundingClientRect().width,
+    labels: lis.every(l => /Earned|Locked/.test(l.textContent)) }; })()`);
+ok("all 143 badges are drawn with their own spec (no fallback) and the icon, colour and metal exist", md.shown === md.total && md.bad.length === 0, JSON.stringify(md.bad.slice(0, 5)) + " shown " + md.shown);
+ok("no two medals share an SVG id", md.dup === 0, JSON.stringify(md));
+ok("the artwork is hidden from screen readers and every badge still has a name and an Earned / Locked line", md.svgHidden && md.named && md.labels, JSON.stringify(md));
+ok("earned medals are in full colour, locked ones carry a dashed ring as well as the paler colour (not colour alone)", md.earnedOn && md.lockedOff && md.dashedLocked && !md.dashedEarned && md.lockedN >= 100, JSON.stringify(md));
+ok("a gallery medal is 78px across", Math.round(md.size) === 78, JSON.stringify(md.size));
+const shape = await ev(`(() => { const sh = k => { const sp = medalSpec({ k }); return sp.shape + "/" + sp.tier; }; return [sh("first-workout"), sh("streak-7"), sh("perfect-day"), sh("first-run"), sh("run-10"), sh("run-50"), sh("hundred")].join(" "); })()`);
+ok("shapes and metals follow the kit: hex, shield and seal for milestones; bronze, silver, gold for first, 10 and 50", shape === "hex/bronze shield/silver seal/gold medal/bronze medal/silver medal/gold hex/platinum", shape);
+const sch = {};
+for (const sc of ["light", "dark", "oled"]) { await ev(`document.documentElement.dataset.scheme = ${JSON.stringify(sc)}; true`); await sleep(150); sch[sc] = await ev(`getComputedStyle(document.documentElement).getPropertyValue("--mk-r0").trim() + "|" + getComputedStyle(document.documentElement).getPropertyValue("--mk-c2").trim()`); }
+ok("locked medals have their own palette in dark and OLED, different from light", sch.light !== sch.dark && sch.dark === sch.oled && sch.light.length > 3, JSON.stringify(sch));
+await ev(`document.documentElement.dataset.scheme = "light"; true`);
+await ev(`document.documentElement.dataset.motion = "reduced"; true`);
+ok("with reduced motion the earned medals do not animate in", await ev(`getComputedStyle(document.querySelector(".mk.on")).animationName`) === "none");
+await ev(`delete document.documentElement.dataset.motion; true`);
+ok("the challenge card uses the same medal at 62px", await ev(`Math.round(document.querySelector(".challenge-card .mk").getBoundingClientRect().width)`) === 62);
+await shot("awards-medals");
 
 ok("no page errors during any of this", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);

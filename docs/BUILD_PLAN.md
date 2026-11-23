@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.6.1 | Coach in four tabs (Ask, Today, Plan, Settings; chat first, deep links, drafts kept) and the revamped achievement medals for all 143 badges | IN PROGRESS: PR #99 |
 | 8.6 | Layout tidy-up: no Web app view, even spacing, grouped menu and phone bottom bar, Next step on Today, Coach chat first, Achievements filter, Health categories, readable recipe names | IN PROGRESS: PR #99 |
 | 8.5.4 | Menu: flat Finpex-style side menu, first pass of the clean-up (page layouts not done) | IN PROGRESS: PR #99 |
 | 8.5.3 | Settings: persistent left sidebar rebuilt with own setrail classes, mobile pinned row | IN PROGRESS: PR #99 |
