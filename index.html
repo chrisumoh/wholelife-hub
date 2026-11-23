@@ -19175,7 +19175,7 @@ function premiumHub(p){
     </div>
     <div class="prem-toggle" role="group" aria-label="Billing period">
       <button type="button" data-act="prem-plan" data-v="monthly" aria-pressed="${plan === "monthly"}">Monthly</button>
-      <button type="button" data-act="prem-plan" data-v="yearly" aria-pressed="${plan === "yearly"}">Yearly${planSavePct() ? " · Save " + planSavePct() + "%" : ""}</button>
+      <button type="button" data-act="prem-plan" data-v="yearly" aria-pressed="${plan === "yearly"}">Yearly <span class="ps-disc">${planSavePct() ? "Save " + planSavePct() + "%" : "Save yearly"}</span></button>
     </div>
     <div class="prem-cards">
       <div class="prem-card">
@@ -19197,7 +19197,7 @@ function premiumHub(p){
         <div class="prem-card-head"><span class="prem-card-ic gold">${icon("crown","",19)}</span><b>Premium</b>
           <span class="prem-mini" role="group" aria-label="Billing period">
             <button type="button" data-act="prem-plan" data-v="monthly" aria-pressed="${plan === "monthly"}">Monthly</button>
-            <button type="button" data-act="prem-plan" data-v="yearly" aria-pressed="${plan === "yearly"}">Yearly${planSavePct() ? " · Save " + planSavePct() + "%" : ""}</button>
+            <button type="button" data-act="prem-plan" data-v="yearly" aria-pressed="${plan === "yearly"}">Yearly <span class="ps-disc">${planSavePct() ? "Save " + planSavePct() + "%" : "Save yearly"}</span></button>
           </span>
         </div>
         <p class="tiny muted">Every extra feature, for planning ahead</p>
@@ -19210,7 +19210,7 @@ function premiumHub(p){
         ${on ? `<button type="button" class="btn prem-card-btn" disabled>Premium active</button>` : `<button type="button" class="btn primary prem-card-btn" data-act="prem-cta">Subscribe — ${esc(planPrice(plan) || "Price TBA")}</button>`}
       </div>
     </div>
-    <p class="tiny muted prem-fineprint">Prices in USD, billed through Lemon Squeezy. Plans renew automatically until you cancel; cancel any time in Settings &gt; Premium. Cancelling never deletes anything you've logged.</p>
+    <p class="tiny muted prem-fineprint">Monthly ${esc((planPrice("monthly") || "Price TBA").replace(/ \/ (month|year)/, ""))}, yearly ${esc((planPrice("yearly") || "Price TBA").replace(/ \/ (month|year)/, ""))}. Prices in USD, billed through Lemon Squeezy. Plans renew automatically until you cancel; cancel any time in Settings &gt; Premium. Cancelling never deletes anything you've logged.</p>
 
     <div class="prem-feat-list">
       <div class="prem-feat-head">What's included</div>
