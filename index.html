@@ -3887,7 +3887,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.17", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.21", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3901,6 +3901,38 @@ const APP_VERSION = { update: "8.6", build: "8.6.17", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.21",
+      area:"Coach",
+      title:"Each coach thinks in its own way: the Enforcer's heartbeat line, the Motivator's stretching pill and the Strategist's cradle",
+      bug:"While WL Coach was replying, all three coaches showed the same three pulsing dots with no visible words.",
+      fix:"Coach > Ask now shows a different loader for each coach, in that coach's own colour (the darker tone on light, the lighter tone on dark) with the visible words WL Coach is thinking (Spanish: WL Coach está pensando). The Enforcer gets a heartbeat line that draws itself, the Motivator a pill that stretches across and back, the Strategist a five-ball cradle. They stand still when motion is reduced. The loaders come from the code you supplied; the heartbeat's line shape was drawn here because the paste had none.",
+      where:"index.html: coachThinking() (before coachChatCard()), the chat log's busy row, CSS block after .wlc-typing (.wlc-think, .ld-ekg, .ld-worm, .ld-newton), APP_VERSION, WLH.changelog. tests/browser/sectors.mjs (section 8: one check per coach and one for reduced motion). docs/BUILD_PLAN.md, README.md, CHANGELOG.md.",
+      test:"CHROME=/path/to/chrome CI=1 node tests/browser/sectors.mjs. By hand: open Coach > Ask, send a question and watch the loader; change your coach in Settings > Coach and ask again.",
+      limits:"Checked in headless Chrome only, not on a real iPhone or iPad. The loaders only show while a reply is on its way, so check them on a slow connection." },
+    { id:"8.6.20",
+      area:"Nutrition",
+      title:"Portion on Log a meal is a standard dropdown list again",
+      bug:"Since 8.3.34 the Portion box on Log a meal was a wheel where the chosen row is full size and the others fade, and you asked for the normal scrollable list back.",
+      fix:"Portion is a plain dropdown again, the same as the Meal box beside it: it opens a list with Regular, Half, Smaller, Large and Double portion, and on a phone or iPad it uses the device's own picker. The only change is that the Portion select no longer asks for the wheel (data-wheel removed). The wheel code is still in the file and unused, so no other list is affected.",
+      where:"index.html: nutritionView() (the m-portion select), APP_VERSION, WLH.changelog. tests/browser/pickers.mjs (section 2 now checks the dropdown). docs/BUILD_PLAN.md, README.md, CHANGELOG.md.",
+      test:"CHROME=/path/to/chrome CI=1 node tests/browser/pickers.mjs and sectors.mjs. By hand: open Log > Meals and tap Portion: a normal list opens with five choices.",
+      limits:"The wheel picker code is left in place for any later list that asks for it. Checked in headless Chrome only, not on a real iPhone or iPad." },
+    { id:"8.6.19",
+      area:"Nutrition",
+      title:"Search more foods from Open Food Facts when you log a meal, off until you turn it on",
+      bug:"The food catalog is small next to everything people really eat, especially packaged foods and brands, and there was no way to look up a food that is not in it.",
+      fix:"Log a meal has a Search more foods chip. The first time, it explains what is sent and has one button, Turn on food search (also a switch in Settings > Privacy and security, off by default, with a line in the privacy policy and the change history). Once on, typing a food or brand and pressing Search asks Open Food Facts (world.openfoodfacts.org) for matches. Only the typed words are sent, never your name, log or profile. Results are plain text: name, brand, calories per 100 g, protein per 100 g and the serving size when the product lists one; products with no calories are skipped and absurd values are dropped. Picking one fills the name and calories (for the serving if known, else 100 g), and the meal is logged marked as an estimate with no catalog dish id, so the protein line does not count it. vercel.json now allows connect-src to that one extra host.",
+      where:"index.html: OFF_URL, offClean(), offRun(), offPanel() (before mealPhotoCard()), nutritionView() (chip and panel), the off-open, off-on, off-off, off-pick and consent-food-toggle cases, the off-search submit case, the log-meal case (est), consentCenter(), HISTORY_LABELS, privacyPolicyView() (Food search), APP_VERSION, WLH.changelog. vercel.json (connect-src). tests/browser/advice.mjs (section 4), tests/browser/headers.mjs. docs/SECURITY.md, docs/BUILD_PLAN.md, README.md, CHANGELOG.md.",
+      test:"CHROME=/path/to/chrome CI=1 node tests/browser/advice.mjs (section 4) and headers.mjs. By hand: Log > Meals > Search more foods, turn it on, search kenkey or a brand, pick a result, check the calories, log it: the meal shows as an estimate. Settings > Privacy and security shows the Food search switch.",
+      limits:"Not run against the live Open Food Facts service from here (the test uses a pretend reply), so check one real search on the preview. Open Food Facts data is entered by volunteers and can be wrong or missing. It has few West African dishes, so the catalog stays first for those. Brands and names come back in whatever language the product was entered in. Spanish is added but has had no native-speaker review." },
+    { id:"8.6.18",
+      area:"Nutrition and Coach",
+      title:"Protein from the dishes you log, West African suggestions first when no food culture is set, and the coach now replies in Spanish",
+      bug:"After 8.6.16 the app counted calories only, so neither the day's glance nor the coach could say anything about protein. With no food culture chosen, the low-calorie suggestions (\"close the gap\") ranked every dish in the catalog by protein, which put non-West African dishes such as Chicken tikka first. The Spanish coach reply code from 8.5.1 was merged but never deployed, so a coach question asked in Spanish was still answered in English.",
+      fix:"Protein is worked out, not stored: for each meal logged from a catalog dish, the dish's protein per serving times its portion (read from the \"(1.5× portion)\" in the meal name). Hand-typed meals, snacks, drinks and extras have no protein figure and are left out, never guessed. Today at a glance shows one line (\"Protein: about 60 g from 1 of 2 meals, against about 112 g\", in Spanish too); the target is 1.6 g per kg of body weight, the figure the Premium eating-out page already used. The coach gets a protein item when at least 3 of the last 7 days were fully logged from catalog dishes and the average is under 70% of the target; it names one high-protein dish (West African first). With no culture set, the shortfall suggestions now rank West African dishes first, then by protein, and the heading says so; a chosen culture is unchanged. wl-coach (version 3) is deployed with Verify JWT off, as before: it replies in Spanish when the app sends lang es.",
+      where:"index.html: proteinOn(), portionOf(), proteinTarget(), westFirst() (new, next to loggedFood()), shortfallAdvice(), the shortfall heading in todaysMenuCard's coach block, glanceCardNutrition() (protein line), coachAdviceItems() (protein item), APP_VERSION, WLH.changelog. tests/browser/advice.mjs (section 3, 4 new checks). docs/BUILD_PLAN.md, README.md, CHANGELOG.md. supabase/functions/wl-coach was not edited; the existing code was deployed.",
+      test:"CHROME=/path/to/chrome CI=1 node tests/browser/advice.mjs; node --test tests/wl-coach-handler.test.mjs (21 pass). By hand: log a catalog dish from Log > Meals and open Today at a glance: the Protein line appears under the tiles. Set Settings > Appearance to Español, sign in, allow coach chat and ask in Coach > Ask: the reply comes back in Spanish. With no food culture set and a big calorie gap, the suggestions are West African dishes.",
+      limits:"Protein counts catalog dishes only, so a day with typed meals or snacks reads low and says how many meals it counted. Protein is not synced or stored, so nothing changed in Supabase tables; it follows each meal's dish id. The 1.6 g per kg target is a general estimate, not advice for a medical condition. The Spanish coach reply has had no native-speaker review and has been tested only against the handler, not live." },
     { id:"8.6.17",
       area:"Lock screen",
       title:"The lock screen and sign-in loaders use a drifting gradient in the app's colours instead of animated workout figures",
@@ -8028,7 +8060,7 @@ function shortfallAdvice(p){
   if (c.gap == null || c.gap >= -200) return null;
   const short = Math.abs(Math.round(c.gap));
   const pool = culturePool(p, null).list;
-  const dense = pool.filter(d => d.cal >= 450).sort((a, b) => b.pr - a.pr).slice(0, 3);
+  const dense = pool.filter(d => d.cal >= 450).sort((a, b) => westFirst(p)(a, b) || b.pr - a.pr).slice(0, 3);
   const snacks = (typeof SNACKS !== "undefined" ? SNACKS : []).filter(s => s.cal >= 150).slice(0, 3);
   return { short, dense, snacks,
     line: `You're about ${short.toLocaleString()} calories a day under your target. Under-eating stalls progress as surely as over-eating: you lose muscle and energy first, and the scale follows later.`,
@@ -10442,6 +10474,16 @@ function updateEntry(kind, id, fn){ const byP = S.logs[S.activeId] || {}; for (c
 function removeEntry(kind, id){ const byP = S.logs[S.activeId] || {}; for (const m in byP) { const i = byP[m][kind].findIndex(e => e.id === id); if (i > -1) { byP[m][kind].splice(i,1); markLog(S.activeId, m); return; } } }
 function mealTotal(m){ return (m.cal||0) + (m.extras||[]).reduce((a,x)=>a+(x.cal||0),0); }
 function intakeOn(date){ return onDate("meals",date).reduce((a,m)=>a+mealTotal(m),0) + onDate("snacks",date).reduce((a,s)=>a+(s.cal||0),0) + onDate("drinks",date).reduce((a,d)=>a+(d.cal||0),0); }
+// ---- protein: derived, never stored. Grams = the catalog's protein per serving for the dish a meal was logged from, times its portion. Hand-typed meals, snacks, drinks and extras have no protein figure and are left out, not guessed. ----
+const portionOf = m => { const x = /\(([\d.]+)× portion\)/.exec(m.name || ""); const n = x ? parseFloat(x[1]) : 1; return n > 0 && n <= 10 ? n : 1; };
+function proteinOn(date){
+  const meals = onDate("meals", date); let g = 0, counted = 0;
+  for (const m of meals) { const d = m.dish && DISH_BY_ID[m.dish]; if (d && d.pr != null) { g += d.pr * portionOf(m); counted++; } }
+  return { g: Math.round(g), counted, meals: meals.length };
+}
+const proteinTarget = p => p?.weightKg ? Math.round(p.weightKg * 1.6) : null; // same figure as calorieHeadroom()
+// With no culture chosen, West African dishes come first (CLAUDE.md section 3); with one, the pool is already its own.
+const westFirst = p => (a, b) => p?.culture ? 0 : (b.r === "west") - (a.r === "west");
 function loggedFood(date){ return onDate("meals",date).length + onDate("snacks",date).length + onDate("drinks",date).length > 0; }
 function latestWeightKg(p = P()){
   const w = entries("weights", p.id).sort((a,b)=>a.date<b.date?1:-1)[0];
@@ -13410,9 +13452,12 @@ function nutritionView(p){
         <label class="f">Meal<select id="m-slot">${opt(SLOTS, slotNow)}</select></label>
         <label class="f">Date<input type="date" id="m-date" value="${date}" max="${today()}"></label>
         <label class="f full">What did you eat?<input type="text" id="m-name" list="dishlist" value="${esc(UI.prefill?.name || "")}" placeholder="Start typing: jollof, waakye, egusi…"></label>
+        <div class="nl-chips full"><button type="button" class="chip nl-chip" data-act="off-open" aria-expanded="${!!UI.offOpen}" aria-controls="off-panel">${WLA.lang === "es" ? "Buscar más alimentos" : "Search more foods"}</button></div>
+        ${UI.offOpen ? offPanel(p) : ""}
+        ${UI.offNote ? `<p class="small muted full" role="status">${esc(UI.offNote)}</p>` : ""}
         ${prem ? `<div class="nl-chips"><button type="button" class="chip nl-chip" data-act="nl-photo">${icon("camera","",15)} From a photo</button><input type="file" id="meal-shot-in" accept="image/*" capture="environment" hidden><a class="chip nl-chip" href="#/premium/restaurant">${icon("food","",15)} Eating out</a></div>` : ""}
         <div class="nl-calw"><label class="f" for="m-cal">Calories</label><div class="nl-calbox"><input type="number" id="m-cal" min="0" max="5000" value="${UI.prefill?.cal ?? ""}" placeholder="From catalog"><button type="button" class="nl-guess" data-act="mb-guess" aria-label="${esc(tr("Guess the calories"))}">${icon("spark","",14)} ${esc(tr("Guess"))}</button></div></div>
-        <label class="f">Portion<select id="m-portion" data-wheel>${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
+        <label class="f">Portion<select id="m-portion">${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
       </div>
       ${quickLogBlock(date)}
       ${typeof voiceMealButton === "function" ? voiceMealButton(p) : ""}
@@ -13463,6 +13508,9 @@ function glanceCardNutrition(p, date, meals, snacks){
     <div class="gl-day" role="group" aria-label="Change day"><button class="btn sm icon-btn" data-act="day" data-v="-1" aria-label="Previous day">${icon("chevL","",16)}</button><span class="gl-date tab">${fmtDay(date)}</span><button class="btn sm icon-btn" data-act="day" data-v="1" aria-label="Next day"${date >= today() ? " disabled" : ""}>${icon("chevR","",16)}</button></div></div>
     <div class="gl-tiles">${tile(tr("Meals"), meals.length)}${tile(tr("Snacks"), snacks.length)}${tile(tr("Total"), `${eaten.toLocaleString()} <small>cal</small>`, totSub)}
       <button type="button" class="gl-tile gl-drinks" data-act="drinks-tile" aria-expanded="${open}"${open ? ' aria-controls="drinks-panel"' : ""}><span class="tiny muted">${esc(tr("Drinks · Alcohol"))}</span><span class="gl-dval"><span>${esc(drinkTxt)}</span>${icon("chevR","",16)}</span></button></div>
+    ${(() => { const pr = proteinOn(date), t = proteinTarget(p); if (!pr.counted) return ""; return es
+      ? `<p class="small muted gl-protein">Proteína: unos ${pr.g} g de ${pr.counted} de ${pr.meals} comidas${t ? `, de unos ${t} g` : ""}. No se cuentan los snacks ni las comidas escritas a mano.</p>`
+      : `<p class="small muted gl-protein">Protein: about ${pr.g} g from ${pr.counted} of ${pr.meals} meal${pr.meals === 1 ? "" : "s"}${t ? `, against about ${t} g` : ""}. Snacks and meals you typed in by hand aren't counted.</p>`; })()}
     ${burnedOn(date,p) ? `<p class="small muted">Estimated burn: ${Math.round(burnedOn(date,p)).toLocaleString()} cal including ${onDate("workouts",date).length} workout${onDate("workouts",date).length===1?"":"s"}.</p>` : ""}
   </section>`;
 }
@@ -14128,6 +14176,14 @@ function buildICS(p){
 // ---- WL Coach chat (build 8.4.1) ----
 // The question goes to the wl-coach edge function with the person's own token. The Anthropic key never reaches the browser, the chat is
 // not saved on the device, and the function logs each exchange to ai_coach_logs (readable only by that person).
+// 8.6.21: each coach thinks in its own way and colour: the Enforcer's heartbeat line, the Motivator's stretching pill, the Strategist's cradle.
+function coachThinking(){
+  const id = coachDef(P()).id, label = tr("WL Coach is thinking");
+  const art = id === "enforcer" ? `<svg class="ld-ekg" viewBox="0 0 44 22" aria-hidden="true"><polyline points="0,11 9,11 13,11 17,3 22,19 26,11 31,11 44,11"/></svg>`
+    : id === "motivator" ? `<div class="ld-worm" aria-hidden="true"></div>`
+    : `<div class="ld-newton" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>`;
+  return `<div class="wlc-msg"><div class="wlc-bubble wlc-typing wlc-think wlc-think-${id}" role="status" aria-label="${esc(label)}" style="${coachTone(id)}">${art}<em class="wlc-think-l">${esc(label)}</em></div></div>`;
+}
 function coachChatCard(){
   const C = UI.wlc || {}, p = P();
   const head = `<div class="wlc-head"><h2>Ask WL Coach</h2></div>`;
@@ -14145,7 +14201,7 @@ function coachChatCard(){
   // themselves: a send goes to a server), the conversation once there is one (yours on the right, the coach on the left, three dots
   // while it thinks), and the box with its Ask button. The reply is still shown as plain text.
   const msgs = (C.msgs || []).map(m => `<div class="wlc-msg${m.me ? " me" : ""}"><span class="sr-only">${m.me ? "You" : "WL Coach"}: </span><div class="wlc-bubble">${esc(m.t)}</div></div>`).join("")
-    + (C.busy ? `<div class="wlc-msg"><div class="wlc-bubble wlc-typing" role="status" aria-label="${esc(tr("WL Coach is thinking"))}"><span></span><span></span><span></span></div></div>` : "");
+    + (C.busy ? coachThinking() : "");
   return `<section class="card wlc-card" id="wlc">
     <div class="wlc-head"><h2>Ask WL Coach</h2><span class="pill-goal wlc-note">Can't see your logs yet · Not medical advice</span></div>
     ${WLA.lang === "es" ? '<p class="tiny muted">Puedes escribir en español; algunas respuestas del servicio pueden llegar en inglés.</p>' : ""}
@@ -14573,6 +14629,7 @@ document.addEventListener("click", async e => {
       const cal = base * portion;
       const m = { id: uid(), date: val("m-date") || today(), slot: val("m-slot"), name: portion !== 1 ? `${name} (${portion}× portion)` : name, cal: Math.round(cal), dish: dish?.id || null, extras: [] };
       if (UI.mealShot?.data) { m.photo = UI.mealShot.data; UI.mealShot = null; }
+      if (UI.offEst) { m.est = true; UI.offEst = false; UI.offNote = null; } // from Open Food Facts: logged as an estimate
       addEntry("meals", m); UI.pendingExtras = m.id; UI.navDate = m.date; UI.prefill = null; UI.mSlot = null; render(); toast("Meal logged", "success"); checkCelebrations(); checkAwards(); break; }
     case "log-pick": { // 8.6.8: the + Log on a Today's meals card logs that pick for today, one regular portion, the same way Log meal does
       const d = dailyPicks(today(), P())[+t.dataset.i]; if (!d) return;
@@ -14583,6 +14640,14 @@ document.addEventListener("click", async e => {
       const closing = !!UI.drinkOpen; UI.drinkOpen = !closing; render();
       if (closing) document.querySelector(".gl-drinks")?.focus();
       break; }
+    case "off-open": UI.offOpen = !UI.offOpen; render(); if (UI.offOpen) document.getElementById("off-q")?.focus(); break;
+    case "off-on": p.foodSearchOk = true; historyAdd("food-on"); saveProfile(); render(); document.getElementById("off-q")?.focus(); break;
+    case "off-off": p.foodSearchOk = false; UI.off = null; UI.offOpen = false; historyAdd("food-off"); saveProfile(); render(); toast("Food search is off"); break;
+    case "off-pick": { const x = UI.off?.items?.[+t.dataset.i]; if (!x) return;
+      const cal = x.serv ? Math.round(x.kcal100 * x.serv / 100) : x.kcal100;
+      UI.prefill = { name: x.name, cal, slot: val("m-slot") }; UI.offEst = true; UI.offOpen = false;
+      UI.offNote = `${x.name}: ${cal} cal for ${x.serv ? `a ${x.serv} g serving` : "100 g"} (Open Food Facts). Change the portion or calories if yours differs; it will be logged as an estimate.`;
+      render(); document.getElementById("m-cal")?.focus(); break; }
     case "nl-photo": document.getElementById("meal-shot-in")?.click(); break; // the From a photo chip opens the same camera or file chooser as before
     case "quick-food": UI.prefill = { name: t.dataset.name, cal: t.dataset.cal ? +t.dataset.cal : "", slot: t.dataset.slot }; render(); document.getElementById("m-name")?.focus(); break;
     case "repeat-day": {
@@ -14725,6 +14790,7 @@ document.addEventListener("click", async e => {
     // lives, and it takes effect immediately because the views that gate on these flags re-check
     // them on every render.
     case "consent-photoai-toggle": p.photoAiConsent = !p.photoAiConsent; historyAdd(p.photoAiConsent ? "photo-on" : "photo-off"); saveProfile(); render(); break;
+    case "consent-food-toggle": p.foodSearchOk = !p.foodSearchOk; if (!p.foodSearchOk) { UI.off = null; UI.offOpen = false; } historyAdd(p.foodSearchOk ? "food-on" : "food-off"); saveProfile(); render(); break;
     case "consent-coach-toggle": coachConsentChange(!p.coachChatConsent); break;
     case "consent-clips-toggle": p.prem = p.prem || {}; p.prem.clipsConsent = !p.prem.clipsConsent; historyAdd(p.prem.clipsConsent ? "clips-on" : "clips-off"); saveProfile(); render(); break;
     case "consent-body-toggle": { const st = bodyState(p); st.on = !st.on; historyAdd(st.on ? "body-on" : "body-off"); saveProfile(); render(); if (st.on) bodyPhotoLockNudge(); break; }
@@ -14805,6 +14871,7 @@ document.addEventListener("submit", async e => {
   if (kind === "age-gate") { ageGateSubmit(); return; }
   if (kind === "fr-me") { frSaveMe(); return; }
   if (kind === "fr-search") { frSearch(); return; }
+  if (kind === "off-search") { const q = ($("#off-q")?.value || "").trim().slice(0, 60); if (q.length >= 2) offRun(q); return; }
   if (kind === "fm-send") { fmSend(); return; }
   if (kind === "ch-new") { chNew(); return; }
   if (kind === "ci-mo") {
@@ -16536,7 +16603,7 @@ function coachContextCard(p){
     ${s ? `<section class="card cc-short">
       <h2 class="eyebrow" style="color:var(--c-nutrition)">You're eating short</h2>
       <p class="small">${esc(s.line)}</p>
-      ${s.dense.length ? `<div><div class="tiny muted" style="margin-bottom:6px">From your own food culture, these close the gap:</div>
+      ${s.dense.length ? `<div><div class="tiny muted" style="margin-bottom:6px">${p.culture ? "From your own food culture" : "From West African food"}, these close the gap:</div>
         <div class="chips">${s.dense.map(d => `<a class="chip" href="${dishLink(d)}">${esc(d.n)} <span class="tab muted">${d.cal} cal</span></a>`).join("")}</div></div>` : ""}
       ${s.snacks.length ? `<div><div class="tiny muted" style="margin-bottom:6px">Or a snack:</div>
         <div class="chips">${s.snacks.map(x => `<span class="chip">${esc(x.n)} <span class="tab muted">${x.cal} cal</span></span>`).join("")}</div></div>` : ""}
@@ -18744,6 +18811,7 @@ function privacyPolicyView(){
       <li><b>Form check camera.</b> Turns on your camera to record a short clip. The clip is never uploaded — recording, review and playback all happen on this device, in the same encrypted storage as the rest of your hub. Importing a video file instead needs no camera permission at all.</li>
       <li><b>Body progress studio.</b> Same as above for still photos, with one difference: signed in, with Sync photos on (Settings › Privacy &amp; security, on by default), the photos are also copied to your private account storage, as described in section 4, so they appear on your other devices. They are hidden whenever your profile is locked.</li>
       <li><b>Coach chat.</b> Off until you press Allow coach chat, and only for signed-in accounts. Each question you type is sent through our server to Anthropic, the company that makes Claude, which answers it; the question and the answer are also saved in your account (see section 4) and may be read by the app owner to check answers are safe and fix problems. No logs or profile details are sent with it. Do not type anything you would not want shared. Your choice is also saved in your account, with the date, so the server can check it before every question; turn it off any time in Privacy &amp; security and the next question from any device is refused.</li>
+      <li><b>Food search.</b> Off until you turn it on in Log a meal &gt; Search more foods, or in Settings &gt; Privacy &amp; security. When you press Search, the words you typed in that box are sent from your browser to Open Food Facts (world.openfoodfacts.org), a free public food database, to find matches. Nothing else is sent: not your name, your log, your profile or your account. Open Food Facts sees your internet address, as any website does, and has its own privacy policy. A food you pick is logged on your device and in your account like any other meal, marked as an estimate.</li>
       <li><b>Voice coach.</b> Reads the coach's reply aloud using your browser's built-in text-to-speech. It does not use your microphone and never records or sends audio anywhere.</li>
       <li><b>Imported health data</b> (Apple Health, Google Fit/Fitbit or similar exports). You choose the file; it is read in this browser and the file itself is never uploaded or sent anywhere. The workouts, weigh-ins and daily values it creates are saved like anything else you log, including to your account when you are signed in (section 4). There is no live, automatic connection to any health service, so there is nothing to "disconnect" — only files you choose to import.</li>
       <li><b>Recovery score</b> reads the same profile and logged data as the rest of the app (sleep, resting heart rate, training load, how you say you feel) to shape its daily read. Nothing here is sent to a third party. Cycle-aware plans, Doctor visit prep, and Fasting and Ramadan mode are listed on the Premium screen but not built yet — not found, skipped, per this app's own build-honestly rule; they collect nothing because there is nothing there to use yet.</li>
@@ -18978,6 +19046,7 @@ function creditsView(){
 // set and immediately falls back to asking again. There are three flags, one per feature
 // family, deliberately not a single blanket "AI features" toggle:
 //   p.photoAiConsent      — photo meal logging + gym equipment photos (sent to Claude)
+//   p.foodSearchOk        — food search (typed words sent to Open Food Facts)
 //   p.coachChatConsent    — WL Coach chat (typed questions sent to Anthropic and saved in the account)
 //   p.prem.clipsConsent   — form check camera (recorded on-device only)
 //   p.prem.body.on        — body progress studio (already gated by its own opt-in screen,
@@ -18987,6 +19056,7 @@ function consentCenter(p){
     <button class="btn sm${on ? "" : " ghost"}" data-act="${act}" aria-pressed="${!!on}">${on ? "On" : "Off"}</button></div>`;
   return `<div class="setgroup"><div class="setlabel">Camera, photo-AI and coach chat permissions</div>
     ${row(!!p.photoAiConsent, "Photo meal logging & equipment photos", "Sends the one photo you choose to Claude for an estimate.", "consent-photoai-toggle")}
+    ${row(!!p.foodSearchOk, "Food search (Open Food Facts)", "Sends the words you type in the food search box to world.openfoodfacts.org when you press Search. Nothing else.", "consent-food-toggle")}
     ${row(!!p.coachChatConsent, "Coach chat", "Sends your typed questions to Anthropic through our server and saves them in your account.", "consent-coach-toggle")}
     ${row(!!p.prem?.clipsConsent, "Form check camera", "Records on this device only; the video is never uploaded.", "consent-clips-toggle")}
     ${row(!!p.prem?.body?.on, "Body progress studio", "Saves progress photos on this device and, with Sync photos on, in your private account storage.", "consent-body-toggle")}
@@ -19001,6 +19071,8 @@ const HISTORY_LABELS = {
   terms: "Accepted the Terms and Privacy Policy at sign-up",
   "photo-on": "Turned on photo meal logging and equipment photos",
   "photo-off": "Turned off photo meal logging and equipment photos",
+  "food-on": "Turned on food search (Open Food Facts)",
+  "food-off": "Turned off food search (Open Food Facts)",
   "coach-on": "Turned on coach chat",
   "coach-off": "Turned off coach chat",
   "clips-on": "Turned on the form check camera",
@@ -19031,7 +19103,7 @@ function privacyGlance(p){
   const row = (label, val) => `<div class="setrow"><div class="setlabel"><b>${esc(label)}</b></div><span class="small">${val}</span></div>`;
   let terms = null;
   try { terms = JSON.parse(localStorage.getItem(CONSENT_KEY) || "null"); } catch {}
-  const perms = [!!p.photoAiConsent, !!p.coachChatConsent, !!p.prem?.clipsConsent, !!p.prem?.body?.on].filter(Boolean).length;
+  const perms = [!!p.foodSearchOk, !!p.photoAiConsent, !!p.coachChatConsent, !!p.prem?.clipsConsent, !!p.prem?.body?.on].filter(Boolean).length;
   const hist = historyGet().slice(-10).reverse();
   const when = at => new Date(at).toLocaleString([], { day:"numeric", month:"short", year:"numeric", hour:"numeric", minute:"2-digit" });
   return `<section class="card" id="privacy-glance">
@@ -19458,6 +19530,23 @@ function coachAdviceItems(p = P()){
       text: `${addr}you've had ${namedToday.join(" and ")} so far today (${todayIn.toLocaleString()} cal) — about ${left.toLocaleString()} left for the rest of the day.`,
       note: "From today's log.",
       action: { label:"Log a meal", href:"#/nutrition" } });
+  }
+
+  // ---- Protein: only days where every meal came from a catalog dish, so the total is not understated by hand-typed meals. ----
+  const prT = proteinTarget(p);
+  if (prT) {
+    const gs = []; for (let i = 1; i <= 7; i++) { const x = proteinOn(addDays(today(), -i)); if (x.counted && x.counted === x.meals) gs.push(x.g); }
+    const avgP = gs.length ? Math.round(gs.reduce((a, g) => a + g, 0) / gs.length) : 0;
+    if (gs.length >= 3 && avgP < prT * 0.7) {
+      const pick = culturePool(p, null).list.filter(d => d.pr >= 25 && d.cal <= 700).sort((a, b) => westFirst(p)(a, b) || b.pr - a.pr)[0];
+      const dish = pick ? ` ${pick.n} brings about ${pick.pr} g in a serving.` : "";
+      items.push({ k:"protein", sig: String(Math.round(avgP / 10)),
+        text: id === "enforcer" ? `${addr}protein is short: about ${avgP} g a day against roughly ${prT} g.${dish} Put a real protein on every plate.`
+          : id === "motivator" ? `${addr}your protein is averaging about ${avgP} g a day, and about ${prT} g is the mark.${dish} One change to a plate gets you closer.`
+          : `${addr}across ${gs.length} fully logged days protein averaged about ${avgP} g, against roughly ${prT} g for your weight.${dish}`,
+        note: `From ${gs.length} days of meals logged from the catalog. Snacks aren't counted.`,
+        action: { label:"Log a meal", href:"#/nutrition" } });
+    }
   }
 
   // ---- Hydration: only worth raising once enough of the day has actually passed. ----
@@ -21502,6 +21591,41 @@ function guessDishes(fp, p, slot){
   scored.sort((a, b) => b.s - a.s);
   // Corrected twice for the same dish means the guess is wrong for this person: stop offering it.
   return scored.filter(x => (rejected[x.d.id] || 0) < 2).slice(0, 4).map(x => x.d);
+}
+// ---- Open Food Facts search (8.6.19). Off until the person turns it on (p.foodSearchOk). Only the words typed in the search box are sent, and only when Search is pressed. ----
+const OFF_URL = "https://world.openfoodfacts.org/cgi/search.pl";
+function offClean(list){
+  const num = v => { const n = Number(v); return Number.isFinite(n) ? n : null; };
+  return (Array.isArray(list) ? list : []).map(x => {
+    const n = x?.nutriments || {}, kcal = num(n["energy-kcal_100g"]), name = String(x?.product_name || "").trim().slice(0, 80);
+    if (!name || kcal == null || kcal < 0 || kcal > 900) return null;
+    const pr = num(n.proteins_100g), g = num(x.serving_quantity);
+    return { name, brand: String(x.brands || "").split(",")[0].trim().slice(0, 40), kcal100: Math.round(kcal),
+      pr100: pr != null && pr >= 0 && pr <= 100 ? Math.round(pr * 10) / 10 : null, serv: g && g > 0 && g <= 1000 ? Math.round(g) : null };
+  }).filter(Boolean).slice(0, 8);
+}
+async function offRun(q){
+  const st = UI.off ||= {}; st.q = q; st.busy = true; st.err = ""; st.empty = false; render();
+  try {
+    const r = await fetch(`${OFF_URL}?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=15&fields=product_name,brands,nutriments,serving_quantity`, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error("http");
+    const items = offClean((await r.json())?.products);
+    if (st.q !== q) return;
+    st.items = items; st.empty = !items.length;
+  } catch { if (st.q !== q) return; st.items = []; st.err = "Couldn't reach Open Food Facts. Check your connection and try again."; }
+  st.busy = false; render();
+}
+function offPanel(p){
+  const es = WLA.lang === "es", st = UI.off || {};
+  if (!p.foodSearchOk) return `<div class="note full" id="off-panel"><p class="small" style="margin:0 0 6px">${es
+    ? "Al pulsar Buscar, las palabras que escribas se envían a world.openfoodfacts.org, una base de datos pública y gratuita de alimentos. No se envía nada más: ni tu nombre, ni tu registro, ni tu perfil. Puedes desactivarlo en Ajustes > Privacidad y seguridad."
+    : "When you press Search, the words you type are sent to world.openfoodfacts.org, a free public food database. Nothing else is sent: not your name, your log or your profile. You can turn it off in Settings > Privacy and security."}</p>
+    <button type="button" class="btn primary sm" data-act="off-on">${es ? "Activar la búsqueda de alimentos" : "Turn on food search"}</button></div>`;
+  const rows = (st.items || []).map((x, i) => `<button type="button" class="li tap-row" data-act="off-pick" data-i="${i}"><span class="grow stk"><b>${esc(x.name)}</b><span class="tiny muted">${x.brand ? esc(x.brand) + " · " : ""}${x.kcal100} cal ${es ? "por 100 g" : "per 100 g"}${x.pr100 != null ? ` · ${x.pr100} g ${es ? "de proteína" : "protein"}` : ""}${x.serv ? ` · ${es ? "porción" : "serving"} ${x.serv} g` : ""}</span></span></button>`).join("");
+  return `<div class="note full" id="off-panel"><form class="row" data-form="off-search" style="gap:6px"><input id="off-q" class="grow" maxlength="60" autocomplete="off" value="${esc(st.q || "")}" placeholder="${es ? "Alimento o marca" : "Food or brand"}" aria-label="${es ? "Buscar en Open Food Facts" : "Search Open Food Facts"}"><button class="btn primary" type="submit"${st.busy ? " disabled" : ""}>${st.busy ? (es ? "Buscando…" : "Searching…") : (es ? "Buscar" : "Search")}</button></form>
+    ${st.err ? `<p class="small" role="status">${esc(st.err)}</p>` : ""}${st.empty ? `<p class="small muted" role="status">${es ? "Sin resultados con calorías." : "No matches with calories. Try another word."}</p>` : ""}
+    ${rows ? `<div class="list" style="margin-top:6px">${rows}</div>` : ""}
+    <p class="tiny muted" style="margin:6px 0 0">${es ? "Datos de Open Food Facts, aportados por voluntarios: compáralos con la etiqueta. Lo que registres queda marcado como estimación." : "From Open Food Facts, entered by volunteers: check the label. What you log from here is marked as an estimate."} <button type="button" class="btn sm ghost" data-act="off-off">${es ? "Desactivar" : "Turn off"}</button></p></div>`;
 }
 function mealPhotoCard(p){
   const st = UI.mealShot;
@@ -26995,6 +27119,24 @@ a.mck:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @keyframes wlcdot{0%,80%,100%{opacity:.35;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
 :root[data-motion="reduced"] .wlc-typing span{animation:none;opacity:.7}
 @media (prefers-reduced-motion:reduce){.wlc-typing span{animation:none;opacity:.7}}
+.wlc-think{gap:12px;--ink:var(--cc-ink);color:var(--cc-ink)}
+:root:is([data-scheme="dark"],[data-scheme="oled"]) .wlc-think{--ink:var(--cc-inkd);color:var(--cc-inkd)}
+.wlc-think-l{font-style:normal;font-size:calc(13px * var(--text-scale,1));color:var(--muted)}
+.ld-ekg{width:44px;height:22px;flex-shrink:0;overflow:visible}
+.ld-ekg polyline{fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:90;stroke-dashoffset:90;animation:ekg 1.6s linear infinite}
+@keyframes ekg{0%{stroke-dashoffset:90}60%,75%{stroke-dashoffset:0}100%{stroke-dashoffset:-90}}
+.ld-worm{position:relative;width:80px;height:10px;flex-shrink:0}
+.ld-worm::after{content:"";position:absolute;top:0;left:0;width:24px;height:10px;border-radius:5px;background:var(--ink);animation:worm 1.2s ease-in-out infinite alternate}
+@keyframes worm{0%{left:0;width:24px}50%{width:56px}100%{left:56px;width:24px}}
+.ld-newton{display:flex;gap:2px;margin:2px 18px 6px;flex-shrink:0}
+.ld-newton i{width:10px;height:10px;border-radius:50%;background:var(--ink);transform-origin:50% -28px}
+.ld-newton i:first-child{animation:newton-l 1s ease-in-out infinite}
+.ld-newton i:last-child{animation:newton-r 1s ease-in-out infinite}
+@keyframes newton-l{0%,50%,100%{transform:rotate(0)}25%{transform:rotate(38deg)}}
+@keyframes newton-r{0%,50%,100%{transform:rotate(0)}75%{transform:rotate(-38deg)}}
+:root[data-motion="reduced"] .ld-ekg polyline,:root[data-motion="reduced"] .ld-worm::after,:root[data-motion="reduced"] .ld-newton i{animation:none}
+:root[data-motion="reduced"] .ld-ekg polyline{stroke-dashoffset:0;opacity:.7}
+@media (prefers-reduced-motion:reduce){.ld-ekg polyline{animation:none;stroke-dashoffset:0;opacity:.7}.ld-worm::after,.ld-newton i{animation:none}}
 .wlc-chips{display:flex;flex-wrap:wrap;gap:8px}
 .wlc-composer{position:relative;display:flex;align-items:flex-end;gap:10px;padding:10px 10px 10px 14px;border:1px solid var(--line2);border-radius:var(--r);background:var(--surface)}
 .wlc-composer:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
