@@ -3879,7 +3879,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.15", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.16", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3893,6 +3893,15 @@ const APP_VERSION = { update: "8.6", build: "8.6.15", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.16",
+      area:"Debugging",
+      title:"The Weight trend highlight on Today opens Body measurements instead of Page not found, and six Coach labels are now in Spanish",
+      bug:"A debugging pass after 8.6.15 opened 35 pages in 10 combinations of width (1280, 820, 390 and 360), light, dark and OLED, and English and Spanish. It found no script errors, no console errors and no sideways scrolling, but two problems. The Weight trend row under Highlights on Today linked to a metric page that does not exist, so tapping it showed Page not found; main has the same fault. In Spanish, the coach hero's Style, Level and Frequency labels and the check-in's Answer, Ask me something else and You're eating short were still in English.",
+      fix:"The Weight trend row now uses the weight estimate's own link, Body measurements, the same place the Weight estimate card opens. The six labels are translated, and so is the number of days a week in the hero.",
+      where:"index.html: highlightsSection(), coachView() (the Frequency line), the 8.6.14 and 8.6.15 Spanish block, APP_VERSION, WLH.changelog. tests/browser/sectors.mjs: new section 11b (the highlight, and every in-app link drawn on 12 main pages opens a real page) and section 12. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"CHROME=/path/to/chrome CI=1 node tests/browser/sectors.mjs (sections 11b and 12). By hand: on Today, once a few days of meals are logged, tap Highlights > Weight trend: it opens Body measurements.",
+      limits:"The link check visits the links drawn on those 12 pages for the test profile; links that only appear in other states are not visited. The Spanish has had no native-speaker review."
+    },
     { id:"8.6.15",
       area:"Coach",
       title:"The Personal coach page: a hero with your coach's live score, compact tabs, one Ask card, the check-in beside the training read-out, and a slim five-questions strip",
@@ -11400,7 +11409,7 @@ function highlightsSection(p){
   if (pr.ready && pr.days) {
     const per = p.units === "metric" ? `${round(Math.abs(pr.kgPerWeek), 2)} kg` : `${round(Math.abs(pr.lbPerWeek), 1)} lb`;
     const dir = Math.abs(pr.lbPerWeek) < 0.1 ? "holding steady" : `trending ${pr.lbPerWeek < 0 ? "down" : "up"} about ${per}/week`;
-    items.push({ icon:"trend", color:"var(--accent)", title:"Weight trend", body:`Last ${pr.days} logged day${pr.days === 1 ? "" : "s"} — ${dir}`, href:"#/metric/estimate" });
+    items.push({ icon:"trend", color:"var(--accent)", title:"Weight trend", body:`Last ${pr.days} logged day${pr.days === 1 ? "" : "s"} — ${dir}`, href: METRICS.estimate.link }); // 8.6.16: the estimate has no metric page of its own (it was Page not found); it lives with Body measurements
   }
   if (!items.length) return "";
   return `<h2 class="sec-title">Highlights</h2>
@@ -12131,6 +12140,7 @@ Object.assign(WL_ES, {
 Object.assign(WL_ES, {
   "Guess":"Estimar", "Drinks · Alcohol":"Bebidas · Alcohol", "Nothing logged":"Nada registrado", "Accepts lb, kg or st":"Acepta lb, kg o st", "Hide today's menu":"Ocultar el menú de hoy",
   "Days with food logged":"Días con comida registrada", "of the last 7":"de los últimos 7", "0 of 5 answered":"0 de 5 respondidas",
+  "Style:":"Estilo:", "Level:":"Nivel:", "Frequency:":"Frecuencia:", "Answer":"Responder", "Ask me something else":"Pregúntame otra cosa", "You're eating short":"Estás comiendo poco",
   "Keep it moderate":"Mantén un ritmo moderado", "Good week to push":"Buena semana para exigirte", "Hold the volume":"Mantén el volumen", "Train as planned":"Entrena según lo planeado",
   "So the coach knows where to start you. Every one is optional, they take about a minute and live on the Settings tab.":"Para que el entrenador sepa por dónde empezarte. Todas son opcionales, llevan un minuto y están en la pestaña Ajustes."
 });
@@ -13986,7 +13996,7 @@ function coachView(p){
           <p class="tiny muted">${esc(typeof coachGreetingRich === "function" ? coachGreetingRich(p) : coachGreeting(p))}</p></div></div>
       ${typeof coachMechanic === "function" ? `<div class="cp-mech">${coachMechanic(p)}</div>` : ""}
     </div>
-    <div class="cp-meta small muted"><span>Goal: <b>${esc(GOALS.find(g=>g[0]===p.goal)?.[1] || "Not set")}</b></span><span class="cp-dot" aria-hidden="true">·</span><span>Style: <b>${esc(STYLES.find(g=>g[0]===p.style)?.[1] || "Not set")}</b></span><span class="cp-dot" aria-hidden="true">·</span><span>Level: <b>${esc(LEVELS.find(g=>g[0]===p.level)?.[1])}</b></span><span class="cp-dot" aria-hidden="true">·</span><span>Frequency: <b>${p.freq ? `${p.freq} days a week` : "Not set"}</b></span></div>
+    <div class="cp-meta small muted"><span>Goal: <b>${esc(GOALS.find(g=>g[0]===p.goal)?.[1] || "Not set")}</b></span><span class="cp-dot" aria-hidden="true">·</span><span>Style: <b>${esc(STYLES.find(g=>g[0]===p.style)?.[1] || "Not set")}</b></span><span class="cp-dot" aria-hidden="true">·</span><span>Level: <b>${esc(LEVELS.find(g=>g[0]===p.level)?.[1])}</b></span><span class="cp-dot" aria-hidden="true">·</span><span>Frequency: <b>${p.freq ? (WLA.lang === "es" ? `${p.freq} días por semana` : `${p.freq} days a week`) : "Not set"}</b></span></div>
   </section>
 
   <div class="ctabs" role="tablist" aria-label="${esc(tr("Coach sections"))}">${COACH_TABS.map(([k, l]) => `<button type="button" class="ctab" role="tab" id="ctab-${k}" data-act="coach-tab" data-v="${k}" aria-controls="cpanel-${k}" aria-selected="${tab === k}" tabindex="${tab === k ? 0 : -1}">${l}</button>`).join("")}</div>
