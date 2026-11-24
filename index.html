@@ -3879,7 +3879,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.7", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.12", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3893,6 +3893,51 @@ const APP_VERSION = { update: "8.6", build: "8.6.7", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.12",
+      area:"Premium",
+      title:"What stays open on Free, the questions and About Premium follow the trust and FAQ design",
+      bug:"The Premium page's trust section was a strip of six grey pills under a small label, the three questions were bare lines, and About Premium was a flat grey box, so the reasons to trust the app were easy to miss.",
+      fix:"What stays open on Free is now a bordered card with a plain heading, Your core tracker and data always stay yours, and the six things (Works offline, Dark mode, English & Spanish, Passcode lock, Multiple profiles, Export your data anytime) are tiles with an icon each: three columns on a wide screen, one on a phone. The three questions sit in one bordered card with a chevron that turns when one opens, and the answer fades in. About Premium has a soft gold tint and a faint crown. No new claims were added: the six items, the three answers and the About text are the app's own words, and no price, trial or guarantee was added. The not-medical-advice note is unchanged. Two older labels on the Free-state Premium page, What's included and the unpressed Monthly or Yearly button, were under 4.5:1 (4.24 in light and 3.7 in dark); they now pass in every mode. The stack that holds pop-up notifications is now a named region, so screen readers can find it (a label alone is not allowed on a plain box). The new axe checks found both; they date from earlier builds.",
+      where:"index.html: the Premium page markup (.prem-stays, .ps-title, .prem-faqs, .prem-about, .pa-crown), the wifi and download icons in the I table, the sectors-css style block (last in the file; Premium rules scoped to .prem-store-page, including .prem-feat-head and .prem-mini), swipeToast() (the #st-stack region), APP_VERSION, WLH.changelog. tests/browser/sectors.mjs (section 11, and section 13: axe on every new screen at 1280 and 390px in light and dark; new file, see 8.6.8). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/sectors.mjs, then node tests/browser/finpex.mjs (its six pills and three questions checks still pass). By hand: add ?premium=0 to the address, open the Premium page, scroll to What stays open on Free, open and close each question, and look at it in light, dark and OLED and on a phone.",
+      limits:"Checked in headless Chrome, not on a real iPad or iPhone. The About text contrast is measured on the real pixels behind it (gold tint and crown), 4.5:1 or better in light, dark and OLED with the default accent only. The questions are still native details elements, so they work from the keyboard and without scripts; the fade-in is off with Reduced motion."
+    },
+    { id:"8.6.11",
+      area:"Appearance",
+      title:"A live glass preview with presets, a Smooth motion style, and quick-setup chips on an empty profile",
+      bug:"Settings > Appearance had an opacity slider but nothing showed what it did, motion was only Bouncy or Reduced, and a profile with nothing filled in gave no clear first step.",
+      fix:"Glass and motion now has a preview card over a soft backdrop that follows the Interface opacity slider. It shows today's real calories (a ring of your eaten calories over your own target; with no target set it says so) and a badge reading the glass percentage, and three preset chips sit under the slider: Frosted 35%, Balanced 70% and Solid 100%. Motion has a third choice, Smooth: the same movement with a calm glide, no spring and slightly longer timings. Try this motion slides a small puck with the chosen style. Smooth is saved on the profile and goes through sync, backup and import like the other choices; an unknown value from an old backup falls back to Bouncy. On Settings > Profile, a profile that is missing its name, age, sex, height or weight shows Quick setup chips (+ Add height and so on) that open the right card with the cursor on the right field.",
+      where:"index.html: glassPreview(), opacityRow() (presets), the Motion segmented control and .mo-demo, cleanProfile() (motion), applyLook() (data-motion smooth), profileTab() (quick), the pf-fill action, the op-set and mo-test click handlers, the ui-op-ws slider handler, WL_ES, the sectors-css style block, APP_VERSION, WLH.changelog. tests/browser/sectors.mjs (sections 9 and 10). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/sectors.mjs, then node tests/browser/glass.mjs and appearance.mjs. By hand: open Settings > Appearance, press Frosted, Balanced and Solid and watch the preview and the badge, try Smooth and press Try this motion; then open Settings > Profile on a profile with nothing filled in (add one in Settings > Household) and press + Add height.",
+      limits:"The preview is a picture of the glass, not the real page behind it. The design's sample numbers are not shown: the preview uses your real calories. Smooth works through the app's shared timing and easing settings, so an animation that sets its own timing instead is not changed by it. Checked in headless Chrome, not on a real iPad or iPhone, and the Spanish has not been read by a native speaker."
+    },
+    { id:"8.6.10",
+      area:"Coach",
+      title:"Ask WL Coach is a chat window: your questions on the right, answers on the left, suggested questions",
+      bug:"The Ask tab was a text box and a button: your question and the coach's answer came out as one block of text, nothing showed that the coach was working, and there were no starting points for someone who did not know what to ask.",
+      fix:"The chat card has a header with the coach icon and an honest note, Can't see your logs yet, Not medical advice. Your questions sit on the right in your accent colour and the coach's answers on the left, each labelled for screen readers. While the coach thinks, three dots show and the Send button (now a round paper-plane button) switches off and says Thinking. Four suggested questions fill the box when tapped; they never send by themselves, because a send goes to a server. The box keeps its character counter, and the stream scrolls to the newest message. The answer is still shown as plain text. The sign-in and consent screens are unchanged. After a reply the box now clears itself by hand, so a question cannot stay behind if the browser keeps focus in the box after a tap on Send.",
+      where:"index.html: coachChatCard(), WLC_ASKS, the wlc-ask action, wlCoachSend(), WL_ES, the sectors-css style block, APP_VERSION, WLH.changelog. tests/browser/sectors.mjs (section 8); tests/browser/coachchat.mjs is unchanged and still passes. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/sectors.mjs and coachchat.mjs. By hand: sign in, open Coach > Ask, allow coach chat, tap a suggested question (nothing is sent), press Send, and watch the dots and the answer.",
+      limits:"The design's simulated replies, coach-name tags and persona pill are not brought in: replies come only from the real wl-coach function. Chat is not saved between visits (it lives on the screen, as before) and only the last 12 messages stay. Checked in headless Chrome with a stand-in for the server, not against the live coach, and not on a real iPad or iPhone. The Spanish suggestions have not been read by a native speaker."
+    },
+    { id:"8.6.9",
+      area:"Workouts",
+      title:"Workouts: quick activity picks, minute chips with a calorie estimate, a weekly goal stepper with day dots, and richer history rows",
+      bug:"The equipment photo card and Import workouts sat one above the other, the activity picker had to be opened to change anything, minutes and calories were two bare boxes with no hint of what a session burns, the weekly goal was a ring and a sentence, and history rows were a line of text.",
+      fix:"The Workouts, Minutes and Streak strip comes first, and Snap gym equipment and Import workouts sit side by side. Under the current activity there are five quick picks (your recent activities, then common ones); the full picker is still behind Change. Minute chips (20m, 30m, 45m, 60m) fill Minutes, and a pill shows the calories the session would burn using the same MET x weight x hours sum that history uses, or your own number when you typed one, or asks for minutes. The weekly goal card has a minus and plus stepper (1 to 14 a week, saved on the profile and the same number Settings shows), the ring, seven day dots from Monday that fill on the days you trained, and the coach's line. History rows show the activity icon, the name, the date and note, then minutes and calories on the right. A ring animation script could stop with an error when the page redrew while a ring was still waiting; it now skips such a node.",
+      where:"index.html: workoutsView(), quickActs(), wEstimate(), weekDots(), the w-preset and wgoal actions, the global input listener (estimate), the ringIO callback, WL_ES, the sectors-css style block, APP_VERSION, WLH.changelog. tests/browser/sectors.mjs (sections 6 and 7). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/sectors.mjs, then workouts.mjs and rings.mjs. By hand: open Workouts, tap a quick pick and a minute chip and watch the estimate, save a workout, press plus and minus on the weekly goal, and check the dots and the history row.",
+      limits:"Strava and Garmin buttons are not brought in (the real import is an export file with no automatic sync, and the card says so); neither are the design's challenge avatars or sample numbers. The estimate uses your latest weight, or 75 kg when none is set, so it is only an estimate. Checked in headless Chrome, not on a real iPad or iPhone."
+    },
+    { id:"8.6.8",
+      area:"Nutrition",
+      title:"Daily nutrition: Today's meals as cards with + Log, Log a meal beside a stack, a readable Last 7 days chart, a compact photo opt-in",
+      bug:"Today's meals was a plain list with no quick way to log a pick, Log a meal sat alone with the day's glance, drinks and weight far below it, the Last 7 days chart's text shrank to about 6px when it sat beside another card, and the Snap your plate opt-in was a tall card of privacy bullets above its button.",
+      fix:"Today's meals shows the three picks as cards: the meal, the dish name (a link to the recipe), its calories, and a + Log button that logs that pick for today as one regular portion, after which the Extras panel opens as it does after Log meal. Log a meal keeps its form (the Meal dropdown and the Portion wheel are unchanged) and sits beside a stack: Today at a glance (a ring of your calorie target, only when one is set, and tiles for Meals, Snacks and Left), Drinks, and Log your weight (field, date and Save on one row). Meals on today sits beside Last 7 days, whose chart has larger text, a Target pill and a hover title on each bar giving the day and calories. Snap your plate shows its header, the one fact that matters (Nothing is sent unless you use this) and the Allow button, with the three privacy points under How privacy works, one tap away. The Target pill and the coach note now meet 4.5:1 in dark mode. The + Log buttons and the privacy summary are 44px tall.",
+      where:"index.html: mealsTodayCard(), nutritionView(), glanceCardNutrition(), weightLogCard(), mealsOnCard(), weekChart(p, narrow), photoAiOptIn(), the log-pick action, WL_ES, the sectors-css style block (new, last in the file), APP_VERSION, WLH.changelog. tests/browser/sectors.mjs (new suite, added to run-all.mjs: sections 1 to 5; no existing test was edited). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/sectors.mjs, then meal-sync.mjs, controls.mjs, pickers.mjs and motion.mjs. By hand: open Log > Meals, press + Log on a pick, check the stack beside Log a meal, hover the bars of Last 7 days, and open How privacy works on Snap your plate. Look at it in light, dark and OLED and on a phone.",
+      limits:"The design's Empty and Demo toggles, code export, Sync buttons and toasts, the Alcohol-free chip, the target-line toggle and its sample numbers are not brought in: everything shown is your own data. + Log always logs one regular portion; use Log a meal for another. Checked in headless Chrome, not on a real iPad or iPhone, and the Spanish has not been read by a native speaker."
+    },
     { id:"8.6.7",
       area:"Premium",
       title:"The Premium page is centred: head, banner, billing toggle, plan cards and the sections below",
@@ -10031,7 +10076,7 @@ function cleanProfile(x){
   if (x.celebr && typeof x.celebr === "object") { d.celebr = {}; for (const [k, v] of Object.entries(x.celebr).slice(0, 60)) d.celebr[k] = str(v, 24); }
   d.limits = Array.isArray(x.limits) ? [...new Set(x.limits.filter(k => LIMITS.some(l => l.k === k)))].slice(0, 12) : [];
   const l = x.look || {};
-  d.look = { season: oneOf(l.season, SEASONS.map(x => x[0]), "none"), opacity: num(l.opacity, 0.35, 1) ?? 1, mode: oneOf(l.mode, ["auto","light","dark","oled"], "auto"), accent: oneOf(l.accent, ["blue","gold","green","hibiscus","ocean","violet","dynamic"], "blue"), motion: oneOf(l.motion, ["full","reduced"], "full"), theme: oneOf(l.theme, ["forest","ocean","sunset","midnight"], "forest"), scene: oneOf(l.scene, ["none","floral","savanna","mountains","ocean","night"], "none"),
+  d.look = { season: oneOf(l.season, SEASONS.map(x => x[0]), "none"), opacity: num(l.opacity, 0.35, 1) ?? 1, mode: oneOf(l.mode, ["auto","light","dark","oled"], "auto"), accent: oneOf(l.accent, ["blue","gold","green","hibiscus","ocean","violet","dynamic"], "blue"), motion: oneOf(l.motion, ["full","smooth","reduced"], "full"), theme: oneOf(l.theme, ["forest","ocean","sunset","midnight"], "forest"), scene: oneOf(l.scene, ["none","floral","savanna","mountains","ocean","night"], "none"),
     // v8.6: font picker choice. Whitelist kept in sync by hand with FONTS (app2.js) and the
     // [data-font="x"] rules in head.html - this file loads before FONTS is defined, so the
     // 8 keys are spelled out literally here rather than referencing that array.
@@ -10682,6 +10727,8 @@ function profileTab(p){
   const us = p.units === "us"; const hIn = p.heightCm ? p.heightCm/2.54 : null; const kg = latestWeightKg(p);
   const lab = (list, v, dflt = "Not set") => esc(list.find(x => x[0] === v)?.[1] || dflt);
   const need = [["age",p.age],["sex",p.sex],["height",p.heightCm],["weight",kg]].filter(x => !x[1]).map(x => x[0]);
+  // 8.6.11: quick setup chips for the basics that are still empty; each opens that card's editor on the field.
+  const quick = [["name", !p.name, "about", "pe-name"], ["age", !p.age, "about", "pe-age"], ["sex", !p.sex, "about", "pe-sex"], ["height", !p.heightCm, "body", us ? "pe-ft" : "pe-cm"], ["weight", !kg, "body", "pe-wt"]].filter(x => x[1]);
   const done = [p.name,p.age,p.sex,p.heightCm,kg,p.goal,p.style,p.freq,p.diet,p.culture].filter(Boolean).length;
   return `
   <section class="card hero">
@@ -10693,7 +10740,8 @@ function profileTab(p){
         ${p.photo ? `<button class="btn sm ghost pf-rm" data-act="photo-remove">Remove photo</button>` : ""}</div>
       <div class="seg setctl" role="group" aria-label="Units"><button data-act="units" data-v="us" aria-pressed="${us}">lb · ft</button><button data-act="units" data-v="metric" aria-pressed="${!us}">kg · cm</button></div>
     </div>
-    <div class="stack" style="gap:6px"><div class="setrow small"><span class="setlabel pf-prog">Profile ${done} of 10 filled in <span class="apr-chip">${done * 10}%</span></span>${need.length ? `<span class="muted">Add ${need.join(", ")} to turn on the weight estimate</span>` : `<span class="tag good">Weight estimate on</span>`}</div><div class="bar"><i style="width:${done*10}%"></i></div></div>
+    <div class="stack" style="gap:6px"><div class="setrow small"><span class="setlabel pf-prog">Profile ${done} of 10 filled in <span class="apr-chip">${done * 10}%</span></span>${need.length ? `<span class="muted">Add ${need.join(", ")} to turn on the weight estimate</span>` : `<span class="tag good">Weight estimate on</span>`}</div><div class="bar"><i style="width:${done*10}%"></i></div>
+      ${quick.length ? `<div class="pf-quick"><span class="tiny muted">${esc(tr("Quick setup: tap to fill in"))}</span><div class="chips" role="group" aria-label="${esc(tr("Quick setup"))}">${quick.map(q => `<button type="button" class="chip pf-q" data-act="pf-fill" data-g="${q[2]}" data-f="${q[3]}">+ ${esc(tr("Add " + q[0]))}</button>`).join("")}</div></div>` : ""}</div>
     ${SB.user && sbClient() ? accountCard(true) : ""}
   </section>
   <div class="grid g2">
@@ -11606,6 +11654,8 @@ function commitVitals(acc){
 }
 // =================== UI HELPERS ===================
 const I = {
+  wifi:'<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
  home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
  food:'<path d="M4 3v8a3 3 0 0 0 6 0V3M7 3v18M17 21V3c-2 0-4 3-4 7s2 4 4 4"/>',
  run:'<circle cx="14" cy="4" r="2"/><path d="M6 20l4-6 3 2 1 5M9 9l3-2 3 3 3 1M10 14l-3-3 2-3"/>',
@@ -12039,6 +12089,17 @@ Object.assign(WL_ES, {
   "Pinned vitals":"Signos fijados", "Clear search":"Borrar búsqueda", "No matching health metrics":"No hay métricas de salud que coincidan", "Import now":"Importar ahora",
   "Saved on the day you pick, today unless you change it.":"Se guarda en el día que elijas, hoy salvo que lo cambies.", "Log":"Registrar", "Cancel":"Cancelar", "Save":"Guardar"
 });
+// 8.6.8 to 8.6.12: the six-sector revamp (Nutrition, Workouts, Coach, Profile, Glass & motion, Premium trust).
+Object.assign(WL_ES, {
+  "Hover a bar for the day's calories.":"Pasa el cursor sobre una barra para ver las calorías del día.", "How privacy works":"Cómo funciona la privacidad", "Nothing is sent unless you use this.":"No se envía nada a menos que lo uses.",
+  "Import workouts":"Importar entrenamientos", "Bring sessions in from Apple Health, Google Health, Fitbit, Strava, Garmin and most other apps with an export file. There is no automatic sync.":"Trae sesiones de Apple Health, Google Health, Fitbit, Strava, Garmin y la mayoría de las apps con un archivo de exportación. No hay sincronización automática.",
+  "Add minutes for an estimate":"Añade los minutos para una estimación", "Quick picks":"Atajos", "Quick minutes":"Minutos rápidos", "Fewer workouts per week":"Menos entrenamientos por semana", "More workouts per week":"Más entrenamientos por semana", "Workouts per week":"Entrenamientos por semana",
+  "Can't see your logs yet · Not medical advice":"Aún no ve tus registros · No es consejo médico", "WL Coach is thinking":"WL Coach está pensando", "Ask a training or food question to start.":"Haz una pregunta de entrenamiento o comida para empezar.", "Suggested questions":"Preguntas sugeridas",
+  "Smooth":"Suave", "Smooth glide":"Deslizamiento suave", "Bouncy spring":"Rebote elástico", "Reduced (instant)":"Reducido (instantáneo)", "Try this motion":"Probar este movimiento", "Frosted":"Esmerilado", "Balanced":"Equilibrado", "Solid":"Sólido", "Today's calories":"Calorías de hoy", "Nothing logged yet today":"Nada registrado hoy", "Opacity presets":"Ajustes de opacidad",
+  "Bouncy adds the spring animations. Smooth keeps the motion but glides, with no spring. Reduced turns them off, and your device's own \"reduce motion\" setting always wins.":"Animado añade movimientos elásticos. Suave mantiene el movimiento pero se desliza, sin rebote. Reducido los desactiva, y el ajuste de \"reducir movimiento\" de tu dispositivo siempre manda.",
+  "Quick setup: tap to fill in":"Configuración rápida: toca para completar", "Quick setup":"Configuración rápida", "Add name":"Añadir nombre", "Add age":"Añadir edad", "Add sex":"Añadir sexo", "Add height":"Añadir estatura", "Add weight":"Añadir peso",
+  "What should I eat after a workout?":"¿Qué debo comer después de entrenar?", "Best West African high-protein breakfast?":"¿Cuál es un buen desayuno alto en proteína de África Occidental?", "Sore legs after soccer: stretch or rest?":"Piernas doloridas tras jugar al fútbol: ¿estirar o descansar?", "How much water should I drink?":"¿Cuánta agua debo beber?"
+});
 // ---- Spanish catalog text ----
 // Recipe prose (descriptions, steps, ingredient names, snack instructions) lives in i18n/es-recipes.js.
 // It is fetched the first time a Spanish screen renders, so English users never download it.
@@ -12194,7 +12255,7 @@ function applyLook(p = P()){
   if (typeof DARK_ONLY_THEMES !== "undefined" && DARK_ONLY_THEMES.includes(look.theme) && scheme === "light") scheme = "dark";
   el.dataset.scheme = scheme;
   el.dataset.accent = look.accent === "dynamic" ? timeAccent() : (look.accent || "blue");
-  el.dataset.motion = look.motion === "reduced" ? "reduced" : "full";
+  el.dataset.motion = look.motion === "reduced" ? "reduced" : look.motion === "smooth" ? "smooth" : "full";
   el.dataset.font = FONTS.some(f => f[0] === look.font) ? look.font : "system";
   delete el.dataset.layout; // the Web app layout was removed in 8.5.5; saved choices are ignored
   el.style.colorScheme = scheme === "light" ? "light" : "dark";
@@ -13180,10 +13241,13 @@ function projectionCard(p, compact){
 // The Meals detail page (Nutrition): today's planned Breakfast, Lunch and Dinner, the plan link and the food-culture prompt.
 function mealsTodayCard(p){
   const picks = dailyPicks(today(), p);
+  // 8.6.8: one card per pick (slot, calories, name, where it is from and how long it takes) and a + Log that logs it for today.
   return `<section class="card" id="meals-today">
     <div class="setrow"><div class="setlabel"><div class="eyebrow">Picked for you today</div><h2 style="margin-top:4px">Today's meals</h2>
       ${cultureTag(p)}</div><a class="btn sm" href="#/recipes">${p.plan ? "See full plan" : "Build a plan"}</a></div>
-    <div class="list">${picks.map((d,i) => `<a class="li tap-row" href="${dishLink(d)}"><span class="grow stk"><span class="eyebrow">${SLOTS[i]?.[1] || ""}</span><b>${esc(d.n)}</b><span class="tiny muted">${esc(d.c)} · ≈${d.cal} cal · ${d.t[1]} min cook${goalNote(d,p) ? " · " + esc(goalNote(d,p)) : ""}</span></span>${icon("chevR","row-chev",16)}</a>`).join("")}</div>
+    <div class="mtgrid">${picks.map((d,i) => { const sl = SLOTS[i] || ["", ""], note = goalNote(d,p);
+      return `<div class="li mt-card" data-slot="${esc(sl[0])}"><span class="grow stk"><span class="mt-top"><span class="eyebrow mt-slot">${esc(tr(sl[1]))}</span><span class="tab mt-cal">≈${d.cal} cal</span></span><a class="mt-name" href="${dishLink(d)}"><b>${esc(d.n)}</b></a><span class="tiny muted">${esc(d.c)} · ${d.t[1]} min cook${note ? " · " + esc(note) : ""}</span></span>
+        <button type="button" class="btn sm mt-log" data-act="log-pick" data-i="${i}" aria-label="${esc(tr("Log"))} ${esc(d.n)} ${esc(tr(sl[1]))}">+ ${esc(tr("Log"))}</button></div>`; }).join("")}</div>
     <p class="tiny faint">Changes daily. ${p.diet || p.allergies ? "Filtered for your food preference and allergies." : "Add food preferences or allergies in Settings to filter these."}</p>
   </section>`;
 }
@@ -13203,21 +13267,21 @@ function workoutsCard(p){
 }
 
 // =================== NUTRITION ===================
-function weekChart(p){
+function weekChart(p, narrow){  // narrow: the half-width card on the Nutrition page, drawn on a narrower canvas so the text stays readable
   const days = Array.from({length:7}, (_,i) => addDays(today(), i-6));
   const vals = days.map(intakeOn); const goal = p.calorieGoal;
   const max = Math.max(goal || 0, ...vals, 1000); const top = Math.ceil(max/500)*500;
-  const W = 640, H = 220, L = 44, B = 36, T = 14, bw = (W-L-10)/7;
+  const W = narrow ? 420 : 640, H = narrow ? 250 : 220, L = narrow ? 48 : 44, B = 36, T = 14, bw = (W-L-10)/7, fs = narrow ? 12.5 : 11;
   const y = v => T + (H-T-B) * (1 - v/top);
   const ticks = [0, top/2, top];
-  return `<div class="chart" tabindex="0" role="region" aria-label="Chart, scrolls sideways"><svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Calories per day for the last 7 days">
-    ${ticks.map(t => `<line x1="${L}" x2="${W-6}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" /><text x="${L-8}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="var(--faint)">${t.toLocaleString()}</text>`).join("")}
+  return `<div class="chart" tabindex="0" role="region" aria-label="Chart, scrolls sideways"><svg class="chart-svg${narrow ? " narrow" : ""}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Calories per day for the last 7 days">
+    ${ticks.map(t => `<line x1="${L}" x2="${W-6}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" /><text x="${L-8}" y="${y(t)+4}" text-anchor="end" font-size="${fs}" fill="var(--faint)">${t.toLocaleString()}</text>`).join("")}
     ${vals.map((v,i) => { const x = L + i*bw + bw*0.2, w = bw*0.6; const h = y(0) - y(v); const over = goal && v > goal;
-      return `<rect x="${x}" y="${y(v)}" width="${w}" height="${Math.max(0,h)}" rx="5" fill="${v ? (over ? "var(--warn)" : "var(--accent)") : "none"}"/>
-      ${v ? `<text x="${x+w/2}" y="${y(v)-6}" text-anchor="middle" font-size="11" fill="var(--muted)">${v.toLocaleString()}</text>` : `<text x="${x+w/2}" y="${y(0)-6}" text-anchor="middle" font-size="11" fill="var(--faint)">—</text>`}
-      <text x="${x+w/2}" y="${H-18}" text-anchor="middle" font-size="11" font-weight="${days[i]===today()?700:400}" fill="var(--text)">${DOW[parseYmd(days[i]).getDay()]}</text>
-      <text x="${x+w/2}" y="${H-4}" text-anchor="middle" font-size="10" fill="var(--faint)">${parseYmd(days[i]).getDate()}</text>`; }).join("")}
-    ${goal ? `<line x1="${L}" x2="${W-6}" y1="${y(goal)}" y2="${y(goal)}" stroke="var(--gold)" stroke-dasharray="5 4" stroke-width="1.5"/><text x="${W-8}" y="${y(goal)-5}" text-anchor="end" font-size="11" font-weight="600" fill="var(--gold)">Target ${goal.toLocaleString()}</text>` : ""}
+      return `<rect x="${x}" y="${y(v)}" width="${w}" height="${Math.max(0,h)}" rx="5" fill="${v ? (over ? "var(--warn)" : "var(--accent)") : "none"}">${v ? `<title>${fmtDay(days[i])}: ${v.toLocaleString()} cal${over ? " (over your target)" : ""}</title>` : ""}</rect>
+      ${v ? `<text x="${x+w/2}" y="${y(v)-6}" text-anchor="middle" font-size="${fs}" fill="var(--muted)">${v.toLocaleString()}</text>` : `<text x="${x+w/2}" y="${y(0)-6}" text-anchor="middle" font-size="${fs}" fill="var(--faint)">—</text>`}
+      <text x="${x+w/2}" y="${H-18}" text-anchor="middle" font-size="${fs}" font-weight="${days[i]===today()?700:400}" fill="var(--text)">${DOW[parseYmd(days[i]).getDay()]}</text>
+      <text x="${x+w/2}" y="${H-4}" text-anchor="middle" font-size="${narrow ? 11.5 : 10}" fill="var(--faint)">${parseYmd(days[i]).getDate()}</text>`; }).join("")}
+    ${goal ? `<line x1="${L}" x2="${W-6}" y1="${y(goal)}" y2="${y(goal)}" stroke="var(--gold)" stroke-dasharray="5 4" stroke-width="1.5"/><text x="${W-8}" y="${y(goal)-5}" text-anchor="end" font-size="${fs}" font-weight="600" fill="var(--gold)">Target ${goal.toLocaleString()}</text>` : ""}
   </svg></div>`;
 }
 // ---------- 8.1.12: faster meal logging (text-only chips, spelling variants) ----------
@@ -13294,33 +13358,51 @@ function nutritionView(p){
       ${typeof voiceMealButton === "function" ? voiceMealButton(p) : ""}
       <p class="small muted">${WLA.lang === "es" ? "Deja el campo de calorías vacío y pulsa Estimar las calorías. Describe la comida con tus palabras y ajusta las porciones. También puedes añadir una foto." : 'Leave the calorie box empty and hit <b>Guess the calories</b>. Type it how you\'d say it, like "rice and stew with chicken", and you can adjust each portion. Or snap a photo below.'}</p>
     </section>
-    ${pend ? extrasPanel(pend) : `<section class="card"><div class="row between"><h2>${WLA.lang === "es" ? `Resumen de ${date === today() ? "hoy" : fmtDay(date)}` : `${date === today() ? "Today" : fmtDay(date)} at a glance`}</h2><div class="btn-group" role="group" aria-label="Change day"><button class="btn sm icon-btn" data-act="day" data-v="-1" aria-label="Previous day">${icon("chevL","",16)}</button><button class="btn sm icon-btn" data-act="day" data-v="1" aria-label="Next day"${date>=today()?" disabled":""}>${icon("chevR","",16)}</button></div></div>
-      <div class="grid" style="grid-template-columns:repeat(3,1fr)"><div><div class="tiny muted">Meals</div><div class="num mid">${meals.reduce((a,m)=>a+mealTotal(m),0).toLocaleString()}</div></div><div><div class="tiny muted">Snacks${drinkKcalOn(date) ? " + drinks" : ""}</div><div class="num mid">${(snacks.reduce((a,s)=>a+s.cal,0) + drinkKcalOn(date)).toLocaleString()}</div></div><div><div class="tiny muted">${p.calorieGoal ? "Left" : "Total"}</div><div class="num mid">${(p.calorieGoal ? p.calorieGoal - intakeOn(date) : intakeOn(date)).toLocaleString()}</div></div></div>
-      ${burnedOn(date,p) ? `<p class="small muted">Estimated burn: ${Math.round(burnedOn(date,p)).toLocaleString()} cal including ${onDate("workouts",date).length} workout${onDate("workouts",date).length===1?"":"s"}.</p>` : ""}
-    </section>`}
+    <div class="stack nut-side">
+      ${pend ? extrasPanel(pend) : glanceCardNutrition(p, date, meals, snacks)}
+      ${typeof drinksSection === "function" ? drinksSection(p) : ""}
+      ${weightLogCard(p)}
+    </div>
   </div>
   ${typeof mealPhotoCard === "function" ? mealPhotoCard(p) : ""}
   ${typeof photoStrip === "function" && typeof isPremium === "function" && isPremium() ? photoStrip(p, date) : ""}
   ${mealBuilderCard(p)}
   ${foodPhotoCard(p)}
-  ${typeof drinksSection === "function" ? drinksSection(p) : ""}
-  <section class="card">
-    <div class="row between"><h2>${WLA.lang === "es" ? `Comidas ${date === today() ? "de hoy" : `del ${fmtDay(date)}`}` : `Meals on ${date === today() ? "today" : fmtDay(date)}`}</h2><span class="small muted tab">${meals.reduce((a,m)=>a+mealTotal(m),0).toLocaleString()} cal</span></div>
+  <div class="grid g2 nut-lower">
+  ${mealsOnCard(p, date, meals)}
+  <section class="card"><div class="row between"><div><h2>Last 7 days</h2><div class="tiny muted">Hover a bar for the day's calories.</div></div>${p.calorieGoal ? `<span class="pill-goal tab" title="Your daily calorie target">Target ${p.calorieGoal.toLocaleString()} cal</span>` : `<a class="small" href="#/settings">Add a target line</a>`}</div>${weekChart(p, true)}</section>
+  </div>
+  ${projectionCard(p)}`;
+}
+// 8.6.8: the three cards that make up the right-hand column of the Nutrition page (and the Meals on today card beside Last 7 days).
+// Today at a glance: a ring for how much of the calorie target is eaten (only when a target is set) and three tiles.
+function glanceCardNutrition(p, date, meals, snacks){
+  const eaten = intakeOn(date), goal = p.calorieGoal, pct = goal ? eaten / goal : 0;
+  const mealCal = meals.reduce((a,m) => a + mealTotal(m), 0), snackCal = snacks.reduce((a,x) => a + x.cal, 0) + drinkKcalOn(date);
+  const tile = (label, v) => `<div class="gl-tile"><div class="tiny muted">${label}</div><div class="num mid">${v.toLocaleString()}</div></div>`;
+  return `<section class="card nut-glance"><div class="row between"><h2>${WLA.lang === "es" ? `Resumen de ${date === today() ? "hoy" : fmtDay(date)}` : `${date === today() ? "Today" : fmtDay(date)} at a glance`}</h2><div class="btn-group" role="group" aria-label="Change day"><button class="btn sm icon-btn" data-act="day" data-v="-1" aria-label="Previous day">${icon("chevL","",16)}</button><button class="btn sm icon-btn" data-act="day" data-v="1" aria-label="Next day"${date >= today() ? " disabled" : ""}>${icon("chevR","",16)}</button></div></div>
+    <div class="gl-body">${goal ? ringHTML(pct, `<span class="rc-main">${Math.round(pct * 100)}%</span>`, `${Math.round(pct * 100)}% of your ${goal.toLocaleString()} calorie target eaten`, pct > 1 ? "var(--warn)" : "var(--c-food)", 84) : ""}
+      <div class="gl-tiles">${tile("Meals", mealCal)}${tile(`Snacks${drinkKcalOn(date) ? " + drinks" : ""}`, snackCal)}${tile(goal ? "Left" : "Total", goal ? goal - eaten : eaten)}</div></div>
+    ${burnedOn(date,p) ? `<p class="small muted">Estimated burn: ${Math.round(burnedOn(date,p)).toLocaleString()} cal including ${onDate("workouts",date).length} workout${onDate("workouts",date).length===1?"":"s"}.</p>` : ""}
+  </section>`;
+}
+// Log your weight: the field, the date and Save on one row, then the last five weigh-ins.
+function weightLogCard(p){
+  return `<section class="card nut-weight"><h2>Log your weight</h2>
+    <div class="nw-row"><label class="f nw-val">Weight<input type="text" inputmode="decimal" autocomplete="off" id="w-val" placeholder="${esc(weightPlaceholder(p))}"></label><label class="f nw-date">Date<input type="date" id="w-date" value="${today()}" max="${today()}"></label><button class="btn primary" data-act="log-weight">Save weight</button></div>
+    <p class="tiny muted">Type it however you like: <b>155</b>, <b>70 kg</b>, <b>11 st 4</b>. Without a unit it's read as ${p.units === "metric" ? "kilograms" : "pounds"}.</p>
+    ${UI.weightErr ? `<div class="note">${esc(UI.weightErr)}</div>` : ""}
+    ${(() => { const ws = entries("weights").sort((a,b)=>a.date<b.date?1:-1).slice(0,5); return ws.length ? `<div class="list small">${ws.map(w => `<div class="li"><span>${fmtDay(w.date)}</span><span class="row" style="gap:6px"><span class="tab">${fmtWeight(w.kg)}</span><button class="btn sm ghost" data-act="del-weight" data-id="${w.id}" aria-label="Delete">${icon("x")}</button></span></div>`).join("")}</div>` : `<p class="small muted">Weigh-ins let you compare the estimate with what really happened.</p>`; })()}
+  </section>`;
+}
+function mealsOnCard(p, date, meals){
+  return `<section class="card nut-meals">
+    <div class="row between"><h2>${WLA.lang === "es" ? `Comidas ${date === today() ? "de hoy" : `del ${fmtDay(date)}`}` : `Meals on ${date === today() ? "today" : fmtDay(date)}`}</h2><span class="small muted tab pill-goal">${meals.reduce((a,m)=>a+mealTotal(m),0).toLocaleString()} cal</span></div>
     ${meals.length ? `<div class="list">${meals.map(m => `<div class="li"><div class="grow"><div class="eyebrow" style="color:var(--gold)">${SLOTS.find(s=>s[0]===m.slot)?.[1]}</div><b>${esc(m.name)}</b> <span class="tab muted small">${m.cal} cal</span>${m.est ? ` <span class="guess">${icon("spark")} estimate</span>` : ""}
       ${(m.extras||[]).length ? `<ul class="clean small muted" style="margin-top:4px">${m.extras.map(x => `<li>+ ${esc(x.name)} <span class="tab">${x.cal} cal</span></li>`).join("")}</ul>` : ""}
       </div><div class="row" style="gap:6px">${m.photo && !UI.locked ? `<button class="mealthumb" data-act="ms-view" data-id="${m.id}" aria-label="Photo of ${esc(m.name)}"><img src="${m.photo}" alt=""></button>` : ""}<span class="tab"><b>${mealTotal(m)}</b></span><button class="btn sm ghost" data-act="extras" data-id="${m.id}">Extras</button><button class="btn sm ghost" data-act="del-meal" data-id="${m.id}" aria-label="Delete ${esc(m.name)}">${icon("x","")}</button></div></div>`).join("")}</div>`
       : `${emptyState("meals", WLA.lang === "es" ? `No hay comidas registradas${date === today() ? " hoy" : ""}. Registra una arriba o deja que el entrenador elija según tu cultura gastronómica.` : `No meals logged${date === today() ? " yet today" : ""}. Log one above, or let the coach pick from your food culture.`, [tr("See today's menu"),"#/culture"])}`}
-  </section>
-  <section class="card"><div class="row between"><h2>Last 7 days</h2>${p.calorieGoal ? "" : `<a class="small" href="#/settings">Add a target line</a>`}</div>${weekChart(p)}</section>
-  <div class="grid g2">${projectionCard(p)}
-    <section class="card"><h2>Log your weight</h2>
-      <div class="form"><label class="f">Weight<input type="text" inputmode="decimal" autocomplete="off" id="w-val" placeholder="${esc(weightPlaceholder(p))}"></label><label class="f">Date<input type="date" id="w-date" value="${today()}" max="${today()}"></label></div>
-      <p class="tiny muted">Type it however you like: <b>155</b>, <b>70 kg</b>, <b>11 st 4</b>. Without a unit it's read as ${p.units === "metric" ? "kilograms" : "pounds"}.</p>
-      ${UI.weightErr ? `<div class="note">${esc(UI.weightErr)}</div>` : ""}
-      <button class="btn" data-act="log-weight">Save weight</button>
-      ${(() => { const ws = entries("weights").sort((a,b)=>a.date<b.date?1:-1).slice(0,5); return ws.length ? `<div class="list small">${ws.map(w => `<div class="li"><span>${fmtDay(w.date)}</span><span class="row" style="gap:6px"><span class="tab">${fmtWeight(w.kg)}</span><button class="btn sm ghost" data-act="del-weight" data-id="${w.id}" aria-label="Delete">${icon("x")}</button></span></div>`).join("")}</div>` : `<p class="small muted">Weigh-ins let you compare the estimate with what really happened.</p>`; })()}
-    </section>
-  </div>`;
+  </section>`;
 }
 function extrasPanel(m){
   return `<section class="card fade" aria-live="polite">
@@ -13368,6 +13450,30 @@ window.addEventListener("scroll", () => railTipHide(), { passive: true, capture:
 // =================== WORKOUTS ===================
 // Keep a half-filled workout form across re-renders (picker and import toggles).
 function wSaveDraft(){ if (!document.getElementById("w-min")) return; UI.wDraft = { minutes: val("w-min"), date: val("w-d"), cal: val("w-cal"), note: val("w-note") }; }
+// 8.6.9: the quick activity picks, the live calorie estimate and the weekly-goal day dots on the Workouts page.
+// Quick picks are the activities this profile logged most recently, filled up with common ones; the full picker is still behind Change.
+function quickActs(cur){
+  const seen = new Set([cur]), out = [];
+  for (const w of entries("workouts").sort((a,b) => a.date < b.date ? 1 : -1)) { if (ACT[w.type] && !seen.has(w.type)) { seen.add(w.type); out.push(ACT[w.type]); if (out.length >= 5) break; } }
+  for (const k of ["run","walk","cycle","hiit","strength","soccer","swim","yoga"]) { if (out.length >= 5) break; if (ACT[k] && !seen.has(k)) { seen.add(k); out.push(ACT[k]); } }
+  return out;
+}
+function wEstimateText(mins, cal, type, kg){
+  if (!mins) return "Add minutes for an estimate";
+  return cal ? `${Math.round(cal).toLocaleString()} cal (yours)` : `≈ ${workoutKcal({ type, minutes: mins }, kg).toLocaleString()} cal est.`;
+}
+// Called on every keystroke in Minutes and Calories and by the minute chips; it only edits the pill and the chips, so a typed form is never re-rendered.
+function wEstimate(){
+  const el = document.getElementById("w-est"); if (!el) return;
+  const mins = numv("w-min");
+  el.textContent = wEstimateText(mins, numv("w-cal"), val("w-type"), latestWeightKg(P()));
+  document.querySelectorAll(".wk-presets .chip").forEach(c => c.setAttribute("aria-pressed", String(+c.dataset.v === mins)));
+}
+function weekDots(p){
+  const ws = weekStart(today()), wk = weekWorkouts(p);
+  return `<div class="day-dots" role="list" aria-label="This week, day by day">${Array.from({ length: 7 }, (_, i) => { const d = addDays(ws, i), n = wk.filter(w => w.date === d).length, name = DOW[parseYmd(d).getDay()];
+    return `<span class="day-dot${n ? " is-done" : ""}${d === today() ? " is-today" : ""}" role="listitem" aria-label="${name}${d === today() ? " (today)" : ""}: ${n ? `${n} workout${n === 1 ? "" : "s"}` : "no workout"}">${name[0]}</span>`; }).join("")}</div>`;
+}
 function workoutsView(p){
   const all = entries("workouts").sort((a,b) => a.date < b.date ? 1 : -1);
   const kg = latestWeightKg(p);
@@ -13375,8 +13481,12 @@ function workoutsView(p){
   return `
   ${workoutStatsRow(p)}
   ${typeof restBox === "function" ? restBox(p) : ""}
-  ${equipPhotoCard(p)}
-  <section class="card"><button type="button" class="btn sm" style="align-self:flex-start" data-act="imp-toggle" aria-expanded="${UI.impOpen}">${UI.impOpen ? "Hide imports" : "Import from Apple Health or another app"}</button></section>
+  <div class="grid g2 wk-tools">
+    ${equipPhotoCard(p)}
+    <section class="card wk-import"><h2>Import workouts</h2>
+      <p class="small muted">Bring sessions in from Apple Health, Google Health, Fitbit, Strava, Garmin and most other apps with an export file. There is no automatic sync.</p>
+      <button type="button" class="btn sm" style="align-self:flex-start" data-act="imp-toggle" aria-expanded="${UI.impOpen}">${UI.impOpen ? "Hide imports" : "Import from Apple Health or another app"}</button></section>
+  </div>
   <div class="grid g3">
     ${UI.impOpen ? `<section class="card"><div class="eyebrow">Apple Health</div><h3>Import your iPhone export</h3>
       <p class="small muted">On iPhone: Health app, then your photo, then Export All Health Data. Unzip it and choose <b>export.xml</b>. Large files are fine; it's read in pieces on this device. Brings in workouts and weigh-ins (last 12 months) plus steps, resting heart rate, blood pressure, blood oxygen, sleep and water (last 90 days).</p>
@@ -13391,26 +13501,27 @@ function workoutsView(p){
       <div class="form">
         <div class="f full" role="group" aria-label="Activity"><span>Activity</span>
           ${(() => { const cur = UI.prefillW?.type || UI.pickAct || "strength"; const ca = ACT[cur] || ACTIVITIES[0];
-            return UI.actOpen ? `${ACT_GROUPS.map(([g, gn]) => `<div class="actgroup" role="group" aria-label="${esc(gn)}"><div class="actgh">${esc(gn)}</div><span class="actpick">${ACTIVITIES.filter(a => a.g === g).map(a => `<button type="button" class="actbtn" data-act="pick-act" data-v="${a.k}" aria-pressed="${(UI.prefillW?.type || UI.pickAct || "strength") === a.k}" title="${esc(a.n)}">${wicon(a.k, 40)}<span class="tiny">${esc(a.n)}</span></button>`).join("")}</span></div>`).join("")}<button type="button" class="btn sm" data-act="act-toggle" aria-expanded="true">Done</button>` : `<div class="actcur">${wicon(ca.k, 40)}<b class="grow">${esc(ca.n)}</b><button type="button" class="btn sm" data-act="act-toggle" aria-expanded="false">Change</button></div>`; })()}
+            return UI.actOpen ? `${ACT_GROUPS.map(([g, gn]) => `<div class="actgroup" role="group" aria-label="${esc(gn)}"><div class="actgh">${esc(gn)}</div><span class="actpick">${ACTIVITIES.filter(a => a.g === g).map(a => `<button type="button" class="actbtn" data-act="pick-act" data-v="${a.k}" aria-pressed="${(UI.prefillW?.type || UI.pickAct || "strength") === a.k}" title="${esc(a.n)}">${wicon(a.k, 40)}<span class="tiny">${esc(a.n)}</span></button>`).join("")}</span></div>`).join("")}<button type="button" class="btn sm" data-act="act-toggle" aria-expanded="true">Done</button>` : `<div class="actcur">${wicon(ca.k, 40)}<b class="grow">${esc(ca.n)}</b><button type="button" class="btn sm" data-act="act-toggle" aria-expanded="false">Change</button></div><div class="actquick" role="group" aria-label="Quick picks">${quickActs(cur).map(a => `<button type="button" class="chip actq" data-act="pick-act" data-v="${a.k}">${wicon(a.k, 22)}<span>${esc(a.n)}</span></button>`).join("")}</div>`; })()}
           <select id="w-type" class="visually-tight" aria-label="Activity">${opt(ACTIVITIES.map(a=>[a.k,a.n]), UI.prefillW?.type || UI.pickAct || "strength")}</select></div>
         <label class="f">Minutes<input type="number" id="w-min" min="1" max="600" value="${UI.wDraft?.minutes ?? UI.prefillW?.minutes ?? ""}" placeholder="45"></label>
         <label class="f">Date<input type="date" id="w-d" value="${esc(UI.wDraft?.date || today())}" max="${today()}"></label>
         <label class="f">Calories (optional)<input type="number" id="w-cal" min="0" max="5000" value="${UI.wDraft?.cal ?? ""}" placeholder="Estimated if blank"></label>
+        <div class="f full wk-quick"><span class="wk-presets" role="group" aria-label="Quick minutes">${[20,30,45,60].map(m => `<button type="button" class="chip" data-act="w-preset" data-v="${m}" aria-pressed="${+(UI.wDraft?.minutes ?? UI.prefillW?.minutes) === m}">${m}m</button>`).join("")}</span><span class="pill-goal" id="w-est" role="status">${esc(wEstimateText(+(UI.wDraft?.minutes ?? UI.prefillW?.minutes) || null, +(UI.wDraft?.cal) || null, UI.prefillW?.type || UI.pickAct || "strength", kg))}</span></div>
         <label class="f full">Notes<input type="text" id="w-note" value="${esc(UI.wDraft?.note ?? UI.prefillW?.note ?? "")}" placeholder="e.g. legs, 5K, pickup soccer"></label>
       </div>
       <button class="btn primary" data-act="log-workout">Save workout</button>
     </section>
   </div>
   ${imp ? `<section class="card"><div class="row between"><h3>${esc(imp.label)}</h3>${imp.done ? `<button class="btn sm ghost" data-act="imp-close">Dismiss</button>` : ""}</div>${imp.done ? "" : `<div class="bar"><i style="width:${imp.pct||0}%"></i></div>`}<p class="small muted">${esc(imp.msg || "")}</p></section>` : ""}
-  <section class="card">
-    <div class="setrow"><div class="setlabel"><div class="eyebrow">Weekly goal</div><h2 style="margin-top:4px">${weekWorkouts(p).length}${p.workoutGoal ? ` of ${p.workoutGoal}` : ""} workouts this week</h2></div>${p.workoutGoal ? "" : `<a class="small" href="#/settings">Set a weekly goal</a>`}</div>
-    ${p.workoutGoal ? ringHTML(weekWorkouts(p).length / p.workoutGoal, `<span class="rc-main">${weekWorkouts(p).length}</span><span class="rc-sub">of ${p.workoutGoal}</span>`, `${weekWorkouts(p).length} of ${p.workoutGoal} workouts this week`, "var(--c-activity)", 104) : ""}
-    <p class="small muted">${esc(motivation(p))}</p>
+  <section class="card wk-goal">
+    <div class="setrow"><div class="setlabel"><div class="eyebrow">Weekly goal</div><h2 style="margin-top:4px">${weekWorkouts(p).length}${p.workoutGoal ? ` of ${p.workoutGoal}` : ""} workouts this week</h2></div>${p.workoutGoal ? `<div class="wg-step" role="group" aria-label="Workouts per week"><button type="button" class="btn sm icon-btn" data-act="wgoal" data-d="-1" aria-label="Fewer workouts per week"${p.workoutGoal <= 1 ? " disabled" : ""}>−</button><span class="tab" aria-live="polite">${p.workoutGoal} / wk</span><button type="button" class="btn sm icon-btn" data-act="wgoal" data-d="1" aria-label="More workouts per week"${p.workoutGoal >= 14 ? " disabled" : ""}>+</button></div>` : `<a class="small" href="#/settings">Set a weekly goal</a>`}</div>
+    <div class="wg-body">${p.workoutGoal ? ringHTML(weekWorkouts(p).length / p.workoutGoal, `<span class="rc-main">${Math.min(999, Math.round(weekWorkouts(p).length / p.workoutGoal * 100))}%</span>`, `${weekWorkouts(p).length} of ${p.workoutGoal} workouts this week`, "var(--c-activity)", 84) : ""}
+      <div class="wg-days">${weekDots(p)}<p class="small muted">${esc(motivation(p))}</p></div></div>
   </section>
   ${challengesCard()}
   <section class="card">
     <div class="row between"><h2>Workout history</h2><span class="small muted">${all.length} total</span></div>
-    ${all.length ? `<div class="list">${all.slice(0, UI.wShow || 10).map(w => `<div class="li wrow">${wicon(w.type, 38)}<div class="grow"><b>${esc(ACT[w.type]?.n || "Workout")}</b> <span class="muted small">· ${w.minutes ?? "—"} min · ≈${workoutKcal(w,kg) || 0} cal${w.src ? ` · ${esc(w.src)}` : ""}</span>${w.note ? `<div class="small muted">${esc(w.note)}</div>` : ""}</div><span class="small muted tab">${fmtDay(w.date)}</span><button class="btn sm ghost" data-act="del-workout" data-id="${w.id}" aria-label="Delete workout">${icon("x")}</button></div>`).join("")}</div>
+    ${all.length ? `<div class="list">${all.slice(0, UI.wShow || 10).map(w => `<div class="li wrow">${wicon(w.type, 38)}<div class="grow"><b>${esc(ACT[w.type]?.n || "Workout")}</b><div class="small muted wr-meta">${fmtDay(w.date)}${w.note ? ` · ${esc(w.note)}` : ""}${w.src ? ` · ${esc(w.src)}` : ""}</div></div><div class="wr-nums tab"><b>${w.minutes ?? "—"} min</b><span class="wr-kcal">≈${workoutKcal(w,kg) || 0} cal</span></div><button class="btn sm ghost" data-act="del-workout" data-id="${w.id}" aria-label="Delete workout">${icon("x")}</button></div>`).join("")}</div>
       ${all.length > (UI.wShow || 10) ? `<button class="btn sm" data-act="more-w">Show more</button>` : ""}`
       : `${emptyState("workouts", "No workouts yet. Log one above, import a file from your phone, or mark a session done with your coach.", ["Open your coach","#/coach"])}`}
   </section>
@@ -13938,16 +14049,24 @@ function coachChatCard(){
     </ul>
     <div class="row" style="margin-top:6px"><button class="btn primary" data-act="wlc-optin"${C.consenting ? " disabled" : ""}>${C.consenting ? "Saving…" : "Allow coach chat"}</button></div>
     ${C.err ? `<div class="note" role="alert">${esc(C.err)}</div>` : ""}</section>`;
-  const msgs = (C.msgs || []).map(m => `<div class="well" style="margin:6px 0"><span class="tiny muted">${m.me ? "You" : "WL Coach"}</span><div class="small" style="white-space:pre-wrap">${esc(m.t)}</div></div>`).join("");
-  return `<section class="card" id="wlc">${head}
+  // 8.6.10: a chat window. Your questions on the right, the coach on the left, three dots while it thinks, suggested questions that fill the box
+  // (they never send by themselves: a send goes to a server), and a counter. The reply is still shown as plain text.
+  const msgs = (C.msgs || []).map(m => `<div class="wlc-msg${m.me ? " me" : ""}"><span class="sr-only">${m.me ? "You" : "WL Coach"}: </span><div class="wlc-bubble">${esc(m.t)}</div></div>`).join("")
+    + (C.busy ? `<div class="wlc-msg"><div class="wlc-bubble wlc-typing" role="status" aria-label="${esc(tr("WL Coach is thinking"))}"><span></span><span></span><span></span></div></div>` : "");
+  return `<section class="card wlc-card" id="wlc">
+    <div class="wlc-head"><span class="wlc-av" aria-hidden="true">${icon("compass","",22)}</span>
+      <div class="wlc-title"><div class="eyebrow">Chat with your coach</div><h2>Ask WL Coach</h2></div>
+      <span class="pill-goal wlc-note">Can't see your logs yet · Not medical advice</span></div>
     <p class="small muted">Training and food questions. WL Coach can't see your logs yet, so tell it what it needs to know. It is not medical advice.</p>
     ${WLA.lang === "es" ? '<p class="tiny muted">Puedes escribir en español; algunas respuestas del servicio pueden llegar en inglés.</p>' : ""}
-    <div id="wlc-log" aria-live="polite">${msgs}</div>
-    <label class="f">Your question<textarea id="wlc-q" maxlength="1000" placeholder="For example: what should I eat after a workout?">${esc(C.q || "")}</textarea></label>
-    <div class="row"><button class="btn primary" data-act="wlc-send"${C.busy ? " disabled" : ""}>${C.busy ? "Thinking…" : "Send"}</button></div>
+    <div id="wlc-log" class="wlc-stream" aria-live="polite">${msgs || `<p class="wlc-empty small muted">${esc(tr("Ask a training or food question to start."))}</p>`}</div>
+    <div class="wlc-chips" role="group" aria-label="${esc(tr("Suggested questions"))}">${WLC_ASKS.map((q, i) => `<button type="button" class="chip" data-act="wlc-ask" data-i="${i}">${esc(tr(q))}</button>`).join("")}</div>
+    <div class="wlc-composer"><textarea id="wlc-q" rows="2" maxlength="1000" aria-label="${esc(tr("Your question"))}" placeholder="${esc(tr("For example: what should I eat after a workout?"))}">${esc(C.q || "")}</textarea>
+      <button type="button" class="wlc-send" data-act="wlc-send" aria-label="${esc(C.busy ? tr("Thinking…") : tr("Send"))}"${C.busy ? " disabled" : ""}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button></div>
     ${C.err ? `<div class="note" role="alert">${esc(C.err)}</div>` : ""}
   </section>`;
 }
+const WLC_ASKS = ["What should I eat after a workout?", "Best West African high-protein breakfast?", "Sore legs after soccer: stretch or rest?", "How much water should I drink?"];
 // The opt-in is also recorded on the account (coach_consent_set, 8.4.3): the wl-coach function trusts that record, never a flag typed into the request,
 // so a direct call cannot skip the screen and a withdrawal stops every tab and device at once. The switch only turns on after the record is saved.
 const COACH_WD_KEY = "wlh.coachwd", COACH_UID_KEY = "wlh.coachuid";
@@ -13985,7 +14104,7 @@ async function wlCoachSend(){
   const c = sbClient(); if (!c || !SB.user) { C.err = "Sign in first."; render(); return; }
   if (!P().coachChatConsent) { C.err = "Allow coach chat first."; C.q = q; render(); return; }
   if (navigator.onLine === false) { C.err = "You are offline. Try again when you are connected."; C.q = q; render(); return; }
-  C.q = q; C.busy = true; render();
+  C.q = q; C.busy = true; render(); { const lg = document.getElementById("wlc-log"); if (lg) lg.scrollTop = lg.scrollHeight; }
   let out = null, state = "error";
   try {
     const { data } = await c.auth.getSession(), token = data?.session?.access_token;
@@ -14004,7 +14123,9 @@ async function wlCoachSend(){
     : state === "unavailable" ? "The coach isn't available right now. Try again later."
     : state === "bad_message" ? "Write a question under 1,000 characters."
     : "The coach couldn't answer just now. Try again in a moment.";
-  render();
+  render(); const lg = document.getElementById("wlc-log"); if (lg) lg.scrollTop = lg.scrollHeight;
+  // A tap on Send does not always take focus off the box (iPad Safari), and the page keeps what looks like typing, so clear it by hand.
+  if (state === "ok") { const b = document.getElementById("wlc-q"); if (b && b.value === q) { b.value = ""; b.dispatchEvent(new Event("input", { bubbles: true })); } }
 }
 async function askClaude(kind){
   const sample = await window.claude?.use?.("sample");
@@ -14169,10 +14290,13 @@ function settingsView(p){
       <div class="apr-two">${uiStyleRow()}${languageRow()}</div>
     </section>
     <section class="card apr-card" aria-labelledby="apr-h3"><h3 class="apr-h" id="apr-h3">Glass &amp; motion</h3>
+      ${glassPreview(p)}
       ${opacityRow(p)}
       <div class="setgroup"><div class="setlabel">${tr("Motion")}</div>
-        <div class="seg" role="group" aria-label="Motion"><button data-act="look-motion" data-v="full" aria-pressed="${(p.look?.motion||"full")==="full"}">Bouncy</button><button data-act="look-motion" data-v="reduced" aria-pressed="${p.look?.motion==="reduced"}">Reduced</button></div>
-        <span class="tiny muted">Bouncy adds the spring animations. Reduced turns them off, and your device's own "reduce motion" setting always wins.</span></div>
+        <div class="seg" role="group" aria-label="Motion"><button data-act="look-motion" data-v="full" aria-pressed="${(p.look?.motion||"full")==="full"}">Bouncy</button><button data-act="look-motion" data-v="smooth" aria-pressed="${p.look?.motion==="smooth"}">Smooth</button><button data-act="look-motion" data-v="reduced" aria-pressed="${p.look?.motion==="reduced"}">Reduced</button></div>
+        <span class="tiny muted">Bouncy adds the spring animations. Smooth keeps the motion but glides, with no spring. Reduced turns them off, and your device's own "reduce motion" setting always wins.</span>
+        <div class="mo-demo"><span class="mo-track" aria-hidden="true"><span class="mo-puck" id="mo-puck">${icon("chevR","",14)} ${esc(tr(MOTION_NAMES[p.look?.motion || "full"] || MOTION_NAMES.full))}</span></span>
+          <button type="button" class="btn sm" data-act="mo-test">Try this motion</button></div></div>
     </section>
     ${reviewBar(p)}
   </div>`;
@@ -14360,6 +14484,10 @@ document.addEventListener("click", async e => {
       const m = { id: uid(), date: val("m-date") || today(), slot: val("m-slot"), name: portion !== 1 ? `${name} (${portion}× portion)` : name, cal: Math.round(cal), dish: dish?.id || null, extras: [] };
       if (UI.mealShot?.data) { m.photo = UI.mealShot.data; UI.mealShot = null; }
       addEntry("meals", m); UI.pendingExtras = m.id; UI.navDate = m.date; UI.prefill = null; render(); toast("Meal logged", "success"); checkCelebrations(); checkAwards(); break; }
+    case "log-pick": { // 8.6.8: the + Log on a Today's meals card logs that pick for today, one regular portion, the same way Log meal does
+      const d = dailyPicks(today(), P())[+t.dataset.i]; if (!d) return;
+      const m = { id: uid(), date: today(), slot: SLOTS[+t.dataset.i]?.[0] || "lunch", name: d.n, cal: Math.round(d.cal), dish: d.id || null, extras: [] };
+      addEntry("meals", m); UI.pendingExtras = m.id; UI.navDate = m.date; UI.prefill = null; render(); toast("Meal logged", "success"); checkCelebrations(); checkAwards(); break; }
     case "quick-food": UI.prefill = { name: t.dataset.name, cal: t.dataset.cal ? +t.dataset.cal : "", slot: t.dataset.slot }; render(); document.getElementById("m-name")?.focus(); break;
     case "repeat-day": {
       const date = t.dataset.date || today(), src = onDate("meals", addDays(date, -1)), have = onDate("meals", date);
@@ -14398,6 +14526,8 @@ document.addEventListener("click", async e => {
       swipeToast({ title: "Workout saved", description: `${wn}, ${Math.round(mins)} min`, type: "success", rich: true, key: "wk-saved" }); checkCelebrations(); checkAwards(); break; }
     case "del-workout": removeEntry("workouts", t.dataset.id); render(); break;
     case "ring-day": UI.ringDay = t.dataset.v; render(); document.querySelector(`.rday[data-v="${t.dataset.v}"]`)?.focus(); break;
+    case "w-preset": { const i = document.getElementById("w-min"); if (i) { i.value = t.dataset.v; wEstimate(); } break; }
+    case "wgoal": { const n = Math.max(1, Math.min(14, (p.workoutGoal || 0) + +t.dataset.d)); if (n !== p.workoutGoal) { p.workoutGoal = n; saveProfile(); render(); } document.querySelector(`[data-act="wgoal"][data-d="${t.dataset.d}"]:not([disabled])`)?.focus(); break; }
     case "act-toggle": wSaveDraft(); UI.actOpen = !UI.actOpen; render(); document.querySelector('[data-act="act-toggle"]')?.focus(); break;
     case "sc-tip": t.closest(".sc")?.classList.toggle("tipon"); break;
     case "imp-toggle": wSaveDraft(); UI.impOpen = !UI.impOpen; render(); break;
@@ -14432,6 +14562,7 @@ document.addEventListener("click", async e => {
     case "coach-tab": { coachTabSet(t.dataset.v, !t.dataset.go); const el = t.dataset.go && document.querySelector(t.dataset.go); if (el) { el.scrollIntoView({ block: "center" }); el.focus?.({ preventScroll: true }); } break; }
     case "coach-q": UI.askCoach = { ...(UI.askCoach||{}), q: t.dataset.q }; render(); document.getElementById("coach-q")?.focus(); break;
     case "wlc-optin": coachConsentChange(true); break;
+    case "wlc-ask": { const q = tr(WLC_ASKS[+t.dataset.i] || ""), box = document.getElementById("wlc-q"); if (box && q) { box.value = q.slice(0, 1000); box.dispatchEvent(new Event("input", { bubbles: true })); box.focus(); } break; }
     case "wlc-send": wlCoachSend(); break;
     case "ask-coach": UI.askCoach = { ...(UI.askCoach||{}), q: val("coach-q") }; askClaude("coach"); break;
     case "rem-day": { const d = +t.dataset.v; const r = p.reminders; r.days = r.days.includes(d) ? r.days.filter(x => x !== d) : [...r.days, d].sort(); saveProfile(); render(); break; }
@@ -14451,6 +14582,7 @@ document.addEventListener("click", async e => {
     case "m-range": UI.mRange = +t.dataset.v; render(); break;
     case "del-metric": deleteMetric(t.dataset.k, t.dataset.d); render(); toast("Deleted"); break;
     case "photo-remove": p.photo = null; saveProfile(); render(); toast("Photo removed"); break;
+    case "pf-fill": { UI.editGroup = t.dataset.g; UI.groupErr = null; render(); requestAnimationFrame(() => { const f = document.getElementById(t.dataset.f); (f?._wl || f)?.focus(); }); break; } // the page swaps a select for its own button one frame after a render, so focus after that
     case "edit-group": UI.editGroup = t.dataset.v; UI.groupErr = null; render(); document.querySelector(`#pg-${t.dataset.v} input, #pg-${t.dataset.v} select`)?.focus(); break;
     case "cancel-group": UI.editGroup = null; UI.groupErr = null; render(); break;
     case "look-mode": case "look-accent": {
@@ -14633,6 +14765,7 @@ document.addEventListener("submit", async e => {
 let qTimer;
 document.addEventListener("input", e => {
   const t = e.target;
+  if (t.id === "w-min" || t.id === "w-cal") wEstimate();
   if (t.id === "browse-q") { clearTimeout(qTimer); qTimer = setTimeout(() => { UI.browseQ = t.value; const pos = t.selectionStart; render(); const el = document.getElementById("browse-q"); if (el) { el.focus(); el.setSelectionRange(pos, pos); } }, 150); return; }
   if (t.id === "rf-q" || t.id === "s-q") {
     clearTimeout(qTimer); qTimer = setTimeout(() => { if (t.id === "rf-q") { UI.recFilter.q = t.value; UI.recPg = 1; } else UI.snackQ = t.value; UI.focus = t.id; const pos = t.selectionStart; render(); const el = document.getElementById(t.id); if (el) { el.focus(); el.setSelectionRange(pos, pos); } }, 200);
@@ -14756,6 +14889,7 @@ const ringIO = "IntersectionObserver" in window ? new IntersectionObserver(entri
     if (!entry.isIntersecting) continue;
     ringIO.unobserve(entry.target);
     const wrap = entry.target, fill = wrap.querySelector(".ring-fill");
+    if (!fill) continue; // the page was redrawn and this node now holds something else
     const pct = Math.max(0, Math.min(1, parseFloat(wrap.dataset.ring) || 0));
     const c = 2 * Math.PI * 30;
     fill.style.strokeDasharray = c; fill.style.strokeDashoffset = c;
@@ -14793,7 +14927,7 @@ const ST_STARTING = typeof window !== "undefined" && "CSSStartingStyleRule" in w
 function stReduced(){ return document.documentElement.dataset.motion === "reduced" || matchMedia("(prefers-reduced-motion: reduce)").matches; }
 function stStack(){
   let s = document.getElementById("st-stack");
-  if (!s) { s = document.createElement("div"); s.id = "st-stack"; s.setAttribute("aria-label", "Notifications"); document.body.append(s); }
+  if (!s) { s = document.createElement("div"); s.id = "st-stack"; s.setAttribute("role", "region"); s.setAttribute("aria-label", "Notifications"); document.body.append(s); } // a named region: a label alone is not allowed on a plain div
   return s;
 }
 // opts: { title, description, type: info|success|warn|error|bell, rich, time, actionLabel, onAction, duration, key, onClose }
@@ -15653,15 +15787,19 @@ function photoAiOptIn(kind){
   const copy = kind === "food"
     ? { h:"Snap your plate", d:"Take a picture of your food and the app will guess what's on the plate and how many calories it is. Photo estimates only work when the app is opened inside Claude. On this site they fall back to an offline estimate." }
     : { h:"Log a machine from a photo", d:"Photograph the gym equipment you used and Claude will name it and suggest a safe starting point." };
-  return `<section class="card shot" id="${kind}-photo-optin">
-    <div class="setrow"><div class="setlabel"><div class="mhead" style="color:var(--c-food)">${cicon("apple","var(--c-food)",18)}<b>Photo estimate</b></div><h2 style="margin-top:4px">${esc(copy.h)}</h2></div></div>
-    <p class="small muted">${esc(copy.d)} Before the first photo goes anywhere, here is exactly what that means:</p>
-    <ul class="clean small optin">
-      <li>${icon("pmShare","",16)}<span>Inside Claude, the one photo you choose is sent to Claude for that one answer, along with a short summary of your profile so the answer fits you. It's shrunk and stripped of location data first.</span></li>
-      <li>${icon("lock","",16)}<span>Nothing is sent unless you use this. Typing the calories in by hand instead sends nothing anywhere.</span></li>
-      <li>${icon("x","",16)}<span>Turn this off any time in Settings &gt; Privacy and security — the rest of the app keeps working without it.</span></li>
-    </ul>
-    <div class="row" style="margin-top:6px"><button class="btn primary" data-act="photoai-optin">Allow photo estimates</button></div>
+  // 8.6.8: a compact card; the three privacy points sit in a "How privacy works" disclosure, with the key fact kept in view next to the Allow button.
+  return `<section class="card shot po-card" id="${kind}-photo-optin">
+    <div class="po-row"><div class="po-text">
+      <div class="mhead" style="color:var(--c-food)">${cicon("apple","var(--c-food)",18)}<b>Photo estimate</b></div><h2 style="margin-top:4px">${esc(copy.h)}</h2>
+      <p class="small muted">${esc(copy.d)}</p><p class="small muted">Nothing is sent unless you use this.</p></div>
+      <div class="po-act"><button class="btn primary" data-act="photoai-optin">Allow photo estimates</button></div></div>
+    <details class="po-how how"><summary>How privacy works</summary>
+      <p class="small muted">Before the first photo goes anywhere, here is exactly what that means:</p>
+      <ul class="clean small optin">
+        <li>${icon("pmShare","",16)}<span>Inside Claude, the one photo you choose is sent to Claude for that one answer, along with a short summary of your profile so the answer fits you. It's shrunk and stripped of location data first.</span></li>
+        <li>${icon("lock","",16)}<span>Nothing is sent unless you use this. Typing the calories in by hand instead sends nothing anywhere.</span></li>
+        <li>${icon("x","",16)}<span>Turn this off any time in Settings &gt; Privacy and security — the rest of the app keeps working without it.</span></li>
+      </ul></details>
   </section>`;
 }
 // ---------- B1. Photo calorie estimate, inside the meal logging flow ----------
@@ -17749,6 +17887,8 @@ const WS_HANDLERS = {
     p.look = { ...(p.look || {}), opacity: o };
     applyOpacity(p);
     const out = document.getElementById("ui-op-val"); if (out) out.textContent = `${Math.round(o * 100)}%`;
+    const gb = document.getElementById("gp-badge"); if (gb) gb.textContent = `${Math.round(o * 100)}% glass`;
+    document.querySelectorAll(".op-presets .chip").forEach(c => c.setAttribute("aria-pressed", String(+c.dataset.v === Math.round(o * 100))));
     clearTimeout(applyOpacity._t); applyOpacity._t = setTimeout(() => saveProfile(), 400);
   }
 };
@@ -17830,7 +17970,16 @@ function opacityRow(p){
       <span class="opval" id="ui-op-val">${v}%</span>
       <button class="btn sm" data-act="op-reset">Reset</button>
     </div>
+    <div class="op-presets" role="group" aria-label="Opacity presets">${[[35,"Frosted"],[70,"Balanced"],[100,"Solid"]].map(([n, l]) => `<button type="button" class="chip" data-act="op-set" data-v="${n}" aria-pressed="${v === n}">${tr(l)} ${n}%</button>`).join("")}</div>
     <span class="tiny muted">Sets how see-through the glass is on every panel, card and menu, live. Text stays at full contrast at every setting, so it never becomes hard to read.</span></div>`;
+}
+// 8.6.11: a live preview of the glass: a card over a soft backdrop that follows the slider, holding today's real calorie ring.
+const MOTION_NAMES = { full: "Bouncy spring", smooth: "Smooth glide", reduced: "Reduced (instant)" };
+function glassPreview(p){
+  const eaten = intakeOn(today()), goal = p.calorieGoal, v = Math.round((p.look?.opacity ?? 1) * 100), pct = goal ? eaten / goal : 0;
+  const line = goal ? `${eaten.toLocaleString()} of ${goal.toLocaleString()} cal` : eaten ? `${eaten.toLocaleString()} cal eaten` : "Nothing logged yet today";
+  return `<div class="gp"><div class="gp-card">${ringHTML(pct, `<span class="rc-main">${goal ? Math.min(999, Math.round(pct * 100)) + "%" : "–"}</span>`, goal ? `${Math.round(pct * 100)}% of your calorie target eaten today` : "No calorie target set", "var(--c-food)", 56)}
+    <div class="gp-txt"><b>Today's calories</b><span class="small">${esc(tr(line))}</span></div><span class="gp-badge tab" id="gp-badge">${v}% glass</span></div></div>`;
 }
 
 // ---- widget layouts (8.2.7): one engine for Summary and every page ----
@@ -18050,6 +18199,14 @@ document.addEventListener("keydown", e => {
 document.addEventListener("click", e => {
   const t = e.target.closest('[data-act="op-reset"]'); const p = t && P(); if (!p) return;
   p.look = { ...(p.look || {}), opacity: 1 }; applyOpacity(p); saveProfile(); render();
+});
+document.addEventListener("click", e => {
+  const t = e.target.closest('[data-act="op-set"]'); const p = t && P(); if (!p) return;
+  p.look = { ...(p.look || {}), opacity: Math.max(35, Math.min(100, +t.dataset.v || 100)) / 100 }; applyOpacity(p); saveProfile(); render();
+});
+document.addEventListener("click", e => { // Try this motion: slide the puck with the easing and speed the chosen mode uses
+  const t = e.target.closest('[data-act="mo-test"]'); if (!t) return;
+  document.getElementById("mo-puck")?.classList.toggle("shifted");
 });
 document.addEventListener("input", e => {
   if (e.target.id !== "ui-op") return;
@@ -19855,14 +20012,15 @@ function premiumHub(p){
 
     <div class="prem-stays">
       <div class="eyebrow">What stays open on Free</div>
+      <h3 class="ps-title">Your core tracker and data always stay yours.</h3>
       <p class="draft">Home, logging, history and export stay open whether or not you subscribe. Export is always free, and cancelling never deletes anything you've logged.</p>
       <div class="pill-strip">
-        <span class="wl-pill">Works offline</span>
-        <span class="wl-pill">Dark mode</span>
-        <span class="wl-pill">English &amp; Spanish</span>
-        <span class="wl-pill">Passcode lock</span>
-        <span class="wl-pill">Multiple profiles</span>
-        <span class="wl-pill">Export your data anytime</span>
+        <span class="wl-pill">${icon("wifi","",18)}Works offline</span>
+        <span class="wl-pill">${icon("moon","",18)}Dark mode</span>
+        <span class="wl-pill">${icon("globe","",18)}English &amp; Spanish</span>
+        <span class="wl-pill">${icon("lock","",18)}Passcode lock</span>
+        <span class="wl-pill">${icon("users","",18)}Multiple profiles</span>
+        <span class="wl-pill">${icon("download","",18)}Export your data anytime</span>
       </div>
       <p class="advice-banner">WholeLife Hub is a tracking tool. It is not medical advice.</p>
     </div>
@@ -19874,6 +20032,7 @@ function premiumHub(p){
     </div>
 
     <div class="prem-about">
+      <span class="pa-crown" aria-hidden="true">${icon("crown","",72)}</span>
       <div class="eyebrow">About Premium</div>
       <p class="draft">WholeLife Premium bundles every optional feature we build past the core tracker into one
       subscription, priced to cover the work rather than to squeeze a free app. It never changes how the free
@@ -26591,5 +26750,130 @@ html .side .nav a[aria-current="page"]::before,html .side .nav button.prem-trigg
 .prem-store-page .prem-cta-bar > *{ max-width:1040px; margin-inline:auto; }
 .prem-store-page .prem-cta-bar .prem-cta-fine{ text-align:center; }
 .prem-store-page + #subscription{ max-width:1040px; margin-inline:auto; box-sizing:border-box; }
+</style>
+<style id="sectors-css">
+/* 8.6.8+: the six-sector revamp. Every rule is scoped to the page it restyles, and uses the app's own tokens. */
+/* ---- Daily nutrition ---- */
+.mtgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+.mt-card.li{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:12px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface)}
+.mt-card.li:first-child{border-top:1px solid var(--line)}
+.mt-card .grow{display:flex;flex-direction:column;gap:6px}
+.mt-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mt-slot.eyebrow{display:inline-flex;align-items:center;gap:6px;color:var(--text);font-weight:600;text-transform:none;letter-spacing:0;font-size:calc(12px * var(--text-scale,1))}
+.mt-slot.eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.mt-card[data-slot="lunch"] .mt-slot::before{background:var(--good)}
+.mt-card[data-slot="dinner"] .mt-slot::before{background:var(--accent)}
+.mt-cal{color:var(--muted);font-size:calc(13px * var(--text-scale,1))}
+.mt-name{color:var(--text);text-decoration:none}
+.mt-name b{display:block;font-size:calc(16px * var(--text-scale,1));line-height:1.25}
+.mt-name:hover b,.mt-name:focus-visible b{text-decoration:underline;text-underline-offset:3px}
+.mt-log{align-self:flex-end;background:color-mix(in srgb,var(--good) 14%,var(--surface));color:var(--good);border:1px solid color-mix(in srgb,var(--good) 35%,transparent)}
+.nut-side{gap:16px;min-width:0}
+.gl-body{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.gl-tiles{flex:1 1 220px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.gl-tile{background:var(--raise);border-radius:var(--r-sm);padding:10px 8px;text-align:center}
+.gl-tile .num{display:block}
+.nw-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:end}
+.nw-row .f{margin:0}
+.nw-row .btn{grid-column:1 / -1}
+.chart-svg.narrow{width:100%;min-width:300px;max-width:560px;height:auto;margin-inline:auto;display:block}
+.pill-goal{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:var(--raise);color:color-mix(in srgb,var(--text) 72%,var(--raise));font-size:calc(12px * var(--text-scale,1));font-weight:600;white-space:nowrap}
+.po-row{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.po-text{flex:1 1 320px;min-width:0}
+.po-act{flex:0 0 auto}
+.po-how{border-top:1px solid var(--line);padding-top:10px}
+.nut-meals .empty,.nut-meals .emptystate,.nut-meals [class*="empty"]{border:1px dashed var(--line2);border-radius:var(--r-sm)}
+@media (max-width:600px){.mt-card.li{flex-direction:row;align-items:center}.mt-log{align-self:center}}
+/* ---- Workouts ---- */
+#sec-workouts > .scgrid.plain{order:-1}
+.wk-import h2{margin:0}
+.actquick{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip.actq{gap:8px;padding:5px 12px 5px 6px}
+.chip.actq .wi{flex:none}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+.wk-quick{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.wk-presets{display:flex;gap:8px;flex-wrap:wrap}
+.wg-step{display:flex;align-items:center;gap:8px}
+.wg-step .btn{min-width:36px;padding:0}
+.wg-body{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.wg-days{display:flex;flex-direction:column;gap:8px;flex:1 1 220px;min-width:0}
+.day-dots{display:flex;gap:8px;flex-wrap:wrap}
+.day-dot{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:600;font-size:calc(13px * var(--text-scale,1));background:var(--raise);color:var(--muted);border:1px solid transparent}
+.day-dot.is-today{border-color:var(--accent)}
+.day-dot.is-done{background:var(--good);color:var(--surface)}
+.wrow .grow b{display:block}
+.wr-nums{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right;flex:none}
+.wr-kcal{color:var(--good);font-size:calc(12px * var(--text-scale,1));font-weight:600}
+/* ---- WL Coach chat ---- */
+.wlc-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.wlc-av{position:relative;flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--c-coach);color:var(--surface)}
+.wlc-av::after{content:"";position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;background:var(--good);border:2px solid var(--surface)}
+.wlc-title{flex:1 1 180px;min-width:0}
+.wlc-title h2{margin:0}
+.wlc-note{white-space:normal}
+.wlc-stream{display:flex;flex-direction:column;gap:10px;min-height:140px;max-height:min(58vh,520px);overflow-y:auto;padding:14px;border:1px solid var(--line);border-radius:var(--r);background:color-mix(in srgb,var(--raise) 55%,var(--surface))}
+.wlc-empty{margin:auto;text-align:center;max-width:36ch}
+.wlc-msg{display:flex;max-width:100%}
+.wlc-msg.me{justify-content:flex-end}
+.wlc-bubble{max-width:min(92%,640px);padding:10px 14px;border-radius:16px 16px 16px 6px;background:var(--surface);border:1px solid var(--line);color:var(--text);font-size:calc(14px * var(--text-scale,1));line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.wlc-msg.me .wlc-bubble{border-radius:16px 16px 6px 16px;background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.wlc-typing{display:inline-flex;gap:5px;align-items:center;padding:14px 16px}
+.wlc-typing span{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:wlcdot 1s infinite ease-in-out}
+.wlc-typing span:nth-child(2){animation-delay:.15s}
+.wlc-typing span:nth-child(3){animation-delay:.3s}
+@keyframes wlcdot{0%,80%,100%{opacity:.35;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+:root[data-motion="reduced"] .wlc-typing span{animation:none;opacity:.7}
+@media (prefers-reduced-motion:reduce){.wlc-typing span{animation:none;opacity:.7}}
+.wlc-chips{display:flex;flex-wrap:wrap;gap:8px}
+.wlc-composer{position:relative;display:flex;align-items:flex-end;gap:10px;padding:10px 10px 10px 14px;border:1px solid var(--line2);border-radius:var(--r);background:var(--surface)}
+.wlc-composer:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.wlc-composer textarea{flex:1;min-width:0;min-height:44px;max-height:140px;resize:none;border:0;outline:0;background:transparent;box-shadow:none;padding:6px 0;font:inherit;color:var(--text)}
+.wlc-composer .wl-count{align-self:flex-end;margin:0;padding-bottom:12px;white-space:nowrap}
+.wlc-send{flex:none;width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.wlc-send:disabled{opacity:.5;cursor:default}
+/* ---- Profile quick setup ---- */
+.pf-quick{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.pf-q{border-style:dashed}
+/* ---- touch size: every new tappable control is 44px tall at any width ---- */
+.mt-log,.pf-q,.wk-presets .chip,.actq,.wlc-chips .chip,.op-presets .chip{min-height:44px}
+.po-how summary{display:flex;align-items:center;min-height:44px}
+/* ---- Glass & motion ---- */
+.op-presets{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
+.gp{border-radius:var(--r);padding:22px 18px;margin-bottom:14px;background:radial-gradient(circle at 18% 30%,color-mix(in srgb,#34D399 45%,var(--ground)) 0,transparent 55%),radial-gradient(circle at 85% 20%,color-mix(in srgb,#38BDF8 45%,var(--ground)) 0,transparent 50%),radial-gradient(circle at 60% 95%,color-mix(in srgb,#FB923C 40%,var(--ground)) 0,transparent 55%),var(--ground)}
+.gp-card{display:flex;align-items:center;gap:14px;flex-wrap:wrap;max-width:460px;margin-inline:auto;padding:14px 16px;border-radius:var(--r);border:1px solid color-mix(in srgb,var(--text) 14%,transparent);background:color-mix(in srgb,var(--surface) calc(var(--ui-op,1) * 100%),transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:var(--text)}
+.gp .rc-main{font-size:calc(14px * var(--text-scale,1))}
+.gp-txt{display:flex;flex-direction:column;gap:2px;flex:1 1 140px;min-width:0}
+.gp-badge{padding:4px 10px;border-radius:999px;background:var(--text);color:var(--surface);font-size:calc(12px * var(--text-scale,1));font-weight:600;white-space:nowrap}
+.mo-demo{display:flex;align-items:center;gap:12px;margin-top:8px}
+.mo-track{flex:1;min-width:0;display:block;padding:6px;border-radius:12px;background:var(--raise);overflow:hidden}
+.mo-puck{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:calc(13px * var(--text-scale,1));white-space:nowrap;transition:transform var(--dur-page) var(--ease-spring)}
+.mo-puck.shifted{transform:translateX(clamp(0px, calc(100cqw - 100%), 9999px))}
+.mo-track{container-type:inline-size}
+:root[data-motion="smooth"]{--ease-spring:cubic-bezier(.4,0,.2,1);--ease:cubic-bezier(.4,0,.2,1);--dur-tap:220ms;--dur-popup:300ms;--dur-menu:380ms;--dur-page:540ms}
+/* ---- Premium trust and FAQ ---- */
+.prem-store-page .prem-stays{padding:18px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.prem-stays .eyebrow{color:var(--good)}
+.prem-stays .ps-title{margin:4px 0 0;font-size:calc(20px * var(--text-scale,1));line-height:1.25}
+.prem-store-page .prem-stays .pill-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:10px;margin:14px 0}
+.prem-stays .wl-pill{gap:10px;border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;background:color-mix(in srgb,var(--raise) 55%,var(--surface));font-weight:600;text-align:left}
+.prem-stays .wl-pill .ico{flex:none;width:34px;height:34px;padding:7px;border-radius:10px;background:var(--accent-soft);color:var(--accent);box-sizing:border-box}
+.prem-store-page .prem-faqs{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.prem-faqs .wl-faq{border-top:1px solid var(--line)}
+.prem-faqs .wl-faq:first-child{border-top:0}
+.prem-faqs .wl-faq summary{justify-content:space-between;gap:12px;padding:0 18px;list-style:none}
+.prem-faqs .wl-faq summary::-webkit-details-marker{display:none}
+.prem-faqs .wl-faq summary::after{content:"";flex:none;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translateY(-2px);transition:transform var(--dur-menu) var(--ease-spring)}
+.prem-faqs .wl-faq[open] summary::after{transform:rotate(-135deg) translateY(-2px)}
+.prem-faqs .wl-faq p{padding:0 18px 14px}
+.prem-faqs .wl-faq[open] > p{animation:faqin var(--dur-menu) var(--ease-spring)}
+@keyframes faqin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.prem-store-page .prem-about{position:relative;overflow:hidden;border:1px solid color-mix(in srgb,var(--gold) 38%,transparent);background:linear-gradient(135deg,var(--gold-soft),var(--surface))}
+.prem-about .eyebrow{color:var(--gold)}
+.prem-about .pa-crown{position:absolute;right:16px;bottom:-12px;color:var(--gold);opacity:.16;pointer-events:none}
+.prem-about .pa-crown .ico{width:84px;height:84px;max-height:none}
+/* two older labels on the Free-state Premium page fell under 4.5:1 (What's included, the unpressed billing button); mixing toward the text colour fixes both in every mode */
+.prem-store-page .prem-feat-head{color:color-mix(in srgb,var(--text) 75%,var(--surface))}
+.prem-store-page .prem-mini button:not([aria-pressed="true"]){color:color-mix(in srgb,var(--text) 72%,var(--raise))}
+.prem-about > :not(.pa-crown){position:relative}
 </style>
 </body></html>
