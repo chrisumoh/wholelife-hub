@@ -182,6 +182,32 @@ for (const mode of ["dark", "oled", "light"]) {
   await key("Escape", "Escape", 27); await sleep(300);
 }
 
+console.log("--- 8. Beta open: the dialog from the Premium list and from Settings > Premium");
+await view(1200);
+await send("Page.navigate", { url: "http://127.0.0.1:8844/index.html#/home" }); await sleep(500);
+ok("the app boots again without ?premium=0", await waitFor(READY, 15000), errors.join(" | "));
+ok("the profile counts as Premium, so the side menu shows Premium and not Go Premium", await ev(`isPremium() === true && !!document.querySelector(".side .nav button.prem-trigger") && !document.querySelector(".side .nav a.upsell")`));
+await click(".side .nav button.prem-trigger");
+const pl = await ev(`(() => { const body = document.querySelector("#pop-premium .pop-body"); if (!body) return null; const first = body.firstElementChild; return { cmp: first.classList.contains("pop-cmp"), act: first.getAttribute("data-act"), text: first.textContent.replace(/\\s+/g, " ").trim(), rows: body.querySelectorAll("a.pop-row").length }; })()`);
+ok("the Premium list starts with a Compare Free and Premium row, then the features", !!pl && pl.cmp && pl.act === "paywall" && /Compare Free and Premium/.test(pl.text) && pl.rows > 0, JSON.stringify(pl));
+await shot("premium-list-compare");
+await click("#pop-premium .pop-cmp"); await sleep(500);
+ok("pressing it closes the list and opens the Free vs Premium dialog", await open() && !(await ev(`!!document.getElementById("pop-premium")`)) && await ev(`document.querySelector("#fvp-title")?.textContent === "WholeLife Hub Premium"`));
+await key("Escape", "Escape", 27); await sleep(400);
+ok("Escape closes the dialog and focus goes back to the Premium row in the side menu", !(await open()) && await ev(`document.activeElement === document.querySelector(".side .nav button.prem-trigger")`), await ev(`document.activeElement?.outerHTML?.slice(0, 120)`));
+await goto("#/settings/premium"); await sleep(400);
+const st = await ev(`(() => { const hero = document.querySelector(".prem-hero"); if (!hero) return null; const b = hero.querySelector('button[data-act="paywall"]'), a = hero.querySelector('a[href="#/premium"]'); return { btn: b ? b.textContent.trim() : null, link: a ? a.textContent.trim() : null }; })()`);
+ok("Settings > Premium has Compare plans beside See what's included", !!st && st.btn === "Compare plans" && st.link === "See what's included", JSON.stringify(st));
+await click(".prem-hero button[data-act='paywall']"); await sleep(500);
+ok("Compare plans opens the Free vs Premium dialog", await open());
+await key("Escape", "Escape", 27); await sleep(400);
+ok("Escape puts focus back on Compare plans", await ev(`document.activeElement?.matches('.prem-hero button[data-act="paywall"]')`), await ev(`document.activeElement?.outerHTML?.slice(0, 120)`));
+await ev(`wlaSetLang("es"); true`); await sleep(400);
+await click(".side .nav button.prem-trigger");
+ok("in Spanish the row reads Comparar Gratis y Premium", await ev(`/Comparar Gratis y Premium/.test(document.querySelector("#pop-premium .pop-cmp")?.textContent || "") && /Mira qué incluye cada plan/.test(document.querySelector("#pop-premium .pop-cmp")?.textContent || "")`));
+await key("Escape", "Escape", 27); await sleep(300);
+await ev(`wlaSetLang("en"); true`); await sleep(300);
+
 ok("no script errors on the page", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

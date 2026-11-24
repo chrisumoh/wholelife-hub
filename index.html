@@ -3059,6 +3059,10 @@ html .side .nav a .si-tile svg{color:#fff}
 .pop-row b{display:block;font-size:calc((14.5px) * var(--text-scale,1));font-weight:600}
 .pop-row .tiny{display:block;margin-top:1px;font-size:calc((13px) * var(--text-scale,1));color:var(--muted);overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
+/* 8.6.6: the way into the Free vs Premium dialog from the Premium list. */
+.pop-row.pop-cmp{background:color-mix(in srgb,var(--gold) 10%,transparent);margin-bottom:12px;font:inherit}
+.pop-row.pop-cmp .pr-ic{color:var(--gold)}
+.pop-row.pop-cmp > svg{flex:none;color:var(--muted)}
 
 /* Status pills (TASK 7): shared by the sidebar rows and the Premium popup. */
 .pill-ready{font-size:calc((10px) * var(--text-scale,1));font-weight:600;padding:2px 8px;border-radius:999px;background:#15803D;
@@ -3875,7 +3879,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.5", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.6", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3889,6 +3893,15 @@ const APP_VERSION = { update: "8.6", build: "8.6.5", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.6",
+      area:"Premium",
+      title:"A way into the Free vs Premium dialog while the beta is open",
+      bug:"A tester opened the Vercel preview and could not find the new Free vs Premium dialog. While the beta is open every profile counts as Premium, so the side menu shows a Premium row that opens the plain feature list, and the dialog was only reachable by adding ?premium=0 to the address (then Go Premium) or from Preview the paywall at the foot of Settings > Premium.",
+      fix:"The Premium list opened from the side menu now starts with a gold-tinted Compare Free and Premium row that opens the dialog. Settings > Premium shows a Compare plans button beside See what's included when the profile is Premium (a Free profile already had it). The new row is translated in Spanish. Nothing else about the dialog changed.",
+      where:"index.html: premiumPopupRowsHTML() (new compare row, data-act=paywall), premiumTab() (Compare plans button for Premium profiles), FVP_ES (two new lines), the .pop-cmp rules beside .pop-row, APP_VERSION, WLH.changelog. tests/browser/paywall.mjs (new section 8: the beta-open entry points; needs your OK as a test edit).",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/paywall.mjs. By hand: open the app with no query on the address, press Premium in the side menu and then Compare Free and Premium; also open Settings > Premium and press Compare plans. Press Escape and check the focus goes back to the button you used. Try Settings > Appearance > Español.",
+      limits:"The row appears for every Premium profile, including paying ones, not only during the beta. Checked in headless Chrome, not on a real iPad or iPhone. The Premium list's own text (the title and the Close label) is still English in Spanish mode, as before."
+    },
     { id:"8.6.5",
       area:"Premium",
       title:"Free vs Premium: the comparison dialog follows the new Premium comparison design, with a tile and a description on every row",
@@ -19676,7 +19689,15 @@ function premiumPopupRowsHTML(){
   const list = PREMIUM_FEATURES.filter(f => showAll || premiumReady(f.id));
   const hidden = PREMIUM_FEATURES.length - list.length;
   const note = hidden ? `<p class="tiny muted" style="margin:10px 4px 2px">${hidden} more feature${hidden === 1 ? " is" : "s are"} still being built and will show here once ${hidden === 1 ? "it's" : "they're"} ready.</p>` : "";
-  return list.map((f,i) => `
+  // 8.6.6: while the beta is open everyone counts as Premium, so the Free vs Premium dialog
+  // (otherwise only a Free profile reaches it) needs a way in from here.
+  const compare = `
+    <button type="button" class="pop-row pop-cmp" data-act="paywall" data-pop="close">
+      <span class="pr-ic">${icon("crown","",24)}</span>
+      <span class="grow"><b>${esc(fvpT("Compare Free and Premium"))}</b><span class="tiny">${esc(fvpT("See what each plan includes"))}</span></span>
+      ${icon("arrowR","",16)}
+    </button>`;
+  return compare + list.map((f,i) => `
     <a class="pop-row" href="#/premium/${f.id}" data-pop="close">
       <span class="pr-ic" style="color:var(--accent)">${icon(f.icon,"",24)}</span>
       <span class="grow"><b>${esc(f.name)}</b><span class="tiny">${esc(f.blurb)}</span></span>
@@ -20063,7 +20084,7 @@ function subscriptionPanel(p){
 // from the feature list and a feature added to the registry shows up here by itself.
 const FVP_CORE = { id:"core", icon:"pulse", name:"Core tracker", sub:"Summary and rings, health data, meal, snack, drink and workout logging, full history, recipes and meal plans, achievements — free forever." };
 // Table words only (feature names live in WL_ES); kept here so a bare word like Free or Full cannot change other screens.
-const FVP_ES = { "Free vs Premium":"Gratis vs Premium", "Free vs Premium — everything side by side":"Gratis vs Premium: todo lado a lado", "Feature":"Función", "Free":"Gratis", "$0 forever":"$0 para siempre", "/mo":"/mes", "/yr":"/año",
+const FVP_ES = { "Compare Free and Premium":"Comparar Gratis y Premium", "See what each plan includes":"Mira qué incluye cada plan", "Free vs Premium":"Gratis vs Premium", "Free vs Premium — everything side by side":"Gratis vs Premium: todo lado a lado", "Feature":"Función", "Free":"Gratis", "$0 forever":"$0 para siempre", "/mo":"/mes", "/yr":"/año",
   "Core tracker":"Registro básico", "Summary and rings, health data, meal, snack, drink and workout logging, full history, recipes and meal plans, achievements — free forever.":"Resumen y anillos, datos de salud, registro de comidas, bocadillos, bebidas y entrenamientos, historial completo, recetas y planes de comidas, logros: gratis para siempre.",
   "Limited":"Limitado", "Full":"Completo", "Included in Free":"Incluido en Gratis", "Included in Premium":"Incluido en Premium", "Not included":"No incluido",
   "Free and Premium compared, feature by feature":"Gratis y Premium comparados, función por función",
@@ -20136,6 +20157,8 @@ function fvpHTML(){
       <button type="button" class="fvp-cta" data-act="fvp-plans"><span>${esc(fvpT("See plans"))}</span>${icon("arrowR","",15)}</button></div>`;
 }
 function openPaywall(triggerEl){
+  // Opened from the Premium list, which closes as this opens: hand focus back to the side-menu row that opened the list.
+  if (triggerEl?.closest?.("#pop-premium")) triggerEl = document.querySelector(".nav .prem-trigger");
   const pop = openPopover("paywall", { labelledby:"fvp-title fvp-sub", width:"min(960px, calc(100vw - 20px))", bodyHTML:fvpHTML(), triggerEl, returnSel:'[data-act="paywall"]', focusSel:".fvp-cta" });
   pop.wrap.classList.add("fvp");
 }
@@ -20468,7 +20491,7 @@ function premiumTab(p){
           : on ? "All nineteen features are unlocked on this profile. They appear in the sidebar as each one is finished."
           : "Nineteen extra features across food, training, coaching and health. Free for everyone while the app is in beta."}</p>
       </div>
-      ${on ? `<a class="btn" href="#/premium">See what's included</a>`
+      ${on ? `<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" data-act="paywall">Compare plans</button><a class="btn" href="#/premium">See what's included</a></div>`
            : `<button class="btn primary" data-act="paywall">Compare plans</button>`}
     </div>
   </section>
