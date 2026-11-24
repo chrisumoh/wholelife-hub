@@ -3879,7 +3879,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.16", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.17", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3893,6 +3893,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.16", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.17",
+      area:"Nutrition and Coach",
+      title:"Protein from the dishes you log, West African suggestions first when no food culture is set, and the coach now replies in Spanish",
+      bug:"After 8.6.16 the app counted calories only, so neither the day's glance nor the coach could say anything about protein. With no food culture chosen, the low-calorie suggestions (\"close the gap\") ranked every dish in the catalog by protein, which put non-West African dishes such as Chicken tikka first. The Spanish coach reply code from 8.5.1 was merged but never deployed, so a coach question asked in Spanish was still answered in English.",
+      fix:"Protein is worked out, not stored: for each meal logged from a catalog dish, the dish's protein per serving times its portion (read from the \"(1.5× portion)\" in the meal name). Hand-typed meals, snacks, drinks and extras have no protein figure and are left out, never guessed. Today at a glance shows one line (\"Protein: about 60 g from 1 of 2 meals, against about 112 g\", in Spanish too); the target is 1.6 g per kg of body weight, the figure the Premium eating-out page already used. The coach gets a protein item when at least 3 of the last 7 days were fully logged from catalog dishes and the average is under 70% of the target; it names one high-protein dish (West African first). With no culture set, the shortfall suggestions now rank West African dishes first, then by protein, and the heading says so; a chosen culture is unchanged. wl-coach (version 3) is deployed with Verify JWT off, as before: it replies in Spanish when the app sends lang es.",
+      where:"index.html: proteinOn(), portionOf(), proteinTarget(), westFirst() (new, next to loggedFood()), shortfallAdvice(), the shortfall heading in todaysMenuCard's coach block, glanceCardNutrition() (protein line), coachAdviceItems() (protein item), APP_VERSION, WLH.changelog. tests/browser/advice.mjs (section 3, 4 new checks). docs/BUILD_PLAN.md, README.md, CHANGELOG.md. supabase/functions/wl-coach was not edited; the existing code was deployed.",
+      test:"CHROME=/path/to/chrome CI=1 node tests/browser/advice.mjs; node --test tests/wl-coach-handler.test.mjs (21 pass). By hand: log a catalog dish from Log > Meals and open Today at a glance: the Protein line appears under the tiles. Set Settings > Appearance to Español, sign in, allow coach chat and ask in Coach > Ask: the reply comes back in Spanish. With no food culture set and a big calorie gap, the suggestions are West African dishes.",
+      limits:"Protein counts catalog dishes only, so a day with typed meals or snacks reads low and says how many meals it counted. Protein is not synced or stored, so nothing changed in Supabase tables; it follows each meal's dish id. The 1.6 g per kg target is a general estimate, not advice for a medical condition. The Spanish coach reply has had no native-speaker review and has been tested only against the handler, not live." },
     { id:"8.6.16",
       area:"Debugging",
       title:"The Weight trend highlight on Today opens Body measurements instead of Page not found, and six Coach labels are now in Spanish",
@@ -8011,7 +8019,7 @@ function shortfallAdvice(p){
   if (c.gap == null || c.gap >= -200) return null;
   const short = Math.abs(Math.round(c.gap));
   const pool = culturePool(p, null).list;
-  const dense = pool.filter(d => d.cal >= 450).sort((a, b) => b.pr - a.pr).slice(0, 3);
+  const dense = pool.filter(d => d.cal >= 450).sort((a, b) => westFirst(p)(a, b) || b.pr - a.pr).slice(0, 3);
   const snacks = (typeof SNACKS !== "undefined" ? SNACKS : []).filter(s => s.cal >= 150).slice(0, 3);
   return { short, dense, snacks,
     line: `You're about ${short.toLocaleString()} calories a day under your target. Under-eating stalls progress as surely as over-eating: you lose muscle and energy first, and the scale follows later.`,
@@ -10425,6 +10433,16 @@ function updateEntry(kind, id, fn){ const byP = S.logs[S.activeId] || {}; for (c
 function removeEntry(kind, id){ const byP = S.logs[S.activeId] || {}; for (const m in byP) { const i = byP[m][kind].findIndex(e => e.id === id); if (i > -1) { byP[m][kind].splice(i,1); markLog(S.activeId, m); return; } } }
 function mealTotal(m){ return (m.cal||0) + (m.extras||[]).reduce((a,x)=>a+(x.cal||0),0); }
 function intakeOn(date){ return onDate("meals",date).reduce((a,m)=>a+mealTotal(m),0) + onDate("snacks",date).reduce((a,s)=>a+(s.cal||0),0) + onDate("drinks",date).reduce((a,d)=>a+(d.cal||0),0); }
+// ---- protein: derived, never stored. Grams = the catalog's protein per serving for the dish a meal was logged from, times its portion. Hand-typed meals, snacks, drinks and extras have no protein figure and are left out, not guessed. ----
+const portionOf = m => { const x = /\(([\d.]+)× portion\)/.exec(m.name || ""); const n = x ? parseFloat(x[1]) : 1; return n > 0 && n <= 10 ? n : 1; };
+function proteinOn(date){
+  const meals = onDate("meals", date); let g = 0, counted = 0;
+  for (const m of meals) { const d = m.dish && DISH_BY_ID[m.dish]; if (d && d.pr != null) { g += d.pr * portionOf(m); counted++; } }
+  return { g: Math.round(g), counted, meals: meals.length };
+}
+const proteinTarget = p => p?.weightKg ? Math.round(p.weightKg * 1.6) : null; // same figure as calorieHeadroom()
+// With no culture chosen, West African dishes come first (CLAUDE.md section 3); with one, the pool is already its own.
+const westFirst = p => (a, b) => p?.culture ? 0 : (b.r === "west") - (a.r === "west");
 function loggedFood(date){ return onDate("meals",date).length + onDate("snacks",date).length + onDate("drinks",date).length > 0; }
 function latestWeightKg(p = P()){
   const w = entries("weights", p.id).sort((a,b)=>a.date<b.date?1:-1)[0];
@@ -13446,6 +13464,9 @@ function glanceCardNutrition(p, date, meals, snacks){
     <div class="gl-day" role="group" aria-label="Change day"><button class="btn sm icon-btn" data-act="day" data-v="-1" aria-label="Previous day">${icon("chevL","",16)}</button><span class="gl-date tab">${fmtDay(date)}</span><button class="btn sm icon-btn" data-act="day" data-v="1" aria-label="Next day"${date >= today() ? " disabled" : ""}>${icon("chevR","",16)}</button></div></div>
     <div class="gl-tiles">${tile(tr("Meals"), meals.length)}${tile(tr("Snacks"), snacks.length)}${tile(tr("Total"), `${eaten.toLocaleString()} <small>cal</small>`, totSub)}
       <button type="button" class="gl-tile gl-drinks" data-act="drinks-tile" aria-expanded="${open}"${open ? ' aria-controls="drinks-panel"' : ""}><span class="tiny muted">${esc(tr("Drinks · Alcohol"))}</span><span class="gl-dval"><span>${esc(drinkTxt)}</span>${icon("chevR","",16)}</span></button></div>
+    ${(() => { const pr = proteinOn(date), t = proteinTarget(p); if (!pr.counted) return ""; return es
+      ? `<p class="small muted gl-protein">Proteína: unos ${pr.g} g de ${pr.counted} de ${pr.meals} comidas${t ? `, de unos ${t} g` : ""}. No se cuentan los snacks ni las comidas escritas a mano.</p>`
+      : `<p class="small muted gl-protein">Protein: about ${pr.g} g from ${pr.counted} of ${pr.meals} meal${pr.meals === 1 ? "" : "s"}${t ? `, against about ${t} g` : ""}. Snacks and meals you typed in by hand aren't counted.</p>`; })()}
     ${burnedOn(date,p) ? `<p class="small muted">Estimated burn: ${Math.round(burnedOn(date,p)).toLocaleString()} cal including ${onDate("workouts",date).length} workout${onDate("workouts",date).length===1?"":"s"}.</p>` : ""}
   </section>`;
 }
@@ -16519,7 +16540,7 @@ function coachContextCard(p){
     ${s ? `<section class="card cc-short">
       <h2 class="eyebrow" style="color:var(--c-nutrition)">You're eating short</h2>
       <p class="small">${esc(s.line)}</p>
-      ${s.dense.length ? `<div><div class="tiny muted" style="margin-bottom:6px">From your own food culture, these close the gap:</div>
+      ${s.dense.length ? `<div><div class="tiny muted" style="margin-bottom:6px">${p.culture ? "From your own food culture" : "From West African food"}, these close the gap:</div>
         <div class="chips">${s.dense.map(d => `<a class="chip" href="${dishLink(d)}">${esc(d.n)} <span class="tab muted">${d.cal} cal</span></a>`).join("")}</div></div>` : ""}
       ${s.snacks.length ? `<div><div class="tiny muted" style="margin-bottom:6px">Or a snack:</div>
         <div class="chips">${s.snacks.map(x => `<span class="chip">${esc(x.n)} <span class="tab muted">${x.cal} cal</span></span>`).join("")}</div></div>` : ""}
@@ -19445,6 +19466,23 @@ function coachAdviceItems(p = P()){
       text: `${addr}you've had ${namedToday.join(" and ")} so far today (${todayIn.toLocaleString()} cal) — about ${left.toLocaleString()} left for the rest of the day.`,
       note: "From today's log.",
       action: { label:"Log a meal", href:"#/nutrition" } });
+  }
+
+  // ---- Protein: only days where every meal came from a catalog dish, so the total is not understated by hand-typed meals. ----
+  const prT = proteinTarget(p);
+  if (prT) {
+    const gs = []; for (let i = 1; i <= 7; i++) { const x = proteinOn(addDays(today(), -i)); if (x.counted && x.counted === x.meals) gs.push(x.g); }
+    const avgP = gs.length ? Math.round(gs.reduce((a, g) => a + g, 0) / gs.length) : 0;
+    if (gs.length >= 3 && avgP < prT * 0.7) {
+      const pick = culturePool(p, null).list.filter(d => d.pr >= 25 && d.cal <= 700).sort((a, b) => westFirst(p)(a, b) || b.pr - a.pr)[0];
+      const dish = pick ? ` ${pick.n} brings about ${pick.pr} g in a serving.` : "";
+      items.push({ k:"protein", sig: String(Math.round(avgP / 10)),
+        text: id === "enforcer" ? `${addr}protein is short: about ${avgP} g a day against roughly ${prT} g.${dish} Put a real protein on every plate.`
+          : id === "motivator" ? `${addr}your protein is averaging about ${avgP} g a day, and about ${prT} g is the mark.${dish} One change to a plate gets you closer.`
+          : `${addr}across ${gs.length} fully logged days protein averaged about ${avgP} g, against roughly ${prT} g for your weight.${dish}`,
+        note: `From ${gs.length} days of meals logged from the catalog. Snacks aren't counted.`,
+        action: { label:"Log a meal", href:"#/nutrition" } });
+    }
   }
 
   // ---- Hydration: only worth raising once enough of the day has actually passed. ----

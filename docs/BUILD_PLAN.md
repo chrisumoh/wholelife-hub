@@ -10,7 +10,7 @@ Update statuses in the same PR that changes them. Each phase ships on its own bu
 |---|---|---|
 | 1 | Bug fixes: duplicate avatar, clipped text, menu-over-Settings layering glitch, Settings tabs | DONE (already fixed in earlier builds; checked at 375px and 820px in 8.2.21) |
 | 2 | Premium system: purchase-gated flag, badges, Telegram-style premium screen | DONE except live payments (Lemon Squeezy checkout, licence key check and receipt built in 8.3.2–8.3.25; isPremium flag, dev override and premium screen exist; the licence function is deployed but runs in test mode, and the legal business details in index.html are still placeholders) |
-| 3 | Coach: full data access + personalized advice card (9 rules) | PARTLY DONE: advice card built; 8.2.21 adds repeat marking and the evening review. No protein advice (calories only); Task 3.1 plan adjustments not audited |
+| 3 | Coach: full data access + personalized advice card (9 rules) | PARTLY DONE: advice card built; 8.2.21 adds repeat marking and the evening review. Protein advice since 8.6.17 (from catalog dishes only); Task 3.1 plan adjustments not audited |
 | 4 | Font system: 8 options, Perplexity-style default | DONE (already built; audited in 8.3.22: 8 self-hosted fonts apply and load, tabular numbers, no overflow at 375px) |
 | 5 | UI cleanup: blue outlines, compact appearance controls, clean layout, gradient sidebar icons | PROMPTED |
 | 6 | Space + arrow: centered arrow morph (tested code in prompt), 12-col grid, one-row headers, two-pane Settings, sidebar grouping | PROMPTED |
@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.6.17 | Protein worked out from the catalog dishes you log (Today at a glance line, coach item), West African dishes first in shortfall suggestions when no culture is set, wl-coach Spanish replies deployed (version 3) | IN PROGRESS: this PR |
 | 8.6.16 | Debugging pass: the Weight trend highlight on Today opens Body measurements instead of Page not found (also on main); six Coach labels in Spanish; a test that every in-app link on 12 main pages opens a real page | IN PROGRESS: PR #99 |
 | 8.6.15 | Personal coach page: hero with the coach's live mechanic (the Enforcer's score as a ring with check pills that link to where each is logged), compact tabs, one Ask WL Coach card with a Sign in button when signed out, the check-in beside the training read-out with a days-logged strip, eating-short as its own card, and a slim five-questions strip | IN PROGRESS: PR #99 |
 | 8.6.14 | Daily nutrition: Log a meal beside Meals on today (meal tag, Guess joined to Calories), See today's menu inside that card, Today at a glance as four tiles with a Drinks · Alcohol panel, Last 7 days beside a one-row Log your weight (638 elements, under the 1,000 limit) | IN PROGRESS: PR #99 |

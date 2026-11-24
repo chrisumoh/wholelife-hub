@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.16, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.17, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.17 · Nutrition and Coach: Protein from the dishes you log, West African suggestions first when no food culture is set, and the coach now replies in Spanish
+
+- **Problem:** After 8.6.16 the app counted calories only, so neither the day's glance nor the coach could say anything about protein. With no food culture chosen, the low-calorie suggestions ("close the gap") ranked every dish in the catalog by protein, which put non-West African dishes such as Chicken tikka first. The Spanish coach reply code from 8.5.1 was merged but never deployed, so a coach question asked in Spanish was still answered in English.
+- **Change:** Protein is worked out, not stored: for each meal logged from a catalog dish, the dish's protein per serving times its portion (read from the "(1.5× portion)" in the meal name). Hand-typed meals, snacks, drinks and extras have no protein figure and are left out, never guessed. Today at a glance shows one line ("Protein: about 60 g from 1 of 2 meals, against about 112 g", in Spanish too); the target is 1.6 g per kg of body weight, the figure the Premium eating-out page already used. The coach gets a protein item when at least 3 of the last 7 days were fully logged from catalog dishes and the average is under 70% of the target; it names one high-protein dish (West African first). With no culture set, the shortfall suggestions now rank West African dishes first, then by protein, and the heading says so; a chosen culture is unchanged. wl-coach (version 3) is deployed with Verify JWT off, as before: it replies in Spanish when the app sends lang es.
+- **Where:** index.html: proteinOn(), portionOf(), proteinTarget(), westFirst() (new, next to loggedFood()), shortfallAdvice(), the shortfall heading in todaysMenuCard's coach block, glanceCardNutrition() (protein line), coachAdviceItems() (protein item), APP_VERSION, WLH.changelog. tests/browser/advice.mjs (section 3, 4 new checks). docs/BUILD_PLAN.md, README.md, CHANGELOG.md. supabase/functions/wl-coach was not edited; the existing code was deployed.
+- **How to test:** CHROME=/path/to/chrome CI=1 node tests/browser/advice.mjs; node --test tests/wl-coach-handler.test.mjs (21 pass). By hand: log a catalog dish from Log > Meals and open Today at a glance: the Protein line appears under the tiles. Set Settings > Appearance to Español, sign in, allow coach chat and ask in Coach > Ask: the reply comes back in Spanish. With no food culture set and a big calorie gap, the suggestions are West African dishes.
+- **Known limits:** Protein counts catalog dishes only, so a day with typed meals or snacks reads low and says how many meals it counted. Protein is not synced or stored, so nothing changed in Supabase tables; it follows each meal's dish id. The 1.6 g per kg target is a general estimate, not advice for a medical condition. The Spanish coach reply has had no native-speaker review and has been tested only against the handler, not live.
 
 ## 8.6.16 · Debugging: The Weight trend highlight on Today opens Body measurements instead of Page not found, and six Coach labels are now in Spanish
 
