@@ -1551,14 +1551,22 @@ input,select,textarea{font-size:calc((var(--t-base)) * var(--text-scale,1));font
 .ts-ax-label input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
 
 /* v7.5 PASTEL LOCK SCENE (section 1) [CSS_NOTES 73] */
-.ob.pastel{background:linear-gradient(170deg,#FFF1E2 0%,#FDE8D6 48%,#FFE2CE 100%)}
-:root:is([data-scheme="dark"],[data-scheme="oled"]) .ob.pastel{background:linear-gradient(170deg,#2A2119 0%,#231B15 55%,#1C1611 100%)}
-.pastel-bg{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
-.pastel-bg .blob{position:absolute;border-radius:50%;opacity:.5}
-.pastel-bg .b1{width:44vmax;height:44vmax;left:-14vmax;top:-12vmax;background:#FFD9B8}
-.pastel-bg .b2{width:38vmax;height:38vmax;right:-12vmax;bottom:-14vmax;background:#CFEDE7}
-.pastel-bg .b3{width:26vmax;height:26vmax;right:16vw;top:6vh;background:#F6DCEF;opacity:.4}
-:root:is([data-scheme="dark"],[data-scheme="oled"]) .pastel-bg .blob{opacity:.16}
+.ob.pastel{background:var(--ground)}
+.pastel-bg{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;
+  background-image:radial-gradient(ellipse 72% 56% at 10% 8%,color-mix(in srgb,var(--good) 11%,transparent),transparent 68%),
+    radial-gradient(ellipse 68% 54% at 92% 88%,color-mix(in srgb,var(--accent) 11%,transparent),transparent 68%)}
+.pastel-bg .orb{position:absolute;border-radius:50%;filter:blur(84px);will-change:transform;transform:translate3d(0,0,0)}
+.pastel-bg .o1{width:54vmax;height:54vmax;top:-18vmax;left:-14vmax;background:radial-gradient(circle at 42% 42%,color-mix(in srgb,var(--good) 26%,transparent) 0%,transparent 70%);animation:pgDriftA 20s ease-in-out infinite alternate}
+.pastel-bg .o2{width:48vmax;height:48vmax;top:10vmax;right:-16vmax;background:radial-gradient(circle at 55% 45%,color-mix(in srgb,var(--accent) 24%,transparent) 0%,transparent 70%);animation:pgDriftB 24s ease-in-out infinite alternate}
+.pastel-bg .o3{width:52vmax;height:52vmax;bottom:-22vmax;left:22vmax;background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--gold) 22%,transparent) 0%,transparent 70%);animation:pgDriftC 22s ease-in-out infinite alternate}
+:root:is([data-scheme="dark"],[data-scheme="oled"]) .pastel-bg .o1{background:radial-gradient(circle at 42% 42%,color-mix(in srgb,var(--good) 30%,transparent) 0%,transparent 70%)}
+:root:is([data-scheme="dark"],[data-scheme="oled"]) .pastel-bg .o2{background:radial-gradient(circle at 55% 45%,color-mix(in srgb,var(--accent) 30%,transparent) 0%,transparent 70%)}
+:root:is([data-scheme="dark"],[data-scheme="oled"]) .pastel-bg .o3{background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--gold) 16%,transparent) 0%,transparent 70%)}
+:root[data-scheme="oled"] .pastel-bg .orb{opacity:.5}
+@keyframes pgDriftA{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(4.5vw,3.5vh,0) scale(1.06)}100%{transform:translate3d(2vw,7vh,0) scale(.97)}}
+@keyframes pgDriftB{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-5vw,4vh,0) scale(.95)}100%{transform:translate3d(-2.5vw,-4vh,0) scale(1.05)}}
+@keyframes pgDriftC{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-4vw,-3.5vh,0) scale(1.05)}100%{transform:translate3d(4vw,-2vh,0) scale(.96)}}
+:root[data-motion="reduced"] .pastel-bg .orb{animation:none}
 .pchar-stage{position:absolute;inset:0}
 .pchar{position:absolute;margin:0;width:clamp(96px,13vw,170px);aspect-ratio:9/10;
   opacity:0;transform:translateY(26px) scale(.86);
@@ -3879,7 +3887,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.16", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.17", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3893,6 +3901,15 @@ const APP_VERSION = { update: "8.6", build: "8.6.16", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.17",
+      area:"Lock screen",
+      title:"The lock screen and sign-in loaders use a drifting gradient in the app's colours instead of animated workout figures",
+      bug:"The lock screen, the Syncing your data loader, Sign in again, Choose a new password, Data from before you signed in and the coach prompt all sat on a peach backdrop with animated workout figures (squats, running, skipping and others) that stepped in and out every few seconds. It was busy, it did not match the app's colours, and it looked the same whatever the light or dark setting was.",
+      fix:"The animated figures are gone. Those screens now sit on a soft drifting gradient built from the app's own colours: green, blue and gold glows over the page background. It is made from the colour tokens, so it follows light, dark and OLED automatically (OLED keeps the middle black), follows the accent in use, and stands still under Reduce motion. The card on top is unchanged.",
+      where:"index.html: the pastel-bg CSS block (.ob.pastel, .pastel-bg, .orb, pgDriftA/B/C keyframes) and pastelScene(), APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Open the app with a passcode set (or sign out and back in) to see the lock screen; try light, dark and OLED in Settings > Appearance, and Reduce motion. The glows should follow the mode and sit still with Reduce motion. node tests/check-repo.mjs.",
+      limits:"Checked in headless Chrome only, not on a real iPhone or Safari. The old figure drawings and their swap timer are still in the file but nothing draws them any more; removing them is a separate clean-up. Only the screens listed above changed; the Welcome screen, the menu icons and the Workouts icons are not touched."
+    },
     { id:"8.6.16",
       area:"Debugging",
       title:"The Weight trend highlight on Today opens Body measurements instead of Page not found, and six Coach labels are now in Spanish",
@@ -18456,13 +18473,9 @@ function pcPick(){
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   return pool.slice(0, PCHAR_SLOTS);
 }
-// The pastel scene behind the lock card and the loader.
+// Build 8.6.17: the ambient gradient behind the lock card and the loader (the animated workout figures were taken down).
 function pastelScene(){
-  const cast = pcPick();
-  return `<div class="pastel-bg" aria-hidden="true">
-    <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
-    <div class="pchar-stage">${cast.map(charSVG).join("")}</div>
-  </div>`;
+  return `<div class="pastel-bg" aria-hidden="true"><span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span></div>`;
 }
 // The cast keeps changing while you sign up: every few seconds one figure swaps itself out
 // for an activity that is not currently on stage. Transform and opacity only, and nothing

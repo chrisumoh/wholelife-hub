@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.6.17 | Lock screen and sign-in loaders: the animated workout figures are replaced by a drifting gradient in the app's colours that follows light, dark and OLED | IN PROGRESS: PR |
 | 8.6.16 | Debugging pass: the Weight trend highlight on Today opens Body measurements instead of Page not found (also on main); six Coach labels in Spanish; a test that every in-app link on 12 main pages opens a real page | IN PROGRESS: PR #99 |
 | 8.6.15 | Personal coach page: hero with the coach's live mechanic (the Enforcer's score as a ring with check pills that link to where each is logged), compact tabs, one Ask WL Coach card with a Sign in button when signed out, the check-in beside the training read-out with a days-logged strip, eating-short as its own card, and a slim five-questions strip | IN PROGRESS: PR #99 |
 | 8.6.14 | Daily nutrition: Log a meal beside Meals on today (meal tag, Guess joined to Calories), See today's menu inside that card, Today at a glance as four tiles with a Drinks · Alcohol panel, Last 7 days beside a one-row Log your weight (638 elements, under the 1,000 limit) | IN PROGRESS: PR #99 |
