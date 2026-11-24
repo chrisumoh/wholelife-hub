@@ -78,7 +78,7 @@ ok("the send button is 44px tall", (await ev(`document.querySelector('[data-act=
 await ev(`document.getElementById("wlc-q").value = "What should I eat?"; document.querySelector('[data-act="wlc-send"]').click(); true`);
 ok("the reply shows as plain text", await waitFor(`document.getElementById("wlc-log")?.innerText.includes("plantain")`) && !(await ev(`!!document.querySelector("#wlc-log b")`)));
 const c = await ev(`window.__calls[0]`);
-ok("it posts the question with the person's token", !!c && c.u.endsWith("/functions/v1/wl-coach") && c.o.headers.authorization === "Bearer tok-123" && c.o.body === JSON.stringify({ message: "What should I eat?", lang: "en" }));
+ok("it posts the question with the person's token", !!c && c.u.endsWith("/functions/v1/wl-coach") && c.o.headers.authorization === "Bearer tok-123" && c.o.body === JSON.stringify({ message: "What should I eat?", lang: "en", person: await ev(`P().id`) }));
 ok("the request carries no client-side consent flag (the account record is what counts)", !/consent/.test(c.o.body));
 
 await ev(`window.__reply = "rate_limited"; document.getElementById("wlc-q").value = "again"; document.querySelector('[data-act="wlc-send"]').click(); true`); await sleep(500);
@@ -104,5 +104,24 @@ await ev(`location.hash = "#/settings/privacy"; render(); document.querySelector
 ok("a normal withdrawal calls the account once and leaves nothing to retry", await ev(`window.__rpc.length === 1 && window.__rpc[0].a.p_on === false && localStorage.getItem("wlh.coachwd") === null`));
 await goCoach();
 ok("after withdrawing, the opt-in shows again", await ev(`!!document.querySelector('[data-act="wlc-optin"]')`));
+// 8.6.22: sharing the profile and last 7 days is a second choice, recorded on the account as a ctx- version.
+await ev(`window.__rpcFail = false; window.__rpc.length = 0; window.__reply = "ok"; document.querySelector('[data-act="wlc-optin"]').click(); true`); await sleep(300);
+ok("chat on, sharing off: the note says it can't see your logs and offers the share step", /Can't see your logs yet/.test(await txt()) && await ev(`!!document.querySelector('[data-act="wlc-ctx-on"]') && P().coachContext !== true`));
+ok("the share step lists what is and isn't sent", /allergies/.test(await ev(`document.querySelector(".wlc-share")?.textContent || ""`)) && /Not sent: your name, email, photos/.test(await ev(`document.querySelector(".wlc-share")?.textContent || ""`)));
+await ev(`window.__rpc.length = 0; window.__rpcFail = true; document.querySelector('[data-act="wlc-ctx-on"]').click(); true`); await sleep(300);
+ok("if the account can't be updated, sharing stays off and says nothing was shared", await ev(`P().coachContext !== true`) && /Nothing was shared/.test(await txt()));
+await ev(`window.__rpc.length = 0; window.__rpcFail = false; document.querySelector('[data-act="wlc-ctx-on"]').click(); true`); await sleep(300);
+ok("sharing records a ctx- version on the account and turns on here", await ev(`window.__rpc.some(c => c.n === "coach_consent_set" && c.a.p_on === true && c.a.p_version === "ctx-" + TERMS_VERSION) && P().coachContext === true`));
+ok("the note now says it uses your profile and last 7 days", /Uses your profile and last 7 days/.test(await txt()) && await ev(`historyGet().some(h => h.k === "coach-ctx-on")`));
+await ev(`window.__rpc.length = 0; document.querySelector('[data-act="wlc-ctx-off"]').click(); true`); await sleep(300);
+ok("stopping goes back to the plain terms version, chat stays on", await ev(`window.__rpc.some(c => c.a.p_on === true && c.a.p_version === TERMS_VERSION) && P().coachContext === false && P().coachChatConsent === true`));
+await ev(`P().coachContext = false; window.__ctxReply = true; window.__calls.length = 0;
+  window.fetch = async (u, o) => { if (String(u).includes("/functions/v1/wl-coach")) { window.__calls.push({ u: String(u), o }); return new Response(JSON.stringify({ state: "ok", reply: "Try waakye.", context: true }), { status: 200 }); } return new Response("{}", { status: 404 }); }; true`);
+await goCoach(); await ev(`document.getElementById("wlc-q").value = "Lunch?"; document.querySelector('[data-act="wlc-send"]').click(); true`); await sleep(500);
+ok("if the server says it used the profile (turned on elsewhere), this screen shows it", await ev(`P().coachContext === true`));
+await ev(`location.hash = "#/settings/privacy"; render(); true`); await sleep(300);
+ok("Privacy & security lists the sharing switch under coach chat", await ev(`!!document.querySelector('[data-act="consent-coachctx-toggle"]')`));
+await ev(`document.querySelector('[data-act="consent-coach-toggle"]').click(); true`); await sleep(300);
+ok("turning coach chat off also turns sharing off", await ev(`P().coachChatConsent === false && P().coachContext === false && !document.querySelector('[data-act="consent-coachctx-toggle"]')`));
 ok("no script errors", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

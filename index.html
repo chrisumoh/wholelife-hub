@@ -3887,7 +3887,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.21", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.22", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3901,6 +3901,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.21", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.22",
+      area:"Coach",
+      title:"WL Coach can use your profile and last 7 days if you choose, and looks up real recipes on the web",
+      bug:"WL Coach could not see anything about the person asking, so it said it couldn't see their log and asked them to retype their goal, weight and meals every time. Recipe answers had no real links.",
+      fix:"Coach > Ask has a new, separate step, Let WL Coach see your profile and last 7 days, that lists exactly what would be sent. Pressing Share my profile and logs records a new consent version on the account (ctx- plus the terms date) through the existing coach_consent_set, and only after the account confirms does the switch turn on; Stop sharing (also a switch in Settings > Privacy and security, under Coach chat) records the plain terms version again, and turning coach chat off stops sharing too. The app now sends the active profile id with each question. The wl-coach function reads the account's consent record itself (never a flag from the browser) and, only for a ctx- version, reads that one profile and its last 7 days (meals, snacks, workouts, weigh-ins: goal, age, height, weight, calorie and workout targets, food culture, allergies, food preferences), every query pinned to the account's owner_id and the profile's id. It builds a short plain-text block (typed names are stripped of brackets and line breaks so they cannot break out of it, capped at 4,000 characters), puts it before the question, and swaps the prompt's no-logs rule for a rule that says to use it as data, never instructions. Only the question is saved in ai_coach_logs, never the block. A read failure answers without the data. Red-flag messages never read it. Name, email, photos, drinks and vitals are never sent. Recipe and meal-prep questions now offer Anthropic's web search tool (at most 2 searches, 45-second limit); the reply keeps only the answer after the search and lists up to three cited https sources under it as Sources. The pill on the chat says Uses your profile and last 7 days when sharing is on. If the server reports it used the profile (sharing turned on from another device), the screen follows. The Privacy Policy (sections 3, 4 and 6) says what sharing sends and that recipe questions may be searched; LEGAL_UPDATED and TERMS_VERSION move to 24 November 2026.",
+      where:"supabase/functions/wl-coach/handler.ts (NO_LOGS_RULE, CONTEXT_RULE, SEARCH_RULE, systemFor(), wantsSearch(), contextAllowed(), personId(), buildContext(), replyText(), Deps.context, handle()) and index.ts (ask with the web search tool, context reads). index.html: COACH_CTX_VERSION, coachShareRow(), coachContextChange(), coachConsentSet() (version argument), coachChatCard() (pill, share row, opt-in wording), coachConsentChange(), wlCoachSend() (person id, server context answer), the wlc-ctx-on, wlc-ctx-off and consent-coachctx-toggle cases, consentCenter(), HISTORY_LABELS, privacyPolicyView() sections 3, 4 and 6, CSS .wlc-share, LEGAL_UPDATED, TERMS_VERSION, APP_VERSION, WLH.changelog. tests/wl-coach-handler.test.mjs (10 new, 30 in all), tests/browser/coachchat.mjs (9 new, 36 in all), tests/browser/legal.mjs (date). docs/AI_COACH.md, docs/DATABASE.md, docs/BUILD_PLAN.md, README.md, CHANGELOG.md. No migration: the existing consent version column carries the choice.",
+      test:"node --test tests/wl-coach-handler.test.mjs; CHROME=/path/to/chrome CI=1 node tests/browser/coachchat.mjs, legal.mjs, sectors.mjs, privacy.mjs. By hand after the function is deployed: allow coach chat, ask How much protein have I had today? (it says it can't see your log), press Share my profile and logs, log a meal, ask again (it uses the meal); ask for an egusi soup recipe (a Sources list appears); press Stop sharing and ask again (it can't see your log).",
+      limits:"Code only until wl-coach is deployed (supabase functions deploy wl-coach --no-verify-jwt); until then nothing extra is sent, and the share switch changes only the consent record. The consent record is per account while the data is the active profile's, so one person's choice covers the household profiles they switch to. The switch on a device is a display; the server's record decides. Web search is billed by Anthropic per search (about $10 per 1,000) and can be turned off for the organization in the Claude Console, which would make recipe questions fail; it uses the 2025 tool version because the page does not list Haiku 5.5 or Sonnet 5.5 for the newer ones. A long search can return a paused answer, which is shown as far as it got. The new Spanish lines fall back to English. The Privacy Policy wording is copy, not legal advice. Not tried against the live model or the live database." },
     { id:"8.6.21",
       area:"Coach",
       title:"Each coach thinks in its own way: the Enforcer's heartbeat line, the Motivator's stretching pill and the Strategist's cradle",
@@ -12960,7 +12968,7 @@ function obGround(){ return `<div class="obg-bg" aria-hidden="true"><i></i><i></
 // is kept, never the birth date. Someone under 13 gets a plain "can't set up" screen, and the device refuses another try for 24 hours
 // (a flag in this browser; clearing site data removes it, so it deters a retry rather than guaranteeing one).
 const AGE_BLOCK_KEY = "wlh.ageblock", AGE_BLOCK_MS = 24 * 3600 * 1000, CONSENT_KEY = "wlh.consent";
-const TERMS_VERSION = "2026-11-01"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
+const TERMS_VERSION = "2026-11-24"; // bump with LEGAL_UPDATED whenever the Terms or the Privacy Policy change
 const ageBlocked = () => { try { return +localStorage.getItem(AGE_BLOCK_KEY) > Date.now(); } catch { return false; } };
 const blockAge = () => { try { localStorage.setItem(AGE_BLOCK_KEY, String(Date.now() + AGE_BLOCK_MS)); } catch {} };
 // Whole years old. The birth day is not asked, so a birthday this month counts as not reached yet.
@@ -14193,7 +14201,7 @@ function coachChatCard(){
     <ul class="clean small optin">
       <li>${icon("pmShare","",16)}<span>Your question is sent through our server to Anthropic, the company that makes Claude, to get an answer. Anything you type may be sent, so leave out names and details you would not want shared.</span></li>
       <li>${icon("lock","",16)}<span>Your question and the answer are saved in your account, and may be read by the app's owner to check answers are safe and to fix problems. Only you can read them from the app. Deleting your account deletes them.</span></li>
-      <li>${icon("x","",16)}<span>Your logs and profile are not sent. Turn this off any time in Settings &gt; Privacy and security; the rest of the app works without it. WL Coach is not medical advice.</span></li>
+      <li>${icon("x","",16)}<span>Your logs and profile are not sent unless you later choose to share them, which is a separate step. Turn this off any time in Settings &gt; Privacy and security; the rest of the app works without it. WL Coach is not medical advice.</span></li>
     </ul>
     <div class="row" style="margin-top:6px"><button class="btn primary" data-act="wlc-optin"${C.consenting ? " disabled" : ""}>${C.consenting ? "Saving…" : "Allow coach chat"}</button></div>
     ${C.err ? `<div class="note" role="alert">${esc(C.err)}</div>` : ""}</section>`;
@@ -14203,7 +14211,8 @@ function coachChatCard(){
   const msgs = (C.msgs || []).map(m => `<div class="wlc-msg${m.me ? " me" : ""}"><span class="sr-only">${m.me ? "You" : "WL Coach"}: </span><div class="wlc-bubble">${esc(m.t)}</div></div>`).join("")
     + (C.busy ? coachThinking() : "");
   return `<section class="card wlc-card" id="wlc">
-    <div class="wlc-head"><h2>Ask WL Coach</h2><span class="pill-goal wlc-note">Can't see your logs yet · Not medical advice</span></div>
+    <div class="wlc-head"><h2>Ask WL Coach</h2><span class="pill-goal wlc-note">${p.coachContext ? "Uses your profile and last 7 days" : "Can't see your logs yet"} · Not medical advice</span></div>
+    ${coachShareRow(p, C)}
     ${WLA.lang === "es" ? '<p class="tiny muted">Puedes escribir en español; algunas respuestas del servicio pueden llegar en inglés.</p>' : ""}
     <div class="wlc-chips" role="group" aria-label="${esc(tr("Suggested questions"))}">${WLC_ASKS.map((q, i) => `<button type="button" class="chip" data-act="wlc-ask" data-i="${i}">${esc(tr(q))}</button>`).join("")}</div>
     <div id="wlc-log" class="wlc-stream" aria-live="polite">${msgs}</div>
@@ -14212,13 +14221,37 @@ function coachChatCard(){
     ${C.err ? `<div class="note" role="alert">${esc(C.err)}</div>` : ""}
   </section>`;
 }
+// ---- coach: share profile and logs (8.6.22) ----
+// A second, separate choice. The account record's version says what was agreed: COACH_CTX_VERSION ("ctx-" + terms date) lets the wl-coach
+// function attach this profile and its last 7 days; the plain TERMS_VERSION means the question alone. The function reads the record, never this flag.
+const COACH_CTX_VERSION = "ctx-" + TERMS_VERSION;
+function coachShareRow(p, C){
+  if (p.coachContext) return `<div class="row wlc-share"><p class="tiny muted">WL Coach gets this profile's goal, age, height, weight, calorie and workout targets, food culture, allergies, food preferences and the last 7 days of meals, snacks, workouts and weigh-ins with each question.</p>
+    <button type="button" class="btn sm" data-act="wlc-ctx-off"${C.sharing ? " disabled" : ""}>Stop sharing</button></div>`;
+  return `<details class="wlc-share"><summary class="small">Let WL Coach see your profile and last 7 days</summary>
+    <p class="small muted">With each question, our server would also send Anthropic this profile's goal, age, height, weight, calorie and workout targets, food culture, allergies and food preferences, plus the last 7 days of meals, snacks, workouts and weigh-ins, so answers fit you. Not sent: your name, email, photos, drinks, vitals or anything older. Only your question and the answer are saved in your account, as now. Stop any time here or in Settings &gt; Privacy and security.</p>
+    <button type="button" class="btn sm primary" data-act="wlc-ctx-on"${C.sharing ? " disabled" : ""}>${C.sharing ? "Saving…" : "Share my profile and logs"}</button></details>`;
+}
+async function coachContextChange(on){
+  const p = P(), C = UI.wlc = { ...(UI.wlc || {}), err: null };
+  if (C.sharing || !p) return;
+  if (!SB.user || !p.coachChatConsent) { toast("Allow coach chat first."); return; }
+  // Stopping takes effect on this screen at once; starting only after the account record says so.
+  if (!on) { p.coachContext = false; historyAdd("coach-ctx-off"); saveProfile(); render(); }
+  C.sharing = true; render();
+  const ok = await coachConsentSet(true, on ? COACH_CTX_VERSION : TERMS_VERSION);
+  C.sharing = false;
+  if (!ok) { C.err = on ? "Couldn't save your choice. Check your connection and try again. Nothing was shared." : "Sharing is off here, but we couldn't update your account yet. Try again."; render(); return; }
+  if (on) { p.coachContext = true; historyAdd("coach-ctx-on"); saveProfile(); }
+  render();
+}
 const WLC_ASKS = ["What should I eat after a workout?", "Best West African high-protein breakfast?", "Sore legs after soccer: stretch or rest?", "How much water should I drink?"];
 // The opt-in is also recorded on the account (coach_consent_set, 8.4.3): the wl-coach function trusts that record, never a flag typed into the request,
 // so a direct call cannot skip the screen and a withdrawal stops every tab and device at once. The switch only turns on after the record is saved.
 const COACH_WD_KEY = "wlh.coachwd", COACH_UID_KEY = "wlh.coachuid";
-async function coachConsentSet(on){
+async function coachConsentSet(on, version = TERMS_VERSION){
   const c = sbClient(); if (!c || !SB.user) return false;
-  try { const r = await c.rpc("coach_consent_set", { p_on: on, p_version: TERMS_VERSION }); return !r.error; } catch { return false; }
+  try { const r = await c.rpc("coach_consent_set", { p_on: on, p_version: version }); return !r.error; } catch { return false; }
 }
 async function coachConsentChange(on){
   const p = P(), C = UI.wlc = { ...(UI.wlc || {}), err: null };
@@ -14233,7 +14266,7 @@ async function coachConsentChange(on){
     p.coachChatConsent = true; historyAdd("coach-on"); saveProfile(); render(); $("#wlc-q")?.focus(); return;
   }
   // Off first, so this screen stops sending at once; then the account record. If that fails it is retried the next time this account signs in.
-  p.coachChatConsent = false; historyAdd("coach-off"); saveProfile(); render();
+  p.coachChatConsent = false; p.coachContext = false; historyAdd("coach-off"); saveProfile(); render();
   let uid = ""; try { uid = SB.user?.id || localStorage.getItem(COACH_UID_KEY) || ""; localStorage.setItem(COACH_WD_KEY, uid); } catch {}
   if (SB.user && await coachConsentSet(false)) { try { localStorage.removeItem(COACH_WD_KEY); } catch {} }
   else if (SB.user) toast("Coach chat is off here, but we couldn't update your account yet. We'll retry.", "warn");
@@ -14255,13 +14288,15 @@ async function wlCoachSend(){
   try {
     const { data } = await c.auth.getSession(), token = data?.session?.access_token;
     if (token) {
-      const r = await fetch(`${SB_URL}/functions/v1/wl-coach`, { method:"POST", headers:{ "content-type":"application/json", apikey:SB_KEY, authorization:`Bearer ${token}` }, body: JSON.stringify({ message:q, lang:WLA.lang }) });
+      const r = await fetch(`${SB_URL}/functions/v1/wl-coach`, { method:"POST", headers:{ "content-type":"application/json", apikey:SB_KEY, authorization:`Bearer ${token}` }, body: JSON.stringify({ message:q, lang:WLA.lang, person:P()?.id }) });
       out = await r.json().catch(() => ({})); state = out.state || "error";
     } else state = "unauthorized";
   } catch { console.warn("coach request failed"); }
   C.busy = false;
   // The account says no (withdrawn in another tab or on another device): this screen follows it.
-  if (state === "consent_required" && P().coachChatConsent) { const p = P(); p.coachChatConsent = false; historyAdd("coach-off"); saveProfile(); }
+  if (state === "consent_required" && P().coachChatConsent) { const p = P(); p.coachChatConsent = false; p.coachContext = false; historyAdd("coach-off"); saveProfile(); }
+  // Sharing was turned on from another device: the server attached this profile's data, so this screen says so too.
+  if (state === "ok" && out.context === true && !P().coachContext) { P().coachContext = true; saveProfile(); }
   if (state === "ok" && typeof out.reply === "string") { C.msgs = [...(C.msgs || []), { me:true, t:q }, { me:false, t:out.reply }].slice(-12); C.q = ""; }
   else C.err = state === "unauthorized" ? "Your sign-in has expired. Sign out, sign in again, then retry."
     : state === "rate_limited" ? "You've asked a lot this hour. Try again later."
@@ -14723,6 +14758,8 @@ document.addEventListener("click", async e => {
     case "coach-tab": { coachTabSet(t.dataset.v, !t.dataset.go); const el = t.dataset.go && document.querySelector(t.dataset.go); if (el) { el.scrollIntoView({ block: "center" }); el.focus?.({ preventScroll: true }); } break; }
     case "coach-q": UI.askCoach = { ...(UI.askCoach||{}), q: t.dataset.q }; render(); document.getElementById("coach-q")?.focus(); break;
     case "wlc-optin": coachConsentChange(true); break;
+    case "wlc-ctx-on": coachContextChange(true); break;
+    case "wlc-ctx-off": coachContextChange(false); break;
     case "wlc-ask": { const q = tr(WLC_ASKS[+t.dataset.i] || ""), box = document.getElementById("wlc-q"); if (box && q) { box.value = q.slice(0, 1000); box.dispatchEvent(new Event("input", { bubbles: true })); box.focus(); } break; }
     case "wlc-send": wlCoachSend(); break;
     case "ask-coach": UI.askCoach = { ...(UI.askCoach||{}), q: val("coach-q") }; askClaude("coach"); break;
@@ -14792,6 +14829,7 @@ document.addEventListener("click", async e => {
     case "consent-photoai-toggle": p.photoAiConsent = !p.photoAiConsent; historyAdd(p.photoAiConsent ? "photo-on" : "photo-off"); saveProfile(); render(); break;
     case "consent-food-toggle": p.foodSearchOk = !p.foodSearchOk; if (!p.foodSearchOk) { UI.off = null; UI.offOpen = false; } historyAdd(p.foodSearchOk ? "food-on" : "food-off"); saveProfile(); render(); break;
     case "consent-coach-toggle": coachConsentChange(!p.coachChatConsent); break;
+    case "consent-coachctx-toggle": coachContextChange(!p.coachContext); break;
     case "consent-clips-toggle": p.prem = p.prem || {}; p.prem.clipsConsent = !p.prem.clipsConsent; historyAdd(p.prem.clipsConsent ? "clips-on" : "clips-off"); saveProfile(); render(); break;
     case "consent-body-toggle": { const st = bodyState(p); st.on = !st.on; historyAdd(st.on ? "body-on" : "body-off"); saveProfile(); render(); if (st.on) bodyPhotoLockNudge(); break; }
     case "photoai-optin": p.photoAiConsent = true; historyAdd("photo-on"); saveProfile(); render(); break;
@@ -18726,7 +18764,7 @@ const CONTACT_EMAIL = "wholelifehub@hotmail.com";
 const LEGAL_BUSINESS_NAME = "Whole Life Hub";
 const MAILING_ADDRESS = "13022 Thunderhead Drive, Germantown, MD 20874";
 const REFUND_POLICY_TEXT = "Every charge has 14 days. Contact us within 14 days of any charge, the first one or a renewal, and we refund it in full, whether or not you have used Premium in that time, and you do not need a reason. After those 14 days the charge for that period is not refundable, but you can cancel at any time to stop the next one. Cancelling part way through a period leaves Premium running until the period you paid for ends, and we do not refund the unused part. Refunds go back to the card you paid with, through Lemon Squeezy, and can take up to 10 days to appear. If you were charged after cancelling, charged twice, charged the wrong amount, or charged without your permission, tell us and we refund it in full. Ending Premium never deletes anything: every meal, workout, weigh-in and photo stays exactly where it is. Nothing here reduces any right the law gives you where you live.";
-const LEGAL_UPDATED = "1 November 2026";
+const LEGAL_UPDATED = "24 November 2026";
 
 function applyCanonical(){
   if (/\[YOUR-DOMAIN\]/.test(SITE_URL)) return;              // nothing to point at yet
@@ -18810,7 +18848,7 @@ function privacyPolicyView(){
       <li><b>Photo meal logging and gym equipment photos.</b> The one photo you choose is sent to Claude, the AI this app runs on, for that one answer, along with a summary of your profile (age, goals, food culture) so the answer fits you. The photo is shrunk on your device and stripped of location data before it leaves. Typing calories in by hand instead sends nothing anywhere. Turn this off any time in Settings &gt; Privacy and security.</li>
       <li><b>Form check camera.</b> Turns on your camera to record a short clip. The clip is never uploaded — recording, review and playback all happen on this device, in the same encrypted storage as the rest of your hub. Importing a video file instead needs no camera permission at all.</li>
       <li><b>Body progress studio.</b> Same as above for still photos, with one difference: signed in, with Sync photos on (Settings › Privacy &amp; security, on by default), the photos are also copied to your private account storage, as described in section 4, so they appear on your other devices. They are hidden whenever your profile is locked.</li>
-      <li><b>Coach chat.</b> Off until you press Allow coach chat, and only for signed-in accounts. Each question you type is sent through our server to Anthropic, the company that makes Claude, which answers it; the question and the answer are also saved in your account (see section 4) and may be read by the app owner to check answers are safe and fix problems. No logs or profile details are sent with it. Do not type anything you would not want shared. Your choice is also saved in your account, with the date, so the server can check it before every question; turn it off any time in Privacy &amp; security and the next question from any device is refused.</li>
+      <li><b>Coach chat.</b> Off until you press Allow coach chat, and only for signed-in accounts. Each question you type is sent through our server to Anthropic, the company that makes Claude, which answers it; the question and the answer are also saved in your account (see section 4) and may be read by the app owner to check answers are safe and fix problems. No logs or profile details are sent with it unless you also press Share my profile and logs, a separate choice: then each question also carries the active profile's goal, age, height, weight, calorie and workout targets, food culture, allergies and food preferences, and its last 7 days of meals, snacks, workouts and weigh-ins (never your name, email, photos, drinks or vitals). Those details are used to answer and are not saved with the question. Questions about recipes may also be looked up on the web by Anthropic's search tool; only the question is used for that. Do not type anything you would not want shared. Your choice is also saved in your account, with the date, so the server can check it before every question; turn it off any time in Privacy &amp; security and the next question from any device is refused.</li>
       <li><b>Food search.</b> Off until you turn it on in Log a meal &gt; Search more foods, or in Settings &gt; Privacy &amp; security. When you press Search, the words you typed in that box are sent from your browser to Open Food Facts (world.openfoodfacts.org), a free public food database, to find matches. Nothing else is sent: not your name, your log, your profile or your account. Open Food Facts sees your internet address, as any website does, and has its own privacy policy. A food you pick is logged on your device and in your account like any other meal, marked as an estimate.</li>
       <li><b>Voice coach.</b> Reads the coach's reply aloud using your browser's built-in text-to-speech. It does not use your microphone and never records or sends audio anywhere.</li>
       <li><b>Imported health data</b> (Apple Health, Google Fit/Fitbit or similar exports). You choose the file; it is read in this browser and the file itself is never uploaded or sent anywhere. The workouts, weigh-ins and daily values it creates are saved like anything else you log, including to your account when you are signed in (section 4). There is no live, automatic connection to any health service, so there is nothing to "disconnect" — only files you choose to import.</li>
@@ -18829,7 +18867,7 @@ function privacyPolicyView(){
       <li><b>Weigh-ins:</b> the date and time and the weight.</li>
       <li><b>Daily vitals:</b> for each day, the steps, active calories, resting heart rate, sleep, water, blood oxygen and blood pressure you entered or imported.</li>
       <li><b>Each profile:</b> its name and basics (age, sex, height, weight, target weight, goal), your food culture, diet and allergies, calorie and workout goals, activity level and sport, your coach choice and name, your workout and meal plans, your coach questions, answers and check-ins, awards, reminders, appearance choices (theme, accent, font and text size), the layout and sizes of your home-screen cards, units, menu choices, grocery and pantry lists, weekly reviews, experiments, recovery check-ins, body measurements, your sharing choices, and the location of your profile picture and progress photos.</li>
-      <li><b>Coach chat choice,</b> if you used the coach chat switch: whether it is on, the version of these terms it was given under, and when you turned it on or off.</li>
+      <li><b>Coach chat choice,</b> if you used the coach chat switch: whether it is on, the version of these terms it was given under, whether it includes sharing your profile and logs, and when you last changed it.</li>
       <li><b>Coach chat questions and answers,</b> if you turned on coach chat: what you asked, the reply, the date and time, which model answered, and how long it took. Only you can read them from the app, and they are removed when you delete your account.</li>
       <li><b>Photos</b> (meals, workouts, progress photos and your profile picture), unless you turn off Sync photos in Settings › Privacy &amp; security: each is stored as one file in a private area of your account, at a path made of your account id, the profile id, the kind of photo and the item id. Before it leaves your device it is re-saved as a JPEG of about 200 KB or less, which removes metadata such as where it was taken. Only your signed-in account can open it. Deleting the item (or its profile) deletes the file.</li>
     </ul>
@@ -18869,7 +18907,7 @@ function privacyPolicyView(){
       <li><b>Vercel</b>, which hosts this page. When you load it, Vercel receives and keeps standard web-request logs (for example your IP address, browser details and the page requested). It is not sent anything from your hub.</li>
       <li><b>Supabase</b>, our database and sign-in service. Your email, password and the items listed in section 4, photos included, go there when you create an account, sign in, or are signed in. Without an account, none of your health data is sent to it. It also stores the crash reports described in section 1: no account id, no health data.</li>
       <li><b>Claude</b>, the AI, answers coach questions, meal suggestions and the photo estimates described in section 3, but only when the app is opened inside Claude and you start the feature (for the photo ones, only after you've allowed them once). Outside Claude those features show as unavailable and nothing is sent.</li>
-      <li><b>Anthropic</b>, the company that makes Claude, only if you turned on coach chat. Your typed question is sent to it through our server so it can answer; see section 3.</li>
+      <li><b>Anthropic</b>, the company that makes Claude, only if you turned on coach chat. Your typed question is sent to it through our server so it can answer, with your profile and last 7 days only if you chose to share them; see section 3.</li>
       <li><b>Lemon Squeezy</b>, our payment provider, only if you choose a Premium plan. Its checkout page opens inside this app (or in a new tab, if you pick that) and you type your email and payment details into Lemon Squeezy's page, not ours: this app never sees them. When you paste your licence key, the key is sent through our Supabase function to Lemon Squeezy to check it, and checked again about once a day. None of your health data is sent.</li>
       <li><b>Your own downloads</b> when you export your data, which stay on your device.</li>
     </ul>
@@ -19048,6 +19086,7 @@ function creditsView(){
 //   p.photoAiConsent      — photo meal logging + gym equipment photos (sent to Claude)
 //   p.foodSearchOk        — food search (typed words sent to Open Food Facts)
 //   p.coachChatConsent    — WL Coach chat (typed questions sent to Anthropic and saved in the account)
+//   p.coachContext        — part of coach chat: also send the profile and last 7 days (account record version ctx-…)
 //   p.prem.clipsConsent   — form check camera (recorded on-device only)
 //   p.prem.body.on        — body progress studio (already gated by its own opt-in screen,
 //                           bodyOptIn() in the body-progress file; listed here for completeness)
@@ -19058,6 +19097,7 @@ function consentCenter(p){
     ${row(!!p.photoAiConsent, "Photo meal logging & equipment photos", "Sends the one photo you choose to Claude for an estimate.", "consent-photoai-toggle")}
     ${row(!!p.foodSearchOk, "Food search (Open Food Facts)", "Sends the words you type in the food search box to world.openfoodfacts.org when you press Search. Nothing else.", "consent-food-toggle")}
     ${row(!!p.coachChatConsent, "Coach chat", "Sends your typed questions to Anthropic through our server and saves them in your account.", "consent-coach-toggle")}
+    ${p.coachChatConsent ? row(!!p.coachContext, "Coach sees your profile and last 7 days", "Also sends this profile's basics, allergies and last 7 days of meals, snacks, workouts and weigh-ins with each question. Not saved with it.", "consent-coachctx-toggle") : ""}
     ${row(!!p.prem?.clipsConsent, "Form check camera", "Records on this device only; the video is never uploaded.", "consent-clips-toggle")}
     ${row(!!p.prem?.body?.on, "Body progress studio", "Saves progress photos on this device and, with Sync photos on, in your private account storage.", "consent-body-toggle")}
     <span class="tiny muted">Turning one off here stops that feature immediately and shows its explainer again next time you open it.</span></div>`;
@@ -19075,6 +19115,8 @@ const HISTORY_LABELS = {
   "food-off": "Turned off food search (Open Food Facts)",
   "coach-on": "Turned on coach chat",
   "coach-off": "Turned off coach chat",
+  "coach-ctx-on": "Let the coach see your profile and last 7 days",
+  "coach-ctx-off": "Stopped sharing your profile and logs with the coach",
   "clips-on": "Turned on the form check camera",
   "clips-off": "Turned off the form check camera",
   "body-on": "Turned on the body progress studio",
@@ -27104,6 +27146,7 @@ a.mck:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wlc-head{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
 .wlc-head h2{margin:0}
 .wlc-note{white-space:normal}
+.wlc-share{margin:6px 0 2px}.wlc-share summary{cursor:pointer}.wlc-share .btn{margin-top:6px}
 .wlc-out{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:var(--r-sm);background:var(--raise)}
 .wlc-out p{margin:0;flex:1 1 260px}
 .wlc-stream{display:flex;flex-direction:column;gap:10px;max-height:min(58vh,520px);overflow-y:auto;padding:14px;border:1px solid var(--line);border-radius:var(--r);background:color-mix(in srgb,var(--raise) 55%,var(--surface))}
