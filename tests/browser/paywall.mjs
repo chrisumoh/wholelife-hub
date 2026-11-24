@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join, extname } from "node:path";
 
 // Run from the repo root:  node tests/browser/paywall.mjs   (needs Node 22+ and Chrome; set CHROME to its path, CI=1 as root)
-// Build 8.6.3, restyled in 8.6.5 from the Premium comparison design: the Free vs Premium dialog (the paywall) as one flat table, a tile and a description on every row, real Premium list, accessible dialog, Spanish, three looks.
+// Build 8.6.3, restyled in 8.6.5 (8.6.6 adds the beta-open entry points, 8.6.7 centres the Premium page) from the Premium comparison design: the Free vs Premium dialog (the paywall) as one flat table, a tile and a description on every row, real Premium list, accessible dialog, Spanish, three looks.
 // SHOTS=<folder> also saves screenshots there, for looking at.
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
@@ -207,6 +207,31 @@ await click(".side .nav button.prem-trigger");
 ok("in Spanish the row reads Comparar Gratis y Premium", await ev(`/Comparar Gratis y Premium/.test(document.querySelector("#pop-premium .pop-cmp")?.textContent || "") && /Mira qué incluye cada plan/.test(document.querySelector("#pop-premium .pop-cmp")?.textContent || "")`));
 await key("Escape", "Escape", 27); await sleep(300);
 await ev(`wlaSetLang("en"); true`); await sleep(300);
+
+console.log("--- 9. The Premium page is centred");
+const PM = `(() => { const q = s => document.querySelector(s); const c = s => { const r = q(s)?.getBoundingClientRect(); return r ? { cx: (r.left + r.right) / 2, w: r.width } : null; };
+  const ta = s => q(s) ? getComputedStyle(q(s)).textAlign : null; const mid = c(".prem-store").cx;
+  const parts = [".prem-head h2", ".prem-sub", ".prem-banner", ".prem-toggle", ".prem-cards", ".prem-fineprint", ".prem-feat-list", ".prem-stays", ".prem-about", "#subscription"];
+  return { off: parts.filter(s => q(s) && Math.abs(c(s).cx - mid) > 2).map(s => s + " " + Math.round(c(s).cx - mid)), missing: parts.filter(s => !q(s) && s !== ".prem-banner"), cardsW: c(".prem-cards").w, sw: document.documentElement.scrollWidth, iw: innerWidth,
+    head: ta(".prem-head"), card: ta(".prem-card"), feat: ta(".prem-feat-list"), faqs: ta(".prem-faqs"), cta: q(".prem-cta-bar > *") ? Math.abs(c(".prem-cta-bar > *").cx - mid) : null, ctaFine: ta(".prem-cta-bar .prem-cta-fine") }; })()`;
+await send("Page.navigate", { url: "http://127.0.0.1:8844/index.html#/premium" }); await sleep(500);
+ok("the app boots on the Premium page", await waitFor(READY, 15000), errors.join(" | "));
+for (const w of [1780, 1200, 820, 375]) {
+  await view(w, 1000); await goto("#/premium"); await sleep(500);
+  const m = await ev(PM);
+  ok(`${w}px (Premium on): the head, banner, toggle, plan cards, fine print, feature list, About and subscription card share the card's centre line`, m.off.length === 0 && m.missing.length === 0, JSON.stringify(m));
+  ok(`${w}px: the plan cards stay within 1040px and the page does not scroll sideways`, m.cardsW <= 1041 && m.sw <= m.iw, JSON.stringify(m));
+  ok(`${w}px: the head is centred while the plan cards, feature rows and questions keep left-aligned text`, m.head === "center" && m.card === "left" && m.feat === "left" && m.faqs === "left", JSON.stringify(m));
+}
+await view(1780, 1000);
+await shot("premium-page-centred");
+await send("Page.navigate", { url: "http://127.0.0.1:8844/index.html?premium=0#/premium" }); await sleep(500);
+await waitFor(READY, 15000); await view(1780, 1000); await goto("#/premium"); await sleep(500);
+const mf = await ev(PM);
+ok("Free: the same parts are centred, and the slide-to-pay bar and its fine print sit on the centre line too", mf.off.length === 0 && mf.cta !== null && mf.cta <= 2 && mf.ctaFine === "center", JSON.stringify(mf));
+await ev(`document.querySelector(".prem-store-page").scrollIntoView(); true`);
+await shot("premium-page-centred-free");
+await view(1200);
 
 ok("no script errors on the page", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`);

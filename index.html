@@ -3879,7 +3879,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.6", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.7", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3893,6 +3893,15 @@ const APP_VERSION = { update: "8.6", build: "8.6.6", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.7",
+      area:"Premium",
+      title:"The Premium page is centred: head, banner, billing toggle, plan cards and the sections below",
+      bug:"On the Premium page the heading and tagline sat in a narrow centred box at the left of the page, the billing toggle was in the middle, and the Free and Premium cards started at the left edge, so the page looked lopsided with a wide empty area on the right.",
+      fix:"The whole page now sits on the page's centre line in a column up to 1040px: the Plans & pricing label, the WholeLife Premium title and tagline, the Premium is active banner, the billing toggle, the two plan cards, the fine print, the What's included panel, What stays open on Free, About Premium, the questions and the subscription card. On a Free profile the slide-to-pay bar and its fine print follow the same column. Inside the column the plan cards, the feature rows and the questions keep left-aligned text, and the section headings and short notes are centred. On a phone it is the same single column as before.",
+      where:"index.html: the premcentre-css style block (last in the file; every rule is scoped to .prem-store-page, so Settings > Premium is untouched), APP_VERSION, WLH.changelog. tests/browser/paywall.mjs (new section 9; needs your OK as a test edit). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/paywall.mjs. By hand: open the Premium page on a wide screen, on an iPad and on a phone, as a Free profile (add ?premium=0 to the address) and as a Premium one, and look that the head, toggle and cards share one centre line and nothing scrolls sideways.",
+      limits:"Checked in headless Chrome at 375, 820, 1200 and 1780px, not on a real iPad or iPhone. The column stops growing at 1040px, so on a very wide screen there is empty space on both sides rather than one. Only the Premium page changed; other pages keep their left-aligned layout."
+    },
     { id:"8.6.6",
       area:"Premium",
       title:"A way into the Free vs Premium dialog while the beta is open",
@@ -26552,5 +26561,35 @@ html .side .nav a[aria-current="page"]::before,html .side .nav button.prem-trigg
 .ql-head p{margin:2px 0 0}
 .ql-actions{display:flex;justify-content:flex-end;gap:8px}
 .ql-actions .btn{min-height:44px}
+</style>
+<style id="premcentre-css">
+/* 8.6.7: the Premium page is centred. The head, banner, billing toggle, plan cards and fine print sit on the page's centre line
+   in a column up to 1040px. Inside that column the plan cards, the feature rows and the questions keep left-aligned text, as
+   a price list reads best; the section headings and short notes are centred. Scoped to .prem-store-page so Settings > Premium
+   (which shares the subscription card) is not touched. */
+.prem-store-page .prem-store{ align-items:center; text-align:center; }
+.prem-store-page .prem-store > .prem-head,
+.prem-store-page .prem-store > .prem-cards,
+.prem-store-page .prem-store > .prem-fineprint,
+.prem-store-page .prem-store > .prem-feat-list,
+.prem-store-page .prem-store > .prem-stays,
+.prem-store-page .prem-store > .prem-faqs,
+.prem-store-page .prem-store > .prem-about{ align-self:center; width:100%; max-width:1040px; box-sizing:border-box; }
+.prem-store-page .prem-head{ text-align:center; }
+.prem-store-page .prem-head .eyebrow{ justify-content:center; }
+.prem-store-page .prem-sub{ margin-inline:auto; }
+.prem-store-page .prem-banner{ width:fit-content; max-width:100%; margin-inline:auto; }
+.prem-store-page .prem-card{ text-align:left; }
+.prem-store-page .prem-feat-list{ text-align:left; }
+.prem-store-page .prem-feat-list .prem-feat-head{ align-self:center; }
+.prem-store-page .prem-stays,
+.prem-store-page .prem-about{ text-align:center; }
+.prem-store-page .prem-stays .pill-strip{ justify-content:center; }
+.prem-store-page .prem-stays .draft,
+.prem-store-page .prem-about p{ max-width:62ch; margin-inline:auto; }
+.prem-store-page .prem-faqs{ text-align:left; }
+.prem-store-page .prem-cta-bar > *{ max-width:1040px; margin-inline:auto; }
+.prem-store-page .prem-cta-bar .prem-cta-fine{ text-align:center; }
+.prem-store-page + #subscription{ max-width:1040px; margin-inline:auto; box-sizing:border-box; }
 </style>
 </body></html>

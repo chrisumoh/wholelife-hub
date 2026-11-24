@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.6, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.7, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.7 · Premium: The Premium page is centred: head, banner, billing toggle, plan cards and the sections below
+
+- **Problem:** On the Premium page the heading and tagline sat in a narrow centred box at the left of the page, the billing toggle was in the middle, and the Free and Premium cards started at the left edge, so the page looked lopsided with a wide empty area on the right.
+- **Change:** The whole page now sits on the page's centre line in a column up to 1040px: the Plans & pricing label, the WholeLife Premium title and tagline, the Premium is active banner, the billing toggle, the two plan cards, the fine print, the What's included panel, What stays open on Free, About Premium, the questions and the subscription card. On a Free profile the slide-to-pay bar and its fine print follow the same column. Inside the column the plan cards, the feature rows and the questions keep left-aligned text, and the section headings and short notes are centred. On a phone it is the same single column as before.
+- **Where:** index.html: the premcentre-css style block (last in the file; every rule is scoped to .prem-store-page, so Settings > Premium is untouched), APP_VERSION, WLH.changelog. tests/browser/paywall.mjs (new section 9; needs your OK as a test edit). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/paywall.mjs. By hand: open the Premium page on a wide screen, on an iPad and on a phone, as a Free profile (add ?premium=0 to the address) and as a Premium one, and look that the head, toggle and cards share one centre line and nothing scrolls sideways.
+- **Known limits:** Checked in headless Chrome at 375, 820, 1200 and 1780px, not on a real iPad or iPhone. The column stops growing at 1040px, so on a very wide screen there is empty space on both sides rather than one. Only the Premium page changed; other pages keep their left-aligned layout.
 
 ## 8.6.6 · Premium: a way into the Free vs Premium dialog while the beta is open
 
