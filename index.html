@@ -3875,7 +3875,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.2", channel: "Dev Testing", date: "2026-11-23", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.3", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3889,6 +3889,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.2", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.3",
+      area:"Premium",
+      title:"Premium: the paywall is now one Free vs Premium comparison table",
+      bug:"The paywall was a bottom sheet called Everything in Premium: one long list of 19 features with a tick for Premium and a dash or cross for Basic. It had no prices, no groups, no hint of what the free plan does include, a different name for the free plan (Basic) than the Premium page uses (Free), no Spanish feature names, and focus could slip out of it with the Tab key.",
+      fix:"The paywall is now a centred dialog titled Free vs Premium (Go Premium in the side menu, Compare plans on the Premium page, Settings > Premium > Preview the paywall, and a locked page all open it). A pill under the title says where things stand: while the beta is open it says every feature is open and free while testing finishes, plus that some features are still in testing and switch on as they pass (taken from which Premium features are finished). Below it is a real table, Feature, Free and Premium, with the plan names and prices pinned at the top while the rows scroll: Free says $0 forever (the same words as the Premium page) and Premium shows $7.99/mo and $59.99/yr, read from PREMIUM_PLANS so they cannot disagree with the Subscribe button. The rows are grouped into Coaching & Core, Nutrition & Kitchen, Training & Recovery and Health, Lifestyle & Sharing: a Core tracker row (Meals, snacks, drinks and workouts, on both plans) and the 19 Premium features. Each Premium row is built from its own basic setting in PREMIUM_FEATURES, so a feature the app marks limited on Free shows Limited under Free and a tick with Full under Premium, and every other feature shows a dash under Free and a tick under Premium; a feature added to the list but not to a group lands in the last group instead of going missing. The Premium column has one continuous gold band. The footer says Premium is everything in Free, in full, plus the rest, with a See plans button that closes the dialog and opens Settings > Premium. It uses the shared popup shell, so it is a modal dialog: focus starts on See plans, Tab stays inside (close button, the scrolling table, See plans), Escape, the close button or the dark area closes it and focus returns to what opened it. The table scrolls as a labelled region you can reach with the keyboard, the close button and See plans are 44px tall, and every tick, dash, Limited and Full has words for screen readers. Spanish covers the title, headings, statuses, notice, footer and the 19 feature names (the Premium page's feature names are now Spanish too). The AI Coach row from the design file was left out on purpose: the coach is the same for everyone today. Colours come from the app's own tokens (gold, surface, raise) in light, dark and OLED.",
+      where:"index.html: FVP_SECTIONS, FVP_CORE, FVP_ES, fvpT(), fvpPrices(), fvpCell(), fvpRow(), fvpHTML(), openPaywall() (now built on openPopover; it takes the button that opened it), closePaywall(), the paywall click case in the early click handler, the fvp-plans click case, the 8.6.3 Free vs Premium block in the tidy-css style (.pop-wrap.fvp and the .fvp-* classes), 19 feature names added to WL_ES, APP_VERSION, WLH.changelog. tests/browser/paywall.mjs (new, 48 checks), a11y.mjs (the modal is one more popup screen axe checks, and open popups are closed between screens), run-all.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/paywall.mjs, then node tests/browser/run-all.mjs. By hand: open the app with ?premium=0 on the end of the address so you are on Free, press Go Premium in the side menu, scroll the table (the headings stay put), press Tab around it, press Escape; then open #/premium/grocery, and Settings > Premium > Preview the paywall. Press See plans and you land on Settings > Premium. Switch to Spanish in Settings > Appearance and open it again. Check 375, 820 and 1440px, light, dark and OLED.",
+      limits:"Checked in headless Chrome at 375, 820 and 1440px, not on a real iPad or iPhone. The AI Coach row from the design file is not in the table (Chris's choice): the AI coach has no Free or Premium split yet, it answers 30 questions an hour for everyone and sees only the question typed, not meals, training or sleep. Limited means whatever basic:\"limited\" says in PREMIUM_FEATURES (Photo meal logging, Progressive programs, Weekly review PDF, Family challenges); the app does not yet define or enforce what the limit is. The beta pill reads BETA_OPEN and the finished-features check, so it changes by itself when the beta closes or every feature is finished. The old Everything in Premium sheet and its .pw-* CSS are still in the stylesheet, now unused. The design file's own fonts, its demo dashboard and its code-copy tool were not brought in." },
     { id:"8.6.2",
       area:"Snacks",
       title:"Snacks: a Recipe drawer, servings that show on the card, No allergens, sort and a logged-today pill",
@@ -11751,7 +11759,7 @@ const WL_ES = {
   "Summary":"Resumen", "Learn":"Tutoriales", "Log":"Registrar", "Plan":"Planificar", "Progress":"Progreso", "Meals":"Comidas", "Snacks":"Bocadillos",
   "Workouts & imports":"Entrenamientos e importaciones", "Recipes & meal plans":"Recetas y planes de comidas",
   "Food culture":"Cultura gastronómica", "Personal coach":"Entrenador personal", "Health data":"Datos de salud",
-  "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Today":"Hoy", "More":"Más", "Next step":"Siguiente paso", "Browse by category":"Ver por categoría", "Every metric in this category is already pinned above.":"Todas las métricas de esta categoría ya están fijadas arriba.", "Show badges":"Mostrar insignias", "Every badge is earned. Nothing is locked.":"Todas las insignias están conseguidas. Nada está bloqueado.", "You're all caught up for today.":"Hoy estás al día.", "Log water":"Registrar agua", "Log food":"Registrar comida", "Log weight":"Registrar peso", "Open workout":"Abrir entrenamiento", "No food logged yet today":"Aún no has registrado comida hoy", "No weigh-in in the last 7 days":"Sin pesaje en los últimos 7 días", "Open":"Abrir", "Mobile navigation":"Navegación móvil", "1½ servings":"1½ porciones", "No allergens":"Sin alérgenos", "Sort":"Ordenar", "Default order":"Orden predeterminado", "Lowest calories":"Menos calorías", "Highest calories":"Más calorías", "Clear filters":"Quitar filtros", "Recipe":"Receta", "Servings":"Porciones", "Coach sections":"Secciones del entrenador", "Five quick questions":"Cinco preguntas rápidas", "Answer them":"Responder", "No plan yet":"Aún no hay plan", "See my week":"Ver mi semana", "Go to the questions":"Ir a las preguntas", "Pick how many days you can train and build a plan on the Plan tab.":"Elige cuántos días puedes entrenar y crea un plan en la pestaña Planificar.", "Nothing is planned for today. The whole week is on the Plan tab.":"Hoy no hay nada planeado. Toda la semana está en la pestaña Planificar.", "Every one is optional. They take about a minute and live on the Settings tab.":"Todas son opcionales. Toman un minuto y están en la pestaña Ajustes.", "Answer the five questions on the Settings tab first and the plan fits you better.":"Responde primero las cinco preguntas de la pestaña Ajustes y el plan se ajustará mejor a ti.", "Close":"Cerrar", "Go Premium":"Hazte Premium",
+  "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Today":"Hoy", "More":"Más", "Next step":"Siguiente paso", "Browse by category":"Ver por categoría", "Every metric in this category is already pinned above.":"Todas las métricas de esta categoría ya están fijadas arriba.", "Show badges":"Mostrar insignias", "Every badge is earned. Nothing is locked.":"Todas las insignias están conseguidas. Nada está bloqueado.", "You're all caught up for today.":"Hoy estás al día.", "Log water":"Registrar agua", "Log food":"Registrar comida", "Log weight":"Registrar peso", "Open workout":"Abrir entrenamiento", "No food logged yet today":"Aún no has registrado comida hoy", "No weigh-in in the last 7 days":"Sin pesaje en los últimos 7 días", "Open":"Abrir", "Mobile navigation":"Navegación móvil", "1½ servings":"1½ porciones", "No allergens":"Sin alérgenos", "Sort":"Ordenar", "Default order":"Orden predeterminado", "Lowest calories":"Menos calorías", "Highest calories":"Más calorías", "Clear filters":"Quitar filtros", "Recipe":"Receta", "Servings":"Porciones", "Coach sections":"Secciones del entrenador", "Five quick questions":"Cinco preguntas rápidas", "Answer them":"Responder", "No plan yet":"Aún no hay plan", "See my week":"Ver mi semana", "Go to the questions":"Ir a las preguntas", "Pick how many days you can train and build a plan on the Plan tab.":"Elige cuántos días puedes entrenar y crea un plan en la pestaña Planificar.", "Nothing is planned for today. The whole week is on the Plan tab.":"Hoy no hay nada planeado. Toda la semana está en la pestaña Planificar.", "Every one is optional. They take about a minute and live on the Settings tab.":"Todas son opcionales. Toman un minuto y están en la pestaña Ajustes.", "Answer the five questions on the Settings tab first and the plan fits you better.":"Responde primero las cinco preguntas de la pestaña Ajustes y el plan se ajustará mejor a ti.", "Close":"Cerrar", "Go Premium":"Hazte Premium", "Grocery list builder":"Generador de lista de compras", "Pantry mode":"Modo despensa", "Photo meal logging":"Registro de comidas con foto", "Restaurant mode":"Modo restaurante", "Micronutrient gaps":"Carencias de micronutrientes", "Progressive programs":"Programas progresivos", "Form check camera":"Cámara de revisión de técnica", "Body progress studio":"Estudio de progreso corporal", "Recovery score":"Puntuación de recuperación", "Weekly review PDF":"Informe semanal en PDF", "Voice coach":"Entrenador por voz", "Habit experiments":"Experimentos de hábitos", "Coach sharing":"Compartir con un entrenador", "Family challenges":"Retos familiares", "Community recipes":"Recetas de la comunidad", "Doctor visit prep":"Preparar la visita al médico", "Cycle-aware plans":"Planes según tu ciclo", "Fasting & Ramadan mode":"Modo ayuno y Ramadán", "Budget mode":"Modo presupuesto",
   "Profile":"Perfil", "Coach":"Entrenador", "Appearance":"Apariencia", "Goals & food":"Metas y comida", "Household":"Hogar",
   "App":"Aplicación", "Settings sections":"Secciones de ajustes", "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información",
   "Display":"Pantalla", "Automatic":"Automático", "Light":"Claro", "Dark":"Oscuro", "OLED black":"Negro OLED",
@@ -14327,6 +14335,7 @@ document.addEventListener("click", async e => {
     case "add-snack": { const s = SNACKS.find(x => x.id === t.dataset.id); logSnack(s, parseFloat(val("sq-"+s.id)) || 1); break; }
     case "snack-recipe": openSnackRecipe(t.dataset.id, t); break;
     case "snack-recipe-add": { const s = SNACKS.find(x => x.id === t.dataset.id); if (!s) break; closePopover("snackrecipe"); logSnack(s, snackMult(s.id)); break; }
+    case "fvp-plans": closePopover("paywall"); location.hash = "#/settings/premium"; break;
     case "snack-noal": UI.snackNoAl = !UI.snackNoAl; render(); break;
     case "snack-reset": { UI.snackQ = ""; UI.snackNoAl = false; UI.snackSort = "default"; const q = document.getElementById("s-q"); if (q) q.value = ""; render(); break; }
     case "snack-today": { const el = document.getElementById("snack-today"); if (el) { el.scrollIntoView({ block: "start" }); el.focus({ preventScroll: true }); } break; }
@@ -19973,61 +19982,80 @@ function subscriptionPanel(p){
 // ---------- The paywall ----------
 // Bottom sheet on phones, centred card on desktop, one row per registry feature. It is built
 // imperatively rather than through render() so opening it never disturbs the page underneath.
-function openPaywall(){
-  // A sheet that is mid-close is still in the DOM for its transition. Reopening within that
-  // window must not be swallowed, so the closing one is dropped rather than treated as open.
-  const closing = document.querySelector(".pw-wrap.closing"); if (closing) closing.remove();
-  if (document.querySelector(".pw-wrap")) return;
-  const wrap = document.createElement("div");
-  wrap.className = "pw-wrap";
-  wrap.innerHTML = `<div class="pw-scrim" data-pw="close"></div>
-    <div class="pw-card" role="dialog" aria-modal="true" aria-labelledby="pw-title">
-      <div class="pw-head">
-        <span class="pw-grab" aria-hidden="true"></span>
-        <button class="pw-x" data-pw="close" aria-label="Close">${icon("x","",18)}</button>
-        <div class="eyebrow">Whole Life Hub</div>
-        <h2 id="pw-title">Everything in Premium</h2>
-        <p class="pw-sub">Nineteen features across food, training, coaching and health.</p>
-      </div>
-      <div class="pw-tablewrap">
-        <table class="pw-table">
-          <thead><tr>
-            <th scope="col" class="pw-f">Features</th>
-            <th scope="col" class="pw-p"><span class="pw-ph">${icon("crown","",16)}<span>Premium</span></span></th>
-            <th scope="col" class="pw-b">Basic</th>
-          </tr></thead>
-          <tbody>${PREMIUM_FEATURES.map(f => `<tr>
-            <th scope="row" class="pw-f"><span class="pw-ic">${icon(f.icon,"",18)}</span><span>${esc(f.name)}</span></th>
-            <td class="pw-p"><span class="pw-yes" role="img" aria-label="Included">${icon("check","",16)}</span></td>
-            <td class="pw-b">${f.basic === "limited"
-              ? `<span class="pw-lim" role="img" aria-label="Limited">–</span>`
-              : `<span class="pw-no" role="img" aria-label="Not included">${icon("x","",15)}</span>`}</td>
-          </tr>`).join("")}</tbody>
-        </table>
-      </div>
-      <div class="pw-foot">
-        <button class="btn primary pw-cta" data-pw="cta">Continue</button>
-        <p class="tiny muted pw-beta">Beta: all features are currently free while we finish testing.</p>
-        <button class="pw-not" data-pw="close">Not now</button>
-      </div>
-    </div>`;
-  document.body.append(wrap);
-  requestAnimationFrame(() => wrap.classList.add("on"));
-  wrap.addEventListener("click", ev => {
-    const act = ev.target.closest("[data-pw]")?.dataset.pw; if (!act) return;
-    if (act === "cta") { closePaywall(); location.hash = "#/settings/premium"; return; }
-    closePaywall();
-  });
-  document.addEventListener("keydown", paywallKey);
-  setTimeout(() => wrap.querySelector(".pw-cta")?.focus({ preventScroll:true }), 260);
+// ---- Free vs Premium (8.6.3) ----
+// The paywall. The rows come from PREMIUM_FEATURES, whose `basic` field says whether Free has a limited version, so the table
+// cannot drift from the feature list; only the grouping and the Core tracker row are written here. A feature added to
+// PREMIUM_FEATURES but not listed in a section lands in the last one instead of going missing.
+const FVP_SECTIONS = [
+  { h:"Coaching & Core",             ids:["core","voice","review"] },
+  { h:"Nutrition & Kitchen",         ids:["mealphoto","grocery","pantry","restaurant","micros","community"] },
+  { h:"Training & Recovery",         ids:["programs","formcheck","body","recovery","experiments"] },
+  { h:"Health, Lifestyle & Sharing", ids:["family","share","doctor","cycle","fasting","budget"] }
+];
+const FVP_CORE = { id:"core", icon:"clipboard", name:"Core tracker", sub:"Meals, snacks, drinks and workouts" };
+// Table words only (feature names live in WL_ES); kept here so a bare word like Free or Full cannot change other screens.
+const FVP_ES = { "Free vs Premium":"Gratis vs Premium", "Feature":"Función", "Free":"Gratis", "$0 forever":"$0 para siempre", "/mo":"/mes", "/yr":"/año",
+  "Coaching & Core":"Entrenador y básicos", "Nutrition & Kitchen":"Nutrición y cocina", "Training & Recovery":"Entrenamiento y recuperación", "Health, Lifestyle & Sharing":"Salud, estilo de vida y compartir",
+  "Core tracker":"Registro básico", "Meals, snacks, drinks and workouts":"Comidas, bocadillos, bebidas y entrenamientos",
+  "Limited":"Limitado", "Full":"Completo", "Included in Free":"Incluido en Gratis", "Included in Premium":"Incluido en Premium", "Not included":"No incluido",
+  "Free and Premium compared, feature by feature":"Gratis y Premium comparados, función por función",
+  "Premium is everything in Free, in full, plus the rest.":"Premium es todo lo de Gratis, completo, y además el resto.", "See plans":"Ver planes",
+  "Beta: every feature is open and free while we finish testing.":"Beta: todas las funciones están abiertas y gratis mientras terminamos las pruebas.",
+  "Some are still in testing and switch on as they pass.":"Algunas siguen en pruebas y se activan al superarlas.",
+  "Some features are still in testing — they switch on as they pass.":"Algunas funciones siguen en pruebas: se activan al superarlas." };
+const fvpT = s => WLA.lang !== "es" ? s : (FVP_ES[s] || WL_ES[s] || s);
+// "$7.99/mo · $59.99/yr" from the two real prices only; a plan with no price is left out.
+function fvpPrices(){
+  const money = k => { const pl = PREMIUM_PLANS.find(x => x.k === k); if (typeof pl?.amount !== "number" || !/^[A-Z]{3}$/.test(pl.cur || "")) return null;
+    try { return new Intl.NumberFormat(undefined, { style:"currency", currency:pl.cur }).format(pl.amount); } catch { return null; } };
+  const m = money("monthly"), y = money("yearly");
+  return [m && m + fvpT("/mo"), y && y + fvpT("/yr")].filter(Boolean).join(" · ");
 }
-function paywallKey(e){ if (e.key === "Escape") closePaywall(); }
-function closePaywall(){
-  const w = document.querySelector(".pw-wrap:not(.closing)"); if (!w) return;
-  document.removeEventListener("keydown", paywallKey);
-  w.classList.remove("on"); w.classList.add("closing");
-  setTimeout(() => w.remove(), 260);
+// One status cell. The mark is for the eye; the words are for screen readers (or shown, for Limited and Full).
+function fvpCell(kind, col){
+  if (kind === "limited") return `<span class="fvp-pill">${esc(fvpT("Limited"))}</span>`;
+  if (kind === "full") return `<span class="fvp-full">${icon("check","",16)}<span>${esc(fvpT("Full"))}</span></span>`;
+  if (kind === "yes") return `<span class="fvp-ck ${col}">${icon("check","",16)}</span><span class="sr-only">${esc(fvpT(col === "prem" ? "Included in Premium" : "Included in Free"))}</span>`;
+  return `<span class="fvp-dash" aria-hidden="true">—</span><span class="sr-only">${esc(fvpT("Not included"))}</span>`;
 }
+function fvpRow(m){
+  return `<tr><th scope="row" class="fvp-f"><div class="fvp-fc"><span class="fvp-ic">${icon(m.icon,"",18)}</span><span class="fvp-ft"><span class="fvp-fn">${esc(fvpT(m.name))}</span>${m.sub ? `<span class="fvp-fs">${esc(fvpT(m.sub))}</span>` : ""}</span></div></th>
+    <td class="fvp-fr">${fvpCell(m.free, "free")}</td><td class="fvp-pr">${fvpCell(m.prem, "prem")}</td></tr>`;
+}
+function fvpHTML(){
+  const model = f => f.id === "core" ? { ...f, free:"yes", prem:"yes" }
+    : { name:f.name, icon:f.icon, free: f.basic === "limited" ? "limited" : "none", prem: f.basic === "limited" ? "full" : "yes" };
+  const byId = Object.fromEntries(PREMIUM_FEATURES.map(f => [f.id, f]));
+  const placed = new Set(FVP_SECTIONS.flatMap(x => x.ids));
+  const extra = PREMIUM_FEATURES.filter(f => !placed.has(f.id)).map(f => f.id);
+  const body = FVP_SECTIONS.map((sec, i) => {
+    const ids = i === FVP_SECTIONS.length - 1 ? [...sec.ids, ...extra] : sec.ids;
+    return `<tbody><tr class="fvp-sec"><th scope="rowgroup" colspan="2">${esc(fvpT(sec.h))}</th><td class="fvp-pr"></td></tr>
+      ${ids.map(id => id === "core" ? model(FVP_CORE) : byId[id] ? model(byId[id]) : null).filter(Boolean).map(fvpRow).join("")}</tbody>`;
+  }).join("");
+  const unfinished = PREMIUM_FEATURES.some(f => !premiumReady(f.id));
+  const notice = BETA_OPEN ? fvpT("Beta: every feature is open and free while we finish testing.") + (unfinished ? " " + fvpT("Some are still in testing and switch on as they pass.") : "")
+    : unfinished ? fvpT("Some features are still in testing — they switch on as they pass.") : "";
+  const price = fvpPrices();
+  return `<div class="fvp-top"><div class="fvp-title-row"><h2 id="fvp-title">${esc(fvpT("Free vs Premium"))}</h2>
+      <button type="button" class="fvp-x" data-pop="close" aria-label="${esc(tr("Close"))}">${icon("x","",20)}</button></div>
+      ${notice ? `<p class="fvp-notice"><span class="fvp-dot" aria-hidden="true"></span><span>${esc(notice)}</span></p>` : ""}</div>
+    <div class="fvp-scroll" role="region" aria-labelledby="fvp-title" tabindex="0">
+      <table class="fvp-table"><caption class="sr-only">${esc(fvpT("Free and Premium compared, feature by feature"))}</caption>
+        <colgroup><col><col class="c-free"><col class="c-prem"></colgroup>
+        <thead><tr><th scope="col" class="fvp-f"><span class="fvp-eyebrow">${esc(fvpT("Feature"))}</span></th>
+          <th scope="col" class="fvp-fr"><span class="fvp-plan">${esc(fvpT("Free"))}</span><span class="fvp-price">${esc(fvpT("$0 forever"))}</span></th>
+          <th scope="col" class="fvp-pr"><span class="fvp-plan gold">${esc(tr("Premium"))}</span>${price ? `<span class="fvp-price">${esc(price)}</span>` : ""}</th></tr></thead>
+        ${body}
+      </table></div>
+    <div class="fvp-foot"><p>${esc(fvpT("Premium is everything in Free, in full, plus the rest."))}</p>
+      <button type="button" class="fvp-cta" data-act="fvp-plans"><span>${esc(fvpT("See plans"))}</span>${icon("arrowR","",15)}</button></div>`;
+}
+function openPaywall(triggerEl){
+  const pop = openPopover("paywall", { labelledby:"fvp-title", width:"min(780px, calc(100vw - 20px))", bodyHTML:fvpHTML(), triggerEl, returnSel:'[data-act="paywall"]', focusSel:".fvp-cta" });
+  pop.wrap.classList.add("fvp");
+}
+function closePaywall(){ closePopover("paywall"); }
 // Called by the router after a free viewer was bounced off a premium route. The address bar is
 // put back to the page they are actually looking at, so a reload doesn't bounce them again.
 function afterPremiumBlock(){
@@ -20324,7 +20352,7 @@ document.addEventListener("click", e => {
   if (a === "rcpt-invoice" && RCPT_LAST) { showInvoice(RCPT_LAST.r, RCPT_LAST.plan, RCPT_LAST.sample); return; }
   if (a === "inv-print") { printInvoice(); return; }
   if (a === "inv-back" && RCPT_LAST) { closePopover("invoice"); showPurchaseReceipt(RCPT_LAST.r, RCPT_LAST.plan, RCPT_LAST.sample); return; }
-  if (a === "paywall") { e.preventDefault(); openPaywall(); return; }
+  if (a === "paywall") { e.preventDefault(); openPaywall(t); return; }
   if (a === "premium-popup") { e.preventDefault(); openPremiumPopup(t); return; }
   if (a === "owner-tap") { ownerTap(); return; }
   if (a === "prem-off") { clearPremium(); if (UI.route === "premium") { UI.route = "home"; UI.param = null; location.hash = "#/home"; } render(); toast("Premium turned off."); return; }
@@ -26199,6 +26227,70 @@ label.f.snack-sort{flex-direction:row;align-items:center;gap:8px}
   .pop-wrap.snackdrawer{place-items:stretch end}
   .pop-wrap.snackdrawer .pop-card{height:100%;max-height:none;border-radius:var(--r-lg) 0 0 var(--r-lg);transform:translateX(24px)}
   .pop-wrap.snackdrawer.on .pop-card{transform:none}
+}
+/* ---- 8.6.3 Free vs Premium: the paywall as one comparison table ---- */
+.pop-wrap.fvp{padding:10px;--fvp-soft:color-mix(in srgb,var(--text) 78%,var(--surface))}
+.pop-wrap.fvp .pop-card{width:min(780px,100%);max-height:min(86dvh,860px);padding:0;overflow:hidden;display:flex;flex-direction:column;background:var(--surface);border-radius:var(--r-lg)}
+.fvp-top{flex:0 0 auto;padding:14px 14px 12px 20px;border-bottom:1px solid var(--line)}
+.fvp-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.fvp-title-row h2{margin:0;font-size:calc(19px * var(--text-scale,1));letter-spacing:-.02em;line-height:1.25}
+.fvp-x{display:grid;place-items:center;flex:none;width:44px;height:44px;border:0;border-radius:var(--r-sm);background:transparent;color:var(--muted);cursor:pointer}
+@media (hover:hover) and (pointer:fine){.fvp-x:hover{background:var(--raise);color:var(--text)}}
+.fvp-notice{display:flex;align-items:flex-start;gap:8px;margin:6px 6px 0 0;padding:6px 12px;border-radius:var(--r-sm);background:var(--gold-soft);border:1px solid color-mix(in srgb,var(--gold) 28%,transparent);font-size:calc(12px * var(--text-scale,1));line-height:1.4;color:var(--text)}
+.fvp-dot{flex:none;width:6px;height:6px;margin-top:6px;border-radius:999px;background:var(--gold)}
+.fvp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.fvp-scroll:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.fvp-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+.fvp-table col.c-free{width:155px}
+.fvp-table col.c-prem{width:180px}
+.fvp-table th,.fvp-table td{padding:0;font-weight:500;text-align:left}
+.fvp-table thead th{position:sticky;top:0;z-index:2;background:var(--surface);padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.fvp-table thead th.fvp-f{padding-left:20px}
+.fvp-table thead th.fvp-fr,.fvp-table thead th.fvp-pr{text-align:center}
+.fvp-table thead th.fvp-pr{background:color-mix(in srgb,var(--gold) 12%,var(--surface));box-shadow:inset 0 2px 0 var(--gold)}
+.fvp-eyebrow{font-size:calc(11px * var(--text-scale,1));font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.fvp-plan{display:block;font-size:calc(14px * var(--text-scale,1));font-weight:700;color:var(--text);line-height:1.25}
+.fvp-plan.gold{color:var(--gold)}
+.fvp-table thead th.fvp-pr .fvp-price{color:var(--fvp-soft)}
+.fvp-price{display:block;margin-top:2px;font-size:calc(11.5px * var(--text-scale,1));font-weight:500;color:var(--faint);font-variant-numeric:tabular-nums;white-space:nowrap}
+.fvp-table .fvp-pr{background:color-mix(in srgb,var(--gold) 6%,var(--surface));border-left:1px solid color-mix(in srgb,var(--gold) 20%,transparent)}
+.fvp-sec th{padding:18px 14px 8px 20px;font-size:calc(10.5px * var(--text-scale,1));font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.fvp-table tbody tr:not(.fvp-sec)>*{border-bottom:1px solid var(--line)}
+.fvp-table tbody:last-of-type tr:last-child>*{border-bottom:0}
+.fvp-table tbody th.fvp-f{padding:0 8px 0 20px}
+.fvp-fc{display:flex;align-items:center;gap:12px;min-width:0;padding:12px 0}
+.fvp-ic{display:grid;place-items:center;flex:none;width:24px;height:24px;color:var(--muted)}
+.fvp-ft{display:flex;flex-direction:column;gap:2px;min-width:0}
+.fvp-fn{font-size:calc(13.5px * var(--text-scale,1));font-weight:600;color:var(--text);line-height:1.35;overflow-wrap:anywhere}
+.fvp-fs{font-size:calc(12px * var(--text-scale,1));font-weight:400;color:var(--faint);line-height:1.35}
+.fvp-table td.fvp-fr,.fvp-table td.fvp-pr{padding:10px 8px;text-align:center;vertical-align:middle}
+.fvp-pill{display:inline-flex;align-items:center;justify-content:center;padding:3px 10px;border-radius:999px;background:var(--raise);color:var(--fvp-soft);font-size:calc(11.5px * var(--text-scale,1));font-weight:600;line-height:1.25;white-space:nowrap}
+.fvp-full{display:inline-flex;align-items:center;justify-content:center;gap:5px;color:var(--gold);font-size:calc(12px * var(--text-scale,1));font-weight:600;line-height:1}
+.fvp-ck{display:inline-grid;place-items:center}
+.fvp-ck.free{color:var(--muted)}
+.fvp-ck.prem{color:var(--gold)}
+.fvp-dash{color:var(--line2);font-size:calc(14px * var(--text-scale,1));font-weight:600;line-height:1;user-select:none}
+.fvp-foot{flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px calc(14px + env(safe-area-inset-bottom,0px));background:var(--raise);border-top:1px solid var(--line)}
+.fvp-foot p{margin:0;font-size:calc(12.5px * var(--text-scale,1));font-weight:500;color:var(--fvp-soft);line-height:1.4}
+.fvp-cta{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 20px;border:0;border-radius:var(--r-sm);background:var(--gold);color:var(--gold-ink);font:inherit;font-size:calc(13.5px * var(--text-scale,1));font-weight:700;letter-spacing:-.01em;cursor:pointer;transition:filter var(--dur-tap) var(--ease-smooth),transform var(--dur-tap) var(--ease-smooth)}
+@media (hover:hover) and (pointer:fine){.fvp-cta:hover{filter:brightness(1.08)}}
+.fvp-cta:active{transform:scale(.985)}
+@media (max-width:640px){
+  .pop-wrap.fvp .pop-card{max-height:90dvh}
+  .fvp-top{padding:10px 8px 10px 16px}
+  .fvp-table col.c-free{width:86px}
+  .fvp-table col.c-prem{width:104px}
+  .fvp-table thead th{padding:10px 8px}
+  .fvp-table thead th.fvp-f{padding-left:14px}
+  .fvp-price{font-size:calc(10px * var(--text-scale,1));white-space:normal;line-height:1.25}
+  .fvp-sec th{padding:16px 8px 6px 14px}
+  .fvp-table tbody th.fvp-f{padding:0 6px 0 14px}
+  .fvp-fc{gap:9px}
+  .fvp-fn{font-size:calc(12.5px * var(--text-scale,1))}
+  .fvp-fs{font-size:calc(11px * var(--text-scale,1))}
+  .fvp-table td.fvp-fr,.fvp-table td.fvp-pr{padding:10px 4px}
+  .fvp-foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
+  .fvp-cta{width:100%}
 }
 </style>
 </body></html>

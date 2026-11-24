@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.6.3 | Premium paywall rebuilt as a Free vs Premium comparison table (grouped rows from the real Premium list, prices from PREMIUM_PLANS, accessible dialog, Spanish); AI Coach row left out | IN PROGRESS: PR #99 |
 | 8.6.2 | Snacks: Recipe drawer, servings (½ to 3) shown on each card, No allergens, sort by calories, results line and a logged-today pill; the app's own snack data and logging unchanged | IN PROGRESS: PR #99 |
 | 8.6.1 | Coach in four tabs (Ask, Today, Plan, Settings; chat first, deep links, drafts kept) and the revamped achievement medals for all 143 badges | IN PROGRESS: PR #99 |
 | 8.6 | Layout tidy-up: no Web app view, even spacing, grouped menu and phone bottom bar, Next step on Today, Coach chat first, Achievements filter, Health categories, readable recipe names | IN PROGRESS: PR #99 |
