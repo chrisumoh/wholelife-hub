@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.17, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.18, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.18 · Nutrition: Search more foods from Open Food Facts when you log a meal, off until you turn it on
+
+- **Problem:** The food catalog is small next to everything people really eat, especially packaged foods and brands, and there was no way to look up a food that is not in it.
+- **Change:** Log a meal has a Search more foods chip. The first time, it explains what is sent and has one button, Turn on food search (also a switch in Settings > Privacy and security, off by default, with a line in the privacy policy and the change history). Once on, typing a food or brand and pressing Search asks Open Food Facts (world.openfoodfacts.org) for matches. Only the typed words are sent, never your name, log or profile. Results are plain text: name, brand, calories per 100 g, protein per 100 g and the serving size when the product lists one; products with no calories are skipped and absurd values are dropped. Picking one fills the name and calories (for the serving if known, else 100 g), and the meal is logged marked as an estimate with no catalog dish id, so the protein line does not count it. vercel.json now allows connect-src to that one extra host.
+- **Where:** index.html: OFF_URL, offClean(), offRun(), offPanel() (before mealPhotoCard()), nutritionView() (chip and panel), the off-open, off-on, off-off, off-pick and consent-food-toggle cases, the off-search submit case, the log-meal case (est), consentCenter(), HISTORY_LABELS, privacyPolicyView() (Food search), APP_VERSION, WLH.changelog. vercel.json (connect-src). tests/browser/advice.mjs (section 4), tests/browser/headers.mjs. docs/SECURITY.md, docs/BUILD_PLAN.md, README.md, CHANGELOG.md.
+- **How to test:** CHROME=/path/to/chrome CI=1 node tests/browser/advice.mjs (section 4) and headers.mjs. By hand: Log > Meals > Search more foods, turn it on, search kenkey or a brand, pick a result, check the calories, log it: the meal shows as an estimate. Settings > Privacy and security shows the Food search switch.
+- **Known limits:** Not run against the live Open Food Facts service from here (the test uses a pretend reply), so check one real search on the preview. Open Food Facts data is entered by volunteers and can be wrong or missing. It has few West African dishes, so the catalog stays first for those. Brands and names come back in whatever language the product was entered in. Spanish is added but has had no native-speaker review.
 
 ## 8.6.17 · Nutrition and Coach: Protein from the dishes you log, West African suggestions first when no food culture is set, and the coach now replies in Spanish
 

@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.6.18 | Open Food Facts search in Log a meal (opt-in, text only, logged as an estimate) | IN PROGRESS: PR #102 |
 | 8.6.17 | Protein worked out from the catalog dishes you log (Today at a glance line, coach item), West African dishes first in shortfall suggestions when no culture is set, wl-coach Spanish replies deployed (version 3) | IN PROGRESS: this PR |
 | 8.6.16 | Debugging pass: the Weight trend highlight on Today opens Body measurements instead of Page not found (also on main); six Coach labels in Spanish; a test that every in-app link on 12 main pages opens a real page | IN PROGRESS: PR #99 |
 | 8.6.15 | Personal coach page: hero with the coach's live mechanic (the Enforcer's score as a ring with check pills that link to where each is logged), compact tabs, one Ask WL Coach card with a Sign in button when signed out, the check-in beside the training read-out with a days-logged strip, eating-short as its own card, and a slim five-questions strip | IN PROGRESS: PR #99 |

@@ -30,7 +30,7 @@ ok("frames only from the Lemon Squeezy store (the in-app checkout), nothing else
 ok("the payment feature only for that same store, not this page or any other site", /payment=\("https:\/\/wholelife\.lemonsqueezy\.com"\)/.test(HEADERS["Permissions-Policy"] || ""));
 const ckHosts = [...readFileSync(join(REPO, "index.html"), "utf8").matchAll(/https:\/\/([a-z0-9-]+\.lemonsqueezy\.com)\/checkout\//g)].map(m => m[1]);
 ok("every checkout link in the app is on the host the frame policy allows", ckHosts.length > 0 && ckHosts.every(h => h === "wholelife.lemonsqueezy.com"), ckHosts.join(","));
-ok("network only to this site and the Supabase project", /connect-src 'self' https:\/\/[a-z0-9]+\.supabase\.co;/.test(csp));
+ok("network only to this site, the Supabase project and Open Food Facts (food search)", /connect-src 'self' https:\/\/[a-z0-9]+\.supabase\.co https:\/\/world\.openfoodfacts\.org;/.test(csp));
 const html = readFileSync(join(REPO, "index.html"), "utf8");
 ok("the Supabase URL in the policy matches the app's SB_URL", html.includes(`SB_URL = "${(csp.match(/connect-src 'self' (https:\/\/[a-z0-9]+\.supabase\.co)/) || [])[1]}"`));
 
