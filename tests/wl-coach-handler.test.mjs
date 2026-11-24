@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { handle, SAFE_REPLY, SMALL_MODEL, BIG_MODEL, SYSTEM_PROMPT, SPANISH_NOTE, NO_LOGS_RULE, CONTEXT_RULE, SEARCH_RULE, buildContext, replyText, contextAllowed, personId, wantsSearch } from "../supabase/functions/wl-coach/handler.ts";
+import { handle, SAFE_REPLY, SMALL_MODEL, BIG_MODEL, SYSTEM_PROMPT, SPANISH_NOTE, NO_LOGS_RULE, CONTEXT_RULE, SEARCH_RULE, buildContext, replyText, contextAllowed, personId, wantsSearch, windowFor, callWithResume, MAX_RESUMES } from "../supabase/functions/wl-coach/handler.ts";
 
 // Run from the repo root:  node --test tests/wl-coach-handler.test.mjs
 // Build 8.4.1: drives the real wl-coach handler with a pretend Supabase and a pretend model (no network, no key).
@@ -183,9 +183,9 @@ test("with no context step, or one that returns nothing, the question goes alone
 
 test("when the context step returns data it goes before the question, the prompt switches rule, and only the question is logged", async () => {
   let seen = null;
-  const f = fake({ context: async (uid, person) => { seen = [uid, person]; return DATA; } });
-  const r = await run({ message: "What should I eat for lunch?", person: "p1" }, f);
-  assert.deepEqual(seen, [UID, "p1"]);
+  const f = fake({ context: async (uid, person, days) => { seen = [uid, person, days]; return DATA; } });
+  const r = await run({ message: "What should I eat for lunch?", person: "p1", today: windowFor(null).to }, f);
+  assert.deepEqual(seen.slice(0, 2), [UID, "p1"]); assert.deepEqual(seen[2], windowFor(null));
   assert.equal(f.calls.ask[0].message, `${DATA}\n\nQuestion: What should I eat for lunch?`);
   assert.ok(f.calls.ask[0].system.includes(CONTEXT_RULE)); assert.ok(!f.calls.ask[0].system.includes(NO_LOGS_RULE));
   assert.equal(f.calls.reserved[0].message, "What should I eat for lunch?"); assert.equal(r.body.context, true);
@@ -250,4 +250,45 @@ test("replyText keeps only the answer after a search, joins its pieces and lists
   ]);
   assert.equal(out, "Try this egusi recipe with spinach. More ideas.\n\nSources:\nEgusi soup: https://a.test/egusi\nB: https://b.test\nC: https://c.test");
   assert.equal(replyText(null), ""); assert.equal(replyText([{ type: "web_search_tool_result" }]), "");
+});
+
+// ---- 8.6.22 review fixes ----
+test("the window is exactly 7 calendar dates ending on the person's today, accepted only within a day of the server's date", () => {
+  const now = new Date("2026-11-24T02:30:00Z");
+  assert.deepEqual(windowFor("2026-11-24", now), { from: "2026-11-18", to: "2026-11-24" });
+  // New York at 21:30 on the 23rd is already the 24th in UTC: the person's own date wins.
+  assert.deepEqual(windowFor("2026-11-23", now), { from: "2026-11-17", to: "2026-11-23" });
+  // Auckland is a day ahead of UTC.
+  assert.deepEqual(windowFor("2026-11-25", now), { from: "2026-11-19", to: "2026-11-25" });
+  for (const bad of ["2026-11-27", "2026-10-24", "2026-02-30", "24/11/2026", "", null, 20261124]) assert.deepEqual(windowFor(bad, now), { from: "2026-11-18", to: "2026-11-24" }, String(bad));
+  const span = w => (Date.parse(w.to) - Date.parse(w.from)) / 864e5 + 1;
+  for (const d of ["2026-11-23", "2026-11-24", "2026-11-25", "2027-03-01"]) assert.equal(span(windowFor(d, new Date(d + "T12:00:00Z"))), 7, d);
+  assert.deepEqual(windowFor("2027-03-01", new Date("2027-03-01T05:00:00Z")), { from: "2027-02-23", to: "2027-03-01" });
+});
+
+test("a paused web search is resumed with the paused content sent back unchanged, then read in full", async () => {
+  const bodies = [];
+  const replies = [
+    { stop_reason: "pause_turn", content: [{ type: "text", text: "Searching." }, { type: "server_tool_use", name: "web_search" }], usage: { input_tokens: 10, output_tokens: 2 } },
+    { stop_reason: "end_turn", content: [{ type: "web_search_tool_result", content: [] }, { type: "text", text: "Egusi soup, step by step.", citations: [{ url: "https://e.test", title: "E" }] }], usage: { input_tokens: 30, output_tokens: 8 } },
+  ];
+  const out = await callWithResume(async b => { bodies.push(structuredClone(b)); return replies[bodies.length - 1]; }, { model: "m", system: "s" }, "egusi recipe");
+  assert.equal(bodies.length, 2);
+  assert.deepEqual(bodies[0].messages, [{ role: "user", content: "egusi recipe" }]);
+  assert.deepEqual(bodies[1].messages, [{ role: "user", content: "egusi recipe" }, { role: "assistant", content: replies[0].content }]);
+  assert.equal(bodies[1].model, "m"); assert.equal(bodies[1].system, "s");
+  assert.deepEqual(out, { text: "Egusi soup, step by step.\n\nSources:\nE: https://e.test", inputTokens: 40, outputTokens: 10 });
+});
+
+test("resuming stops after the budget, and a plain answer is one call", async () => {
+  let n = 0;
+  const out = await callWithResume(async () => { n++; return { stop_reason: "pause_turn", content: [{ type: "text", text: "x" }] }; }, {}, "q");
+  assert.equal(n, MAX_RESUMES + 1); assert.equal(out.text, "x\nx\nx");
+  n = 0; const one = await callWithResume(async () => { n++; return { stop_reason: "end_turn", content: [{ type: "text", text: "hi" }], usage: { input_tokens: 1, output_tokens: 1 } }; }, {}, "q");
+  assert.equal(n, 1); assert.deepEqual(one, { text: "hi", inputTokens: 1, outputTokens: 1 });
+});
+
+test("Spanish recipe questions get web search too", () => {
+  for (const m of ["Dame una receta de sopa egusi", "¿Cómo preparo kelewele?", "cómo hacer waakye", "Ideas de preparación de comidas", "¿Tienes un vídeo?"]) assert.equal(wantsSearch(m), true, m);
+  for (const m of ["¿Cuánta agua debo beber?", "Me duelen las piernas"]) assert.equal(wantsSearch(m), false, m);
 });

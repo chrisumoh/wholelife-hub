@@ -8,7 +8,7 @@
 const ORIGIN = /^(https:\/\/wholelife-hub[a-z0-9-]*\.vercel\.app|http:\/\/(localhost|127\.0\.0\.1):\d+)$/;
 export const SMALL_MODEL = "claude-haiku-5-5", BIG_MODEL = "claude-sonnet-5-5";
 export const MAX_TOKENS_OUT = 700;
-const MAX_MESSAGE = 1000, HOURLY_LIMIT = 30, TIMEOUT_MS = 25000, SEARCH_TIMEOUT_MS = 45000, MAX_BODY = 8192;
+const MAX_MESSAGE = 1000, HOURLY_LIMIT = 30, TIMEOUT_MS = 25000, SEARCH_TIMEOUT_MS = 60000, MAX_BODY = 8192;
 
 export const NO_LOGS_RULE = "- You cannot see this person's logs, profile or history yet. If asked what they have eaten, done or weighed, say you can't see their log in chat yet and ask them to tell you. Never invent a number about them.";
 // Used in place of NO_LOGS_RULE only when the function attached the person's own data (their recorded consent says ctx-).
@@ -42,7 +42,7 @@ const RED_FLAGS: RegExp[] = [
 ];
 export const SAFE_REPLY = "I can't help with this one. What you describe could be serious, and a coach isn't the right place for it. Please stop what you're doing and speak to a doctor or your local emergency number now, especially if it is happening right now. If you are thinking about hurting yourself, contact a crisis line or emergency services in your country, or tell someone near you straight away. I'm here for training and food questions whenever you're ready.";
 // Recipe and meal-prep questions get the web search tool, so links come from real pages. Everything else stays a plain call.
-const SEARCH_HINT = /\b(recipes?|how (do i|to|can i) (make|cook|prepare)|meal[- ]?prep|video|youtube|reddit|links?|where can i (find|read|watch))\b/i;
+const SEARCH_HINT = /\b(recipes?|how (do i|to|can i) (make|cook|prepare)|meal[- ]?prep|video|youtube|reddit|links?|where can i (find|read|watch))\b|\b(recetas?|v[ií]deos?|enlaces?|preparaci[oó]n de comidas)\b|c[oó]mo (se )?(hago|hacer|preparo|preparar|cocino|cocinar)\b/i;
 const BIG_HINT = /\b(plan|programme|program|schedule|routine|split|week|weekly|30[- ]day|meal prep|push\/?pull|periodi[sz]ation)\b/i;
 
 // What goes in the log's error column. Only a fixed set of short codes: never the provider's text, a token or any of the prompt.
@@ -98,6 +98,20 @@ export function buildContext(d: Data): string {
   return (out.length > MAX_CONTEXT ? out.slice(0, MAX_CONTEXT) + "\n(cut short)" : out) + "\n</app_data>";
 }
 
+// The 7 days end on the person's own today, which the app sends; the function accepts it only within a day of the server's UTC date
+// (every time zone is), and otherwise uses the UTC date. from..to is exactly 7 calendar dates, both ends included.
+export type Window = { from: string; to: string };
+const ymd = (d: Date) => d.toISOString().slice(0, 10);
+export function windowFor(clientToday: unknown, now = new Date()): Window {
+  const utc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  let end = utc;
+  if (typeof clientToday === "string" && /^\d{4}-\d{2}-\d{2}$/.test(clientToday)) {
+    const t = Date.parse(clientToday + "T00:00:00Z");
+    if (Number.isFinite(t) && ymd(new Date(t)) === clientToday && Math.abs(t - utc) <= 864e5) end = t;
+  }
+  return { from: ymd(new Date(end - 6 * 864e5)), to: ymd(new Date(end)) };
+}
+
 // ---- reading the model's answer ----
 // With web search the answer is split into several text blocks around citations, after a short "I'll search" block, so only the text
 // after the last search result is kept, joined without breaks, and up to three cited pages are listed under it (citations must be shown).
@@ -114,6 +128,22 @@ export function replyText(content: unknown): string {
     if (url && !seen.has(url) && src.length < 3) { seen.add(url); src.push(`${clean(c.title, 80) || "Source"}: ${url.slice(0, 300)}`); }
   }
   return text && src.length ? `${text}\n\nSources:\n${src.join("\n")}` : text;
+}
+
+// A long web search can stop with stop_reason "pause_turn"; the protocol is to send the paused assistant content back unchanged and let it
+// carry on. At most MAX_RESUMES more calls, all under the same timeout signal. Usage is summed; the answer is read from all the content.
+export const MAX_RESUMES = 2;
+type ApiReply = { content?: unknown[]; stop_reason?: string; usage?: { input_tokens?: number; output_tokens?: number } };
+export async function callWithResume(post: (body: Record<string, unknown>) => Promise<ApiReply>, base: Record<string, unknown>, message: string): Promise<Model> {
+  const user = { role: "user", content: message };
+  let content: unknown[] = [], inputTokens = 0, outputTokens = 0;
+  for (let i = 0; i <= MAX_RESUMES; i++) {
+    const j = await post({ ...base, messages: i === 0 ? [user] : [user, { role: "assistant", content }] });
+    content = [...content, ...(Array.isArray(j?.content) ? j.content : [])];
+    inputTokens += j?.usage?.input_tokens ?? 0; outputTokens += j?.usage?.output_tokens ?? 0;
+    if (j?.stop_reason !== "pause_turn") break;
+  }
+  return { text: replyText(content), inputTokens, outputTokens };
 }
 
 const cors = (req: Request) => {
@@ -138,7 +168,7 @@ export type Deps = {
   ask: (model: string, system: string, message: string, signal: AbortSignal, opts?: { search: boolean }) => Promise<Model>;
   // The person's profile and last 7 days as a text block, or null when their recorded consent does not cover it or there is nothing to send.
   // Throws on a read failure; the question is then answered without it.
-  context?: (userId: string, person: string | null) => Promise<string | null>;
+  context?: (userId: string, person: string | null, days: Window) => Promise<string | null>;
   finish: (id: string, row: Log) => Promise<void>;
 };
 
@@ -154,7 +184,7 @@ export async function handle(req: Request, d: Deps): Promise<Response> {
   if (!body || typeof body !== "object" || Array.isArray(body)) return reply(req, { state: "error" }, 400);
   const asked = (body as { message?: unknown }).message;
   const message = typeof asked === "string" ? asked.trim() : "";
-  const lang = (body as { lang?: unknown }).lang, person = personId((body as { person?: unknown }).person);
+  const lang = (body as { lang?: unknown }).lang, person = personId((body as { person?: unknown }).person), days = windowFor((body as { today?: unknown }).today);
   if (!message || message.length > MAX_MESSAGE) return reply(req, { state: "bad_message" }, 400);
 
   let user: { id: string } | null = null;
@@ -187,7 +217,7 @@ export async function handle(req: Request, d: Deps): Promise<Response> {
 
   const model = pickModel(message), route = model === BIG_MODEL ? "big" : "small", search = wantsSearch(message);
   let data: string | null = null;
-  if (d.context) { try { data = await d.context(user.id, person); } catch { console.warn("coach context read failed"); data = null; } }
+  if (d.context) { try { data = await d.context(user.id, person, days); } catch { console.warn("coach context read failed"); data = null; } }
   if (typeof data !== "string" || !data.trim()) data = null;
   const system = systemFor(lang, !!data, search), prompt = data ? `${data}\n\nQuestion: ${message}` : message;
   try {

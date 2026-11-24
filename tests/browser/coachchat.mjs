@@ -78,7 +78,7 @@ ok("the send button is 44px tall", (await ev(`document.querySelector('[data-act=
 await ev(`document.getElementById("wlc-q").value = "What should I eat?"; document.querySelector('[data-act="wlc-send"]').click(); true`);
 ok("the reply shows as plain text", await waitFor(`document.getElementById("wlc-log")?.innerText.includes("plantain")`) && !(await ev(`!!document.querySelector("#wlc-log b")`)));
 const c = await ev(`window.__calls[0]`);
-ok("it posts the question with the person's token", !!c && c.u.endsWith("/functions/v1/wl-coach") && c.o.headers.authorization === "Bearer tok-123" && c.o.body === JSON.stringify({ message: "What should I eat?", lang: "en", person: await ev(`P().id`) }));
+ok("it posts the question with the person's token", !!c && c.u.endsWith("/functions/v1/wl-coach") && c.o.headers.authorization === "Bearer tok-123" && c.o.body === JSON.stringify({ message: "What should I eat?", lang: "en", person: await ev(`P().id`), today: await ev(`today()`) }));
 ok("the request carries no client-side consent flag (the account record is what counts)", !/consent/.test(c.o.body));
 
 await ev(`window.__reply = "rate_limited"; document.getElementById("wlc-q").value = "again"; document.querySelector('[data-act="wlc-send"]').click(); true`); await sleep(500);
@@ -107,7 +107,7 @@ ok("after withdrawing, the opt-in shows again", await ev(`!!document.querySelect
 // 8.6.22: sharing the profile and last 7 days is a second choice, recorded on the account as a ctx- version.
 await ev(`window.__rpcFail = false; window.__rpc.length = 0; window.__reply = "ok"; document.querySelector('[data-act="wlc-optin"]').click(); true`); await sleep(300);
 ok("chat on, sharing off: the note says it can't see your logs and offers the share step", /Can't see your logs yet/.test(await txt()) && await ev(`!!document.querySelector('[data-act="wlc-ctx-on"]') && P().coachContext !== true`));
-ok("the share step lists what is and isn't sent", /allergies/.test(await ev(`document.querySelector(".wlc-share")?.textContent || ""`)) && /Not sent: your name, email, photos/.test(await ev(`document.querySelector(".wlc-share")?.textContent || ""`)));
+ok("the share step lists what is and isn't sent", /allergies/.test(await ev(`document.querySelector(".wlc-share")?.textContent || ""`)) && /Not sent: names, email, photos/.test(await ev(`document.querySelector(".wlc-share")?.textContent || ""`)));
 await ev(`window.__rpc.length = 0; window.__rpcFail = true; document.querySelector('[data-act="wlc-ctx-on"]').click(); true`); await sleep(300);
 ok("if the account can't be updated, sharing stays off and says nothing was shared", await ev(`P().coachContext !== true`) && /Nothing was shared/.test(await txt()));
 await ev(`window.__rpc.length = 0; window.__rpcFail = false; document.querySelector('[data-act="wlc-ctx-on"]').click(); true`); await sleep(300);
@@ -123,5 +123,25 @@ await ev(`location.hash = "#/settings/privacy"; render(); true`); await sleep(30
 ok("Privacy & security lists the sharing switch under coach chat", await ev(`!!document.querySelector('[data-act="consent-coachctx-toggle"]')`));
 await ev(`document.querySelector('[data-act="consent-coach-toggle"]').click(); true`); await sleep(300);
 ok("turning coach chat off also turns sharing off", await ev(`P().coachChatConsent === false && P().coachContext === false && !document.querySelector('[data-act="consent-coachctx-toggle"]')`));
+// 8.6.22 review: a failed "stop sharing" blocks sending until the account confirms it; the choice covers every profile; Spanish copy.
+await goCoach(); await ev(`window.__rpcFail = false; document.querySelector('[data-act="wlc-optin"]').click(); true`); await sleep(300);
+await ev(`document.querySelector('[data-act="wlc-ctx-on"]').click(); true`); await sleep(300);
+await ev(`(() => { const b = newProfile("Bo"); Object.assign(b, { onboarded: true, coachPrompted: true, tourSeen: "dismissed", coachChatConsent: true }); S.profiles.push(b); return true; })()`);
+await ev(`coachCtxAll(true); true`);
+ok("sharing is shown on every profile of the account", await ev(`S.profiles.length === 2 && S.profiles.every(x => x.coachContext === true)`));
+ok("the share text says it covers every profile on this account", /every profile on this account/.test(await txt()));
+await ev(`window.__rpc.length = 0; window.__rpcFail = true; window.__calls.length = 0; document.querySelector('[data-act="wlc-ctx-off"]').click(); true`); await sleep(400);
+ok("a failed stop turns sharing off on every profile and keeps a retry note", await ev(`S.profiles.every(x => x.coachContext === false) && localStorage.getItem("wlh.coachctxwd") === "u_me"`));
+ok("the screen says nothing will be sent until the account confirms", /won't send any question until it does/.test(await txt()) || /Nothing will be sent until it's confirmed/.test(await txt()));
+await ev(`window.__rpc.length = 0; document.getElementById("wlc-q").value = "Lunch?"; document.querySelector('[data-act="wlc-send"]').click(); true`); await sleep(500);
+ok("while the stop is unconfirmed, a question is not sent (the stop is retried first)", await ev(`window.__calls.length === 0 && window.__rpc.length === 1 && window.__rpc[0].a.p_version === TERMS_VERSION`) && /nothing was sent/.test(await txt()));
+await ev(`window.__rpc.length = 0; window.__rpcFail = false;
+  window.fetch = async (u, o) => { if (String(u).includes("/functions/v1/wl-coach")) { window.__calls.push({ u: String(u), o }); return new Response(JSON.stringify({ state: "ok", reply: "Try kenkey.", context: false }), { status: 200 }); } return new Response("{}", { status: 404 }); };
+  document.getElementById("wlc-q").value = "Lunch?"; document.querySelector('[data-act="wlc-send"]').click(); true`); await sleep(600);
+ok("once the account confirms, the note clears and the question is sent", await ev(`localStorage.getItem("wlh.coachctxwd") === null && window.__rpc.some(c => c.a.p_version === TERMS_VERSION) && window.__calls.length === 1`));
+ok("a server answer without data does not switch sharing back on", await ev(`P().coachContext === false`));
+await ev(`WLA.lang = "es"; render(); true`); await goCoach();
+ok("in Spanish the share step and the note are translated", /Deja que WL Coach vea tu perfil/.test(await txt()) && /Aún no ve tus registros/.test(await txt()));
+await ev(`WLA.lang = "en"; render(); true`);
 ok("no script errors", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
