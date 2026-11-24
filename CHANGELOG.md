@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.19, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.20, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.20 · Coach: Each coach thinks in its own way: the Enforcer's heartbeat line, the Motivator's stretching pill and the Strategist's cradle
+
+- **Problem:** While WL Coach was replying, all three coaches showed the same three pulsing dots with no visible words.
+- **Change:** Coach > Ask now shows a different loader for each coach, in that coach's own colour (the darker tone on light, the lighter tone on dark) with the visible words WL Coach is thinking (Spanish: WL Coach está pensando). The Enforcer gets a heartbeat line that draws itself, the Motivator a pill that stretches across and back, the Strategist a five-ball cradle. They stand still when motion is reduced. The loaders come from the code you supplied; the heartbeat's line shape was drawn here because the paste had none.
+- **Where:** index.html: coachThinking() (before coachChatCard()), the chat log's busy row, CSS block after .wlc-typing (.wlc-think, .ld-ekg, .ld-worm, .ld-newton), APP_VERSION, WLH.changelog. tests/browser/sectors.mjs (section 8: one check per coach and one for reduced motion). docs/BUILD_PLAN.md, README.md, CHANGELOG.md.
+- **How to test:** CHROME=/path/to/chrome CI=1 node tests/browser/sectors.mjs. By hand: open Coach > Ask, send a question and watch the loader; change your coach in Settings > Coach and ask again.
+- **Known limits:** Checked in headless Chrome only, not on a real iPhone or iPad. The loaders only show while a reply is on its way, so check them on a slow connection.
 
 ## 8.6.19 · Nutrition: Portion on Log a meal is a standard dropdown list again
 

@@ -3879,7 +3879,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.19", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.20", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3893,6 +3893,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.19", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.20",
+      area:"Coach",
+      title:"Each coach thinks in its own way: the Enforcer's heartbeat line, the Motivator's stretching pill and the Strategist's cradle",
+      bug:"While WL Coach was replying, all three coaches showed the same three pulsing dots with no visible words.",
+      fix:"Coach > Ask now shows a different loader for each coach, in that coach's own colour (the darker tone on light, the lighter tone on dark) with the visible words WL Coach is thinking (Spanish: WL Coach está pensando). The Enforcer gets a heartbeat line that draws itself, the Motivator a pill that stretches across and back, the Strategist a five-ball cradle. They stand still when motion is reduced. The loaders come from the code you supplied; the heartbeat's line shape was drawn here because the paste had none.",
+      where:"index.html: coachThinking() (before coachChatCard()), the chat log's busy row, CSS block after .wlc-typing (.wlc-think, .ld-ekg, .ld-worm, .ld-newton), APP_VERSION, WLH.changelog. tests/browser/sectors.mjs (section 8: one check per coach and one for reduced motion). docs/BUILD_PLAN.md, README.md, CHANGELOG.md.",
+      test:"CHROME=/path/to/chrome CI=1 node tests/browser/sectors.mjs. By hand: open Coach > Ask, send a question and watch the loader; change your coach in Settings > Coach and ask again.",
+      limits:"Checked in headless Chrome only, not on a real iPhone or iPad. The loaders only show while a reply is on its way, so check them on a slow connection." },
     { id:"8.6.19",
       area:"Nutrition",
       title:"Portion on Log a meal is a standard dropdown list again",
@@ -14151,6 +14159,14 @@ function buildICS(p){
 // ---- WL Coach chat (build 8.4.1) ----
 // The question goes to the wl-coach edge function with the person's own token. The Anthropic key never reaches the browser, the chat is
 // not saved on the device, and the function logs each exchange to ai_coach_logs (readable only by that person).
+// 8.6.20: each coach thinks in its own way and colour: the Enforcer's heartbeat line, the Motivator's stretching pill, the Strategist's cradle.
+function coachThinking(){
+  const id = coachDef(P()).id, label = tr("WL Coach is thinking");
+  const art = id === "enforcer" ? `<svg class="ld-ekg" viewBox="0 0 44 22" aria-hidden="true"><polyline points="0,11 9,11 13,11 17,3 22,19 26,11 31,11 44,11"/></svg>`
+    : id === "motivator" ? `<div class="ld-worm" aria-hidden="true"></div>`
+    : `<div class="ld-newton" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>`;
+  return `<div class="wlc-msg"><div class="wlc-bubble wlc-typing wlc-think wlc-think-${id}" role="status" aria-label="${esc(label)}" style="${coachTone(id)}">${art}<em class="wlc-think-l">${esc(label)}</em></div></div>`;
+}
 function coachChatCard(){
   const C = UI.wlc || {}, p = P();
   const head = `<div class="wlc-head"><h2>Ask WL Coach</h2></div>`;
@@ -14168,7 +14184,7 @@ function coachChatCard(){
   // themselves: a send goes to a server), the conversation once there is one (yours on the right, the coach on the left, three dots
   // while it thinks), and the box with its Ask button. The reply is still shown as plain text.
   const msgs = (C.msgs || []).map(m => `<div class="wlc-msg${m.me ? " me" : ""}"><span class="sr-only">${m.me ? "You" : "WL Coach"}: </span><div class="wlc-bubble">${esc(m.t)}</div></div>`).join("")
-    + (C.busy ? `<div class="wlc-msg"><div class="wlc-bubble wlc-typing" role="status" aria-label="${esc(tr("WL Coach is thinking"))}"><span></span><span></span><span></span></div></div>` : "");
+    + (C.busy ? coachThinking() : "");
   return `<section class="card wlc-card" id="wlc">
     <div class="wlc-head"><h2>Ask WL Coach</h2><span class="pill-goal wlc-note">Can't see your logs yet · Not medical advice</span></div>
     ${WLA.lang === "es" ? '<p class="tiny muted">Puedes escribir en español; algunas respuestas del servicio pueden llegar en inglés.</p>' : ""}
@@ -27090,6 +27106,24 @@ a.mck:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @keyframes wlcdot{0%,80%,100%{opacity:.35;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
 :root[data-motion="reduced"] .wlc-typing span{animation:none;opacity:.7}
 @media (prefers-reduced-motion:reduce){.wlc-typing span{animation:none;opacity:.7}}
+.wlc-think{gap:12px;--ink:var(--cc-ink);color:var(--cc-ink)}
+:root:is([data-scheme="dark"],[data-scheme="oled"]) .wlc-think{--ink:var(--cc-inkd);color:var(--cc-inkd)}
+.wlc-think-l{font-style:normal;font-size:calc(13px * var(--text-scale,1));color:var(--muted)}
+.ld-ekg{width:44px;height:22px;flex-shrink:0;overflow:visible}
+.ld-ekg polyline{fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:90;stroke-dashoffset:90;animation:ekg 1.6s linear infinite}
+@keyframes ekg{0%{stroke-dashoffset:90}60%,75%{stroke-dashoffset:0}100%{stroke-dashoffset:-90}}
+.ld-worm{position:relative;width:80px;height:10px;flex-shrink:0}
+.ld-worm::after{content:"";position:absolute;top:0;left:0;width:24px;height:10px;border-radius:5px;background:var(--ink);animation:worm 1.2s ease-in-out infinite alternate}
+@keyframes worm{0%{left:0;width:24px}50%{width:56px}100%{left:56px;width:24px}}
+.ld-newton{display:flex;gap:2px;margin:2px 18px 6px;flex-shrink:0}
+.ld-newton i{width:10px;height:10px;border-radius:50%;background:var(--ink);transform-origin:50% -28px}
+.ld-newton i:first-child{animation:newton-l 1s ease-in-out infinite}
+.ld-newton i:last-child{animation:newton-r 1s ease-in-out infinite}
+@keyframes newton-l{0%,50%,100%{transform:rotate(0)}25%{transform:rotate(38deg)}}
+@keyframes newton-r{0%,50%,100%{transform:rotate(0)}75%{transform:rotate(-38deg)}}
+:root[data-motion="reduced"] .ld-ekg polyline,:root[data-motion="reduced"] .ld-worm::after,:root[data-motion="reduced"] .ld-newton i{animation:none}
+:root[data-motion="reduced"] .ld-ekg polyline{stroke-dashoffset:0;opacity:.7}
+@media (prefers-reduced-motion:reduce){.ld-ekg polyline{animation:none;stroke-dashoffset:0;opacity:.7}.ld-worm::after,.ld-newton i{animation:none}}
 .wlc-chips{display:flex;flex-wrap:wrap;gap:8px}
 .wlc-composer{position:relative;display:flex;align-items:flex-end;gap:10px;padding:10px 10px 10px 14px;border:1px solid var(--line2);border-radius:var(--r);background:var(--surface)}
 .wlc-composer:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
