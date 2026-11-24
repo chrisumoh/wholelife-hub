@@ -3897,7 +3897,7 @@ const APP_VERSION = { update: "8.6", build: "8.6.6", channel: "Dev Testing", dat
       area:"Premium",
       title:"A way into the Free vs Premium dialog while the beta is open",
       bug:"A tester opened the Vercel preview and could not find the new Free vs Premium dialog. While the beta is open every profile counts as Premium, so the side menu shows a Premium row that opens the plain feature list, and the dialog was only reachable by adding ?premium=0 to the address (then Go Premium) or from Preview the paywall at the foot of Settings > Premium.",
-      fix:"The Premium list opened from the side menu now starts with a gold-tinted Compare Free and Premium row that opens the dialog. Settings > Premium shows a Compare plans button beside See what's included when the profile is Premium (a Free profile already had it). The new row is translated in Spanish. Nothing else about the dialog changed.",
+      fix:"The Premium list opened from the side menu now starts with a gold-tinted Compare Free and Premium row that opens the dialog. Settings > Premium shows a Compare plans button beside See what's included when the profile is Premium (a Free profile already had it). With two buttons the text column keeps at least 300px, so the buttons sit under the text instead of squeezing it. The new row is translated in Spanish. Nothing else about the dialog changed.",
       where:"index.html: premiumPopupRowsHTML() (new compare row, data-act=paywall), premiumTab() (Compare plans button for Premium profiles), FVP_ES (two new lines), the .pop-cmp rules beside .pop-row, APP_VERSION, WLH.changelog. tests/browser/paywall.mjs (new section 8: the beta-open entry points; needs your OK as a test edit).",
       test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/paywall.mjs. By hand: open the app with no query on the address, press Premium in the side menu and then Compare Free and Premium; also open Settings > Premium and press Compare plans. Press Escape and check the focus goes back to the button you used. Try Settings > Appearance > Español.",
       limits:"The row appears for every Premium profile, including paying ones, not only during the beta. Checked in headless Chrome, not on a real iPad or iPhone. The Premium list's own text (the title and the Close label) is still English in Spanish mode, as before."
@@ -20483,7 +20483,7 @@ function premiumTab(p){
   return `
   <section class="card hero prem-hero border-glow-card" style="${BG_STYLE}">${BG_LAYERS}
     <div class="row between" style="align-items:flex-start;gap:12px">
-      <div class="grow" style="flex:1;min-width:200px">
+      <div class="grow" style="flex:1;min-width:${on ? 300 : 200}px">
         <div class="eyebrow">${icon("crown","up-crown",15)} Premium</div>
         <h2 style="margin-top:4px">${BETA_OPEN ? "Premium, open for the beta" : on ? "You have Premium" : "Premium"}</h2>
         <p class="muted" style="margin:6px 0 0">${BETA_OPEN
