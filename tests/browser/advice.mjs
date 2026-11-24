@@ -76,7 +76,7 @@ await ev(`(() => { const p = P(), k = ukey("wlh.advice." + p.id), h = JSON.parse
 ok("changed data is not marked", (await ev(`adviceRepeats(coachAdviceItems(P()), P()).map(i => i.text)`)).every(t => !/Still the one to fix|Second day|Unchanged since/.test(t)));
 ok("only the last two days are kept", Object.keys(await ev(`JSON.parse(localStorage.getItem(ukey("wlh.advice." + P().id)))`)).length <= 2);
 ok("sign-out and delete-everything clear the history", await ev(`LS_USER_BASES.some(b => ukey("wlh.advice." + P().id).startsWith(b))`));
-console.log("--- 3. protein from logged dishes, and West African first when no culture is set (8.6.17)");
+console.log("--- 3. protein from logged dishes, and West African first when no culture is set (8.6.18)");
 await ev(`(() => { const p = P(); p.coachPersona = "enforcer"; p.weightKg = 70; p.culture = ""; S.logs = {}; logIdxDrop();
   addEntry("meals", { id: uid(), date: today(), slot: "lunch", name: "Beef suya (1.5\u00d7 portion)", cal: 630, dish: "suya", extras: [], est: false });
   addEntry("meals", { id: uid(), date: today(), slot: "dinner", name: "Typed by hand", cal: 400, dish: null, extras: [], est: false });
@@ -89,7 +89,7 @@ ok("four fully logged low-protein days give a protein item naming a West African
 const sf = await ev(`(() => { const p = P(); p.culture = ""; const s = shortfallAdvice({ ...p, calorieGoal: 5000 }); return s ? s.dense.map(d => d.r) : null; })()`);
 ok("with no culture set the shortfall suggestions are all West African", Array.isArray(sf) && sf.length > 0 && sf.every(r => r === "west"), JSON.stringify(sf));
 ok("the day's glance shows the protein line", await ev(`(() => { UI.route; return /Protein: about 60 g from 1 of 2 meals/.test(glanceCardNutrition(P(), today(), onDate("meals", today()), []).replace(/<[^>]+>/g, "")); })()`));
-console.log("--- 4. Open Food Facts search: off until turned on, sends only the typed words, logs as an estimate (8.6.18)");
+console.log("--- 4. Open Food Facts search: off until turned on, sends only the typed words, logs as an estimate (8.6.19)");
 await ev(`(() => { const o = window.fetch; window.__off = []; window.fetch = (u, x) => { if (/openfoodfacts/.test(String(u))) { window.__off.push(String(u)); return Promise.resolve(new Response(JSON.stringify({ products: [{ product_name: "Kenkey <b>x</b>", brands: "Acme, Co", nutriments: { "energy-kcal_100g": 140, proteins_100g: 3.1 }, serving_quantity: 200 }, { product_name: "No calories", nutriments: {} }, { product_name: "Absurd", nutriments: { "energy-kcal_100g": 5000 } }] }), { status: 200 })); } return o(u, x); }; S.logs = {}; logIdxDrop(); delete P().foodSearchOk; location.hash = "#/nutrition"; return true; })()`);
 ok("the nutrition page opens with a Search more foods chip", await waitFor(`!!document.querySelector('[data-act="off-open"]')`), errors.join(" | "));
 await ev(`document.querySelector('[data-act="off-open"]').click(); true`);

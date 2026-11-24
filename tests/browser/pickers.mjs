@@ -68,7 +68,7 @@ await view(390, 800); await sleep(300);
 ok("on a phone the rail is a single pinned row, not a squeezed card", await ev(`(() => { const r = document.querySelector(".setrail"), b = r.getBoundingClientRect(); return b.height < 80 && b.width > 300 && getComputedStyle(r).flexDirection === "row" && r.scrollWidth > r.clientWidth; })()`));
 await view(1200);
 
-console.log("--- 2. Log a meal > Portion is a standard dropdown list again (8.6.19)");
+console.log("--- 2. Log a meal > Portion is a standard dropdown list again (8.6.20)");
 await goto("#/nutrition"); await sleep(500);
 ok("the Portion select is a normal dropdown with its five options, not a wheel", await ev(`(() => { const s = document.getElementById("m-portion"); return !!s && !s._wheel && !!s._wl && s.options.length === 5 && !document.querySelector(".wl-wheel"); })()`));
 ok("it opens as a list you can pick from, like Meal", await ev(`(() => { const s = document.getElementById("m-portion"); s._wl.click?.(); return true; })()`));
