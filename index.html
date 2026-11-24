@@ -3875,7 +3875,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.4", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.5", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3889,6 +3889,15 @@ const APP_VERSION = { update: "8.6", build: "8.6.4", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.5",
+      area:"Premium",
+      title:"Free vs Premium: the comparison dialog follows the new Premium comparison design, with a tile and a description on every row",
+      bug:"The Free vs Premium dialog split the features under four headings, gave each one a small grey icon and only a name, marked Limited with a grey pill, and put a gold band behind the Premium column. Nothing on a row said what the feature does, so someone deciding whether to upgrade had to know the names already.",
+      fix:"The dialog now follows the Premium comparison design. The header is a crown tile, WholeLife Hub Premium and Free vs Premium: everything side by side. There are no group headings: the Core tracker comes first and then every Premium feature in the Premium list's own order. Each row has a 34px gold-tinted tile with the feature's icon, the name, and a one-line description. The descriptions are the Premium list's own blurbs, so they cannot drift from the feature list, and the Core tracker says what Free covers (summary and rings, health data, logging, full history, recipes and meal plans, achievements). Free and Premium are left-aligned columns; Limited is bold text, Full is bold text with a tick, and plain ticks are green. The Premium name and the words plus the rest. are gold. The testing note reads Some features are still in testing and switch on as they pass, after the beta line while the beta is open. The dialog is wider on a computer (up to 960px) and keeps all three columns on a phone. Spanish covers the title line, the testing note, the footer, and all 19 descriptions plus the Core tracker one.",
+      where:"index.html: FVP_CORE (icon, new description), FVP_ES, FVP_BLURB_ES (new), fvpCell(), fvpRow(), fvpHTML() (rows are the Core tracker plus PREMIUM_FEATURES; FVP_SECTIONS removed), openPaywall() (wider, named by the title and the subtitle), the Free vs Premium CSS block (.fvp-top, .fvp-crown, .fvp-ic, .fvp-fs, .fvp-q, .fvp-qf, .fvp-ck and the rest), APP_VERSION, WLH.changelog. tests/browser/paywall.mjs (rewritten for the flat list; 52 checks). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/paywall.mjs, then node tests/browser/run-all.mjs. By hand: add ?premium=0 to the address, press Go Premium in the side menu, scroll the table (the Free and Premium headings stay at the top), press See plans. Open it from Compare plans on the Premium page and from Settings > Premium > Preview the paywall. Check light, dark and OLED, a phone width, and Settings > Appearance > Español.",
+      limits:"Checked in headless Chrome at 375, 820 and 1440px, not on a real iPad or iPhone. The AI Coach row from the design is still left out: the AI coach answers the same way for everyone today (30 questions an hour, and it sees only the question typed), so Limited and Unlimited rows would not be true; add it once the coach really differs between plans. The design's Download HTML button and print layout are not in the app. The testing note sits under the title so it stays in view while the rows scroll. Row icons are the app's own Premium icons, not the design's. The Spanish descriptions have not been read by a native speaker."
+    },
     { id:"8.6.4",
       area:"Menu",
       title:"Revamp: a glyph and colour for every menu page, the Settings rail, Appearance, Coach and Profile pages, and a rebuilt Health data page with quick logging",
@@ -20048,27 +20057,41 @@ function subscriptionPanel(p){
 // ---------- The paywall ----------
 // Bottom sheet on phones, centred card on desktop, one row per registry feature. It is built
 // imperatively rather than through render() so opening it never disturbs the page underneath.
-// ---- Free vs Premium (8.6.3) ----
-// The paywall. The rows come from PREMIUM_FEATURES, whose `basic` field says whether Free has a limited version, so the table
-// cannot drift from the feature list; only the grouping and the Core tracker row are written here. A feature added to
-// PREMIUM_FEATURES but not listed in a section lands in the last one instead of going missing.
-const FVP_SECTIONS = [
-  { h:"Coaching & Core",             ids:["core","voice","review"] },
-  { h:"Nutrition & Kitchen",         ids:["mealphoto","grocery","pantry","restaurant","micros","community"] },
-  { h:"Training & Recovery",         ids:["programs","formcheck","body","recovery","experiments"] },
-  { h:"Health, Lifestyle & Sharing", ids:["family","share","doctor","cycle","fasting","budget"] }
-];
-const FVP_CORE = { id:"core", icon:"clipboard", name:"Core tracker", sub:"Meals, snacks, drinks and workouts" };
+// ---- Free vs Premium (8.6.3, redesigned 8.6.5) ----
+// The paywall. Its rows are the Core tracker and then PREMIUM_FEATURES in the registry's own order, each with the
+// feature's own blurb. The registry's `basic` field says whether Free has a limited version, so the table cannot drift
+// from the feature list and a feature added to the registry shows up here by itself.
+const FVP_CORE = { id:"core", icon:"pulse", name:"Core tracker", sub:"Summary and rings, health data, meal, snack, drink and workout logging, full history, recipes and meal plans, achievements — free forever." };
 // Table words only (feature names live in WL_ES); kept here so a bare word like Free or Full cannot change other screens.
-const FVP_ES = { "Free vs Premium":"Gratis vs Premium", "Feature":"Función", "Free":"Gratis", "$0 forever":"$0 para siempre", "/mo":"/mes", "/yr":"/año",
-  "Coaching & Core":"Entrenador y básicos", "Nutrition & Kitchen":"Nutrición y cocina", "Training & Recovery":"Entrenamiento y recuperación", "Health, Lifestyle & Sharing":"Salud, estilo de vida y compartir",
-  "Core tracker":"Registro básico", "Meals, snacks, drinks and workouts":"Comidas, bocadillos, bebidas y entrenamientos",
+const FVP_ES = { "Free vs Premium":"Gratis vs Premium", "Free vs Premium — everything side by side":"Gratis vs Premium: todo lado a lado", "Feature":"Función", "Free":"Gratis", "$0 forever":"$0 para siempre", "/mo":"/mes", "/yr":"/año",
+  "Core tracker":"Registro básico", "Summary and rings, health data, meal, snack, drink and workout logging, full history, recipes and meal plans, achievements — free forever.":"Resumen y anillos, datos de salud, registro de comidas, bocadillos, bebidas y entrenamientos, historial completo, recetas y planes de comidas, logros: gratis para siempre.",
   "Limited":"Limitado", "Full":"Completo", "Included in Free":"Incluido en Gratis", "Included in Premium":"Incluido en Premium", "Not included":"No incluido",
   "Free and Premium compared, feature by feature":"Gratis y Premium comparados, función por función",
-  "Premium is everything in Free, in full, plus the rest.":"Premium es todo lo de Gratis, completo, y además el resto.", "See plans":"Ver planes",
+  "Premium is everything in Free, in full,":"Premium es todo lo de Gratis, completo,", "plus the rest.":"y además el resto.", "See plans":"Ver planes",
   "Beta: every feature is open and free while we finish testing.":"Beta: todas las funciones están abiertas y gratis mientras terminamos las pruebas.",
-  "Some are still in testing and switch on as they pass.":"Algunas siguen en pruebas y se activan al superarlas.",
-  "Some features are still in testing — they switch on as they pass.":"Algunas funciones siguen en pruebas: se activan al superarlas." };
+  "Some features are still in testing and switch on as they pass.":"Algunas funciones siguen en pruebas y se activan al superarlas." };
+// Spanish for each Premium feature's one-line blurb, by registry id (the English comes from PREMIUM_FEATURES).
+const FVP_BLURB_ES = {
+  grocery:"Convierte cualquier día o semana de comidas en una sola lista de compras, sumada y agrupada por pasillo.",
+  pantry:"Marca lo que ya tienes y mira qué puedes cocinar esta noche.",
+  mealphoto:"Adjunta una foto a cualquier comida registrada, guardada de forma privada en tu dispositivo.",
+  restaurant:"Pega un menú y obtén las dos o tres mejores opciones para las calorías que te quedan.",
+  micros:"Una estimación semanal de hierro, B12, fibra y más, con platos que cubren las carencias.",
+  programs:"Programas de ocho a doce semanas que suben tus números a medida que los alcanzas.",
+  formcheck:"Graba una serie y revísala en cámara lenta. Nada sale nunca de tu dispositivo.",
+  body:"Fotos de progreso privadas con una superposición fantasma, además de medidas con cinta a lo largo del tiempo.",
+  recovery:"Entrena fuerte, ve con calma o descansa, según tu sueño, tu frecuencia cardiaca en reposo y tu carga de entrenamiento.",
+  review:"Un resumen imprimible del domingo: constancia, tendencias, logros y el enfoque de la próxima semana.",
+  voice:"Registra comidas hablando y escucha tus objetivos de series y tus temporizadores de descanso.",
+  experiments:"Haz un experimento de dos semanas y comprueba con honestidad si movió el número.",
+  share:"Un enlace de solo lectura para un entrenador humano, que muestra solo lo que elijas incluir.",
+  family:"Retos del hogar y una clasificación que celebra en lugar de avergonzar.",
+  community:"Escribe tus recetas familiares e intercámbialas con otras personas como un archivo para compartir.",
+  doctor:"Un resumen de una página con tus tendencias y notas para entregar a un profesional de la salud.",
+  cycle:"Opcional, desactivado por defecto: consejos de entrenamiento y hierro que siguen tu ciclo.",
+  fasting:"Comidas e hidratación organizadas dentro de tu ventana de alimentación, del suhoor al iftar.",
+  budget:"Fija un presupuesto semanal de comida y deja que el planificador encuentre platos más baratos de tu propio grupo."
+};
 const fvpT = s => WLA.lang !== "es" ? s : (FVP_ES[s] || WL_ES[s] || s);
 // "$7.99/mo · $59.99/yr" from the two real prices only; a plan with no price is left out.
 function fvpPrices(){
@@ -20079,46 +20102,41 @@ function fvpPrices(){
 }
 // One status cell. The mark is for the eye; the words are for screen readers (or shown, for Limited and Full).
 function fvpCell(kind, col){
-  if (kind === "limited") return `<span class="fvp-pill">${esc(fvpT("Limited"))}</span>`;
-  if (kind === "full") return `<span class="fvp-full">${icon("check","",16)}<span>${esc(fvpT("Full"))}</span></span>`;
-  if (kind === "yes") return `<span class="fvp-ck ${col}">${icon("check","",16)}</span><span class="sr-only">${esc(fvpT(col === "prem" ? "Included in Premium" : "Included in Free"))}</span>`;
+  if (kind === "limited") return `<span class="fvp-q">${esc(fvpT("Limited"))}</span>`;
+  if (kind === "full") return `<span class="fvp-qf"><span class="fvp-q">${esc(fvpT("Full"))}</span><span class="fvp-ck" aria-hidden="true">${icon("check","",17)}</span></span>`;
+  if (kind === "yes") return `<span class="fvp-ck" aria-hidden="true">${icon("check","",17)}</span><span class="sr-only">${esc(fvpT(col === "prem" ? "Included in Premium" : "Included in Free"))}</span>`;
   return `<span class="fvp-dash" aria-hidden="true">—</span><span class="sr-only">${esc(fvpT("Not included"))}</span>`;
 }
 function fvpRow(m){
-  return `<tr><th scope="row" class="fvp-f"><div class="fvp-fc"><span class="fvp-ic">${icon(m.icon,"",18)}</span><span class="fvp-ft"><span class="fvp-fn">${esc(fvpT(m.name))}</span>${m.sub ? `<span class="fvp-fs">${esc(fvpT(m.sub))}</span>` : ""}</span></div></th>
+  return `<tr><th scope="row" class="fvp-f"><div class="fvp-fc"><span class="fvp-ic" aria-hidden="true">${icon(m.icon,"",18)}</span><span class="fvp-ft"><span class="fvp-fn">${esc(fvpT(m.name))}</span>${m.sub ? `<span class="fvp-fs">${esc(m.sub)}</span>` : ""}</span></div></th>
     <td class="fvp-fr">${fvpCell(m.free, "free")}</td><td class="fvp-pr">${fvpCell(m.prem, "prem")}</td></tr>`;
 }
 function fvpHTML(){
-  const model = f => f.id === "core" ? { ...f, free:"yes", prem:"yes" }
-    : { name:f.name, icon:f.icon, free: f.basic === "limited" ? "limited" : "none", prem: f.basic === "limited" ? "full" : "yes" };
-  const byId = Object.fromEntries(PREMIUM_FEATURES.map(f => [f.id, f]));
-  const placed = new Set(FVP_SECTIONS.flatMap(x => x.ids));
-  const extra = PREMIUM_FEATURES.filter(f => !placed.has(f.id)).map(f => f.id);
-  const body = FVP_SECTIONS.map((sec, i) => {
-    const ids = i === FVP_SECTIONS.length - 1 ? [...sec.ids, ...extra] : sec.ids;
-    return `<tbody><tr class="fvp-sec"><th scope="rowgroup" colspan="2">${esc(fvpT(sec.h))}</th><td class="fvp-pr"></td></tr>
-      ${ids.map(id => id === "core" ? model(FVP_CORE) : byId[id] ? model(byId[id]) : null).filter(Boolean).map(fvpRow).join("")}</tbody>`;
-  }).join("");
+  const es = WLA.lang === "es";
+  const model = f => f.id === "core" ? { ...f, sub:fvpT(f.sub), free:"yes", prem:"yes" }
+    : { name:f.name, icon:f.icon, sub:(es && FVP_BLURB_ES[f.id]) || f.blurb || "", free: f.basic === "limited" ? "limited" : "none", prem: f.basic === "limited" ? "full" : "yes" };
+  const body = [FVP_CORE, ...PREMIUM_FEATURES].map(model).map(fvpRow).join("");
   const unfinished = PREMIUM_FEATURES.some(f => !premiumReady(f.id));
-  const notice = BETA_OPEN ? fvpT("Beta: every feature is open and free while we finish testing.") + (unfinished ? " " + fvpT("Some are still in testing and switch on as they pass.") : "")
-    : unfinished ? fvpT("Some features are still in testing — they switch on as they pass.") : "";
+  const testing = fvpT("Some features are still in testing and switch on as they pass.");
+  const notice = BETA_OPEN ? fvpT("Beta: every feature is open and free while we finish testing.") + (unfinished ? " " + testing : "") : unfinished ? testing : "";
   const price = fvpPrices();
-  return `<div class="fvp-top"><div class="fvp-title-row"><h2 id="fvp-title">${esc(fvpT("Free vs Premium"))}</h2>
+  return `<div class="fvp-top"><div class="fvp-title-row"><span class="fvp-crown" aria-hidden="true">${icon("crown","",22)}</span>
+      <div class="fvp-tt"><h2 id="fvp-title">WholeLife Hub Premium</h2><p id="fvp-sub">${esc(fvpT("Free vs Premium — everything side by side"))}</p></div>
       <button type="button" class="fvp-x" data-pop="close" aria-label="${esc(tr("Close"))}">${icon("x","",20)}</button></div>
-      ${notice ? `<p class="fvp-notice"><span class="fvp-dot" aria-hidden="true"></span><span>${esc(notice)}</span></p>` : ""}</div>
+      ${notice ? `<p class="fvp-notice">${esc(notice)}</p>` : ""}</div>
     <div class="fvp-scroll" role="region" aria-labelledby="fvp-title" tabindex="0">
       <table class="fvp-table"><caption class="sr-only">${esc(fvpT("Free and Premium compared, feature by feature"))}</caption>
         <colgroup><col><col class="c-free"><col class="c-prem"></colgroup>
-        <thead><tr><th scope="col" class="fvp-f"><span class="fvp-eyebrow">${esc(fvpT("Feature"))}</span></th>
+        <thead><tr><th scope="col" class="fvp-f"><span class="sr-only">${esc(fvpT("Feature"))}</span></th>
           <th scope="col" class="fvp-fr"><span class="fvp-plan">${esc(fvpT("Free"))}</span><span class="fvp-price">${esc(fvpT("$0 forever"))}</span></th>
           <th scope="col" class="fvp-pr"><span class="fvp-plan gold">${esc(tr("Premium"))}</span>${price ? `<span class="fvp-price">${esc(price)}</span>` : ""}</th></tr></thead>
-        ${body}
+        <tbody>${body}</tbody>
       </table></div>
-    <div class="fvp-foot"><p>${esc(fvpT("Premium is everything in Free, in full, plus the rest."))}</p>
+    <div class="fvp-foot"><p>${esc(fvpT("Premium is everything in Free, in full,"))} <span>${esc(fvpT("plus the rest."))}</span></p>
       <button type="button" class="fvp-cta" data-act="fvp-plans"><span>${esc(fvpT("See plans"))}</span>${icon("arrowR","",15)}</button></div>`;
 }
 function openPaywall(triggerEl){
-  const pop = openPopover("paywall", { labelledby:"fvp-title", width:"min(780px, calc(100vw - 20px))", bodyHTML:fvpHTML(), triggerEl, returnSel:'[data-act="paywall"]', focusSel:".fvp-cta" });
+  const pop = openPopover("paywall", { labelledby:"fvp-title fvp-sub", width:"min(960px, calc(100vw - 20px))", bodyHTML:fvpHTML(), triggerEl, returnSel:'[data-act="paywall"]', focusSel:".fvp-cta" });
   pop.wrap.classList.add("fvp");
 }
 function closePaywall(){ closePopover("paywall"); }
@@ -26294,67 +26312,70 @@ label.f.snack-sort{flex-direction:row;align-items:center;gap:8px}
   .pop-wrap.snackdrawer .pop-card{height:100%;max-height:none;border-radius:var(--r-lg) 0 0 var(--r-lg);transform:translateX(24px)}
   .pop-wrap.snackdrawer.on .pop-card{transform:none}
 }
-/* ---- 8.6.3 Free vs Premium: the paywall as one comparison table ---- */
-.pop-wrap.fvp{padding:10px;--fvp-soft:color-mix(in srgb,var(--text) 78%,var(--surface))}
-.pop-wrap.fvp .pop-card{width:min(780px,100%);max-height:min(86dvh,860px);padding:0;overflow:hidden;display:flex;flex-direction:column;background:var(--surface);border-radius:var(--r-lg)}
-.fvp-top{flex:0 0 auto;padding:14px 14px 12px 20px;border-bottom:1px solid var(--line)}
-.fvp-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.fvp-title-row h2{margin:0;font-size:calc(19px * var(--text-scale,1));letter-spacing:-.02em;line-height:1.25}
+/* ---- Free vs Premium: the paywall as one comparison table (8.6.3; look from the Premium comparison design, 8.6.5) ---- */
+.pop-wrap.fvp{padding:10px;--fvp-soft:color-mix(in srgb,var(--text) 78%,var(--surface));--fvp-tile:color-mix(in srgb,var(--gold) 12%,var(--surface));--fvp-tile-line:color-mix(in srgb,var(--gold) 32%,var(--surface))}
+.pop-wrap.fvp .pop-card{width:min(960px,100%);max-height:min(88dvh,900px);padding:0;overflow:hidden;display:flex;flex-direction:column;background:var(--surface);border-radius:var(--r-lg)}
+.fvp-top{flex:0 0 auto;padding:18px 14px 12px 24px}
+.fvp-title-row{display:flex;align-items:center;gap:12px}
+.fvp-crown{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:9px;background:var(--fvp-tile);border:1px solid var(--fvp-tile-line);color:var(--gold)}
+.fvp-tt{flex:1 1 auto;min-width:0}
+.fvp-title-row h2{margin:0;font-size:calc(22px * var(--text-scale,1));font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.fvp-tt p{margin:2px 0 0;font-size:calc(13px * var(--text-scale,1));color:var(--muted);line-height:1.35}
 .fvp-x{display:grid;place-items:center;flex:none;width:44px;height:44px;border:0;border-radius:var(--r-sm);background:transparent;color:var(--muted);cursor:pointer}
 @media (hover:hover) and (pointer:fine){.fvp-x:hover{background:var(--raise);color:var(--text)}}
-.fvp-notice{display:flex;align-items:flex-start;gap:8px;margin:6px 6px 0 0;padding:6px 12px;border-radius:var(--r-sm);background:var(--gold-soft);border:1px solid color-mix(in srgb,var(--gold) 28%,transparent);font-size:calc(12px * var(--text-scale,1));line-height:1.4;color:var(--text)}
-.fvp-dot{flex:none;width:6px;height:6px;margin-top:6px;border-radius:999px;background:var(--gold)}
+.fvp-notice{margin:10px 8px 0 0;font-size:calc(12.5px * var(--text-scale,1));line-height:1.4;color:var(--muted)}
 .fvp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
 .fvp-scroll:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .fvp-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
-.fvp-table col.c-free{width:155px}
-.fvp-table col.c-prem{width:180px}
+.fvp-table col.c-free{width:200px}
+.fvp-table col.c-prem{width:240px}
 .fvp-table th,.fvp-table td{padding:0;font-weight:500;text-align:left}
-.fvp-table thead th{position:sticky;top:0;z-index:2;background:var(--surface);padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
-.fvp-table thead th.fvp-f{padding-left:20px}
-.fvp-table thead th.fvp-fr,.fvp-table thead th.fvp-pr{text-align:center}
-.fvp-table thead th.fvp-pr{background:color-mix(in srgb,var(--gold) 12%,var(--surface));box-shadow:inset 0 2px 0 var(--gold)}
-.fvp-eyebrow{font-size:calc(11px * var(--text-scale,1));font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
-.fvp-plan{display:block;font-size:calc(14px * var(--text-scale,1));font-weight:700;color:var(--text);line-height:1.25}
+.fvp-table thead th{position:sticky;top:0;z-index:2;background:var(--surface);padding:8px 14px 12px;vertical-align:bottom}
+.fvp-table thead th.fvp-f{padding-left:24px}
+.fvp-plan{display:block;font-size:calc(15px * var(--text-scale,1));font-weight:700;color:var(--text);line-height:1.25}
 .fvp-plan.gold{color:var(--gold)}
-.fvp-table thead th.fvp-pr .fvp-price{color:var(--fvp-soft)}
-.fvp-price{display:block;margin-top:2px;font-size:calc(11.5px * var(--text-scale,1));font-weight:500;color:var(--faint);font-variant-numeric:tabular-nums;white-space:nowrap}
-.fvp-table .fvp-pr{background:color-mix(in srgb,var(--gold) 6%,var(--surface));border-left:1px solid color-mix(in srgb,var(--gold) 20%,transparent)}
-.fvp-sec th{padding:18px 14px 8px 20px;font-size:calc(10.5px * var(--text-scale,1));font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
-.fvp-table tbody tr:not(.fvp-sec)>*{border-bottom:1px solid var(--line)}
-.fvp-table tbody:last-of-type tr:last-child>*{border-bottom:0}
-.fvp-table tbody th.fvp-f{padding:0 8px 0 20px}
-.fvp-fc{display:flex;align-items:center;gap:12px;min-width:0;padding:12px 0}
-.fvp-ic{display:grid;place-items:center;flex:none;width:24px;height:24px;color:var(--muted)}
-.fvp-ft{display:flex;flex-direction:column;gap:2px;min-width:0}
-.fvp-fn{font-size:calc(13.5px * var(--text-scale,1));font-weight:600;color:var(--text);line-height:1.35;overflow-wrap:anywhere}
-.fvp-fs{font-size:calc(12px * var(--text-scale,1));font-weight:400;color:var(--faint);line-height:1.35}
-.fvp-table td.fvp-fr,.fvp-table td.fvp-pr{padding:10px 8px;text-align:center;vertical-align:middle}
-.fvp-pill{display:inline-flex;align-items:center;justify-content:center;padding:3px 10px;border-radius:999px;background:var(--raise);color:var(--fvp-soft);font-size:calc(11.5px * var(--text-scale,1));font-weight:600;line-height:1.25;white-space:nowrap}
-.fvp-full{display:inline-flex;align-items:center;justify-content:center;gap:5px;color:var(--gold);font-size:calc(12px * var(--text-scale,1));font-weight:600;line-height:1}
-.fvp-ck{display:inline-grid;place-items:center}
-.fvp-ck.free{color:var(--muted)}
-.fvp-ck.prem{color:var(--gold)}
-.fvp-dash{color:var(--line2);font-size:calc(14px * var(--text-scale,1));font-weight:600;line-height:1;user-select:none}
-.fvp-foot{flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px calc(14px + env(safe-area-inset-bottom,0px));background:var(--raise);border-top:1px solid var(--line)}
-.fvp-foot p{margin:0;font-size:calc(12.5px * var(--text-scale,1));font-weight:500;color:var(--fvp-soft);line-height:1.4}
+.fvp-price{display:block;margin-top:2px;font-size:calc(13px * var(--text-scale,1));font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.fvp-table tbody tr>*{border-top:1px solid var(--line)}
+.fvp-table tbody th.fvp-f{padding:0 8px 0 24px}
+.fvp-fc{display:flex;align-items:center;gap:12px;min-width:0;padding:9px 0}
+.fvp-ic{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:8px;background:var(--fvp-tile);border:1px solid var(--fvp-tile-line);color:var(--gold)}
+.fvp-ft{display:flex;flex-direction:column;gap:1px;min-width:0}
+.fvp-fn{font-size:calc(14.5px * var(--text-scale,1));font-weight:650;color:var(--text);line-height:1.25;overflow-wrap:anywhere}
+.fvp-fs{font-size:calc(12.5px * var(--text-scale,1));font-weight:400;color:var(--muted);line-height:1.35}
+.fvp-table td.fvp-fr,.fvp-table td.fvp-pr{padding:8px 14px;text-align:left;vertical-align:middle}
+.fvp-q{font-size:calc(13px * var(--text-scale,1));font-weight:650;color:var(--text);line-height:1.4}
+.fvp-qf{display:inline-flex;align-items:center;gap:7px}
+.fvp-ck{display:inline-grid;place-items:center;color:var(--good)}
+.fvp-ck svg{stroke-width:2.4}
+.fvp-dash{color:var(--faint);font-size:calc(15px * var(--text-scale,1));line-height:1;user-select:none}
+.fvp-foot{flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px calc(14px + env(safe-area-inset-bottom,0px));background:var(--raise);border-top:1px solid var(--line)}
+.fvp-foot p{margin:0;font-size:calc(13.5px * var(--text-scale,1));font-weight:600;color:var(--text);line-height:1.4}
+.fvp-foot p span{color:var(--gold)}
 .fvp-cta{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 20px;border:0;border-radius:var(--r-sm);background:var(--gold);color:var(--gold-ink);font:inherit;font-size:calc(13.5px * var(--text-scale,1));font-weight:700;letter-spacing:-.01em;cursor:pointer;transition:filter var(--dur-tap) var(--ease-smooth),transform var(--dur-tap) var(--ease-smooth)}
 @media (hover:hover) and (pointer:fine){.fvp-cta:hover{filter:brightness(1.08)}}
 .fvp-cta:active{transform:scale(.985)}
-@media (max-width:640px){
-  .pop-wrap.fvp .pop-card{max-height:90dvh}
-  .fvp-top{padding:10px 8px 10px 16px}
-  .fvp-table col.c-free{width:86px}
-  .fvp-table col.c-prem{width:104px}
-  .fvp-table thead th{padding:10px 8px}
-  .fvp-table thead th.fvp-f{padding-left:14px}
-  .fvp-price{font-size:calc(10px * var(--text-scale,1));white-space:normal;line-height:1.25}
-  .fvp-sec th{padding:16px 8px 6px 14px}
-  .fvp-table tbody th.fvp-f{padding:0 6px 0 14px}
-  .fvp-fc{gap:9px}
-  .fvp-fn{font-size:calc(12.5px * var(--text-scale,1))}
-  .fvp-fs{font-size:calc(11px * var(--text-scale,1))}
-  .fvp-table td.fvp-fr,.fvp-table td.fvp-pr{padding:10px 4px}
+@media (max-width:760px){
+  .pop-wrap.fvp .pop-card{max-height:92dvh}
+  .fvp-top{padding:14px 8px 10px 16px}
+  .fvp-crown{width:34px;height:34px;border-radius:8px}
+  .fvp-title-row h2{font-size:calc(19px * var(--text-scale,1))}
+  .fvp-tt p{font-size:calc(12px * var(--text-scale,1))}
+  .fvp-notice{margin-right:6px;font-size:calc(11.5px * var(--text-scale,1))}
+  .fvp-table col.c-free{width:84px}
+  .fvp-table col.c-prem{width:102px}
+  .fvp-table thead th{padding:6px 6px 10px}
+  .fvp-table thead th.fvp-f{padding-left:16px}
+  .fvp-plan{font-size:calc(13.5px * var(--text-scale,1))}
+  .fvp-price{font-size:calc(11px * var(--text-scale,1));line-height:1.25}
+  .fvp-table tbody th.fvp-f{padding:0 6px 0 16px}
+  .fvp-fc{gap:9px;padding:8px 0}
+  .fvp-ic{width:30px;height:30px;border-radius:7px}
+  .fvp-ic svg{width:16px;height:16px}
+  .fvp-fn{font-size:calc(13px * var(--text-scale,1))}
+  .fvp-fs{font-size:calc(11.5px * var(--text-scale,1))}
+  .fvp-table td.fvp-fr,.fvp-table td.fvp-pr{padding:8px 6px}
+  .fvp-q{font-size:calc(11.5px * var(--text-scale,1))}
+  .fvp-qf{gap:4px}
   .fvp-foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
   .fvp-cta{width:100%}
 }

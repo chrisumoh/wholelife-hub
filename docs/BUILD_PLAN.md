@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.6.5 | Free vs Premium dialog restyled from the Premium comparison design: crown header, one flat list, a tile and a description on every row, green ticks, Spanish descriptions; AI Coach row still left out | IN PROGRESS: PR #99 |
 | 8.6.4 | Revamp: glyph and colour per menu page, Settings rail with icon wells, Appearance in three cards with inline pickers, Settings > Coach hero and colours, Profile cards, Health data (Pinned vitals, search, category pills, Apple Health banner, quick + Log); Learn page route fixed | IN PROGRESS: PR #99 |
 | 8.6.3 | Premium paywall rebuilt as a Free vs Premium comparison table (grouped rows from the real Premium list, prices from PREMIUM_PLANS, accessible dialog, Spanish); AI Coach row left out | IN PROGRESS: PR #99 |
 | 8.6.2 | Snacks: Recipe drawer, servings (½ to 3) shown on each card, No allergens, sort by calories, results line and a logged-today pill; the app's own snack data and logging unchanged | IN PROGRESS: PR #99 |
