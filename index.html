@@ -3879,7 +3879,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.12", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.13", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3893,6 +3893,15 @@ const APP_VERSION = { update: "8.6", build: "8.6.12", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.13",
+      area:"Performance",
+      title:"The Nutrition page builds its 300-odd dish suggestions only when the meal box is first used",
+      bug:"After 8.6.8 the Nutrition page held 1,010 elements with a year of logs, over the release gate's 1,000 (it was 988 before), so the Performance gate failed on PR #99. 304 of them were the hidden dish suggestions behind What did you eat?, rebuilt and compared on every redraw of the page although most visits never type a meal.",
+      fix:"The suggestions list is built once, the first time a box that uses it gets focus, and kept outside the part of the page that redraws. Typing in What did you eat? suggests the same dishes and alternate names as before. With a year of logs the Nutrition page now opens with 713 elements.",
+      where:"index.html: ensureDishList() and its focusin listener (new, beside the 8.6.8 Nutrition helpers), nutritionView() (the datalist is no longer in the template), APP_VERSION, WLH.changelog. tests/browser/sectors.mjs (three checks in section 2). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Run node tests/perf/measure.mjs --gate (nutrition has DOM nodes: 713, limit 1000) and CHROME=/path/to/chrome CI=1 node tests/browser/sectors.mjs. By hand: open Log > Meals, click What did you eat? and type jol: jollof rice and the other dishes are still suggested.",
+      limits:"Once built the list stays for the rest of the visit. On a phone the suggestions appear as the browser shows them (a list or the keyboard bar), as before. Checked in headless Chrome, not on a real iPad or iPhone."
+    },
     { id:"8.6.12",
       area:"Premium",
       title:"What stays open on Free, the questions and About Premium follow the trust and FAQ design",
@@ -13351,7 +13360,6 @@ function nutritionView(p){
         <label class="f">Calories<input type="number" id="m-cal" min="0" max="5000" value="${UI.prefill?.cal ?? ""}" placeholder="Filled from the catalog"></label>
         <label class="f">Portion<select id="m-portion" data-wheel>${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
       </div>
-      <datalist id="dishlist">${DISHES.concat(dishAltOptions()).map(d => `<option value="${esc(d.n)}">${d.cal} cal</option>`).join("")}</datalist>
       ${quickLogBlock(date)}
       <div class="row"><button class="btn primary" data-act="log-meal">Log meal</button><button class="btn" data-act="mb-guess">${icon("spark")} Guess the calories</button>${
         typeof isPremium === "function" && isPremium() ? `<label class="btn photo-btn">${icon("camera","",16)} From a photo<input type="file" id="meal-shot-in" accept="image/*" capture="environment" hidden></label><a class="btn" href="#/premium/restaurant">${icon("food","",16)} Eating out</a>` : ""}</div>
@@ -13374,6 +13382,16 @@ function nutritionView(p){
   </div>
   ${projectionCard(p)}`;
 }
+// ---- dish suggestions ----
+// The 300-odd dish names behind "What did you eat?" are built once, the first time a box that uses them gets focus, and kept outside
+// the page that redraws, so the Nutrition page no longer carries (and re-compares) them on every render.
+function ensureDishList(){
+  if (document.getElementById("dishlist")) return;
+  const d = document.createElement("datalist"); d.id = "dishlist";
+  d.innerHTML = DISHES.concat(dishAltOptions()).map(x => `<option value="${esc(x.n)}">${x.cal} cal</option>`).join("");
+  document.body.append(d);
+}
+document.addEventListener("focusin", e => { if (e.target.matches?.('input[list="dishlist"]')) ensureDishList(); });
 // 8.6.8: the three cards that make up the right-hand column of the Nutrition page (and the Meals on today card beside Last 7 days).
 // Today at a glance: a ring for how much of the calorie target is eaten (only when a target is set) and three tiles.
 function glanceCardNutrition(p, date, meals, snacks){

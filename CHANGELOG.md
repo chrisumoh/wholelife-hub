@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.12, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.13, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.13 · Performance: The Nutrition page builds its 300-odd dish suggestions only when the meal box is first used
+
+- **Problem:** After 8.6.8 the Nutrition page held 1,010 elements with a year of logs, over the release gate's 1,000 (it was 988 before), so the Performance gate failed on PR #99. 304 of them were the hidden dish suggestions behind What did you eat?, rebuilt and compared on every redraw of the page although most visits never type a meal.
+- **Change:** The suggestions list is built once, the first time a box that uses it gets focus, and kept outside the part of the page that redraws. Typing in What did you eat? suggests the same dishes and alternate names as before. With a year of logs the Nutrition page now opens with 713 elements.
+- **Where:** index.html: ensureDishList() and its focusin listener (new, beside the 8.6.8 Nutrition helpers), nutritionView() (the datalist is no longer in the template), APP_VERSION, WLH.changelog. tests/browser/sectors.mjs (three checks in section 2). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Run node tests/perf/measure.mjs --gate (nutrition has DOM nodes: 713, limit 1000) and CHROME=/path/to/chrome CI=1 node tests/browser/sectors.mjs. By hand: open Log > Meals, click What did you eat? and type jol: jollof rice and the other dishes are still suggested.
+- **Known limits:** Once built the list stays for the rest of the visit. On a phone the suggestions appear as the browser shows them (a list or the keyboard bar), as before. Checked in headless Chrome, not on a real iPad or iPhone.
 
 ## 8.6.12 · Premium: What stays open on Free, the questions and About Premium follow the trust and FAQ design
 
