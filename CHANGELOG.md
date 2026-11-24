@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.16, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.17, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.17 · Lock screen: The lock screen and sign-in loaders use a drifting gradient in the app's colours instead of animated workout figures
+
+- **Problem:** The lock screen, the Syncing your data loader, Sign in again, Choose a new password, Data from before you signed in and the coach prompt all sat on a peach backdrop with animated workout figures (squats, running, skipping and others) that stepped in and out every few seconds. It was busy, it did not match the app's colours, and it looked the same whatever the light or dark setting was.
+- **Change:** The animated figures are gone. Those screens now sit on a soft drifting gradient built from the app's own colours: green, blue and gold glows over the page background. It is made from the colour tokens, so it follows light, dark and OLED automatically (OLED keeps the middle black), follows the accent in use, and stands still under Reduce motion. The card on top is unchanged.
+- **Where:** index.html: the pastel-bg CSS block (.ob.pastel, .pastel-bg, .orb, pgDriftA/B/C keyframes) and pastelScene(), APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Open the app with a passcode set (or sign out and back in) to see the lock screen; try light, dark and OLED in Settings > Appearance, and Reduce motion. The glows should follow the mode and sit still with Reduce motion. node tests/check-repo.mjs.
+- **Known limits:** Checked in headless Chrome only, not on a real iPhone or Safari. The old figure drawings and their swap timer are still in the file but nothing draws them any more; removing them is a separate clean-up. Only the screens listed above changed; the Welcome screen, the menu icons and the Workouts icons are not touched.
 
 ## 8.6.16 · Debugging: The Weight trend highlight on Today opens Body measurements instead of Page not found, and six Coach labels are now in Spanish
 
