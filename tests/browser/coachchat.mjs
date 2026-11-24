@@ -143,5 +143,23 @@ ok("a server answer without data does not switch sharing back on", await ev(`P()
 await ev(`WLA.lang = "es"; render(); true`); await goCoach();
 ok("in Spanish the share step and the note are translated", /Deja que WL Coach vea tu perfil/.test(await txt()) && /Aún no ve tus registros/.test(await txt()));
 await ev(`WLA.lang = "en"; render(); true`);
+// 8.6.22 second review: a waiting "stop sharing" never turns consent back on after coach chat is off, and blocked storage still blocks Send.
+await ev(`P().coachChatConsent = true; coachCtxAll(true); window.__rpc.length = 0; window.__rpcFail = true; true`); await goCoach();
+await ev(`document.querySelector('[data-act="wlc-ctx-off"]').click(); true`); await sleep(300);
+ok("setup: a failed stop leaves a retry note", await ev(`coachCtxPending()`));
+await ev(`location.hash = "#/settings/privacy"; render(); true`); await sleep(400);
+await ev(`window.__rpcFail = false; window.__rpc.length = 0; document.querySelector('[data-act="consent-coach-toggle"]').click(); true`); await sleep(400);
+ok("turning coach chat off clears the waiting stop", await ev(`!coachCtxPending() && P().coachChatConsent === false`));
+await ev(`window.__rpc.length = 0; coachWithdrawRetry(); true`); await sleep(300);
+ok("after that, the sign-in retry writes nothing that turns consent on", await ev(`!window.__rpc.some(c => c.a.p_on === true)`));
+await ev(`P().coachChatConsent = true; coachCtxMark("u_me"); localStorage.setItem("wlh.coachwd", "u_me"); window.__rpc.length = 0; coachWithdrawRetry(); true`); await sleep(400);
+ok("with both waiting, only the full withdrawal is sent and the stop is dropped", await ev(`window.__rpc.length === 1 && window.__rpc[0].a.p_on === false && !coachCtxPending() && localStorage.getItem("wlh.coachwd") === null`));
+await ev(`P().coachChatConsent = true; coachCtxAll(true); window.__rpc.length = 0; window.__calls.length = 0; window.__rpcFail = true;
+  window.__ls = { s: Storage.prototype.setItem, g: Storage.prototype.getItem }; Storage.prototype.setItem = function(){ throw new Error("blocked"); }; Storage.prototype.getItem = function(){ throw new Error("blocked"); }; true`);
+await goCoach(); await ev(`document.querySelector('[data-act="wlc-ctx-off"]').click(); true`); await sleep(300);
+ok("with storage blocked, a failed stop is still pending in memory", await ev(`coachCtxPending()`));
+await ev(`document.getElementById("wlc-q").value = "Lunch?"; document.querySelector('[data-act="wlc-send"]').click(); true`); await sleep(400);
+ok("with storage blocked, Send still sends nothing until the account confirms", await ev(`window.__calls.length === 0`));
+await ev(`Storage.prototype.setItem = window.__ls.s; Storage.prototype.getItem = window.__ls.g; window.__rpcFail = false; true`);
 ok("no script errors", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
