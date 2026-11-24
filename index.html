@@ -3875,7 +3875,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.3", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.4", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3889,6 +3889,15 @@ const APP_VERSION = { update: "8.6", build: "8.6.3", channel: "Dev Testing", dat
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.4",
+      area:"Menu",
+      title:"Revamp: a glyph and colour for every menu page, the Settings rail, Appearance, Coach and Profile pages, and a rebuilt Health data page with quick logging",
+      bug:"The menu used the same few icons for different pages and nothing said where you were beyond a grey highlight. The Settings rail was plain text rows. Settings > Appearance was one long list that sent accent colour and typeface to popups. The Settings coach choice was three identical cards, and the Profile page had uneven cards and no photo shortcut. Health data was a stack of equal cards with no search that listed all metrics at once, no way to log a number without leaving the page, and a banner for Apple Health that looked like any other card.",
+      fix:"Menu: every page has a glyph of its own (Log, Plan, Coach and Progress are new), and the page you are on shows a tinted pill, a 3px edge and a colour of its own; idle rows stay grey, in the side menu and the phone bottom bar. Settings rail: eight bespoke icons in 32px tinted wells, a 3px left bar and a colour per section on the current one; on a phone it is one scrolling row that scrolls to the section you are in. Appearance: three cards (Display & theme, Typography & layout, Glass & motion); accent swatches and typefaces are in the page, so the two popups are gone. Settings > Coach: a hero for the current coach with a 4px edge, a pill, a colour for each of the three coaches and each coach's real sample line from COACH_VOICE. Profile: a camera badge on the photo, a percent chip that matches the N of 10 line, equal-height cards and a card for each profile. Health data: Pinned vitals with a tinted icon well on each card, a balanced grid with no empty slot, a real 7-day average or range under each value (nothing made up), a search box with a clear button and a results count, seven category pills, a banner for the Apple Health import, and a + Log button beside every empty metric you can type in that opens a small dialog (date, field, Save). The Learn page now opens: it was missing from the list of known pages, so #/learn showed Page not found.",
+      where:"index.html: NAV (learn added), NAV_GLYPH, NAV_VIBE, NAV_ROUTE_IC, navVibe(), sideNav(), bottomBarHTML(), SET_GLYPH, SET_RAIL_ICON, SET_VIBE, settingsView() rail, railSync(), accentPicker(), fontPicker(), textSizeRow(), accentSwatchHTML(), profileTab(), COACH_TONE, coachTone(), coachCards(), coachSettingsView(), dcard(), wcard(), widgetSection(), healthWell(), healthSub(), qlogBtn(), metricFields(), quickLog(), healthCard(), healthView(), metricView(), the health-clear, health-cat and quick-log click cases, the quick-metric submit case, the 8.6.4 Settings rail, Health data, Appearance, Coach and Profile CSS blocks, and the Spanish lines under 8.6.4. tests/browser/revamp.mjs (new, in run-all.mjs).",
+      test:"Run node tests/check-repo.mjs and CHROME=/path/to/chrome CI=1 node tests/browser/revamp.mjs, then node tests/browser/run-all.mjs. By hand: open the side menu and tap each page (the current row gets a coloured pill and edge). Settings: tap each of the eight sections in the rail. Settings > Appearance: tap a swatch and a typeface, then Save. Settings > Coach: pick another coach and Rename. Settings > Profile: tap the camera badge and another profile's card. Health data: look at Pinned vitals, type in the search box, tap a category pill, then tap + Log on an empty card, type a number and Save. Check light, dark and OLED, and a phone width.",
+      limits:"Checked in headless Chrome at 375, 820, 1280 and 1440px, not on a real iPad, iPhone or Safari. The design file's sample numbers, typical values, goals, normal ranges and extra metrics (distance, body fat, HRV, VO2 max, deep and REM sleep, protein) are not shown: the app only has what you log. The charts stay the app's one bar-chart style, and empty cards still say No Data with no chart. + Log shows only on empty metrics you can type in; a metric with data opens its page with the Add form. The page colours are shown only on the current page or section, and the light colours are darker than the design's so labels read at 4.5:1."
+    },
     { id:"8.6.3",
       area:"Premium",
       title:"Premium: the paywall is now one Free vs Premium comparison table",
@@ -10620,7 +10629,11 @@ function sceneLayer(p){
 
 // =================== SETTINGS (tabbed) ===================
 const SET_RAIL = [["You",["profile","coach","goals","household"]],["App",["appearance","premium","privacy","about"]]];
-const SET_RAIL_ICON = { profile:"user", coach:"coach", goals:"clipboard", household:"users", appearance:"palette", premium:"crown", privacy:"lock", about:"info" };
+// 8.6.4: each Settings section has its own outline glyph and its own colour. The colour shows only on the section you are in
+// (icon, well, edge); every other row stays grey. Pairs are [light, dark]; the light ones are dark enough for 3:1 on their own tint.
+const SET_RAIL_ICON = { profile:"setProfile", coach:"setCoach", goals:"setGoals", household:"setHousehold", appearance:"setAppearance", premium:"setPremium", privacy:"setPrivacy", about:"setData" };
+const SET_VIBE = { profile:["#2563EB","#60A5FA"], coach:["#7C3AED","#A78BFA"], goals:["#047857","#34D399"], household:["#0F766E","#2DD4BF"],
+  appearance:["#BE185D","#F472B6"], premium:["#B45309","#FBBF24"], privacy:["#4F46E5","#818CF8"], about:["#0369A1","#38BDF8"] };
 const SET_TABS = [["profile","Profile"],["coach","Coach"],["appearance","Appearance"],["goals","Goals & food"],["household","Household"],["premium","Premium"],["privacy","Privacy & security"],["about","Data & about"]];
 const initials = n => (n || "").trim().split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join("").toUpperCase() || "?";
 function factRow(k, v){ return `<dt>${esc(k)}</dt><dd>${v}</dd>`; }
@@ -10642,16 +10655,15 @@ function profileTab(p){
   return `
   <section class="card hero">
     <div class="row" style="gap:16px">
-      <div class="photo-edit">${avatarHTML(p, 84)}
-        <label class="btn sm photo-btn">${p.photo ? "Change" : "Add photo"}<input type="file" id="photo-in" accept="image/*" data-cam="user" hidden></label>
-        ${p.photo ? `<button class="btn sm ghost" data-act="photo-remove">Remove</button>` : ""}</div>
+      <div class="photo-edit"><span class="photo-wrap">${avatarHTML(p, 68)}
+        <button type="button" class="photo-badge" data-act="photo-pick" aria-label="${esc(tr(p.photo ? "Change profile photo" : "Add a profile photo"))}" title="${esc(tr(p.photo ? "Change profile photo" : "Add a profile photo"))}">${icon("camera","",14)}</button><input type="file" id="photo-in" accept="image/*" data-cam="user" hidden></span></div>
       <div class="grow" style="flex:1;min-width:180px"><h2>${esc(p.name || "Unnamed profile")}</h2>
-        <div class="small muted">${lab(GOALS, p.goal, "No goal yet")} · ${lab(LEVELS, p.level)} · profile since ${fmtDay(p.created)}</div></div>
+        <div class="small muted">${lab(GOALS, p.goal, "No goal yet")} · ${lab(LEVELS, p.level)} · profile since ${fmtDay(p.created)}</div>
+        ${p.photo ? `<button class="btn sm ghost pf-rm" data-act="photo-remove">Remove photo</button>` : ""}</div>
       <div class="seg setctl" role="group" aria-label="Units"><button data-act="units" data-v="us" aria-pressed="${us}">lb · ft</button><button data-act="units" data-v="metric" aria-pressed="${!us}">kg · cm</button></div>
     </div>
-    <div class="stack" style="gap:6px"><div class="setrow small"><span class="setlabel">Profile ${done} of 10 filled in</span>${need.length ? `<span class="muted">Add ${need.join(", ")} to turn on the weight estimate</span>` : `<span class="tag good">Weight estimate on</span>`}</div><div class="bar"><i style="width:${done*10}%"></i></div></div>
+    <div class="stack" style="gap:6px"><div class="setrow small"><span class="setlabel pf-prog">Profile ${done} of 10 filled in <span class="apr-chip">${done * 10}%</span></span>${need.length ? `<span class="muted">Add ${need.join(", ")} to turn on the weight estimate</span>` : `<span class="tag good">Weight estimate on</span>`}</div><div class="bar"><i style="width:${done*10}%"></i></div></div>
     ${SB.user && sbClient() ? accountCard(true) : ""}
-    ${typeof ownerMark === "function" ? ownerMark() : ""}
   </section>
   <div class="grid g2">
   ${profileGroup(p, "about", "About you",
@@ -10681,12 +10693,18 @@ function profileTab(p){
   </div>
   <section class="card">
     <div class="setrow"><div class="setlabel"><div class="eyebrow">Profiles on this hub</div>
-      <h2 style="margin-top:4px">Switch profile</h2></div></div>
+      <h2 style="margin-top:4px">Switch profile</h2></div><a class="pf-manage" href="#/settings/household">Manage them on Household &rarr;</a></div>
     <p class="small muted">Everyone in the household gets their own targets, logs and meal plan. They all live in this hub and share its passcode.</p>
-    <label class="f full">Active profile<select id="switchProfile" aria-label="Switch profile">${S.profiles.map(x => `<option value="${x.id}"${x.id===p.id?" selected":""}>${esc(x.name || "Unnamed")}</option>`).join("")}<option value="__new">+ Add a profile</option></select></label>
-    <p class="tiny muted">${S.profiles.length === 1 ? "You're the only profile here so far." : `${S.profiles.length} profiles on this hub.`} Manage them on <a href="#/settings/household">Household</a>.</p>
+    <div class="pf-people" role="group" aria-label="${esc(tr("Switch profile"))}">
+      ${S.profiles.map(x => { const on = x.id === p.id;
+        return `<button type="button" class="pf-person${on ? " on" : ""}" data-act="switch" data-id="${x.id}" aria-pressed="${on}">${avatarHTML(x, 40)}
+        <span class="pf-pt"><b>${esc(x.name || "Unnamed")}</b><span>${on ? esc(tr("Active profile")) : `${esc(tr(lab(LEVELS, x.level, "Beginner")))} · ${esc(tr("Tap to switch"))}`}</span></span>
+        ${on ? `<i class="pf-tick" aria-hidden="true">${icon("check","",12)}</i>` : ""}</button>`; }).join("")}
+      <button type="button" class="pf-person add" data-act="new-profile">${icon("plus","",16)}<span>Add household profile</span></button>
+    </div>
   </section>
-  <p class="small muted">WholeLife doesn't ask for your phone number or date of birth. Setting up a profile asks for your birth month and year once, to check your age, and keeps only your age. An account is optional and needs an email address. Profile photos are resized to 320 × 320 in your browser, which also strips hidden location data, and are encrypted along with everything else when a passcode is on.</p>`;
+  <p class="small muted">WholeLife doesn't ask for your phone number or date of birth. Setting up a profile asks for your birth month and year once, to check your age, and keeps only your age. An account is optional and needs an email address. Profile photos are resized to 320 × 320 in your browser, which also strips hidden location data, and are encrypted along with everything else when a passcode is on.</p>
+  ${typeof ownerMark === "function" ? `<div class="pf-foot">${ownerMark()}</div>` : ""}`;
 }
 function saveGroup(p, key){
   const v = id => document.getElementById(id)?.value?.trim() ?? "";
@@ -10854,9 +10872,9 @@ function initSparks(){
 function dcard(o){
   const size = o.size || "m", small = size === "s", edit = o.edit, cover = !edit && o.cover;
   const Tag = edit || cover ? "div" : "a", href = Tag === "a" ? ` href="${o.href}"` : "";
-  const sub = size === "l" && o.subL != null ? o.subL : o.sub;
+  const sub = size === "l" && o.subL != null ? o.subL : o.sub, bare = small && !o.roomy; // roomy: a Small card with space for its sub-line and chart (Health data)
   return `<${Tag} class="mcard dcard ws-${size}${edit ? " editing" : ""}${o.cls ? " " + o.cls : ""}"${href}${o.key ? ` data-k="${esc(o.key)}"` : ""}><div class="mhead${edit ? " editing" : ""}" style="color:${o.color}">${edit ? edit.minus : ""}${o.iconHTML || cicon(o.icon, o.color, 18)}<b>${esc(o.name)}</b>${small || edit ? "" : `<span class="when">${esc(o.when || "")}<span class="chev">${icon("chevR","go",16)}</span></span>`}${edit ? edit.controls : ""}</div>
-    <div class="mbody"><div class="mmain">${o.val}${!small && sub ? `<div class="msub">${esc(sub)}</div>` : ""}</div>${small ? "" : o.chart || ""}</div>${size === "l" ? o.extra || "" : ""}${cover ? `<a class="cover" href="${o.href}" aria-label="Open ${esc(o.name)}"></a>` : ""}</${Tag}>`;
+    <div class="mbody"><div class="mmain">${o.val}${!bare && sub ? `<div class="msub">${esc(sub)}</div>` : ""}</div>${bare ? "" : o.chart || ""}</div>${size === "l" ? o.extra || "" : ""}${cover ? `<a class="cover" href="${o.href}" aria-label="Open ${esc(o.name)}"></a>` : ""}</${Tag}>`;
 }
 const NODATA = `<div class="mval nodata">No Data</div>`;
 // ---- Large card pieces (8.2.7) ----
@@ -11006,6 +11024,40 @@ function wdef(p, k, size){
 }
 // The card for the grids that are not widget layouts (Health data, categories, Trends, Nutrition): always Medium.
 function metricCard(p, k, o = {}){ return dcard({ ...wdef(p, k, "m"), size:"m", key:null, ...o }); }
+// ---- Health data page pieces (8.6.4) ----
+// A 32px tinted well round the card icon, in the metric's own colour.
+const healthWell = (ic, color, size = 18, big = false) => `<span class="ic-well${big ? " lg" : ""}" style="--wc:${color}">${cicon(ic, color, size)}</span>`;
+// One real line under a value: the average of the days you logged in the last 7 (blood oxygen: the range). With fewer than two
+// logged days there is nothing to compare, so the line is left out rather than guessed.
+function healthSub(p, k){
+  const m = METRICS[k]; if (!m || m.special) return "";
+  const vs = seriesOf(k, 7).filter(x => x.v != null).map(x => x.v);
+  if (vs.length < 2) return "";
+  const es = WLA.lang === "es";
+  if (k === "spo2") return es ? `Rango ${Math.min(...vs)}–${Math.max(...vs)} % en ${vs.length} días` : `Range ${Math.min(...vs)}–${Math.max(...vs)}% over ${vs.length} days`;
+  return `${es ? "Promedio de 7 días" : "7-day average"} ${valText(k, p, avgRaw(k, vs))}`;
+}
+// A visible "+ Log" for a metric you can type in that has no data yet. It sits beside the card, not inside it: the card is one link.
+const qlogBtn = k => { const m = METRICS[k]; return m && m.add && m.fields && !latestOf(k) ? `<button type="button" class="qlog" data-act="quick-log" data-k="${k}" aria-label="${esc(tr("Log"))} ${esc(tr(m.n))}"><span aria-hidden="true">+</span> ${esc(tr("Log"))}</button>` : ""; };
+// The "Add data" fields, shared by the metric page and the quick-log dialog (saveMetric reads them by id).
+const metricFields = (p, k, loc = false) => { const m = METRICS[k], L = s => esc(loc ? tr(s) : s);
+  return `<label class="f">${L("Date")}<input type="date" id="md-date" value="${today()}" max="${today()}" required></label>
+        ${m.fields(p).map(([id, label, lo, hi]) => (m.text || []).includes(id)
+          ? `<label class="f">${L(label)}<input type="text" inputmode="decimal" autocomplete="off" id="md-${id}" placeholder="${esc(weightPlaceholder(p))}" required></label>`
+          : `<label class="f">${L(label)}<input type="number" id="md-${id}" min="${lo}" max="${hi}" step="${id === "weight" || id === "water" ? "0.1" : "1"}" ${id === "sleepM" ? "" : "required"}></label>`).join("")}`; };
+function quickLog(k, triggerEl){
+  const p = P(), m = METRICS[k]; if (!p || !m || !m.fields) return;
+  openPopover("qlog", { labelledby:"qlog-h", width:"min(420px, calc(100vw - 32px))", triggerEl, returnSel:`[data-act="quick-log"][data-k="${k}"]`, focusSel:'input:not([type="date"]):not([type="hidden"])',
+    bodyHTML:`<div class="ql-box"><div class="ql-head">${healthWell(m.icon, mColor(k), 20, true)}<div><h2 id="qlog-h">${esc(tr("Log"))} ${esc(tr(m.n))}</h2><p class="small muted">${esc(tr("Saved on the day you pick, today unless you change it."))}</p></div></div>
+      <form class="form ql-form" data-form="quick-metric" data-k="${k}">${metricFields(p, k, true)}
+        <p class="note full" id="ql-err" role="alert" hidden></p>
+        <div class="ql-actions full"><button type="button" class="btn" data-pop="close">${esc(tr("Cancel"))}</button><button class="btn primary" type="submit">${esc(tr("Save"))}</button></div></form></div>` });
+}
+// A Health data category card: the usual card plus a tinted icon well, a real sub-line and the quick-log pill.
+function healthCard(p, k){
+  const d = wdef(p, k, "m");
+  return `<div class="hcw">${dcard({ ...d, size:"m", key:null, iconHTML: healthWell(d.icon, d.color), sub: d.sub || healthSub(p, k) })}${qlogBtn(k)}</div>`;
+}
 
 // =================== PROFILE PHOTO ===================
 function avatarHTML(p, size = 64, cls = ""){
@@ -11255,6 +11307,8 @@ function highlightsSection(p){
 function healthView(p){
   // 8.5.5: one category at a time instead of every category in a wall. Searching looks through all of them; clearing the box
   // brings back the chosen one. Metrics already pinned as a widget on this page are not drawn a second time below it.
+  // 8.6.4: search box with an icon and a clear button, category pills tinted in their own colour, a coloured well on every card,
+  // a quick "+ Log" on empty cards, and the Apple Health import as a banner.
   const q = (UI.browseQ || "").trim().toLowerCase(), catKeys = Object.keys(CATS);
   const sel = catKeys.includes(UI.healthCat) ? UI.healthCat : catKeys[0];
   const match = k => METRICS[k].n.toLowerCase().includes(q) || CATS[METRICS[k].cat].n.toLowerCase().includes(q);
@@ -11265,14 +11319,16 @@ function healthView(p){
   const tools = { nutrition:[["#/nutrition","Meal log"]], snacks:[["#/snacks","Snack log"]], activity:[["#/workouts","Workouts & imports"]] };
   const status = q ? (es ? `${total} ${total === 1 ? "resultado" : "resultados"} en todas las categorías` : `${total} ${total === 1 ? "result" : "results"} across all categories`) : "";
   return `
-  <input type="search" id="browse-q" class="searchbar" value="${esc(UI.browseQ || "")}" placeholder="Search health data: blood oxygen, sleep, steps…" aria-label="Search health data">
+  <div class="hs-search">${icon("search", "hs-mag", 18)}<input type="search" id="browse-q" class="searchbar" value="${esc(UI.browseQ || "")}" placeholder="Search health data: blood oxygen, sleep, steps…" aria-label="Search health data"><button type="button" class="hs-clear" data-act="health-clear" aria-label="Clear search"${q ? "" : " hidden"}>${icon("x", "", 16)}</button></div>
   <p class="small muted hs-status" role="status" aria-live="polite" data-i18n-skip>${status}</p>
   <div class="hs-pick"><span class="hs-pick-l" id="hs-pick-l">Browse by category</span>
-  <div class="chips" role="group" aria-labelledby="hs-pick-l">${Object.entries(CATS).map(([ck,c]) => `<button type="button" class="chip" data-act="health-cat" data-v="${ck}" aria-pressed="${!q && ck === sel}">${cicon(c.icon, c.color, 16)} ${c.n}</button>`).join("")}</div></div>
+  <div class="chips hs-chips" role="group" aria-labelledby="hs-pick-l">${Object.entries(CATS).map(([ck,c]) => `<button type="button" class="chip" data-act="health-cat" data-v="${ck}" style="--cc:${c.color}" aria-pressed="${!q && ck === sel}">${cicon(c.icon, c.color, 16)} ${c.n}</button>`).join("")}</div></div>
   ${secs.map(([ck, c, ms]) => `<section class="health-sec" id="sec-${ck}">
-    <div class="row between"><div class="shead">${cicon(c.icon, c.color, 28)}<h2>${c.n}</h2></div>${(tools[ck] || []).map(([h,l]) => `<a class="btn sm" href="${h}">${l} ${icon("chevR","go",13)}</a>`).join("")}</div>
-    ${ms.length ? `<div class="mgrid">${ms.map(k => metricCard(p, k)).join("")}</div>` : `<p class="small muted">Every metric in this category is already pinned above.</p>`}</section>`).join("") || `<div class="empty">Nothing matches "${esc(UI.browseQ)}".</div>`}
-  <p class="small muted">Import Apple Health on <a href="#/workouts">Workouts & imports</a> to fill these in automatically, or open any card to add data by hand.</p>`;
+    <div class="row between"><div class="shead">${healthWell(c.icon, c.color, 22, true)}<h2>${c.n}</h2></div>${(tools[ck] || []).map(([h,l]) => `<a class="btn sm" href="${h}">${l} ${icon("chevR","go",13)}</a>`).join("")}</div>
+    ${ms.length ? `<div class="mgrid">${ms.map(k => healthCard(p, k)).join("")}</div>` : `<p class="small muted">Every metric in this category is already pinned above.</p>`}</section>`).join("") || `<div class="empty hs-empty"><b>No matching health metrics</b><span data-i18n-skip>${es ? `Nada coincide con "${esc(UI.browseQ)}". Prueba con pasos, oxígeno en sangre, sueño, entrenamientos o agua.` : `Nothing matches "${esc(UI.browseQ)}". Try steps, blood oxygen, sleep, workouts or water.`}</span><button type="button" class="btn sm" data-act="health-clear">Clear search</button></div>`}
+  <div class="card hs-import"><span class="hs-heart" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" focusable="false"><path d="M12 20.4l-1.2-1.1C6.2 15.1 3.2 12.4 3.2 8.9A4.8 4.8 0 0 1 8 4.1c1.6 0 3.1.8 4 2.1.9-1.3 2.4-2.1 4-2.1a4.8 4.8 0 0 1 4.8 4.8c0 3.5-3 6.2-7.6 10.4L12 20.4z"/></svg></span>
+    <p>${es ? "Importa Apple Health en" : "Import Apple Health on"} <a href="#/workouts">${tr("Workouts & imports")}</a> ${es ? "para rellenarlo automáticamente, o abre cualquier tarjeta para añadir datos a mano." : "to fill these in automatically, or open any card to add data by hand."}</p>
+    <a class="hs-go" href="#/workouts">Import now ${icon("chevR", "go", 14)}</a></div>`;
 }
 
 // =================== CATEGORY PAGE ===================
@@ -11447,10 +11503,7 @@ function metricView(p){
   <div class="grid g2">
     <section class="card"><h2>Add data</h2>
       <form class="form" data-form="metric-${k}">
-        <label class="f">Date<input type="date" id="md-date" value="${today()}" max="${today()}" required></label>
-        ${m.fields(p).map(([id, label, lo, hi]) => (m.text || []).includes(id)
-          ? `<label class="f">${esc(label)}<input type="text" inputmode="decimal" autocomplete="off" id="md-${id}" placeholder="${esc(weightPlaceholder(p))}" required></label>`
-          : `<label class="f">${esc(label)}<input type="number" id="md-${id}" min="${lo}" max="${hi}" step="${id === "weight" || id === "water" ? "0.1" : "1"}" ${id === "sleepM" ? "" : "required"}></label>`).join("")}
+        ${metricFields(p, k)}
         <div class="full"><button class="btn primary" type="submit" style="background:${color};border-color:${color}">Add</button></div>
       </form>
       ${UI.metricErr ? `<div class="note">${esc(UI.metricErr)}</div>` : ""}
@@ -11598,6 +11651,27 @@ const I = {
  palette:'<path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 2-2s-.5-1.6-.5-2.4c0-1.1.9-2 2-2H17a4 4 0 0 0 4-4c0-5-4-7.6-9-7.6z"/><circle cx="8" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="7.4" r="1.1" fill="currentColor" stroke="none"/><circle cx="16" cy="9.4" r="1.1" fill="currentColor" stroke="none"/><circle cx="8.6" cy="14.4" r="1.1" fill="currentColor" stroke="none"/>',
  type:'<path d="M5 6.4h14M12 6.4v11.2"/><path d="M8.6 17.6h6.8"/>',
 };
+// 8.6.4: four menu glyphs that no other row uses (Log was a bare plus, Plan repeated Recipes' chef hat, Progress repeated
+// Health data's grid, Coach was generic sparkles). Drawn once here and shared by the side menu, the phone bottom bar and CI.
+const NAV_GLYPH = {
+  journal:'<rect x="4" y="3.5" width="13" height="17" rx="2"/><path d="M8 8h5M8 12h4M8 16h2"/><path d="M15.5 14.5l4-4a1.4 1.4 0 0 1 2 2l-4 4-2.8.8.8-2.8z"/>',
+  calcheck:'<rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M8 2.5v3.5M16 2.5v3.5M3.5 9.5h17"/><path d="M9.2 14.8l2 2 4-4"/>',
+  compass:'<circle cx="12" cy="12" r="9"/><polygon points="15.8 8.2 13.7 13.7 8.2 15.8 10.3 10.3 15.8 8.2"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  trendup:'<polyline points="21 7 13.5 14.5 9.5 10.5 3 17"/><polyline points="15 7 21 7 21 13"/>'
+};
+for (const [k, d] of Object.entries(NAV_GLYPH)) { I[k] = d; CI[k] = `<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</g>`; }
+// 8.6.4: the eight Settings glyphs (ID card, compass, fork and target, house with heart, colour swatches, crown with a glint, shield with a keyhole, database with an info badge).
+const SET_GLYPH = {
+  setProfile:'<rect x="3" y="4.5" width="18" height="15" rx="3"/><circle cx="9" cy="10.3" r="2.1"/><path d="M5.9 16.5c.6-1.9 1.7-2.8 3.1-2.8s2.5.9 3.1 2.8"/><path d="M14.5 9.8h3.7M14.5 13.4h2.5"/>',
+  setCoach:'<circle cx="12" cy="12" r="9"/><polygon points="15.9 8.1 13.6 13.6 8.1 15.9 10.4 10.4 15.9 8.1"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>',
+  setGoals:'<path d="M4.8 3.8v5.2a2.2 2.2 0 0 0 4.4 0V3.8"/><path d="M7 3.8v5.2M7 11.2v9"/><circle cx="16.4" cy="12" r="4.8"/><circle cx="16.4" cy="12" r="1.9"/><circle cx="16.4" cy="12" r="0.6" fill="currentColor" stroke="none"/>',
+  setHousehold:'<path d="M3.5 10.8L12 3.8l8.5 7"/><path d="M5.5 9.6v9.6a1.3 1.3 0 0 0 1.3 1.3h10.4a1.3 1.3 0 0 0 1.3-1.3V9.6"/><path d="M12 17.5s-3.5-2.1-3.5-4.2a2 2 0 0 1 3.5-1.3 2 2 0 0 1 3.5 1.3c0 2.1-3.5 4.2-3.5 4.2z"/>',
+  setAppearance:'<rect x="4" y="4" width="6.2" height="16" rx="2"/><path d="M10.2 6.8l4.4-1.3a2 2 0 0 1 2.4 1.4l1.5 5.2"/><path d="M10.2 13.2l6.8-2.4a2 2 0 0 1 2.5 1.2l1 2.8a2 2 0 0 1-1.2 2.5l-10 3.5"/><circle cx="7.1" cy="16.8" r="1" fill="currentColor" stroke="none"/>',
+  setPremium:'<path d="M3.5 17.2l1.6-8.4 4.3 3.5L12 6.8l2.6 5.5 4.3-3.5 1.6 8.4H3.5z"/><path d="M4.5 20.2h15"/><path d="M19.5 2.8v3.2M17.9 4.4h3.2"/>',
+  setPrivacy:'<path d="M12 3L4.5 6.1v5.5c0 4.8 3.2 8.4 7.5 9.9 4.3-1.5 7.5-5.1 7.5-9.9V6.1L12 3z"/><circle cx="12" cy="10.8" r="1.7"/><path d="M12 12.5v3.3"/>',
+  setData:'<ellipse cx="9.8" cy="6" rx="6.3" ry="2.4"/><path d="M3.5 6v10.8c0 1.3 2.8 2.4 6.3 2.4.7 0 1.4 0 2-.1"/><path d="M16.1 6v4.6"/><path d="M3.5 11.4c0 1.3 2.8 2.4 6.3 2.4.9 0 1.7-.1 2.5-.2"/><circle cx="17.2" cy="17.2" r="4.1"/><path d="M17.2 16.9v2"/><circle cx="17.2" cy="15.2" r="0.6" fill="currentColor" stroke="none"/>'
+};
+Object.assign(I, SET_GLYPH, { search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>' });
 // width/height are set explicitly: a viewBox-only SVG dropped into a flex row gets stretched
 // to the container (the 884px dumbbell and bell bugs), and CSS alone can't undo that reliably.
 const icon = (k, cls="", size=20) => `<svg class="ico ${cls}" data-icon="${k}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${I[k]}</svg>`;
@@ -11658,7 +11732,7 @@ const dishLink = d => `#/recipes/${d.id}`;
 const NAV = [
  ["OVERVIEW",[["home","Summary","home"],["health","Health data","grid"],["browse","Browse","grid"],["cat","Category",""],["metric","Metric",""]]],
  ["TRACK",[["nutrition","Daily nutrition","food"],["workouts","Workouts","run"],["snacks","Snack log","snack"],["alcohol","Alcohol","glass"],["awards","Achievements & Goals","medal"]]],
- ["EAT & TRAIN",[["recipes","Recipes & meal plans","book"],["culture","Food culture","globe"],["coach","Personal coach","coach"]]],
+ ["EAT & TRAIN",[["recipes","Recipes & meal plans","book"],["culture","Food culture","globe"],["coach","Personal coach","coach"],["learn","Learn","gradcap"]]],
  ["PREMIUM",[["premium","Premium","crown"]]],
  ["ACCOUNT",[["settings","Settings & profiles","gear"]]],
  ["LEGAL",[["privacy-policy","Privacy Policy","lock"],["terms","Terms","book"],["refunds","Refunds","book"],["contact","Contact","book"],["credits","Credits","book"]]]
@@ -11923,6 +11997,17 @@ Object.assign(WL_ES, WL_ES_UI);
 // Build 8.5.1: more screens (Home, Coach, Culture, Awards, Premium, Settings).
 const WL_ES_UI2 = {"Today at a glance": "Hoy de un vistazo", "Your rings": "Tus anillos", "today": "hoy", "Edit widgets": "Editar widgets", "days in a row": "días seguidos", "Show up for 10 minutes. Most days you'll keep going.": "Dedícale 10 minutos. La mayoría de los días seguirás.", "Log a few meals this week and your report fills in": "Registra unas cuantas comidas esta semana y tu informe se irá llenando", "tick what you have and see what you can cook": "marca lo que tienes y mira qué puedes cocinar", "Show All Trends": "Ver todas las tendencias", "General information, not medical advice. Talk to a doctor before changing how you eat or train.": "Información general, no consejo médico. Habla con un médico antes de cambiar cómo comes o entrenas.", "Move well. Eat with intention.": "Muévete bien. Come con intención.", "Today's menu": "Menú de hoy", "Picked for you": "Elegido para ti", "Replace all": "Reemplazar todo", "Choose where your food comes from": "Elige de dónde viene tu comida", "Choose a country or region": "Elige un país o región", "Optional and self-described. It shapes suggestions only and is saved in this browser.": "Opcional y a tu criterio. Solo moldea las sugerencias y se guarda en este navegador.", "Replaces the plan on Recipes.": "Reemplaza el plan de Recetas.", "Today's plan": "Plan de hoy", "Three questions, then I'll set the day": "Tres preguntas y organizo el día", "How's your energy today?": "¿Cómo está tu energía hoy?", "A little": "Un poco", "How much time do you have today?": "¿Cuánto tiempo tienes hoy?", "The planned session at the planned volume.": "La sesión planeada con el volumen planeado.", "Set today": "Fijar hoy", "The coach has a question": "El entrenador tiene una pregunta", "How well did you sleep this week?": "¿Qué tal dormiste esta semana?", "Your answer (optional)": "Tu respuesta (opcional)", "Training against what you're actually eating": "Entrenamiento según lo que realmente comes", "So the coach knows where to start you": "Para que el entrenador sepa por dónde empezarte", "Every one of these is optional. Skip anything you'd rather not answer. Rough numbers are fine; the coach only uses them to avoid pushing you too far, too fast.": "Todas son opcionales. Omite lo que prefieras no contestar. Los números aproximados sirven; el entrenador solo los usa para no exigirte demasiado ni demasiado rápido.", "How many push-ups can you do in one go?": "¿Cuántas flexiones puedes hacer seguidas?", "How many sit-ups can you do in one go?": "¿Cuántas abdominales puedes hacer seguidas?", "How long can you hold a plank?": "¿Cuánto tiempo aguantas una plancha?", "When did you last work out?": "¿Cuándo fue tu último entrenamiento?", "Is this your first time working out?": "¿Es tu primera vez entrenando?", "No, I've trained before": "No, ya he entrenado antes", "This past week": "La semana pasada", "Within the last month": "En el último mes", "Longer than a month ago": "Hace más de un mes", "Today or yesterday": "Hoy o ayer", "Skip all of this": "Omitir todo esto", "Your own goal": "Tu propia meta", "Tell the coach what you're after": "Cuéntale al entrenador lo que buscas", "Your goal": "Tu meta", "How long should the first plan be?": "¿Cuánto debe durar el primer plan?", "Answer the five questions above first and the plan fits you better.": "Contesta antes las cinco preguntas de arriba y el plan se ajustará mejor a ti.", "Don't have the kit?": "¿No tienes el equipo?", "Tell me what you're missing and I'll swap those exercises out wherever they appear in your plan.": "Dime qué te falta y cambiaré esos ejercicios donde aparezcan en tu plan.", "Build a plan and I'll check what it needs.": "Crea un plan y revisaré lo que necesita.", "Track and field": "Atletismo", "Track and sprints": "Pista y velocidad", "Where you should be": "Dónde deberías estar", "sessions planned this week": "sesiones planeadas esta semana", "Where you are": "Dónde estás", "logged this week": "registrado esta semana", "no food logged yet": "aún no hay comida registrada", "How you can improve": "Cómo puedes mejorar", "You don't have a plan running yet. Tell the coach your goal below and it'll build you one and check it with you first.": "Todavía no tienes un plan en marcha. Cuéntale tu meta al entrenador abajo y te armará uno, que revisará contigo antes.", "Answer that and the next session is scaled to it.": "Responde eso y la próxima sesión se ajustará a ello.", "Nudges for workouts and food logging": "Recordatorios para entrenar y registrar comidas", "Add a reminder": "Añadir un recordatorio", "Time to move. Even 20 minutes counts.": "Hora de moverse. Hasta 20 minutos cuentan.", "Log what you ate today so your estimate stays honest.": "Registra lo que comiste hoy para que tu estimación sea fiel.", "Blocked for this page in your browser settings.": "Bloqueado para esta página en los ajustes de tu navegador.", "Reminders that work when this page is closed": "Recordatorios que funcionan con la página cerrada", "Add to my calendar (.ics)": "Añadir a mi calendario (.ics)", "Opens with Apple Calendar, Google Calendar or Outlook.": "Se abre con Calendario de Apple, Google Calendar u Outlook.", "Read the terms": "Leer los términos", "Today's meals": "Comidas de hoy", "Build a plan": "Crear un plan", "Snap your plate": "Fotografía tu plato", "Changes daily. Add food preferences or allergies in Settings to filter these.": "Cambia cada día. Añade preferencias o alergias en Ajustes para filtrarlas.", "Nothing today": "Nada hoy", "Log a drink": "Registrar una bebida", "Log it": "Registrarlo", "No drinks logged today. Anything you add here counts toward the day.": "No hay bebidas registradas hoy. Lo que añadas aquí cuenta para el día.", "Days with a drink": "Días con bebida", "Nothing logged this week.": "Nada registrado esta semana.", "Meal log": "Registro de comidas", "Your estimate starts after your first full day of logging.": "Tu estimación empieza después de tu primer día completo de registro.", "Starts after a full day of logging": "Empieza tras un día completo de registro", "Log a machine from a photo": "Registrar una máquina con una foto", "Compete with friends": "Compite con amigos", "Sign in to start a challenge with friends.": "Inicia sesión para empezar un reto con amigos.", "Add a profile to compete": "Añade un perfil para competir", "Log your first workout.": "Registra tu primer entrenamiento.", "Log 10 workouts.": "Registra 10 entrenamientos.", "Log 50 workouts.": "Registra 50 entrenamientos.", "Log 100 workouts.": "Registra 100 entrenamientos.", "Seven Days": "Siete días", "Work out seven days in a row.": "Entrena siete días seguidos.", "Thirty Days": "Treinta días", "Work out thirty days in a row.": "Entrena treinta días seguidos.", "Close all three rings in one day.": "Cierra los tres anillos en un día.", "Perfect Week": "Semana perfecta", "Close all three rings every day for a week.": "Cierra los tres anillos cada día durante una semana.", "Close all three rings every day of a calendar month.": "Cierra los tres anillos cada día de un mes natural.", "Close the Hydration ring 20 days in one month.": "Cierra el anillo de hidratación 20 días en un mes.", "Log food on 25 days in one month.": "Registra comida 25 días en un mes.", "Finish a coach plan from day one to the last day.": "Termina un plan del entrenador del primer al último día.", "Complete a monthly challenge.": "Completa un reto mensual.", "Log a workout in three different months.": "Registra un entrenamiento en tres meses distintos.", "Premium is on": "Premium activado", "No end date": "Sin fecha de fin", "Preview the paywall": "Ver el muro de pago", "Have a license key?": "¿Tienes una clave de licencia?", "Your privacy at a glance": "Tu privacidad de un vistazo", "Where your data lives": "Dónde viven tus datos", "Consent and data history": "Consentimientos e historial de datos", "Copy my photos to my account": "Copiar mis fotos a mi cuenta", "Speaking to log a meal": "Hablar para registrar una comida", "No IDs in links.": "Sin identificadores en los enlaces.", "Friends and online status": "Amigos y estado en línea", "All of Africa": "Toda África", "Edit": "Editar", "+ Add a profile": "+ Añadir un perfil", "Add sex to turn on the weight estimate": "Añade el sexo para activar la estimación de peso", "Meals": "Comidas", "Terms": "Términos", "The Gambia": "Gambia", "Antigua and Barbuda": "Antigua y Barbuda", "Saint Kitts and Nevis": "San Cristóbal y Nieves", "Saint Vincent and the Grenadines": "San Vicente y las Granadinas", "Trinidad and Tobago": "Trinidad y Tobago", "Bosnia and Herzegovina": "Bosnia y Herzegovina", "New Zealand": "Nueva Zelanda", "Papua New Guinea": "Papúa Nueva Guinea", "Goal:": "Meta:", "Swap": "Cambiar", "Not this": "No esta", "Every extra feature, unlocked across food, training, coaching and health.": "Todas las funciones extra, desbloqueadas en comida, entrenamiento, coaching y salud.", "You're in as a beta tester.": "Estás dentro como probador beta.", "Turn any day or week of meals into one shopping list, summed and grouped by aisle.": "Convierte cualquier día o semana de comidas en una lista de compras, sumada y agrupada por pasillo.", "Tick off what you already have and see what you can cook tonight.": "Marca lo que ya tienes y mira qué puedes cocinar esta noche.", "Attach a photo to any logged meal, stored privately on your device.": "Adjunta una foto a cualquier comida registrada, guardada en privado en tu dispositivo.", "Paste a menu and get the best two or three picks for the calories you have left.": "Pega un menú y recibe las dos o tres mejores opciones para las calorías que te quedan.", "A weekly estimate of iron, B12, fibre and more, with dishes that fill the gaps.": "Una estimación semanal de hierro, B12, fibra y más, con platos que cubren las carencias.", "Eight to twelve week programs that raise your numbers as you hit them.": "Programas de ocho a doce semanas que suben tus cifras a medida que las alcanzas.", "Record a set and review it in slow motion. Nothing ever leaves your device.": "Graba una serie y revísala en cámara lenta. Nada sale de tu dispositivo.", "Private progress photos with a ghost overlay, plus tape measurements over time.": "Fotos de progreso privadas con superposición fantasma, más medidas con cinta a lo largo del tiempo.", "Train hard, go easy or rest, from your sleep, resting heart rate and training load.": "Entrena fuerte, ve suave o descansa, según tu sueño, pulso en reposo y carga de entrenamiento.", "A printable Sunday review: adherence, trends, wins and next week's focus.": "Un repaso dominical imprimible: constancia, tendencias, logros y el enfoque de la próxima semana.", "Log meals by speaking, and hear your set targets and rest timers called out.": "Registra comidas hablando y escucha en voz alta tus metas y temporizadores de descanso.", "Run a two week experiment and see honestly whether it moved the number.": "Haz un experimento de dos semanas y comprueba con honestidad si movió la cifra.", "A read-only link for a human coach, showing only what you choose to include.": "Un enlace de solo lectura para un entrenador humano, que muestra solo lo que elijas incluir.", "Household challenges and a leaderboard that celebrates rather than shames.": "Retos del hogar y una clasificación que celebra en lugar de avergonzar.", "Write up your family recipes and swap them with other people as a share file.": "Escribe tus recetas familiares e intercámbialas con otras personas en un archivo para compartir.", "A one page summary of your trends and notes to hand to a clinician.": "Un resumen de una página con tus tendencias y notas para entregar a un profesional de salud.", "Optional, off by default: training and iron advice that follows your cycle.": "Opcional y desactivado por defecto: consejos de entrenamiento y hierro que siguen tu ciclo.", "Meals and hydration arranged inside your eating window, suhoor to iftar.": "Comidas e hidratación dentro de tu ventana de alimentación, de suhoor a iftar.", "Set a weekly food budget and let the planner find cheaper dishes from your own pool.": "Fija un presupuesto semanal de comida y deja que el planificador busque platos más baratos de tu propio grupo.", "Nothing unusual in the last few days, so the plan stands.": "Nada fuera de lo normal en los últimos días, así que el plan se mantiene.", "What part of this week felt good?": "¿Qué parte de esta semana te hizo sentir bien?", "Prefiero no decirlo": "Prefiero no decirlo", "Picked for you today": "Elegido para ti hoy", "Log 350 workout minutes this month.": "Registra 350 minutos de entrenamiento este mes."};
 Object.assign(WL_ES, WL_ES_UI2);
+// 8.6.4: Appearance cards, Profile page, Health data page and quick log.
+Object.assign(WL_ES, {
+  "Display & theme":"Pantalla y tema", "Typography & layout":"Tipografía y diseño", "Glass & motion":"Cristal y movimiento", "Typeface":"Tipo de letra",
+  "Eat well, move well":"Come bien, muévete bien",
+  "Personalize display mode, accent color, typography and glass surfaces across WholeLife Hub.":"Personaliza el modo de pantalla, el color de acento, la tipografía y las superficies de cristal en WholeLife Hub.",
+  "Applies everywhere in the app. Atkinson Hyperlegible and OpenDyslexic are built for easier reading; Lora is a serif for a softer, editorial feel.":"Se aplica en toda la app. Atkinson Hyperlegible y OpenDyslexic están hechas para leer con más facilidad; Lora es una serif de aire más suave y editorial.",
+  "Add household profile":"Añadir perfil del hogar", "Remove photo":"Quitar foto", "Change profile photo":"Cambiar foto de perfil", "Add a profile photo":"Añadir foto de perfil",
+  "Manage them on Household →":"Adminístralos en Hogar →", "Tap to switch":"Toca para cambiar",
+  "Pinned vitals":"Signos fijados", "Clear search":"Borrar búsqueda", "No matching health metrics":"No hay métricas de salud que coincidan", "Import now":"Importar ahora",
+  "Saved on the day you pick, today unless you change it.":"Se guarda en el día que elijas, hoy salvo que lo cambies.", "Log":"Registrar", "Cancel":"Cancelar", "Save":"Guardar"
+});
 // ---- Spanish catalog text ----
 // Recipe prose (descriptions, steps, ingredient names, snack instructions) lives in i18n/es-recipes.js.
 // It is fetched the first time a Spanish screen renders, so English users never download it.
@@ -12473,6 +12558,7 @@ function afterRender(){
   if (typeof wluScan === "function") wluScan(); // 8.3.26 file upload widgets
   ringSync(); flipSync(); // 8.2.20: sliding selection ring, widget flip state
   tabSync(); // 8.3.34: sliding pill on the Settings tabs
+  railSync(); // 8.6.4: on a phone the Settings row scrolls to the section you are in
   if (typeof applyCanonical === "function") applyCanonical();
   if (typeof applyTheme === "function") applyTheme(P());
   if (typeof applyOpacity === "function") applyOpacity(P());
@@ -12557,8 +12643,16 @@ function toggleNavGroup(id){
   saveNavGroups([...collapsed]);
   render();
 }
+// 8.6.4: each page has its own colour, shown only while you are on it (icon, a 3px edge and a faint tint), so the menu stays quiet.
+// [light, dark]: the light values keep 3:1 for the icon on the tint (Snacks and Achievements are a little deeper than first drawn).
+const NAV_VIBE = { heartecg:["#E11D48","#FB7185"], apple:["#059669","#34D399"], cookie:["#DD4F06","#FB923C"], dumbbell:["#2563EB","#60A5FA"],
+  chefhat:["#0D9488","#2DD4BF"], globe:["#C2410C","#FDBA74"], compass:["#7C3AED","#A78BFA"], grid:["#0284C7","#38BDF8"],
+  medal:["#C26A05","#FBBF24"], gradcap:["#4F46E5","#818CF8"], crown:["#B45309","#FCD34D"], gear:["#334155","#E2E8F0"] };
+const navVibe = ic => NAV_VIBE[ic] ? `--nv:${NAV_VIBE[ic][0]};--nv-d:${NAV_VIBE[ic][1]}` : "";
+// The icon key of the row for the page you are on inside a group, so a shut group can show that page's colour.
+const NAV_ROUTE_IC = { nutrition:"apple", snacks:"cookie", workouts:"dumbbell", recipes:"chefhat", culture:"globe", health:"grid", browse:"grid", cat:"grid", metric:"grid", awards:"medal" };
 function sideNav(){
-  const link = (href, on, ic, grad, label0, label = tr(label0)) => `<a href="${href}" data-anim="${ic}" data-label="${esc(label)}" title="${esc(label)}"${on ? ' aria-current="page"' : ""}>${siTile(grad, cicon(ic, "#fff", 22, UI.animIcon === ic && UI.motionOk !== false ? "zap" : ""))}<span>${label}</span></a>`;
+  const link = (href, on, ic, grad, label0, label = tr(label0)) => `<a href="${href}" data-anim="${ic}" data-label="${esc(label)}" title="${esc(label)}" style="${navVibe(ic)}"${on ? ' aria-current="page"' : ""}>${siTile(grad, cicon(ic, "#fff", 22, UI.animIcon === ic && UI.motionOk !== false ? "zap" : ""))}<span>${label}</span></a>`;
   const premOn = typeof isPremium === "function" && isPremium();
   const here = UI.route + "/" + (UI.param || "");
   // v11.0 TASK 7: readiness badge, same green/neutral pill the Premium popup shows, driven by
@@ -12578,7 +12672,7 @@ function sideNav(){
   // separate "Go Premium" upsell row below, untouched -- that's a different flow from the one
   // this task describes.
   const premHub = premOn
-    ? `<button type="button" class="prem-trigger" data-act="premium-popup" data-label="Premium" title="Premium"
+    ? `<button type="button" class="prem-trigger" data-act="premium-popup" data-label="Premium" title="Premium" style="${navVibe("crown")}"
         aria-haspopup="dialog" aria-expanded="false"${UI.route === "premium" ? ' aria-current="page"' : ""}>${siTile(SI_GRAD.awards, icon("crown","",22))}<span>${tr("Premium")}</span></button>`
     : `<a class="upsell" href="#/premium" data-act="paywall" data-label="${tr("Go Premium")}" title="${tr("Go Premium")}">${siTile(SI_GRAD.awards, icon("crown","up-crown",20))}<span>${tr("Go Premium")}</span></a>`;
 
@@ -12598,19 +12692,19 @@ function sideNav(){
   if (UI.navKey !== key2) { UI.navKey = key2; if (here2 && !UI.navOpen[here2]) { UI.navOpen[here2] = true; saveNavOpen(); } }
   const group = (id, label, glyph, grad, itemsHTML) => {
     const open = !!UI.navOpen[id], holds = here2 === id;
-    return `<div class="navgrp navgrp-disc${holds ? " holds" : ""}" data-grp="${id}">
-      <button type="button" class="grp navdisc" id="ngl-${id}" data-act="nav-disc" data-v="${id}" aria-expanded="${open}" aria-controls="ngi-${id}">${siTile(grad, glyph)}<span>${esc(tr(label))}</span>${icon("chevD", "navchev", 16)}</button>
+    return `<div class="navgrp navgrp-disc${holds ? " holds" : ""}" data-grp="${id}" style="${holds ? navVibe(NAV_ROUTE_IC[UI.route]) : ""}">
+      <button type="button" class="grp navdisc" id="ngl-${id}" data-act="nav-disc" data-v="${id}" aria-expanded="${open}" aria-controls="ngi-${id}">${siTile(grad, glyph)}<span>${esc(tr(label))}</span>${holds && !open ? '<i class="navdot" aria-hidden="true"></i>' : ""}${icon("chevD", "navchev", 16)}</button>
       <div class="navgrp-items" id="ngi-${id}" role="group" aria-labelledby="ngl-${id}"${open ? "" : ' data-shut="1"'}>${itemsHTML}</div>
     </div>`;
   };
   const groupsHTML =
-    group("log", "Log", icon("plus", "", 22), SI_GRAD.meals, link("#/nutrition", UI.route === "nutrition", "apple", SI_GRAD.meals, "Meals")
+    group("log", "Log", cicon("journal", "#fff", 22), SI_GRAD.meals, link("#/nutrition", UI.route === "nutrition", "apple", SI_GRAD.meals, "Meals")
       + link("#/snacks", UI.route === "snacks", "cookie", SI_GRAD.snacks, "Snacks")
       + link("#/workouts", UI.route === "workouts", "dumbbell", SI_GRAD.workouts, "Workouts & imports"))
-    + group("plan", "Plan", cicon("chefhat", "#fff", 22), SI_GRAD.recipes, link("#/recipes", UI.route === "recipes", "chefhat", SI_GRAD.recipes, "Recipes & meal plans")
+    + group("plan", "Plan", cicon("calcheck", "#fff", 22), SI_GRAD.recipes, link("#/recipes", UI.route === "recipes", "chefhat", SI_GRAD.recipes, "Recipes & meal plans")
       + link("#/culture", UI.route === "culture", "globe", SI_GRAD.culture, "Food culture"))
-    + link("#/coach", UI.route === "coach", "sparkles", SI_GRAD.coach, "Coach")
-    + group("progress", "Progress", cicon("grid", "#fff", 22), SI_GRAD.health, link("#/health", inHealth, "grid", SI_GRAD.health, "Health data")
+    + link("#/coach", UI.route === "coach", "compass", SI_GRAD.coach, "Coach")
+    + group("progress", "Progress", cicon("trendup", "#fff", 22), SI_GRAD.health, link("#/health", inHealth, "grid", SI_GRAD.health, "Health data")
       + link("#/awards", UI.route === "awards", "medal", SI_GRAD.awards, "Achievements & Goals"))
     + link("#/learn", UI.route === "learn", "gradcap", SI_GRAD.coach, "Learn");
   const tail = `<div class="navgrp navgrp-static navgrp-tail" data-grp="more"><div class="navgrp-items">${premHub}
@@ -12640,7 +12734,7 @@ function bottomBarHTML(){
     return `<button type="button" class="bb-item${on ? " on" : ""}" data-act="sheet" data-v="${id}" aria-haspopup="dialog" aria-expanded="false">${icon(ic, "", 22)}<span>${esc(tr(label))}</span></button>`;
   };
   const lnk = (href, on, ic, label) => `<a class="bb-item" href="${href}"${on ? ' aria-current="page"' : ""}>${icon(ic, "", 22)}<span>${esc(tr(label))}</span></a>`;
-  return `<nav class="bottombar" aria-label="${esc(tr("Mobile navigation"))}">${lnk("#/home", r === "home", "home", "Today")}${btn("log", "Log", "plus")}${btn("plan", "Plan", "book")}${lnk("#/coach", r === "coach", "coach", "Coach")}${btn("more", "More", "menu")}</nav>`;
+  return `<nav class="bottombar" aria-label="${esc(tr("Mobile navigation"))}">${lnk("#/home", r === "home", "home", "Today")}${btn("log", "Log", "journal")}${btn("plan", "Plan", "calcheck")}${lnk("#/coach", r === "coach", "compass", "Coach")}${btn("more", "More", "menu")}</nav>`;
 }
 function openNavSheet(id, trigger){
   const [title, rows] = NAV_SHEETS[id] || NAV_SHEETS.more;
@@ -13936,12 +14030,7 @@ Return ONLY JSON: {"items":[{"name":string,"origin":string (country),"calories":
   st.busy = false; UI.abort = null; render();
 }
 
-// v11.0 TASK 4: the accent row (.swatches) already scrolled horizontally with fade edges rather
-// than hard-clipping, but its 28px (38px on phones) swatches sat under the 44px tap-target
-// minimum, which is the "finicky" part -- a near-miss tap could land between two circles. The
-// row becomes a single 44px trigger button, previewing the current accent, that opens a popup
-// grid where every swatch gets a real 44px hit target (see .swatch-lg in head.html) and its
-// selected state re-paints instantly from the same click, with no re-render round trip to wait on.
+// Swatch helpers: the check glyph switches between white and dark so it stays readable on light and dark swatches.
 function hexLuminance(hex){
   const h = String(hex || "").replace("#","");
   if (h.length !== 6) return 1; // unknown/gradient swatches default to treating as light -> dark check
@@ -13952,14 +14041,14 @@ function hexLuminance(hex){
 // Contrast against white (luminance 1): a dark check reads better once the swatch itself gets
 // light enough that a white glyph would wash out.
 function swatchCheckCls(hex){ return hexLuminance(hex) > 0.42 ? "dk" : "lt"; }
+// 8.6.4: accent colour and typeface sit in the page again, as one-tap choices (the popups they used to open are gone). Every
+// swatch keeps its 44px hit area (.swatch-lg); every typeface is a card with its own sample line, so nothing is cut off.
 function accentPicker(p){
   const cur = (p.look?.accent) || "blue";
   const curA = ACCENTS.find(a => a[0] === cur) || ACCENTS[0];
-  return `<div class="setgroup"><div class="setlabel">${tr("Accent color")}</div>
-    <button type="button" class="compact-trigger accent-trigger" data-act="accent-pop" aria-haspopup="dialog" aria-expanded="false">
-      ${icon("palette","",18)}<span class="ct-dot" style="background:${curA[0]==="dynamic" ? "conic-gradient(#F0B429,#0A6CFF,#C0265F,#00808A,#F0B429)" : curA[2]}"></span><span class="ct-label">${esc(curA[1])}</span>
-    </button>
-    <span class="tiny muted">${cur === "dynamic" ? "Time of day: gold in the morning, blue in the afternoon, hibiscus in the evening, violet at night." : esc(curA[1])}</span></div>`;
+  return `<div class="setgroup"><div class="setlabel apr-lbl"><span>${tr("Accent color")}</span><span class="apr-val" id="apr-accent-name">${esc(curA[1])}</span></div>
+    <div class="swatch-grid apr-swatches" role="group" aria-label="${esc(tr("Accent color"))}">${ACCENTS.map(([k,l,c]) => accentSwatchHTML(k,l,c,cur)).join("")}</div>
+    ${cur === "dynamic" ? `<span class="tiny muted">Time of day: gold in the morning, blue in the afternoon, hibiscus in the evening, violet at night.</span>` : ""}</div>`;
 }
 function accentSwatchHTML(k, l, c, cur){
   const dyn = k === "dynamic";
@@ -13968,65 +14057,12 @@ function accentSwatchHTML(k, l, c, cur){
   return `<button type="button" class="swatch-lg${dyn ? " dyn" : ""} ${checkCls}" style="--sw:${esc(c)}"
     data-act="look-accent" data-v="${k}" aria-pressed="${pressed}" aria-label="${esc(l)}" title="${esc(l)}">${icon("check","",18)}</button>`;
 }
-function accentPopupBodyHTML(){
-  const p = P(); const cur = (p.look?.accent) || "blue";
-  const curA = ACCENTS.find(a => a[0] === cur) || ACCENTS[0];
-  return `<div class="swatch-grid" role="group" aria-label="Accent color">${ACCENTS.map(([k,l,c]) => accentSwatchHTML(k,l,c,cur)).join("")}</div>
-    <span class="accent-pop-caption" id="accent-pop-caption">${esc(curA[1])}</span>`;
-}
-// Repaints the open popup's own selected state the instant a swatch is tapped, rather than
-// waiting on the next full #app render (which never touches this body-level overlay anyway).
-function repaintAccentPopup(){
-  const pop = POPOVERS.accent; if (!pop) return;
-  const body = pop.card.querySelector(".pop-body");
-  if (body) body.innerHTML = accentPopupBodyHTML();
-}
-function openAccentPopup(triggerEl){
-  openPopover("accent", {
-    label: "Accent color",
-    width: "min(360px, calc(100vw - 32px))",
-    triggerEl,
-    bodyHTML: `
-      <div class="pop-head"><h2>Accent color</h2><button type="button" class="pop-x" data-pop="close" aria-label="Close">${icon("x","",24)}</button></div>
-      <div class="pop-body">${accentPopupBodyHTML()}</div>`
-  });
-}
-
-// v11.0 TASK 5: the 2-column font-card grid (which truncated its sample pangram mid-card) is
-// now a single 44px trigger button, previewing the current font, that opens a popup list --
-// one row per font, the sample line ellipsis-truncating cleanly on one line instead of
-// wrapping/clipping inside a fixed-height card. Selecting a font applies immediately (same
-// "look-font" write the old cards used) and closes the popup, per the task's own spec.
 function fontPicker(p){
   const cur = FONTS.some(f => f[0] === p.look?.font) ? p.look.font : "system";
-  const curStack = FONTS.find(f => f[0] === cur)?.[2] || FONTS[0][2];
-  const curName = FONTS.find(f => f[0] === cur)?.[1] || "System";
-  return `<div class="setgroup"><div class="setlabel">Typeface</div>
-    <button type="button" class="compact-trigger font-trigger" data-act="font-pop" aria-haspopup="dialog" aria-expanded="false">
-      ${icon("type","",18)}<span class="ct-label" style="font-family:${esc(curStack)}">${esc(curName)}</span>
-    </button>
+  return `<div class="setgroup"><div class="setlabel">${tr("Typeface")}</div>
+    <div class="font-grid" role="radiogroup" aria-label="${esc(tr("Typeface"))}">${FONTS.map(([k,l,stack]) => `<button type="button" class="font-card" role="radio" aria-checked="${cur===k}" data-act="look-font" data-v="${k}" style="font-family:${esc(stack)}">
+      <b>${esc(l)}</b><span class="fc-sample">Eat well, move well</span>${cur===k ? `<i class="fc-tick" aria-hidden="true">${icon("check","",14)}</i>` : ""}</button>`).join("")}</div>
     <span class="tiny muted">Applies everywhere in the app. Atkinson Hyperlegible and OpenDyslexic are built for easier reading; Lora is a serif for a softer, editorial feel.</span></div>`;
-}
-function fontPopupRowsHTML(p){
-  const cur = FONTS.some(f => f[0] === p.look?.font) ? p.look.font : "system";
-  return FONTS.map(([k,l,stack]) => `
-    <button type="button" class="pop-row font-row" role="radio" aria-checked="${cur===k}" data-act="look-font" data-pop="close" data-v="${k}">
-      <span class="grow">
-        <b style="font-family:${esc(stack)}">${esc(l)}</b>
-        <span class="tiny" style="font-family:${esc(stack)}">The quick brown fox jumps over the lazy dog</span>
-      </span>
-      ${cur===k ? `<span class="f-check">${icon("check","",18)}</span>` : ""}
-    </button>`).join("");
-}
-function openFontPopup(triggerEl){
-  openPopover("font", {
-    label: "Typeface",
-    width: "min(400px, calc(100vw - 32px))",
-    triggerEl,
-    bodyHTML: `
-      <div class="pop-head"><h2>Typeface</h2><button type="button" class="pop-x" data-pop="close" aria-label="Close">${icon("x","",24)}</button></div>
-      <div class="pop-body" role="radiogroup" aria-label="Typeface" style="max-height:min(70vh,520px);overflow:auto">${fontPopupRowsHTML(P())}</div>`
-  });
 }
 
 // v12.0: Dynamic Type-style text size. One slider re-scales every text style in the app at once
@@ -14042,7 +14078,7 @@ function textSizeRow(p){
   const idx = textSizeStep(p);
   const step = TEXT_SIZES[idx];
   const label = idx === 3 ? `${step[1]} (Default)` : step[1];
-  return `<div class="setgroup"><div class="setlabel">${tr("Text size")}</div>
+  return `<div class="setgroup"><div class="setlabel apr-lbl"><span>${tr("Text size")}</span><span class="apr-chip" id="ui-ts-label">${esc(label)}</span></div>
     <div class="tsrow">
       <span class="ts-a sm" aria-hidden="true">Aa</span>
       <input type="range" id="ui-ts" min="0" max="${maxIdx}" step="1" value="${Math.min(idx, maxIdx)}" aria-label="Text size" aria-valuemin="0" aria-valuemax="${maxIdx}" aria-valuenow="${Math.min(idx, maxIdx)}" aria-valuetext="${esc(label)}">
@@ -14051,10 +14087,9 @@ function textSizeRow(p){
     </div>
     <div class="tspreview" id="ui-ts-preview" style="font-size:calc(17px * ${step[2]})">The quick brown fox jumps over the lazy dog.</div>
     <div class="setrow" style="margin-top:2px">
-      <span class="tiny muted" id="ui-ts-label">${esc(label)}</span>
+      <span class="tiny muted">Scales every piece of text in the app together, the same way Apple's Dynamic Type works -- layout and spacing stay put, only text grows or shrinks.</span>
       <label class="tiny muted ts-ax-label"><input type="checkbox" data-act="ts-ax-toggle" ${allowAX ? "checked" : ""}> Larger accessibility sizes</label>
-    </div>
-    <span class="tiny muted">Scales every piece of text in the app together, the same way Apple's Dynamic Type works -- layout and spacing stay put, only text grows or shrinks.</span></div>`;
+    </div></div>`;
 }
 
 // =================== SETTINGS ===================
@@ -14066,14 +14101,12 @@ function settingsView(p){
   // rules, which is what broke the first rail). Below 900px it becomes a pinned scrolling row.
   const rail = `<nav class="setrail" aria-label="${esc(tr("Settings sections"))}">${SET_RAIL.map(([g, keys]) =>
     `<div class="setrail-grp"><div class="setrail-lbl">${esc(tr(g))}</div>${keys.map(k => { const t = SET_TABS.find(x => x[0] === k);
-      return `<a class="setrail-item" href="#/settings${k === "profile" ? "" : "/" + k}"${k === tab ? ' aria-current="page"' : ""}>${icon(SET_RAIL_ICON[k], "", 18)}<span>${esc(tr(t[1]))}</span></a>`; }).join("")}</div>`).join("")}</nav>`;
+      return `<a class="setrail-item" href="#/settings${k === "profile" ? "" : "/" + k}" style="--sv:${SET_VIBE[k][0]};--sv-d:${SET_VIBE[k][1]}"${k === tab ? ' aria-current="page"' : ""}><span class="sr-well">${icon(SET_RAIL_ICON[k], "", 20)}</span><span class="sr-t">${esc(tr(t[1]))}</span></a>`; }).join("")}</div>`).join("")}</nav>`;
   const sections = {
     profile: (SB.user && sbClient() ? "" : accountCard()) + profileTab(p),
     premium: typeof subscriptionPanel === "function" ? premiumTab(p) : "",
     coach: typeof coachSettingsView === "function" ? coachSettingsView(p) : "",
-    appearance: `<section class="card" id="appearance">
-    <h2>${tr("Appearance")}</h2>
-    ${(() => {
+    appearance: (() => {
       // A dark-only theme overrules Light, so the button says so instead of looking chosen and
       // doing nothing. It stays clickable: picking Light then switching theme does what you meant.
       const darkOnly = typeof DARK_ONLY_THEMES !== "undefined" && typeof themeOf === "function" && DARK_ONLY_THEMES.includes(themeOf(p));
@@ -14084,25 +14117,35 @@ function settingsView(p){
       const curMode = MODES.find(m => m[0] === mode) || MODES[0];
       const curOverruled = darkOnly && (mode === "light" || mode === "auto");
       const caption = curOverruled ? `${curMode[1]} — stays dark while your theme is dark-only` : curMode[2];
-      return `<div class="setgroup"><div class="setlabel">${tr("Display")}</div>
+      const display = `<div class="setgroup"><div class="setlabel">${tr("Display")}</div>
       <div class="seg-display" role="radiogroup" aria-label="Color mode">${MODES.map(([k,l]) => {
         const overruled = darkOnly && (k === "light" || k === "auto");
         return `<button class="${overruled ? "overruled" : ""}" data-act="look-mode" data-v="${k}" aria-pressed="${mode===k}" title="${overruled ? `${l} — stays dark` : l}">${tr(l)}</button>`; }).join("")}</div>
       <span class="tiny muted">${esc(caption)}</span>
       ${darkOnly ? `<span class="tiny muted">${esc(THEMES.find(t => t[0] === themeOf(p))?.[1] || "This theme")} is dark whichever mode you pick. Choose another theme to use Light.</span>` : ""}</div>`;
-    })()}
-    ${accentPicker(p)}
-    ${fontPicker(p)}
-    ${textSizeRow(p)}
-    ${uiStyleRow()}
-    ${languageRow()}
-    ${typeof themePicker === "function" ? themePicker(p) : ""}
-    ${opacityRow(p)}
-    <div class="setgroup"><div class="setlabel">${tr("Motion")}</div>
-      <div class="seg" role="group" aria-label="Motion"><button data-act="look-motion" data-v="full" aria-pressed="${(p.look?.motion||"full")==="full"}">Bouncy</button><button data-act="look-motion" data-v="reduced" aria-pressed="${p.look?.motion==="reduced"}">Reduced</button></div>
-      <span class="tiny muted">Bouncy adds the spring animations. Reduced turns them off, and your device's own "reduce motion" setting always wins.</span></div>
+      // 8.6.4: three cards, each with a quiet heading, instead of one long card of fourteen rows.
+      return `<div id="appearance" class="apr">
+    <div class="apr-top"><h2>${tr("Appearance")}</h2>
+      <p class="small muted">Personalize display mode, accent color, typography and glass surfaces across WholeLife Hub.</p></div>
+    <section class="card apr-card" aria-labelledby="apr-h1"><h3 class="apr-h" id="apr-h1">Display &amp; theme</h3>
+      ${display}
+      ${accentPicker(p)}
+      ${typeof themePicker === "function" ? themePicker(p) : ""}
+    </section>
+    <section class="card apr-card" aria-labelledby="apr-h2"><h3 class="apr-h" id="apr-h2">Typography &amp; layout</h3>
+      ${fontPicker(p)}
+      ${textSizeRow(p)}
+      <div class="apr-two">${uiStyleRow()}${languageRow()}</div>
+    </section>
+    <section class="card apr-card" aria-labelledby="apr-h3"><h3 class="apr-h" id="apr-h3">Glass &amp; motion</h3>
+      ${opacityRow(p)}
+      <div class="setgroup"><div class="setlabel">${tr("Motion")}</div>
+        <div class="seg" role="group" aria-label="Motion"><button data-act="look-motion" data-v="full" aria-pressed="${(p.look?.motion||"full")==="full"}">Bouncy</button><button data-act="look-motion" data-v="reduced" aria-pressed="${p.look?.motion==="reduced"}">Reduced</button></div>
+        <span class="tiny muted">Bouncy adds the spring animations. Reduced turns them off, and your device's own "reduce motion" setting always wins.</span></div>
+    </section>
     ${reviewBar(p)}
-  </section>`,
+  </div>`;
+    })(),
     goals: `<section class="card">
     <h2>Targets</h2>
     <p class="small muted">Blank means no target: the dashboard just shows what you've logged.</p>
@@ -14257,6 +14300,7 @@ document.addEventListener("click", async e => {
       UI.coachNameDraft = nm; UI.obStep = 2; render(); window.scrollTo(0,0); break; }
     case "coach-switch": UI.coachSel = t.dataset.v; setCoachPersona(t.dataset.v, P().coachName); render();
       toast(`Coach switched to ${coachName(P())}`); break;
+    case "photo-pick": { const inp = document.getElementById("photo-in"); if (inp) shotOpen(inp); break; }
     case "coach-rename": UI.coachRename = true; UI.focus = "coach-name"; render(); break;
     case "coach-rename-cancel": UI.coachRename = false; render(); break;
     case "coach-prompt-keep": { const p2 = P(); p2.coachPersona = p2.coachPersona || UI.coachSel || COACH_DEFAULT; p2.coachPrompted = true; saveProfile();
@@ -14370,7 +14414,9 @@ document.addEventListener("click", async e => {
       } catch { toast("This browser wouldn't save the file."); }
       break; }
     case "theme-toggle": toggleTheme(); break;
-    case "health-cat": UI.healthCat = t.dataset.v; UI.browseQ = ""; render(); break;
+    case "health-cat": { const box = document.getElementById("browse-q"); if (box) box.value = ""; UI.healthCat = t.dataset.v; UI.browseQ = ""; render(); break; }
+    case "health-clear": { const box = document.getElementById("browse-q"); if (box) box.value = ""; UI.browseQ = ""; render(); document.getElementById("browse-q")?.focus({ preventScroll:true }); break; }
+    case "quick-log": quickLog(t.dataset.k, t); break;
     case "m-range": UI.mRange = +t.dataset.v; render(); break;
     case "del-metric": deleteMetric(t.dataset.k, t.dataset.d); render(); toast("Deleted"); break;
     case "photo-remove": p.photo = null; saveProfile(); render(); toast("Photo removed"); break;
@@ -14381,7 +14427,6 @@ document.addEventListener("click", async e => {
       // change opens as a circle from the tapped button.
       const key = a.slice(5), v = t.dataset.v;
       if (key === "mode") wlaReveal(t, () => wlaSetLook(p, { mode:v })); else wlaSetLook(p, { accent:v });
-      if (a === "look-accent") repaintAccentPopup();
       break;
     }
     case "ui-style": wlaSetStyle(t.dataset.v); break;
@@ -14390,13 +14435,8 @@ document.addEventListener("click", async e => {
     case "look-discard": wlaDiscard(p); break;
     case "look-scene": case "look-motion": case "look-font": {
       p.look = { mode:"auto", accent:"blue", motion:"full", font:"system", ...(p.look||{}) }; p.look[a.slice(5)] = t.dataset.v; saveProfile(); render();
-      // The accent popup lives outside #app (so render() above never touches it); repaint its
-      // own swatches right away so the tapped one shows selected in well under 100ms.
-      if (a === "look-accent") repaintAccentPopup();
       break;
     }
-    case "accent-pop": e.preventDefault(); openAccentPopup(t); break;
-    case "font-pop": e.preventDefault(); openFontPopup(t); break;
     case "ts-reset": wlaSetLook(p, { textSize:"l", largerAX:false }); break;
     case "ts-ax-toggle": {
       wlaSnap(p); p.look = { ...(p.look || {}), largerAX: t.checked };
@@ -14458,7 +14498,7 @@ document.addEventListener("click", async e => {
     case "ch-open": CH.open = !CH.open; render(); break;
     case "ch-join": case "ch-decline": case "ch-leave": chAct(a, t.dataset.id); break;
     case "new-profile": UI.obAuth = false; UI.lastActive = p?.id; UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = null; UI.obGateOk = false; S.activeId = null; render(); break;
-    case "switch": S.activeId = t.dataset.id; saveProfile(); resetUI(); render(); toast(`Switched to ${P().name || "profile"}`); break;
+    case "switch": if (t.dataset.id === S.activeId) break; S.activeId = t.dataset.id; saveProfile(); resetUI(); render(); toast(`Switched to ${P().name || "profile"}`); break;
     case "del-profile": UI.confirmDel = t.dataset.id; render(); break;
     case "del-profile-no": UI.confirmDel = null; render(); break;
     case "del-profile-yes": { const id = t.dataset.id; historyAdd("profile-del"); dropProfile(id); UI.confirmDel = null; saveProfile(); render(); toast("Profile deleted"); break; }
@@ -14523,6 +14563,11 @@ document.addEventListener("submit", async e => {
   if (kind === "coach-name") {
     const p2 = P(); p2.coachName = cleanCoachName(val("coach-name")); saveProfile();
     UI.coachRename = false; render(); toast(p2.coachName ? `Renamed to ${p2.coachName}` : "Using the default name"); return;
+  }
+  if (kind === "quick-metric") {
+    const err = saveMetric(P(), f.dataset.k), box = document.getElementById("ql-err");
+    if (err) { if (box) { box.textContent = err; box.hidden = false; } return; }
+    closePopover("qlog"); render(); toast("Added"); return;
   }
   if (kind.startsWith("metric-")) {
     const k = kind.slice(7); const err = saveMetric(P(), k);
@@ -17804,11 +17849,15 @@ function wlEdit(p, page, w, i, n){
 }
 // A Small or Medium widget turns over to show the detail the Large size holds. The back is built when it is opened (home would
 // otherwise carry every widget's detail), and the runtime class and nodes survive a render because morphInto keeps them.
-function wcard(p, page, w, i, n, editing){
-  const o = { ...wdef(p, w.k, w.size), size: w.size, edit: editing ? wlEdit(p, page, w, i, n) : null };
-  if (editing || w.size === "l") return dcard(o);
-  return `<div class="flipwrap ws-${w.size}" data-key="fw-${page}-${esc(w.k)}"><button type="button" class="flipbtn" data-act="wl-flip" aria-expanded="false" aria-label="More about ${esc(o.name)}">${icon("flip","",16)}</button>
-    <div class="flipin">${dcard({ ...o, cls: `${o.cls ? o.cls + " " : ""}face front` })}<div class="mcard face back" data-morph-skip></div></div></div>`;
+function wcard(p, page, w, i, n, editing, tail = ""){
+  let o = { ...wdef(p, w.k, w.size), size: w.size, edit: editing ? wlEdit(p, page, w, i, n) : null };
+  if (page === "health" && METRICS[w.k]) { // 8.6.4: the Health data look: icon well, a real sub-line, and on a Small card a chart too
+    o = { ...o, iconHTML: healthWell(o.icon, o.color), roomy: true, sub: o.sub || healthSub(p, w.k) };
+    if (w.size === "s" && !o.chart && latestOf(w.k)) o.chart = spark(w.k, 7);
+  }
+  if (editing || w.size === "l") return dcard({ ...o, cls: `${o.cls ? o.cls + " " : ""}${tail}`.trim() || undefined });
+  return `<div class="flipwrap ws-${w.size}${tail ? " " + tail : ""}" data-key="fw-${page}-${esc(w.k)}"><button type="button" class="flipbtn" data-act="wl-flip" aria-expanded="false" aria-label="More about ${esc(o.name)}">${icon("flip","",16)}</button>
+    <div class="flipin">${dcard({ ...o, cls: `${o.cls ? o.cls + " " : ""}face front` })}<div class="mcard face back" data-morph-skip></div></div>${page === "health" ? qlogBtn(w.k) : ""}</div>`;
 }
 function flipBackHTML(p, k, size){
   const d = wdef(p, k, "l");
@@ -17834,9 +17883,11 @@ document.addEventListener("click", e => { const b = e.target.closest('[data-act=
 document.addEventListener("keydown", e => { if (e.key !== "Escape") return; const w = e.target.closest?.(".flipwrap.flipped"); if (!w) return; flipSet(w, false); w.querySelector(".flipbtn")?.focus({ preventScroll:true }); });
 function widgetSection(p, page){
   const { shown, hidden } = wlGet(p, page), editing = UI.editPage === page, asking = UI.resetAsk === page;
+  // Health data: each run of Small cards fills its rows. The last 1 or 2 cards of a run of 3-wide rows grow to take the empty slot.
+  const tails = {}; if (page === "health") for (let a = 0; a < shown.length; ) { if (shown[a].size !== "s") { a++; continue; } let b = a; while (b < shown.length && shown[b].size === "s") b++; const r = (b - a) % 3; for (let j = b - r; j < b; j++) tails[shown[j].k] = `t3-${r}`; a = b; }
   return `<div class="wsec" data-page="${page}" role="group" aria-label="${tr("Widgets")}">
-    <div class="wsec-bar"><button class="link-btn" data-act="wl-edit" data-p="${page}">${editing ? "Done" : "Edit widgets"}</button></div>
-    <div class="wgrid${editing ? " editing" : ""}" data-page="${page}">${shown.map((w, i) => wcard(p, page, w, i, shown.length, editing)).join("") || `<div class="empty">No widgets. Tap Edit widgets to add some.</div>`}</div>
+    <div class="wsec-bar">${page === "health" ? `<h2 class="hs-eyebrow">${tr("Pinned vitals")}</h2>` : ""}<button class="link-btn" data-act="wl-edit" data-p="${page}">${editing ? "Done" : "Edit widgets"}</button></div>
+    <div class="wgrid${editing ? " editing" : ""}" data-page="${page}">${shown.map((w, i) => wcard(p, page, w, i, shown.length, editing, tails[w.k] || "")).join("") || `<div class="empty">No widgets. Tap Edit widgets to add some.</div>`}</div>
     ${editing ? `<section class="card wlist" aria-label="Hidden widgets"><b class="wlist-h">Hidden widgets</b>
       ${hidden.length ? `<ul class="wlist-rows">${hidden.map(k => `<li><span class="wlist-n">${widgetIcon(k)} ${esc(widgetName(k))}</span><button class="wadd" data-act="wl-add" data-p="${page}" data-k="${esc(k)}" aria-label="Add ${esc(widgetName(k))}"><span aria-hidden="true">+</span></button></li>`).join("")}</ul>` : `<span class="small muted">Nothing is hidden. Every widget for this page is showing.</span>`}</section>
     <div class="wreset">${asking ? `<span class="small">Reset sizes and order to the default?</span> <button class="wreset-btn" data-act="wl-reset" data-p="${page}">Reset</button> <button class="wreset-no" data-act="wl-reset-no">Cancel</button>`
@@ -17872,6 +17923,17 @@ function tabPlace(box, a, still){
   pill.style.setProperty("--x", `${a.offsetLeft}px`); pill.style.setProperty("--w", `${a.offsetWidth}px`);
   if (still) { void pill.offsetWidth; pill.classList.remove("still"); }
 }
+// On a phone the Settings rail is a scrolling row, so a section chosen from a link elsewhere can start out of view. Scroll the row
+// (never the page) to it once per section, so a render does not fight the person scrolling the row.
+function railSync(){
+  const rail = document.querySelector(".setrail"), on = rail?.querySelector('a[aria-current="page"]');
+  if (!rail || !on) { UI.railSeen = null; return; }
+  const wide = rail.scrollWidth > rail.clientWidth + 1, key = on.getAttribute("href") + (wide ? "|row" : "");
+  if (UI.railSeen === key) return;
+  UI.railSeen = key;
+  if (wide) rail.scrollLeft = Math.max(0, on.offsetLeft - (rail.clientWidth - on.offsetWidth) / 2);
+}
+window.addEventListener("resize", () => { clearTimeout(railSync.t); railSync.t = setTimeout(railSync, 150); });
 function tabSync(){
   document.querySelectorAll(".tabs").forEach(box => {
     const on = box.querySelector('a[aria-current="page"]');
@@ -18710,6 +18772,9 @@ const COACHES = [
 ];
 const COACH_BY_ID = Object.fromEntries(COACHES.map(c => [c.id, c]));
 const COACH_DEFAULT = "strategist";
+// 8.6.4: one colour per coach. [artwork edge and tick, label on light, label on dark]; the label colours keep 4.5:1 on their tint.
+const COACH_TONE = { motivator:["#EA580C","#B03A0B","#FDBA74"], enforcer:["#2563EB","#1D4ED8","#93C5FD"], strategist:["#059669","#046C4E","#6EE7B7"] };
+const coachTone = id => { const t = COACH_TONE[id] || COACH_TONE[COACH_DEFAULT]; return `--cc:${t[0]};--cc-ink:${t[1]};--cc-inkd:${t[2]}`; };
 
 function coachId(p = P()){ return COACH_BY_ID[p?.coachPersona] ? p.coachPersona : null; }
 function coachDef(p = P()){ return COACH_BY_ID[coachId(p)] || COACH_BY_ID[COACH_DEFAULT]; }
@@ -18788,10 +18853,11 @@ function toneGap(text, nextStep, p = P()){
 function coachCards(p, sel, actName = "coach-pick"){
   return `<div class="coachgrid" role="radiogroup" aria-label="Choose your coach">
     ${COACHES.map(c => `<button type="button" class="coachcard${sel === c.id ? " on" : ""}" role="radio" aria-checked="${sel === c.id}"
-      data-act="${actName}" data-v="${c.id}">
+      data-act="${actName}" data-v="${c.id}" style="${coachTone(c.id)}">
       ${coachPortrait(c.id, 72, true)}
       <span class="cc-txt"><b>${esc(c.label)}</b><span class="cc-sub">${esc(c.sub)}</span>
-        <span class="cc-desc">${esc(c.desc)}</span></span>
+        <span class="cc-desc">${esc(c.desc)}</span>
+        <span class="cc-quote">&ldquo;${esc(COACH_VOICE[c.id].ask)}&rdquo;</span></span>
       <span class="cc-tick" aria-hidden="true">${icon("check","",15)}</span>
     </button>`).join("")}
   </div>`;
@@ -18809,12 +18875,12 @@ function coachSettingsView(p){
   const sel = UI.coachSel || coachId(p) || COACH_DEFAULT;
   const naming = UI.coachRename;
   return `
-  <section class="card">
-    <div class="setrow"><div class="setlabel"><div class="eyebrow" style="color:var(--c-coach)">Your coach</div>
-      <h2 style="margin-top:4px">${esc(coachName(p))}</h2>
-      <span class="small muted">${esc(coachDef(p).sub)}. Switching takes effect on your next coach answer.</span></div>
-      <div class="setctl row" style="gap:8px">${coachIcon(coachDef(p).id, 22)}
-        <button class="btn sm" data-act="coach-rename" aria-label="Rename your coach">${icon("pencil","",15)} Rename</button></div></div>
+  <section class="card coach-hero" style="${coachTone(coachDef(p).id)}">
+    ${coachPortrait(coachDef(p).id, 64)}
+    <div class="ch-body"><div class="eyebrow">Your coach</div>
+      <div class="ch-name"><h2>${esc(coachName(p))}</h2><span class="ch-pill">${esc(coachDef(p).sub)}</span></div>
+      <span class="small muted">Switching takes effect on your next coach answer.</span></div>
+    <button class="btn sm" data-act="coach-rename" aria-label="Rename your coach">${icon("pencil","",15)} Rename</button>
     ${naming ? `<form class="stack" data-form="coach-name">
       ${coachNameField(coachId(p) || COACH_DEFAULT, p.coachName || "")}
       <div class="row"><button class="btn primary" type="submit">Save name</button>
@@ -23174,7 +23240,7 @@ document.addEventListener("click", e => {
   shotOpen(inp);
 }, true);
 document.addEventListener("keydown", e => {
-  if ((e.key === "Enter" || e.key === " ") && e.target.matches?.("label.dropzone")) { e.preventDefault(); e.target.click(); }
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches?.("label.dropzone, label.photo-badge")) { e.preventDefault(); e.target.click(); }
 });
 document.addEventListener("click", async e => {
   const t = e.target.closest('[data-act="media-ask"]'); if (!t) return;
@@ -26292,5 +26358,155 @@ label.f.snack-sort{flex-direction:row;align-items:center;gap:8px}
   .fvp-foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
   .fvp-cta{width:100%}
 }
+/* ---- 8.6.4 Menu: each page has its own colour, shown only while you are on it. Idle rows stay grey; the label stays in the text colour. ---- */
+html .side .nav a,html .side .nav button.prem-trigger,html .side .nav .navgrp-disc{position:relative;--nvc:var(--nv,var(--text))}
+:root:is([data-scheme="dark"],[data-scheme="oled"]) .side .nav a,:root:is([data-scheme="dark"],[data-scheme="oled"]) .side .nav button.prem-trigger,:root:is([data-scheme="dark"],[data-scheme="oled"]) .side .nav .navgrp-disc{--nvc:var(--nv-d,var(--text))}
+html .side .nav a[aria-current="page"],html .side .nav button.prem-trigger[aria-current="page"]{background:color-mix(in srgb,var(--nvc) 12%,var(--surface))}
+html .side .nav a[aria-current="page"] .si-tile,html .side .nav button.prem-trigger[aria-current="page"] .si-tile,html .side .nav .navgrp-disc.holds>.navdisc .si-tile{color:var(--nvc)}
+html .side .nav a[aria-current="page"]::before,html .side .nav button.prem-trigger[aria-current="page"]::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:999px;background:var(--nvc)}
+@media (hover:hover) and (pointer:fine){html .side .nav a:hover .si-tile,html .side .nav button.prem-trigger:hover .si-tile{color:var(--nvc)}}
+.navdot{flex:none;width:6px;height:6px;border-radius:999px;background:var(--nvc);box-shadow:0 0 0 3px color-mix(in srgb,var(--nvc) 18%,transparent)}
+.app.rail .navdot{display:none}
+/* ---- 8.6.4 Appearance: three cards (Display & theme, Typography & layout, Glass & motion) ---- */
+#appearance.apr{display:flex;flex-direction:column;gap:12px;min-width:0;--apr-soft:color-mix(in srgb,var(--text) 74%,var(--raise))}
+.apr-top h2{margin:0}
+.apr-top p{margin:4px 0 0}
+.apr-card{gap:20px}
+.apr-h{margin:0;padding-bottom:12px;border-bottom:1px solid var(--line);font-size:calc(12px * var(--text-scale,1));font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--apr-soft)}
+.apr-lbl{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.apr-val{font-size:calc(13px * var(--text-scale,1));font-weight:600;text-transform:none;letter-spacing:0;color:var(--text)}
+.apr-chip{display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--accent) 14%,var(--surface));color:var(--text);font-size:calc(12px * var(--text-scale,1));font-weight:700;text-transform:none;letter-spacing:0}
+.apr-swatches{gap:8px 12px;padding:0}
+.font-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.font-card{position:relative;display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0;min-height:56px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--raise);color:var(--text);text-align:left;cursor:pointer}
+.font-card b{padding-right:22px;overflow-wrap:anywhere;font-size:calc(13px * var(--text-scale,1));font-weight:700;line-height:1.3}
+.font-card .fc-sample{overflow-wrap:anywhere;font-size:calc(12px * var(--text-scale,1));font-weight:400;line-height:1.3;color:var(--apr-soft)}
+.font-card[aria-checked="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.font-card .fc-tick{position:absolute;top:8px;right:8px;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--accent-ink,#fff)}
+.font-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (hover:hover) and (pointer:fine){.font-card:not([aria-checked="true"]):hover{border-color:var(--line2)}}
+.apr-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding-top:20px;border-top:1px solid var(--line)}
+.apr-two .seg{display:flex;width:100%;align-self:stretch}
+.apr-two .seg button{flex:1;min-width:0}
+@media (max-width:560px){.apr-two{grid-template-columns:minmax(0,1fr)}}
+.apr .chip-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+#appearance.apr .theme-chip{width:auto;min-width:0}
+/* ---- 8.6.4 Coach settings: a coloured edge on the current coach, and a colour, a pill and a sample line on each choice ---- */
+.coach-hero{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px 16px}
+.coach-hero::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 4px 4px 0;background:var(--cc)}
+.coach-hero form{grid-column:1/-1}
+.ch-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ch-name{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+.ch-name h2{margin:0}
+.ch-pill,.coachcard .cc-sub{display:inline-flex;align-self:flex-start;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--cc) 12%,var(--surface));color:var(--cc-ink);font-size:calc(12px * var(--text-scale,1));font-weight:700}
+:root:is([data-scheme="dark"],[data-scheme="oled"]) .ch-pill,:root:is([data-scheme="dark"],[data-scheme="oled"]) .coachcard .cc-sub{color:var(--cc-inkd)}
+.coachcard{--cc:var(--accent);--cc-ink:var(--accent);--cc-inkd:var(--accent)}
+.coachcard.on{border-color:var(--cc);background:color-mix(in srgb,var(--cc) 8%,var(--surface))}
+.coachcard .cc-tick{background:var(--cc);color:#fff}
+@media (hover:hover) and (pointer:fine){.coachcard:hover{border-color:color-mix(in srgb,var(--cc) 55%,var(--line2))}}
+.coachcard .cc-txt{flex:1;align-self:stretch}
+.coachcard .cc-desc{margin-bottom:10px}
+.cc-quote{margin-top:auto;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);color:color-mix(in srgb,var(--text) 78%,var(--surface));font-size:calc(12px * var(--text-scale,1));font-style:italic;line-height:1.45}
+.coachcard.on .cc-quote{border-color:color-mix(in srgb,var(--cc) 40%,var(--line))}
+@media (max-width:560px){.coach-hero{grid-template-columns:auto minmax(0,1fr)}.coach-hero>.btn{grid-column:1/-1;justify-self:start}}
+/* ---- 8.6.4 Profile: camera badge on the photo, cards of equal height with values on the right, profile cards instead of a dropdown ---- */
+.card.hero .photo-wrap{position:relative;display:block;width:68px;height:68px}
+.card.hero .photo-wrap .avatar{width:68px!important;height:68px!important;font-size:26px!important}
+.photo-badge{position:absolute;right:-4px;bottom:-4px;display:grid;place-items:center;width:28px;height:28px;padding:0;border-radius:50%;border:2px solid var(--surface);background:var(--raise);color:var(--text);cursor:pointer;box-shadow:0 0 0 1px var(--line2)}
+.photo-badge::after{content:"";position:absolute;inset:-8px;border-radius:50%}
+.photo-badge:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pf-rm{margin-top:6px}
+.setrow>.setlabel.pf-prog{flex:0 1 auto;flex-direction:row;align-items:center;gap:8px}
+.pgroup{align-self:stretch}
+.pgroup .kv{grid-template-columns:minmax(0,1fr) auto;column-gap:0}
+.pgroup .kv dd{text-align:right;padding-left:14px}
+.pf-manage{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);font-weight:600;font-size:calc(13px * var(--text-scale,1));text-decoration:none}
+@media (hover:hover) and (pointer:fine){.pf-manage:hover{text-decoration:underline}}
+.pf-people{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;--pf-soft:color-mix(in srgb,var(--text) 74%,var(--raise))}
+.pf-person{position:relative;display:flex;align-items:center;gap:12px;min-width:0;min-height:64px;padding:12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--raise);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.pf-person.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.pf-person .avatar{flex:none;box-shadow:none;font-size:calc(15px * var(--text-scale,1))}
+.pf-pt{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+.pf-pt b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc(14px * var(--text-scale,1));font-weight:700}
+.pf-pt span{font-size:calc(12px * var(--text-scale,1));color:var(--pf-soft)}
+.pf-tick{flex:none;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--accent-ink,#fff)}
+.pf-person.add{justify-content:center;gap:8px;border:2px dashed var(--line2);background:transparent;color:var(--pf-soft);font-size:calc(13px * var(--text-scale,1));font-weight:600}
+.pf-person:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (hover:hover) and (pointer:fine){.pf-person:not(.on):hover{border-color:var(--line2)}}
+.pf-foot{display:flex;justify-content:center}
+.pf-foot .brandline{margin:0;padding:0;border-top:0}
+/* ---- 8.6.4 Settings rail: a tinted 32px well round each icon, a wider card, and a colour that shows only on the section you are in ---- */
+.set-layout{grid-template-columns:272px minmax(0,1fr)!important}
+.set-layout>.setrail{gap:8px;padding:14px 10px;border-radius:20px}
+.set-layout .setrail-lbl{padding:4px 12px 6px}
+.set-layout .setrail-grp+.setrail-grp{padding-top:8px;border-top:1px solid var(--line)}
+.set-layout .setrail a.setrail-item{position:relative;--svc:var(--sv,var(--text));gap:11px;padding:0 10px 0 8px;border-radius:12px}
+:root:is([data-scheme="dark"],[data-scheme="oled"]) .set-layout .setrail a.setrail-item{--svc:var(--sv-d,var(--text))}
+.set-layout .setrail a.setrail-item .sr-well{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;overflow:visible;border-radius:9px;color:var(--muted);transition:background-color .16s,color .16s}
+.set-layout .setrail a.setrail-item .sr-well svg{flex:none;width:20px;height:20px}
+.set-layout .setrail a.setrail-item .sr-t{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media (hover:hover) and (pointer:fine){.set-layout .setrail a.setrail-item:hover .sr-well{color:var(--svc)}}
+.set-layout .setrail a.setrail-item[aria-current="page"]{background:color-mix(in srgb,var(--svc) 10%,var(--surface))}
+.set-layout .setrail a.setrail-item[aria-current="page"] .sr-well{background:color-mix(in srgb,var(--svc) 20%,var(--surface));color:var(--svc)}
+.set-layout .setrail a.setrail-item[aria-current="page"]::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:999px;background:var(--svc)}
+@media (max-width:900px){
+  .set-layout{grid-template-columns:minmax(0,1fr)!important}
+  .set-layout>.setrail{border-radius:16px;padding:6px}
+  .set-layout .setrail-grp+.setrail-grp{padding-top:0;border-top:0}
+  .set-layout .setrail a.setrail-item{padding:0 12px 0 6px}
+  .set-layout .setrail a.setrail-item[aria-current="page"]::before{display:none}
+}
+/* ---- 8.6.4 Health data: tinted icon wells, a balanced pinned grid, coloured category pills, a clearer search box, quick log, the import banner ---- */
+.ic-well{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:color-mix(in srgb,var(--wc,var(--accent)) 14%,var(--surface))}
+.ic-well.lg{width:40px;height:40px;border-radius:12px}
+.wsec-bar{align-items:center}
+.wsec-bar .hs-eyebrow{margin:0 auto 0 0;font-size:calc(11px * var(--text-scale,1));font-weight:700;letter-spacing:.09em;line-height:1.2;text-transform:uppercase;color:var(--muted)}
+.wsec[data-page="health"] .wgrid{grid-template-columns:minmax(0,1fr)}
+.wsec[data-page="health"] .wgrid>.ws-s{aspect-ratio:auto;min-height:150px}
+.wsec[data-page="health"] .ws-s .mbody{flex-wrap:wrap;row-gap:8px;padding-top:20px}
+.wsec[data-page="health"] .ws-s .mbody .spark{margin-left:auto}
+.wsec[data-page="health"] .ws-s .mmain{flex:1 1 120px}
+@media (min-width:700px){
+  .wsec[data-page="health"] .wgrid{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .wsec[data-page="health"] .wgrid>.ws-s{grid-column:span 2}
+  .wsec[data-page="health"] .wgrid>.ws-s.t3-1{grid-column:span 6}
+  .wsec[data-page="health"] .wgrid>.ws-s.t3-2{grid-column:span 3}
+}
+.hcw{position:relative;display:flex;min-width:0}
+.hcw>.dcard{flex:1;min-width:0}
+.qlog{position:absolute;right:12px;bottom:12px;z-index:3;display:inline-flex;align-items:center;gap:4px;min-height:36px;padding:0 14px;border:1px solid var(--line2);border-radius:999px;background:var(--surface);color:var(--text);font:inherit;font-size:calc(14px * var(--text-scale,1));font-weight:600;cursor:pointer}
+.qlog::before{content:"";position:absolute;inset:-4px -2px}
+.qlog span{color:var(--accent);font-size:calc(17px * var(--text-scale,1));line-height:1}
+.qlog:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (hover:hover) and (pointer:fine){.qlog:hover{background:var(--raise)}}
+.flipwrap.flipped .qlog{display:none}
+.hs-search{position:relative;display:flex;align-items:center}
+.hs-search .hs-mag{position:absolute;left:16px;color:var(--faint);pointer-events:none}
+.hs-search .searchbar{width:100%;min-height:48px;padding:0 48px 0 46px;border-radius:16px}
+.hs-search input::-webkit-search-cancel-button{display:none}
+.hs-clear{position:absolute;right:4px;display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:12px;background:none;color:var(--muted);cursor:pointer}
+.hs-clear[hidden]{display:none}
+.hs-clear:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+@media (hover:hover) and (pointer:fine){.hs-clear:hover{background:var(--raise);color:var(--text)}}
+.hs-chips .chip[aria-pressed="true"]{background:color-mix(in srgb,var(--cc,var(--accent)) 12%,var(--surface));color:var(--text);box-shadow:inset 0 0 0 1.5px var(--cc,var(--accent))}
+@media (max-width:699px){.hs-chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.hs-chips::-webkit-scrollbar{display:none}.hs-chips .chip{flex:none;white-space:nowrap}}
+.health-sec .shead{gap:12px}
+.health-sec .shead .ic-well svg.ci{width:22px;height:22px}
+.hs-empty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:28px 16px;text-align:center}
+.hs-empty b{font-size:calc(16px * var(--text-scale,1));color:var(--text)}
+.hs-empty .btn{margin-top:6px}
+.app .card.hs-import{display:flex;flex-direction:row;align-items:center;flex-wrap:wrap;gap:14px;padding:14px 16px}
+.hs-import p{flex:1 1 260px;min-width:0;margin:0;font-size:calc(14px * var(--text-scale,1));color:var(--text)}
+.hs-import p a{font-weight:700}
+.hs-heart{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:color-mix(in srgb,var(--c-heart) 14%,var(--surface));color:var(--c-heart)}
+.hs-heart svg{width:20px;height:20px}
+.hs-go{display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 6px;color:var(--accent);font-weight:700;font-size:calc(14px * var(--text-scale,1));text-decoration:none}
+.ql-box{padding:22px 22px 20px}
+.ql-form{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.ql-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.ql-head h2{margin:0;font-size:calc(20px * var(--text-scale,1))}
+.ql-head p{margin:2px 0 0}
+.ql-actions{display:flex;justify-content:flex-end;gap:8px}
+.ql-actions .btn{min-height:44px}
 </style>
 </body></html>
