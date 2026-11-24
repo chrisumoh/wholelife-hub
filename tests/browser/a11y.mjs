@@ -65,7 +65,9 @@ const STATES = {
   "age screen": { js: `(() => { UI.obDraft = newProfile(""); UI.obStep = 0; UI.obGate = "next"; UI.obGateOk = false; render(); return true; })()`, out: true, see: `form[data-form="age-gate"] #ag-y` },
   "setup step 1 (coach)": { js: `(() => { UI.obDraft = newProfile(""); UI.obGate = null; UI.obGateOk = true; UI.obStep = 1; render(); return true; })()`, out: true, see: `.wl-stepper[data-step="1"] [data-act="coach-continue"]` },
   "setup step 3": { js: `(() => { UI.obDraft = newProfile(""); UI.obGate = null; UI.obGateOk = true; UI.obStep = 3; render(); return true; })()`, out: true, see: `.wl-stepper[data-step="3"] #ob-diet` },
-  "setup step 4": { js: `(() => { UI.obDraft = newProfile(""); UI.obGate = null; UI.obGateOk = true; UI.obStep = 4; render(); return true; })()`, out: true, see: `.wl-stepper[data-step="4"] [data-act="ob-choice"]` }
+  "setup step 4": { js: `(() => { UI.obDraft = newProfile(""); UI.obGate = null; UI.obGateOk = true; UI.obStep = 4; render(); return true; })()`, out: true, see: `.wl-stepper[data-step="4"] [data-act="ob-choice"]` },
+  "Free vs Premium modal": { js: `(() => { location.hash = "#/home"; render(); setTimeout(() => openPaywall(), 200); return true; })()`, see: `#pop-paywall .fvp-table` },
+  "Snack recipe drawer": { js: `(() => { location.hash = "#/snacks"; render(); setTimeout(() => document.querySelector('[data-act="snack-recipe"]')?.click(), 200); return true; })()`, see: `#pop-snackrecipe .pop-card #sr-mult` }
 };
 console.log("--- 1. axe on every screen, 375 and 1440px, light and dark");
 for (const w of [375, 1440]) for (const mode of ["light", "dark"]) {
@@ -80,13 +82,13 @@ for (const w of [375, 1440]) for (const mode of ["light", "dark"]) {
   await view(w); await setMode(mode);
   const bad = [];
   for (const [name, st] of Object.entries(STATES)) {
-    await ev(`S.profiles = [${keep}]; S.activeId = S.profiles[0].id; UI.obStep = 0; UI.obGate = null; UI.editPage = null; true`);
+    await ev(`closePopover("paywall"); S.profiles = [${keep}]; S.activeId = S.profiles[0].id; UI.obStep = 0; UI.obGate = null; UI.editPage = null; true`);
     if (st.out) await ev(`S.activeId = null; true`);
     await ev(st.js); await sleep(st.out ? 2200 : 700); // the welcome and setup screens fade in; measuring colours mid-fade gives false contrast failures
     const here = await ev(`!!document.querySelector(${JSON.stringify(st.see)})`);
     if (!here) { bad.push(name + ": the screen did not appear, so it was not checked (" + st.see + ")"); continue; }
     bad.push(...(await ev(RUN)).map(x => name + ": " + x)); }
-  await ev(`S.profiles = [${keep}]; S.activeId = S.profiles[0].id; UI.obStep = 0; UI.obDraft = null; UI.obGate = null; UI.editPage = null; location.hash = "#/home"; render(); true`);
+  await ev(`closePopover("paywall"); S.profiles = [${keep}]; S.activeId = S.profiles[0].id; UI.obStep = 0; UI.obDraft = null; UI.obGate = null; UI.editPage = null; location.hash = "#/home"; render(); true`);
   ok(`${w}px ${mode}: ${Object.keys(STATES).length} popups, edit mode and setup screens, no axe violations`, bad.length === 0, bad.slice(0, 3).join(" || "));
 }
 

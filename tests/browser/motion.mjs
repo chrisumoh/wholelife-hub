@@ -55,7 +55,7 @@ await ev(`P().widgets.find(w => w.k === "coach").size = "l"; render(); true`);
 await goto("#/home");
 
 console.log("--- 1. the selection ring slides");
-await goto("#/coach");
+await goto("#/coach/plan"); // the plan-length choice on the Coach Plan tab is a single-choice group (the Coach page is tabs since 8.6.1)
 const hasSeg = await waitFor(`!!document.querySelector('.seg [aria-pressed="true"]')`, 3000);
 if (!hasSeg) await ev(`P().coachPersona = "strategist"; saveProfile(); render(); true`);
 ok("a single-choice group has one ring, inside it", await waitFor(`document.querySelectorAll(".seg:not(.wseg) > .focus-ring").length >= 1 && [...document.querySelectorAll(".seg:not(.wseg)")].every(s => s.querySelectorAll(":scope > .focus-ring").length <= 1)`, 4000));
@@ -169,7 +169,7 @@ ok("the coach card names the coach once", coach.nameCount === 1, JSON.stringify(
 ok("it does not repeat the percentage or print 0% twice", coach.pct <= 2 && coach.same && !coach.oldLine, JSON.stringify(coach));
 await shot("coach-clean");
 ok("with no food logged the check-in says so plainly", await ev(`(() => { const t = document.querySelector("#sec-coach").textContent; return t.length > 200 && !/Only 0 days/.test(t); })()`));
-await goto("#/coach"); await ev(`document.getElementById("checkin")?.scrollIntoView(); true`); await sleep(200);
+await goto("#/coach/today"); await ev(`document.getElementById("checkin")?.scrollIntoView(); true`); await sleep(200);
 const ci = await ev(`(() => { const f = document.querySelector("#checkin .timeline .fill"); return f ? f.style.width : null; })()`);
 ok("the weekly bar's fill shows what was done (nothing), not how far into the week it is", ci === "0%" || ci === "0px" || ci === "", JSON.stringify(ci));
 await shot("checkin-clean");

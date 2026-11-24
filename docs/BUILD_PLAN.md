@@ -23,6 +23,25 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.6.16 | Debugging pass: the Weight trend highlight on Today opens Body measurements instead of Page not found (also on main); six Coach labels in Spanish; a test that every in-app link on 12 main pages opens a real page | IN PROGRESS: PR #99 |
+| 8.6.15 | Personal coach page: hero with the coach's live mechanic (the Enforcer's score as a ring with check pills that link to where each is logged), compact tabs, one Ask WL Coach card with a Sign in button when signed out, the check-in beside the training read-out with a days-logged strip, eating-short as its own card, and a slim five-questions strip | IN PROGRESS: PR #99 |
+| 8.6.14 | Daily nutrition: Log a meal beside Meals on today (meal tag, Guess joined to Calories), See today's menu inside that card, Today at a glance as four tiles with a Drinks · Alcohol panel, Last 7 days beside a one-row Log your weight (638 elements, under the 1,000 limit) | IN PROGRESS: PR #99 |
+| 8.6.13 | Performance: the Nutrition page builds its dish suggestions on first use of the meal box (1,010 to 713 elements, back under the 1,000 release-gate limit) | IN PROGRESS: PR #99 |
+| 8.6.12 | Premium trust and FAQ: What stays open on Free as a card of six icon tiles with a heading, the three questions in one card with chevrons, About Premium with a gold tint and crown; two older Premium labels and the notification stack fixed for accessibility | IN PROGRESS: PR #99 |
+| 8.6.11 | Appearance and Profile: live glass preview with Frosted, Balanced and Solid presets, a Smooth motion style with Try this motion, and Quick setup chips for an empty profile | IN PROGRESS: PR #99 |
+| 8.6.10 | Coach: Ask WL Coach as a chat window (bubbles, thinking dots, round send button, four suggested questions that fill the box and never send) | IN PROGRESS: PR #99 |
+| 8.6.9 | Workouts: KPI strip first, photo card beside Import, five quick activity picks, minute chips with a live calorie estimate, weekly goal stepper with day dots, richer history rows | IN PROGRESS: PR #99 |
+| 8.6.8 | Daily nutrition: Today's meals as cards with + Log, Log a meal beside the glance, drinks and weight stack, readable Last 7 days chart, compact Snap your plate opt-in; new tests/browser/sectors.mjs | IN PROGRESS: PR #99 |
+| 8.6.7 | Premium page centred: head, banner, billing toggle, plan cards and the sections below share one centre line in a column up to 1040px | IN PROGRESS: PR #99 |
+| 8.6.6 | Compare Free and Premium row at the top of the side-menu Premium list and a Compare plans button in Settings > Premium for Premium profiles, so the Free vs Premium dialog can be opened during the beta without ?premium=0 | IN PROGRESS: PR #99 |
+| 8.6.5 | Free vs Premium dialog restyled from the Premium comparison design: crown header, one flat list, a tile and a description on every row, green ticks, Spanish descriptions; AI Coach row still left out | IN PROGRESS: PR #99 |
+| 8.6.4 | Revamp: glyph and colour per menu page, Settings rail with icon wells, Appearance in three cards with inline pickers, Settings > Coach hero and colours, Profile cards, Health data (Pinned vitals, search, category pills, Apple Health banner, quick + Log); Learn page route fixed | IN PROGRESS: PR #99 |
+| 8.6.3 | Premium paywall rebuilt as a Free vs Premium comparison table (grouped rows from the real Premium list, prices from PREMIUM_PLANS, accessible dialog, Spanish); AI Coach row left out | IN PROGRESS: PR #99 |
+| 8.6.2 | Snacks: Recipe drawer, servings (½ to 3) shown on each card, No allergens, sort by calories, results line and a logged-today pill; the app's own snack data and logging unchanged | IN PROGRESS: PR #99 |
+| 8.6.1 | Coach in four tabs (Ask, Today, Plan, Settings; chat first, deep links, drafts kept) and the revamped achievement medals for all 143 badges | IN PROGRESS: PR #99 |
+| 8.6 | Layout tidy-up: no Web app view, even spacing, grouped menu and phone bottom bar, Next step on Today, Coach chat first, Achievements filter, Health categories, readable recipe names | IN PROGRESS: PR #99 |
+| 8.5.4 | Menu: flat Finpex-style side menu, first pass of the clean-up (page layouts not done) | IN PROGRESS: PR #99 |
+| 8.5.3 | Settings: persistent left sidebar rebuilt with own setrail classes, mobile pinned row | IN PROGRESS: PR #99 |
 | 8.5.2 | Finpex adaptations: Web app layout, offline note, Coming up today, daily score (notifications, onboarding strip and legal short versions not done) | IN PROGRESS: PR open |
 | 8.5 | Language: Spanish controls and the full recipe and snack catalog (lazy-loaded i18n/es-recipes.js); WL Coach server replies remain for a later pass | IN PROGRESS: build-8.5 |
 | 8.4.10 | Health: ignore resize noise in error reports, fix welcome photo grid null error, review log docs/health/2026-11-13.md | IN PROGRESS: claude/project-thread-bkxx67 |

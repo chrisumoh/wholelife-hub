@@ -62,28 +62,14 @@ ok("pills are 44px tall", await ev(`[...document.querySelectorAll(".pill-strip .
 ok("no free trial is promised on the page", await ev(`!/free trial/i.test(document.querySelector(".prem-store-page")?.textContent || "")`));
 ok("cancelling is stated to delete nothing", await ev(`/never deletes/.test(document.querySelector(".prem-stays")?.textContent || "")`));
 
-console.log("--- 2. Layout setting (Web app layout, PR #94: profile look setting)");
+console.log("--- 2. The Web app layout was removed (build 8.5.5)");
 await goto("#/settings/appearance");
-ok("Layout row with App and Web app", await ev(`[...document.querySelectorAll('[data-act="look-layout"]')].map(b => b.textContent).join() === "App,Web app" && document.querySelector('[data-act="look-layout"][data-v="app"]').getAttribute("aria-pressed") === "true"`));
-const wrapW = () => ev(`document.querySelector(".app .wrap").getBoundingClientRect().width`);
-const wrapMax = () => ev(`getComputedStyle(document.querySelector(".app .wrap")).maxWidth`);
-await view(800);
-const appMax800 = await wrapMax();
+ok("no Layout row and no Web app button in Appearance", await ev(`!document.querySelector('[data-act="look-layout"]') && !/Web app/.test(document.getElementById("appearance")?.textContent || "")`));
+await ev(`(() => { const p = S.profiles[0]; p.look = { ...(p.look || {}), layout: "webapp" }; saveProfile(); render(); return true; })()`); await sleep(300);
+ok("a saved webapp choice is ignored: the page keeps the single column", await ev(`!document.documentElement.dataset.layout && getComputedStyle(document.querySelector(".app .wrap")).display !== "grid"`));
 await view(1900);
-const before = await wrapW();
-await click('[data-act="look-layout"][data-v="webapp"]'); await sleep(300);
-ok("Web app applies at once", await ev(`document.documentElement.dataset.layout === "webapp"`));
-ok("the page is wider at 1900px", (await wrapW()) > before + 100, `${before} -> ${await wrapW()}`);
-ok("the choice is saved on the profile look", await ev(`S.profiles[0].look?.layout === "webapp"`));
-await view(800);
-ok("at 800px Web app looks like App", (await wrapMax()) === appMax800, `${appMax800} -> ${await wrapMax()}`);
-await view(375, 812);
-ok("at 375px nothing overflows", await ev(`document.documentElement.scrollWidth <= innerWidth + 2`));
-await view(1900);
-await ev(`flush()`); await sleep(600);
-ok("it is written to this browser's saved profile", await ev(`Object.keys(localStorage).some(k => k.startsWith("wlh.v62") && /"layout":"webapp"/.test(localStorage.getItem(k)))`));
-await click('[data-act="look-layout"][data-v="app"]'); await sleep(300);
-ok("switching back to App restores the default", await ev(`document.documentElement.dataset.layout === "app"`) && await ev(`S.profiles[0].look?.layout !== "webapp"`));
+ok("at 1900px the page still uses one column", await ev(`getComputedStyle(document.querySelector(".app .wrap")).display !== "grid"`));
+await view(1200);
 
 console.log("--- 3. Coming up today and the score card");
 await goto("#/home");

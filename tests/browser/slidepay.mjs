@@ -184,10 +184,11 @@ await send("Emulation.setEmulatedMedia", { features: [] });
 await ev(`CHECKOUT_URLS.monthly = ""; CHECKOUT_URLS.yearly = ""; true`);
 await sleep(1900);
 
-ok("the plan rows show the real prices and a saving worked out from them", await ev(`(() => { const t = document.querySelector(".prem-store-page").textContent; return /\\$7\\.99/.test(t) && /\\$59\\.99/.test(t) && planSavePct() === 37 && /Save 37%/.test(document.querySelector('[data-v="yearly"] .ps-disc').textContent); })()`));
+// The pricing tiers (Free and Premium cards) replaced the two plan rows: the Premium card has a Monthly/Yearly toggle.
+ok("the Premium card shows the real prices and a saving worked out from them", await ev(`(() => { const q = () => document.querySelector(".prem-store-page").textContent, y = document.querySelector('[data-act="prem-plan"][data-v="yearly"]'); const yearly = /\\$59\\.99/.test(q()); document.querySelector('[data-act="prem-plan"][data-v="monthly"]').click(); const monthly = /\\$7\\.99/.test(document.querySelector(".prem-store-page").textContent); document.querySelector('[data-act="prem-plan"][data-v="yearly"]').click(); return yearly && monthly && planSavePct() === 37 && /Save 37%/.test(document.querySelector('[data-act="prem-plan"][data-v="yearly"]').textContent); })()`));
 ok("no placeholder text is left on the plan rows or the fine print", await ev(`!/\\[PRICE\\]|\\[REAL|TBA/.test(document.querySelector(".prem-store-page").textContent)`));
 await ev(`window.__amt = PREMIUM_PLANS.map(p => p.amount); PREMIUM_PLANS.forEach(p => delete p.amount); render(); true`); await sleep(200);
-ok("without real prices it says Save yearly and invents no number", await ev(`(() => { const d = document.querySelector('[data-v="yearly"] .ps-disc').textContent; return /^Save yearly$/.test(d) && planSavePct() === null && /Price TBA/.test(document.querySelector(".prem-store-page").textContent); })()`));
+ok("without real prices it shows no saving number and says Price TBA", await ev(`(() => { const d = document.querySelector('[data-act="prem-plan"][data-v="yearly"]').textContent; return /^Yearly$/.test(d.trim()) && planSavePct() === null && /Price TBA/.test(document.querySelector(".prem-store-page").textContent); })()`));
 await ev(`PREMIUM_PLANS.forEach((p, i) => { p.amount = window.__amt[i]; }); render(); true`);
 
 console.log("--- licence key")

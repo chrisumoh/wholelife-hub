@@ -65,7 +65,8 @@ jobs:
   browser-tests:
     name: Browser tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # The 42 suites take about 20 minutes one after another (8.6.16); 30 leaves room without letting a hung run go on.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
