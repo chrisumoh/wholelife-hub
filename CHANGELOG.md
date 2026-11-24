@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.18, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.19, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.19 · Nutrition: Portion on Log a meal is a standard dropdown list again
+
+- **Problem:** Since 8.3.34 the Portion box on Log a meal was a wheel where the chosen row is full size and the others fade, and you asked for the normal scrollable list back.
+- **Change:** Portion is a plain dropdown again, the same as the Meal box beside it: it opens a list with Regular, Half, Smaller, Large and Double portion, and on a phone or iPad it uses the device's own picker. The only change is that the Portion select no longer asks for the wheel (data-wheel removed). The wheel code is still in the file and unused, so no other list is affected.
+- **Where:** index.html: nutritionView() (the m-portion select), APP_VERSION, WLH.changelog. tests/browser/pickers.mjs (section 2 now checks the dropdown). docs/BUILD_PLAN.md, README.md, CHANGELOG.md.
+- **How to test:** CHROME=/path/to/chrome CI=1 node tests/browser/pickers.mjs and sectors.mjs. By hand: open Log > Meals and tap Portion: a normal list opens with five choices.
+- **Known limits:** The wheel picker code is left in place for any later list that asks for it. Checked in headless Chrome only, not on a real iPhone or iPad.
 
 ## 8.6.18 · Nutrition: Search more foods from Open Food Facts when you log a meal, off until you turn it on
 

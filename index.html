@@ -3879,7 +3879,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.18", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.19", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3893,6 +3893,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.18", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.19",
+      area:"Nutrition",
+      title:"Portion on Log a meal is a standard dropdown list again",
+      bug:"Since 8.3.34 the Portion box on Log a meal was a wheel where the chosen row is full size and the others fade, and you asked for the normal scrollable list back.",
+      fix:"Portion is a plain dropdown again, the same as the Meal box beside it: it opens a list with Regular, Half, Smaller, Large and Double portion, and on a phone or iPad it uses the device's own picker. The only change is that the Portion select no longer asks for the wheel (data-wheel removed). The wheel code is still in the file and unused, so no other list is affected.",
+      where:"index.html: nutritionView() (the m-portion select), APP_VERSION, WLH.changelog. tests/browser/pickers.mjs (section 2 now checks the dropdown). docs/BUILD_PLAN.md, README.md, CHANGELOG.md.",
+      test:"CHROME=/path/to/chrome CI=1 node tests/browser/pickers.mjs and sectors.mjs. By hand: open Log > Meals and tap Portion: a normal list opens with five choices.",
+      limits:"The wheel picker code is left in place for any later list that asks for it. Checked in headless Chrome only, not on a real iPhone or iPad." },
     { id:"8.6.18",
       area:"Nutrition",
       title:"Search more foods from Open Food Facts when you log a meal, off until you turn it on",
@@ -13424,7 +13432,7 @@ function nutritionView(p){
         ${UI.offNote ? `<p class="small muted full" role="status">${esc(UI.offNote)}</p>` : ""}
         ${prem ? `<div class="nl-chips"><button type="button" class="chip nl-chip" data-act="nl-photo">${icon("camera","",15)} From a photo</button><input type="file" id="meal-shot-in" accept="image/*" capture="environment" hidden><a class="chip nl-chip" href="#/premium/restaurant">${icon("food","",15)} Eating out</a></div>` : ""}
         <div class="nl-calw"><label class="f" for="m-cal">Calories</label><div class="nl-calbox"><input type="number" id="m-cal" min="0" max="5000" value="${UI.prefill?.cal ?? ""}" placeholder="From catalog"><button type="button" class="nl-guess" data-act="mb-guess" aria-label="${esc(tr("Guess the calories"))}">${icon("spark","",14)} ${esc(tr("Guess"))}</button></div></div>
-        <label class="f">Portion<select id="m-portion" data-wheel>${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
+        <label class="f">Portion<select id="m-portion">${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
       </div>
       ${quickLogBlock(date)}
       ${typeof voiceMealButton === "function" ? voiceMealButton(p) : ""}
