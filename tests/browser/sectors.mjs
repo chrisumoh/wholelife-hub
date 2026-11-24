@@ -7,7 +7,8 @@ import { join, extname } from "node:path";
 
 // Run from the repo root:  node tests/browser/sectors.mjs   (needs Node 22+ and Chrome; set CHROME to its path, CI=1 as root)
 // Builds 8.6.8 to 8.6.12: the six-sector revamp (Daily nutrition, Workouts, WL Coach, Profile, Glass & motion, Premium trust and FAQ),
-// in light, dark and OLED, on a desktop and a phone. Real data only: nothing here is sample data.
+// and 8.6.14 to 8.6.15: the Nutrition and Personal coach layout (Log a meal beside Meals on today, the glance tiles and drinks panel,
+// the coach hero, the check-in beside the read-out), in light, dark and OLED, on a desktop and a phone. Real data only: nothing here is sample data.
 // SHOTS=<folder> also saves screenshots there, for looking at.
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
@@ -75,30 +76,78 @@ const contrast = (sel, bgSel) => ev(`(() => { const e = document.querySelector($
 
 // colour of the text against the first ancestor that paints a solid background (a list row has none of its own)
 const contrastUp = sel => ev(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return 0; let b = e; while (b && window.__t.alpha(getComputedStyle(b).backgroundColor) < .95) b = b.parentElement; return window.__t.ratio(getComputedStyle(e).color, getComputedStyle(b || document.body).backgroundColor); })()`);
+// the same, but translucent backgrounds (tinted chips, glass) are laid over whatever is behind them, as the screen does
+const contrastStack = sel => ev(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return 0; const fg = getComputedStyle(e).color, gi = getComputedStyle(e).backgroundImage; const stops = /gradient/.test(gi) ? gi.match(/rgba?\\([^)]+\\)/g) : null; if (stops) return Math.min(...stops.map(c => window.__t.ratio(fg, c))); const layers = []; let b = e; while (b) { const c = getComputedStyle(b).backgroundColor, a = window.__t.alpha(c); if (a > 0) layers.push([window.__t.px(c), a]); if (a >= .95) break; b = b.parentElement; } if (!b) layers.push([window.__t.px(getComputedStyle(document.body).backgroundColor), 1]); let base = layers.pop()[0]; for (const [rgb, a] of layers.reverse()) base = base.map((v, i) => Math.round(rgb[i] * a + v * (1 - a))); return window.__t.ratio(fg, "rgb(" + base.join(",") + ")"); })()`); // a gradient button is measured against each of its colour stops
 
-console.log("--- 1. Daily nutrition: Today's meals as three cards, each with a + Log");
+console.log("--- 1. Daily nutrition (8.6.14): Log a meal beside Meals on today, with today's menu one tap away");
 await view(1280, 900); await setMode("light"); await goto("#/nutrition"); await sleep(400);
-const cards = await ev(`[...document.querySelectorAll("#meals-today .mt-card")].map(c => { const l = c.querySelector(".mt-log"), r = c.getBoundingClientRect(); return { slot: c.dataset.slot, top: Math.round(r.top), link: c.querySelector(".mt-name")?.getAttribute("href"), name: c.querySelector(".mt-name b")?.textContent, cal: c.querySelector(".mt-cal")?.textContent, btn: l?.textContent.trim(), bh: l?.getBoundingClientRect().height }; })`);
-ok("Today's meals is three cards (breakfast, lunch, dinner) in one row", cards.length === 3 && cards.map(c => c.slot).join() === "breakfast,lunch,dinner" && new Set(cards.map(c => c.top)).size === 1, JSON.stringify(cards));
-ok("each card names its dish with a link to the recipe, its calories, and a 44px + Log", cards.every(c => /^#\/recipes\//.test(c.link) && c.name && /^≈\d+ cal$/.test(c.cal) && c.btn === "+ Log" && c.bh >= 43.5), JSON.stringify(cards));
+// does an input's hint fit inside it? A text copy of the field, same size and font, holding the hint, must not scroll
+const fits = id => ev(`(() => { const el = document.getElementById(${JSON.stringify(id)}); if (!el) return false; const cs = getComputedStyle(el), c = el.cloneNode(); c.type = "text"; c.removeAttribute("id"); c.value = el.placeholder; c.style.cssText = "position:fixed;left:0;top:0;width:" + cs.width + ";padding:" + cs.padding + ";font:" + cs.font + ";border:" + cs.border + ";box-sizing:" + cs.boxSizing; document.body.appendChild(c); const r = c.scrollWidth <= c.clientWidth; c.remove(); return r; })()`);
+const lm = await g(".nut-top .nut-log"), mo = await g(".nut-top .nut-meals");
+ok("Log a meal and Meals on today sit side by side at the top of the page", lm && mo && lm.r <= mo.l + 1 && Math.abs(lm.t - mo.t) < 2, JSON.stringify({ lm, mo }));
+const row = await ev(`(() => { const r = document.querySelector(".nut-meals .nm-row"); return r ? { slot: r.querySelector(".nm-slot")?.textContent, ds: r.querySelector(".nm-slot")?.dataset.slot, name: r.querySelector(".nm-line b")?.textContent, total: r.querySelector(".nm-total")?.textContent, extras: !!r.querySelector('[data-act="extras"]'), del: r.querySelector('[data-act="del-meal"]')?.getAttribute("aria-label"), pill: document.querySelector(".nut-meals .pill-goal").textContent } : null; })()`);
+ok("a logged meal shows its slot, name and total, with Extras and a named delete, and the pill adds up the day", row && row.slot === "Lunch" && row.ds === "lunch" && row.name === "Jollof rice" && row.total === "500 cal" && row.extras && row.del === "Delete Jollof rice" && row.pill === "500 cal", JSON.stringify(row));
+const mb = await ev(`(() => { const b = document.querySelector('.nut-meals [data-act="nm-menu"]'), m = document.getElementById("meals-today"); return { t: b?.textContent, exp: b?.getAttribute("aria-expanded"), ctl: b?.getAttribute("aria-controls"), hidden: !!m?.hidden, vis: m?.checkVisibility(), inCard: !!m?.closest(".nut-meals"), h: b?.getBoundingClientRect().height }; })()`);
+ok("today's menu starts folded inside Meals on today, behind a 44px See today's menu button that says it is collapsed", mb.t === "See today's menu" && mb.exp === "false" && mb.ctl === "meals-today" && mb.hidden && !mb.vis && mb.inCard && mb.h >= 43.5, JSON.stringify(mb));
+await ev(`document.querySelector('[data-act="nm-menu"]').focus(); true`); await click('[data-act="nm-menu"]');
+const mo2 = await ev(`(() => { const b = document.querySelector('[data-act="nm-menu"]'), m = document.getElementById("meals-today"); return { t: b.textContent, exp: b.getAttribute("aria-expanded"), vis: m.checkVisibility(), focus: document.activeElement === b }; })()`);
+ok("tapping it opens the menu; the button now says Hide today's menu, is marked expanded, and keeps the focus", mo2.t === "Hide today's menu" && mo2.exp === "true" && mo2.vis && mo2.focus, JSON.stringify(mo2));
+const picks = await ev(`[...document.querySelectorAll("#meals-today .mt-row")].map(c => { const l = c.querySelector(".mt-log"); return { slot: c.dataset.slot, link: c.querySelector(".mt-name")?.getAttribute("href"), name: c.querySelector(".mt-name b")?.textContent, info: c.querySelector(".tiny")?.textContent, btn: l?.textContent.trim(), bh: l?.getBoundingClientRect().height, al: l?.getAttribute("aria-label") }; })`);
+ok("the menu lists breakfast, lunch and dinner, each linking to its recipe with its calories and a named 44px + Log", picks.length === 3 && picks.map(c => c.slot).join() === "breakfast,lunch,dinner" && picks.every(c => /^#\/recipes\//.test(c.link) && c.name && /≈\d+ cal/.test(c.info) && c.btn === "+ Log" && c.bh >= 43.5 && c.al.startsWith("Log " + c.name)), JSON.stringify(picks));
 ok("the dish name and its details still sit on separate lines (the Meals clean-up from 8.x)", await ev(`[...document.querySelectorAll("#meals-today .li .grow")].every(g => { const b = g.querySelector("b"), t = g.querySelector(".tiny"); return getComputedStyle(b).display === "block" && getComputedStyle(t).display === "block" && Math.abs(b.getBoundingClientRect().left - t.getBoundingClientRect().left) < 1 && t.getBoundingClientRect().top >= b.getBoundingClientRect().bottom - 1; })`));
 const nMeals = await ev(`onDate("meals", today()).length`);
-await click('#meals-today .mt-card[data-slot="dinner"] .mt-log'); await sleep(300);
-const lg = await ev(`(() => { const ms = onDate("meals", today()), m = ms.find(x => x.slot === "dinner"), d = dailyPicks(today(), P())[2]; return { n: ms.length, ok: !!m && m.name === d.n && m.cal === Math.round(d.cal) && m.dish === (d.id || null) && m.date === today(), extras: /Anything added\\?/.test(document.querySelector(".nut-side")?.textContent || ""), pend: UI.pendingExtras === m?.id }; })()`);
-ok("+ Log on the Dinner card logs that dish for today, one regular portion, and asks about extras", lg.n === nMeals + 1 && lg.ok && lg.extras && lg.pend, JSON.stringify(lg));
+await click('#meals-today .mt-row[data-slot="dinner"] .mt-log'); await sleep(300);
+const lg = await ev(`(() => { const ms = onDate("meals", today()), m = ms.find(x => x.slot === "dinner"), d = dailyPicks(today(), P())[2]; return { n: ms.length, ok: !!m && m.name === d.n && m.cal === Math.round(d.cal) && m.dish === (d.id || null) && m.date === today(), extras: /Anything added\\?/.test(document.querySelector(".nut-top")?.textContent || ""), pend: UI.pendingExtras === m?.id, menu: UI.nmMenu }; })()`);
+ok("+ Log on the dinner pick logs that dish for today, one regular portion, asks about extras in its place, and folds the menu", lg.n === nMeals + 1 && lg.ok && lg.extras && lg.pend && lg.menu === false, JSON.stringify(lg));
 await ev(`(() => { const m = onDate("meals", today()).find(x => x.slot === "dinner"); removeEntry("meals", m.id); UI.pendingExtras = null; render(); return true; })()`); await sleep(300);
-ok("removing it again leaves the meals as they were", await ev(`onDate("meals", today()).length`) === nMeals);
+ok("removing it again leaves the meals as they were, with Meals on today back beside the form", await ev(`onDate("meals", today()).length`) === nMeals && await ev(`!!document.querySelector(".nut-top .nut-meals")`));
+await ev(`UI.navDate = addDays(today(), -9); render(); true`); await sleep(300);
+const em = await ev(`(() => { const c = document.querySelector(".nut-meals"); return { h2: c.querySelector("h2").textContent, txt: c.querySelector(".nm-etext")?.textContent, btn: !!c.querySelector('.nm-empty [data-act="nm-menu"]'), pill: c.querySelector(".pill-goal").textContent, bowl: c.querySelector(".nm-bowl")?.getAttribute("aria-hidden") }; })()`);
+ok("a day with nothing logged says so in one line that names the day, and still offers today's menu", /^Meals on /.test(em.h2) && !/today/.test(em.h2) && /^No meals logged on .+\. Log one, or pick from today's menu\.$/.test(em.txt) && em.btn && em.pill === "0 cal" && em.bowl === "true", JSON.stringify(em));
+await ev(`UI.navDate = today(); render(); true`); await sleep(250);
+const tag0 = await ev(`(() => ({ tag: document.getElementById("m-slot-tag")?.textContent, want: tr(SLOTS.find(s => s[0] === val("m-slot"))?.[1] || "x") }))()`);
+ok("the tag beside Log a meal names the meal the form will log", tag0.tag === tag0.want, JSON.stringify(tag0));
+await ev(`(() => { const s = document.getElementById("m-slot"); s.value = "breakfast"; s.dispatchEvent(new Event("change", { bubbles: true })); return true; })()`); await sleep(150);
+ok("choosing Breakfast changes the tag at once", await ev(`document.getElementById("m-slot-tag").textContent === "Breakfast" && UI.mSlot === "breakfast"`));
+await ev(`render(); true`); await sleep(200);
+ok("a redraw keeps Breakfast in both the Meal menu and the tag", await ev(`val("m-slot") === "breakfast" && document.getElementById("m-slot-tag").textContent === "Breakfast"`));
+await ev(`(() => { document.getElementById("m-name").value = "Waakye"; document.getElementById("m-cal").value = "600"; return true; })()`); await click('[data-act="log-meal"]'); await sleep(300);
+ok("Log meal logs it as breakfast, and the next meal goes back to the time-of-day guess", await ev(`(() => { const m = onDate("meals", today()).find(x => x.name === "Waakye"); const ok = !!m && m.slot === "breakfast" && m.cal === 600 && UI.mSlot == null; if (m) removeEntry("meals", m.id); UI.pendingExtras = null; render(); return ok; })()`));
+await sleep(250);
+const gs = await ev(`(() => { const b = document.querySelector(".nl-calbox .nl-guess"), i = document.getElementById("m-cal"), br = b.getBoundingClientRect(), ir = i.getBoundingClientRect(); return { beside: Math.abs(br.left - ir.right) < 1.5 && Math.abs(br.top - ir.top) < 1.5 && Math.abs(br.bottom - ir.bottom) < 1.5, h: br.height, label: document.querySelector('label[for="m-cal"]')?.textContent, al: b.getAttribute("aria-label"), t: b.textContent.trim(), type: b.type }; })()`);
+ok("Guess is joined to the right end of the Calories box, the same height, 44px, named, and never covers what is typed", gs.beside && gs.h >= 43.5 && gs.label === "Calories" && gs.al === "Guess the calories" && gs.t === "Guess" && gs.type === "button", JSON.stringify(gs));
+ok("the Calories hint fits in the box beside Guess", await fits("m-cal"));
+await ev(`document.getElementById("m-name").value = "rice and stew with chicken"; true`); await click(".nl-guess"); await sleep(300);
+ok("Guess with a meal typed opens the meal builder with what was typed", await ev(`!!UI.mealBuild && UI.mealBuild.text === "rice and stew with chicken" && UI.mealBuild.items.length > 0`), await ev(`JSON.stringify(UI.mealBuild || null).slice(0, 200)`));
+await ev(`UI.mealBuild = null; render(); document.getElementById("m-name").value = ""; true`); await sleep(250);
 
-console.log("--- 2. Daily nutrition: Log a meal beside a stack of glance, drinks and weight");
-const lm = await g("#m-name"), st = await g(".nut-side"), gl = await g(".nut-glance"), dr = await g(".nut-side .drinkbox"), wt = await g(".nut-weight");
-ok("Log a meal sits on the left and the glance, drinks and weight cards stack on the right, in that order", lm && st && gl && dr && wt && lm.r < st.l + 1 && gl.t < dr.t && dr.t < wt.t && Math.abs(gl.l - dr.l) < 1 && Math.abs(gl.l - wt.l) < 1, JSON.stringify({ lm, st, gl, dr, wt }));
-const gtiles = await ev(`[...document.querySelectorAll(".nut-glance .gl-tile")].map(t => t.children[0].textContent + " " + t.children[1].textContent)`);
-ok("the glance card shows Meals, Snacks and what is Left of the 2,000 calorie target", gtiles.join("|") === "Meals 500|Snacks 0|Left 1,500", gtiles.join("|"));
-ok("its ring reads 25% and says so to a screen reader", await ev(`(() => { const r = document.querySelector(".nut-glance .ring-wrap"); return !!r && /25%/.test(r.textContent) && /25% of your 2,000 calorie target/.test(r.getAttribute("aria-label")); })()`));
+console.log("--- 2. Daily nutrition (8.6.14): Today at a glance in four tiles, and Drinks · Alcohol opening a panel");
+const gl = await g(".nut-glance"), top = await g(".nut-top");
+ok("the glance card comes after the top row", gl && top && gl.t >= top.b - 1, JSON.stringify({ gl, top }));
+const gt = await ev(`[...document.querySelectorAll(".nut-glance .gl-tile")].map(t => t.innerText.replace(/\\s+/g, " ").trim())`);
+ok("four tiles: Meals, Snacks, the Total against the target, and Drinks · Alcohol", gt.length === 4 && gt[0] === "Meals 1" && gt[1] === "Snacks 0" && gt[2] === "Total 500 cal 1,500 left of 2,000" && gt[3] === "Drinks · Alcohol Nothing today", gt.join(" | "));
+ok("the total's bar shows a quarter of the target and is hidden from screen readers, since the text says it", await ev(`(() => { const b = document.querySelector(".nut-glance .gl-bar"); return !!b && b.getAttribute("aria-hidden") === "true" && b.querySelector("i").style.width === "25%" && !b.classList.contains("over"); })()`));
+await ev(`P().calorieGoal = 400; render(); true`); await sleep(250);
+ok("over the target the tile says how far over, and the bar turns to its over colour", await ev(`/100 over 400/.test(document.querySelector(".nut-glance .gl-sub").textContent) && document.querySelector(".nut-glance .gl-bar").classList.contains("over")`));
 await ev(`P().calorieGoal = null; render(); true`); await sleep(250);
-ok("with no calorie target there is no ring, and the third tile says Total instead of Left", await ev(`!document.querySelector(".nut-glance .ring-wrap") && /Total\\s*500/.test(document.querySelector(".nut-glance .gl-tiles").textContent.replace(/\\s+/g, " "))`));
+ok("with no calorie target the Total tile shows only the total, with no bar", await ev(`!document.querySelector(".nut-glance .gl-bar") && !document.querySelector(".nut-glance .gl-sub") && /^Total\\s*500 cal$/.test(document.querySelectorAll(".nut-glance .gl-tile")[2].innerText.replace(/\\s+/g, " ").trim())`));
 await ev(`P().calorieGoal = 2000; render(); true`); await sleep(250);
-ok("Log your weight keeps its field, date, Save, hint and the recent weigh-ins", await ev(`!!document.querySelector(".nut-weight #w-val") && !!document.querySelector(".nut-weight #w-date") && !!document.querySelector('.nut-weight [data-act="log-weight"]') && /however you like/.test(document.querySelector(".nut-weight").textContent)`));
+const dt0 = await ev(`(() => { const b = document.querySelector(".gl-drinks"); return { tag: b.tagName, exp: b.getAttribute("aria-expanded"), ctl: b.getAttribute("aria-controls"), panel: !!document.getElementById("drinks-panel"), h: b.getBoundingClientRect().height }; })()`);
+ok("the drinks tile is a button, marked collapsed, with no panel on the page yet", dt0.tag === "BUTTON" && dt0.exp === "false" && dt0.ctl === null && !dt0.panel && dt0.h >= 43.5, JSON.stringify(dt0));
+await ev(`document.querySelector(".gl-drinks").focus(); true`); await click(".gl-drinks");
+const dt1 = await ev(`(() => { const b = document.querySelector(".gl-drinks"), p = document.getElementById("drinks-panel"); return { exp: b.getAttribute("aria-expanded"), ctl: b.getAttribute("aria-controls"), panel: !!p, lab: p && document.getElementById(p.getAttribute("aria-labelledby"))?.textContent, form: !!p?.querySelector("#dr-k") && !!p?.querySelector('[data-act="drink-log"]'), below: !!p && p.getBoundingClientRect().top >= document.querySelector(".nut-glance").getBoundingClientRect().bottom - 1, close: p?.querySelector('[data-act="drinks-tile"]')?.textContent }; })()`);
+ok("tapping it opens the drinks panel under the glance card, named by its heading, with the whole drink form and a Close button", dt1.exp === "true" && dt1.ctl === "drinks-panel" && dt1.panel && dt1.lab === "Drinks · Alcohol" && dt1.form && dt1.below && dt1.close === "Close", JSON.stringify(dt1));
+await ev(`document.getElementById("dr-qty").value = "1"; true`); await click('#drinks-panel [data-act="drink-log"]'); await sleep(300);
+const dl = await ev(`(() => { const d = drinksOn(today()); return { n: d.length, tile: document.querySelector(".gl-drinks .gl-dval").textContent.trim(), want: "1 drink · " + drinkKcalOn(today()).toLocaleString() + " cal", total: document.querySelectorAll(".nut-glance .gl-tile .num")[2].textContent, wantT: intakeOn(today()).toLocaleString() + " cal", more: intakeOn(today()) > 500 }; })()`);
+ok("a drink logged from the panel shows on the tile, and counts in the day's total", dl.n === 1 && dl.tile === dl.want && dl.total === dl.wantT && dl.more, JSON.stringify(dl));
+await click('#drinks-panel [data-act="drink-del"]'); await sleep(300);
+ok("deleting it from the panel takes it off the tile again", await ev(`drinksOn(today()).length === 0 && document.querySelector(".gl-drinks .gl-dval").textContent.trim() === "Nothing today"`));
+await click('#drinks-panel [data-act="drinks-tile"]');
+ok("Close folds the panel away and puts the focus back on the drinks tile", await ev(`!document.getElementById("drinks-panel") && document.activeElement?.classList.contains("gl-drinks") && document.querySelector(".gl-drinks").getAttribute("aria-expanded") === "false"`));
+const wr = await ev(`(() => { const r = [...document.querySelectorAll(".nut-weight .nw-row > *")].map(e => e.getBoundingClientRect()); return { n: r.length, oneRow: new Set(r.map(x => Math.round(x.bottom))).size === 1, save: document.querySelector('.nut-weight .nw-row [data-act="log-weight"]')?.textContent }; })()`);
+ok("Log your weight puts the weight, the date and Save on one row", wr.n === 3 && wr.oneRow && wr.save === "Save", JSON.stringify(wr));
+ok("the weight hint fits in its box", await fits("w-val"));
+ok("Log your weight keeps its hint, the units it accepts and the recent weigh-ins", await ev(`(() => { const c = document.querySelector(".nut-weight"); return /however you like/.test(c.textContent) && /Accepts lb, kg or st/.test(c.textContent) && !!c.querySelector('[data-act="del-weight"]') === entries("weights").length > 0; })()`));
 ok("the 300-odd dish suggestions are not part of the redrawn page; the meal box still points at them", await ev(`!document.querySelector("#sec-nutrition datalist, #app #dishlist") && document.getElementById("m-name").getAttribute("list") === "dishlist"`));
 await send("Emulation.setFocusEmulationEnabled", { enabled: true }); // headless Chrome only sends focus events to a page that has focus
 await ev(`document.getElementById("m-name").focus(); true`); await sleep(100);
@@ -107,16 +156,15 @@ await ev(`document.getElementById("m-name").blur(); render(); document.getElemen
 ok("a redraw and a second focus keep exactly one list, unchanged", await ev(`document.querySelectorAll("#dishlist").length === 1 && document.getElementById("dishlist").options.length === DISHES.length + dishAltOptions().length && document.getElementById("m-name").list?.id === "dishlist"`));
 await send("Emulation.setFocusEmulationEnabled", { enabled: false });
 await ev(`(() => { const i = document.getElementById("w-val"); i.value = "70"; document.querySelector('[data-act="log-weight"]').click(); return true; })()`); await sleep(400);
-ok("saving a weight from the stacked card still records it", await ev(`entries("weights").some(w => Math.round(w.kg) === 70 || Math.abs(w.kg - 31.75) < .5)`));
-ok("the day arrows in the glance card still step back a day and forward again", await (async () => { await click('.nut-glance [data-act="day"][data-v="-1"]'); const a = await ev(`UI.navDate === addDays(today(), -1) && /at a glance/.test(document.querySelector(".nut-glance h2").textContent) && !/^Today/.test(document.querySelector(".nut-glance h2").textContent)`); await click('.nut-glance [data-act="day"][data-v="1"]'); return a && await ev(`UI.navDate === today()`); })());
+ok("saving a weight from the one-row card still records it", await ev(`entries("weights").some(w => Math.round(w.kg) === 70 || Math.abs(w.kg - 31.75) < .5)`));
+ok("the day arrows in the glance card still step back a day and forward again", await (async () => { await click('.nut-glance [data-act="day"][data-v="-1"]'); const a = await ev(`UI.navDate === addDays(today(), -1) && /at a glance/.test(document.querySelector(".nut-glance h2").textContent) && !/^Today/.test(document.querySelector(".nut-glance h2").textContent) && document.querySelector(".nut-glance .gl-date").textContent === fmtDay(addDays(today(), -1))`); await click('.nut-glance [data-act="day"][data-v="1"]'); return a && await ev(`UI.navDate === today() && document.querySelector('.nut-glance [data-act="day"][data-v="1"]').disabled`); })());
 
-console.log("--- 3. Daily nutrition: Meals on today beside Last 7 days, a chart you can read");
-const mo = await g(".nut-lower .nut-meals"), l7 = await g(".nut-lower > section:last-child");
-ok("Meals on today and Last 7 days sit side by side", mo && l7 && mo.r <= l7.l + 1 && Math.abs(mo.t - l7.t) < 2, JSON.stringify({ mo, l7 }));
-ok("the Last 7 days card names the target and the bars say their day and calories on hover", await ev(`(() => { const c = [...document.querySelectorAll(".nut-lower section")].pop(); const ts = [...c.querySelectorAll("rect > title")].map(t => t.textContent); return /Target 2,000 cal/.test(c.querySelector(".pill-goal")?.textContent || "") && ts.length === 6 && ts.every(t => /: [\\d,]+ cal/.test(t)); })()`));
+console.log("--- 3. Daily nutrition (8.6.14): Last 7 days beside Log your weight, a chart you can read");
+const l7 = await g(".nut-lower .nut-week"), wt = await g(".nut-lower .nut-weight"), gl2 = await g(".nut-glance");
+ok("Last 7 days and Log your weight sit side by side under the glance card", l7 && wt && l7.r <= wt.l + 1 && Math.abs(l7.t - wt.t) < 2 && l7.t >= gl2.b - 1, JSON.stringify({ l7, wt }));
+ok("the Last 7 days card names the target and the bars say their day and calories on hover", await ev(`(() => { const c = document.querySelector(".nut-week"); const ts = [...c.querySelectorAll("rect > title")].map(t => t.textContent); return /Target 2,000 cal/.test(c.querySelector(".pill-goal")?.textContent || "") && ts.length === 6 && ts.every(t => /: [\\d,]+ cal/.test(t)); })()`));
 const fsz = w => ev(`(() => { const s = document.querySelector(".chart-svg.narrow"), k = s.getBoundingClientRect().width / s.viewBox.baseVal.width; return Math.min(...[...s.querySelectorAll("text")].map(t => parseFloat(t.getAttribute("font-size")) * k)); })()`);
 ok("the chart text is 9px or more on a desktop", await fsz() >= 9, await fsz());
-ok("the Meals on today card keeps its meal, calories, Extras and delete", await ev(`(() => { const c = document.querySelector(".nut-meals"); return /Jollof rice/.test(c.textContent) && !!c.querySelector('[data-act="extras"]') && !!c.querySelector('[data-act="del-meal"]'); })()`));
 
 console.log("--- 4. Daily nutrition: the Snap your plate opt-in is compact, with the privacy points one tap away");
 await ev(`P().photoAiConsent = false; render(); true`); await sleep(300);
@@ -129,18 +177,23 @@ await click('#food-photo-optin [data-act="photoai-optin"]'); await sleep(300);
 ok("Allow still records the choice and swaps the card for the photo estimate", await ev(`P().photoAiConsent === true && !!document.getElementById("food-photo") && !document.getElementById("food-photo-optin")`));
 await ev(`P().photoAiConsent = false; render(); true`); await sleep(200);
 
-console.log("--- 5. Daily nutrition: dark, OLED and a phone");
-for (const mode of ["dark", "oled"]) { await setMode(mode); await sleep(200);
-  ok(`${mode}: + Log, the target pill and the goal text keep a 4.5:1 contrast`, await contrast("#meals-today .mt-log") >= 4.5 && await contrast(".nut-lower .pill-goal") >= 4.5 && await contrast(".nut-glance .gl-tile .num", ".nut-glance .gl-tile") >= 4.5, [await contrast("#meals-today .mt-log"), await contrast(".nut-lower .pill-goal")].join(","));
+console.log("--- 5. Daily nutrition: light, dark, OLED and a phone");
+await ev(`UI.nmMenu = true; render(); true`); await sleep(200);
+const nutContrast = async () => { const r = { log: await contrast("#meals-today .mt-log"), pill: await contrast(".nut-lower .pill-goal"), num: await contrast(".nut-glance .gl-tile .num", ".nut-glance .gl-tile"), sub: await contrastStack(".nut-glance .gl-sub"), label: await contrastStack(".nut-glance .gl-tile .muted"), slot: await contrast(".nut-meals .nm-slot"), tag: await contrast("#m-slot-tag"), guess: await contrast(".nl-guess"), menu: await contrast(".nm-menu-btn") }; return r; };
+for (const mode of ["light", "dark", "oled"]) { await setMode(mode); await sleep(200);
+  const c = await nutContrast();
+  ok(`${mode}: + Log, the target pill, the glance numbers, the slot chip and tag, Guess and the menu button keep a 4.5:1 contrast`, Object.values(c).every(x => x >= 4.5), JSON.stringify(Object.fromEntries(Object.entries(c).map(([k, v]) => [k, +v.toFixed(2)]))));
   await shot("nutrition-1280-" + mode); }
 await setMode("light"); await sleep(200);
-ok("light: + Log, the target pill and the glance numbers keep a 4.5:1 contrast", await contrast("#meals-today .mt-log") >= 4.5 && await contrast(".nut-lower .pill-goal") >= 4.5 && await contrast(".nut-glance .gl-tile .num", ".nut-glance .gl-tile") >= 4.5);
-await shot("nutrition-1280-light");
 await view(390, 844); await sleep(500);
-const ph = await ev(`(() => ({ hs: document.documentElement.scrollWidth > innerWidth, rows: [...document.querySelectorAll("#meals-today .mt-card")].map(c => { const r = c.getBoundingClientRect(), b = c.querySelector(".mt-log").getBoundingClientRect(); return { w: r.width, sameRow: Math.abs((b.top + b.height / 2) - (r.top + r.height / 2)) < r.height / 2 }; }) }))()`);
-ok("on a phone the page does not scroll sideways and each meal card keeps its + Log on the same row as the dish", !ph.hs && ph.rows.length === 3 && ph.rows.every(r => r.sameRow), JSON.stringify(ph));
+const ph = await ev(`(() => { const lg = document.querySelector(".nut-log").getBoundingClientRect(), ml = document.querySelector(".nut-meals").getBoundingClientRect(), tl = [...document.querySelectorAll(".nut-glance .gl-tile")].map(t => Math.round(t.getBoundingClientRect().top));
+  return { hs: document.documentElement.scrollWidth > innerWidth, stacked: ml.top >= lg.bottom - 1 && Math.abs(ml.left - lg.left) < 1, tileRows: new Set(tl).size, rows: [...document.querySelectorAll("#meals-today .mt-row")].map(c => { const r = c.getBoundingClientRect(), b = c.querySelector(".mt-log").getBoundingClientRect(); return { sameRow: Math.abs((b.top + b.height / 2) - (r.top + r.height / 2)) < r.height / 2, inside: b.right <= r.right + 1 }; }) }; })()`);
+ok("on a phone the page does not scroll sideways, Meals on today sits under the form, and the glance tiles go two by two", !ph.hs && ph.stacked && ph.tileRows === 2, JSON.stringify(ph));
+ok("on a phone each menu row keeps its + Log on the same row as the dish", ph.rows.length === 3 && ph.rows.every(r => r.sameRow && r.inside), JSON.stringify(ph.rows));
+ok("on a phone the Calories and weight hints still fit", await fits("m-cal") && await fits("w-val"));
 ok("on a phone the chart text is still 9px or more", await fsz() >= 9, await fsz());
 await shot("nutrition-390");
+await ev(`UI.nmMenu = false; render(); true`);
 await view(1280, 900);
 
 console.log("--- 6. Workouts: KPI row first, photo card beside Import, quick picks, minute chips and a live estimate");
@@ -215,46 +268,98 @@ const worstContrast = async (hideSel, textSel) => {
     res(worst); }; im.src = "data:image/png;base64,${sh.data}"; })`);
 };
 
-console.log("--- 8. WL Coach: a chat window (signed in, with consent)");
+console.log("--- 8. WL Coach (8.6.10, 8.6.15): one chat card (signed in, with consent)");
 await ev(`SB.user = { id: "u_me", email: "me@example.com" }; window.__calls = []; window.__delay = 0;
   window.fetch = async (u, o) => { if (String(u).includes("/functions/v1/wl-coach")) { window.__calls.push({ u: String(u), o }); if (window.__delay) await new Promise(r => setTimeout(r, window.__delay)); return new Response(JSON.stringify({ state: "ok", reply: "Eggs <b>and</b> plantain, then water." }), { status: 200 }); } return new Response("{}", { status: 404 }); };
   sbClient().auth.getSession = async () => ({ data: { session: { access_token: "tok-123" } } });
   P().coachChatConsent = true; UI.wlc = {}; true`);
 await view(1280, 900); await setMode("light"); await goto("#/coach"); await sleep(500);
-const head = await ev(`(() => { const c = document.querySelector("#wlc.wlc-card"); return c ? { av: !!c.querySelector(".wlc-head .wlc-av .ico, .wlc-head .wlc-av svg"), eyebrow: c.querySelector(".wlc-title .eyebrow")?.textContent, h2: c.querySelector(".wlc-title h2")?.textContent, note: c.querySelector(".wlc-note")?.textContent, empty: !!c.querySelector(".wlc-empty"), msgs: c.querySelectorAll(".wlc-msg").length } : null; })()`);
-ok("the chat card has an avatar, the same heading as before, and the honest note: it can't see your logs, not medical advice", head && head.av && head.eyebrow === "Chat with your coach" && head.h2 === "Ask WL Coach" && /Can't see your logs yet/.test(head.note) && /Not medical advice/.test(head.note), JSON.stringify(head));
-ok("before the first question the stream says so instead of showing a made-up conversation", head.empty && head.msgs === 0, JSON.stringify(head));
+const head = await ev(`(() => { const c = document.querySelector("#wlc.wlc-card"); if (!c) return null; const r = s => c.querySelector(s)?.getBoundingClientRect(); const hd = r(".wlc-head"), ch = r(".wlc-chips"), lg = r("#wlc-log"), cp = r(".wlc-composer"); return { h2: c.querySelector(".wlc-head h2")?.textContent, note: c.querySelector(".wlc-head .wlc-note")?.textContent, msgs: c.querySelectorAll(".wlc-msg").length, order: hd.bottom <= ch.top + 1 && ch.bottom <= cp.top + 1, logH: lg.height, logEmpty: c.querySelector("#wlc-log").children.length === 0, live: c.querySelector("#wlc-log").getAttribute("aria-live") }; })()`);
+ok("the chat card has its heading with the honest note beside it: it can't see your logs, not medical advice", head && head.h2 === "Ask WL Coach" && /Can't see your logs yet/.test(head.note) && /Not medical advice/.test(head.note), JSON.stringify(head));
+ok("the suggestions come first, then the box; before the first question there is no made-up conversation and the empty thread takes no room", head.order && head.msgs === 0 && head.logEmpty && head.logH <= 1 && head.live === "polite", JSON.stringify(head));
 const asks = await ev(`[...document.querySelectorAll(".wlc-chips .chip")].map(c => ({ t: c.textContent.trim(), act: c.dataset.act, h: c.getBoundingClientRect().height }))`);
 ok("four suggested questions, each 44px", asks.length === 4 && asks.every(c => c.act === "wlc-ask" && c.h >= 43.5 && c.t.endsWith("?")), JSON.stringify(asks));
 await click('.wlc-chips .chip');
 ok("tapping a suggestion fills the box and focuses it", await ev(`document.getElementById("wlc-q").value === "What should I eat after a workout?" && document.activeElement.id === "wlc-q"`));
-ok("tapping a suggestion sends nothing (a send goes to a server, so only the person's own Send does it)", (await ev(`window.__calls.length`)) === 0);
+ok("tapping a suggestion sends nothing (a send goes to a server, so only the person's own Ask does it)", (await ev(`window.__calls.length`)) === 0);
 ok("there is exactly one counter and it shows the length", await ev(`document.querySelectorAll("#wlc .wl-count").length === 1 && document.querySelector("#wlc .wl-count").textContent === "34 / 1000"`), await ev(`document.querySelector("#wlc .wl-count")?.textContent`));
-const sendBtn = await ev(`(() => { const b = document.querySelector('[data-act="wlc-send"]'), r = b.getBoundingClientRect(); return { w: r.width, h: r.height, radius: getComputedStyle(b).borderRadius, label: b.getAttribute("aria-label"), dis: b.disabled, svg: !!b.querySelector("svg") }; })()`);
-ok("the send button is a round 44px paper plane with a name", sendBtn.w >= 43.5 && sendBtn.h >= 43.5 && parseFloat(sendBtn.radius) >= 20 && sendBtn.label === "Send" && sendBtn.svg && !sendBtn.dis, JSON.stringify(sendBtn));
+const sendBtn = await ev(`(() => { const b = document.querySelector('[data-act="wlc-send"]'), r = b.getBoundingClientRect(); return { h: r.height, t: b.textContent.trim(), type: b.type, dis: b.disabled, inBox: !!b.closest(".wlc-composer") }; })()`);
+ok("the Ask button sits in the box, 44px tall", sendBtn.h >= 43.5 && sendBtn.t === "Ask" && sendBtn.type === "button" && !sendBtn.dis && sendBtn.inBox, JSON.stringify(sendBtn));
 await ev(`window.__delay = 900; true`);
 await click('[data-act="wlc-send"]'); await sleep(250);
-const busy = await ev(`(() => { const t = document.querySelector(".wlc-typing"), b = document.querySelector('[data-act="wlc-send"]'); return { typing: !!t, role: t?.getAttribute("role"), label: t?.getAttribute("aria-label"), dots: t?.querySelectorAll("span").length, dis: b.disabled, bl: b.getAttribute("aria-label"), mine: document.querySelector(".wlc-msg.me") ? 1 : 0 }; })()`);
-ok("while it thinks: three dots (named for screen readers) and the send button is off and says Thinking…", busy.typing && busy.role === "status" && /thinking/i.test(busy.label) && busy.dots === 3 && busy.dis && busy.bl === "Thinking…", JSON.stringify(busy));
+const busy = await ev(`(() => { const t = document.querySelector(".wlc-typing"), b = document.querySelector('[data-act="wlc-send"]'); return { typing: !!t, role: t?.getAttribute("role"), label: t?.getAttribute("aria-label"), dots: t?.querySelectorAll("span").length, dis: b.disabled, bt: b.textContent.trim(), mine: document.querySelector(".wlc-msg.me") ? 1 : 0 }; })()`);
+ok("while it thinks: three dots (named for screen readers) and the button is off and says Thinking…", busy.typing && busy.role === "status" && /thinking/i.test(busy.label) && busy.dots === 3 && busy.dis && busy.bt === "Thinking…", JSON.stringify(busy));
 ok("the question went out once, with the person's token", await waitFor(`window.__calls.length === 1`) && (await ev(`window.__calls[0].o.headers.authorization`)) === "Bearer tok-123" && JSON.parse(await ev(`window.__calls[0].o.body`)).message === "What should I eat after a workout?");
 ok("the answer arrives and the dots go", await waitFor(`!document.querySelector(".wlc-typing") && document.querySelectorAll(".wlc-msg").length === 2`, 5000));
-const conv = await ev(`(() => { const ms = [...document.querySelectorAll("#wlc-log .wlc-msg")], log = document.getElementById("wlc-log").getBoundingClientRect(); return { me: ms.map(m => m.classList.contains("me")), who: ms.map(m => m.querySelector(".sr-only")?.textContent), t: ms.map(m => m.querySelector(".wlc-bubble").textContent), right: ms.map(m => Math.round(m.querySelector(".wlc-bubble").getBoundingClientRect().right)), left: ms.map(m => Math.round(m.querySelector(".wlc-bubble").getBoundingClientRect().left)), logRight: Math.round(log.right), logLeft: Math.round(log.left), bold: !!document.querySelector("#wlc-log b"), q: document.getElementById("wlc-q").value, cnt: document.querySelector("#wlc .wl-count").textContent }; })()`);
+const conv = await ev(`(() => { const ms = [...document.querySelectorAll("#wlc-log .wlc-msg")], log = document.getElementById("wlc-log").getBoundingClientRect(); return { me: ms.map(m => m.classList.contains("me")), who: ms.map(m => m.querySelector(".sr-only")?.textContent), t: ms.map(m => m.querySelector(".wlc-bubble").textContent), right: ms.map(m => Math.round(m.querySelector(".wlc-bubble").getBoundingClientRect().right)), left: ms.map(m => Math.round(m.querySelector(".wlc-bubble").getBoundingClientRect().left)), logRight: Math.round(log.right), logLeft: Math.round(log.left), bold: !!document.querySelector("#wlc-log b"), q: document.getElementById("wlc-q").value, cnt: document.querySelector("#wlc .wl-count").textContent, bt: document.querySelector('[data-act="wlc-send"]').textContent.trim() }; })()`);
 ok("your question sits on the right and the coach's answer on the left, each labelled for screen readers", conv.me.join() === "true,false" && conv.who.join("|") === "You: |WL Coach: " && conv.right[0] > conv.logRight - 40 && conv.left[1] < conv.logLeft + 40, JSON.stringify(conv));
 ok("the answer is plain text: the <b> the server sent is shown as text, not as bold", conv.t[1] === "Eggs <b>and</b> plantain, then water." && !conv.bold, JSON.stringify(conv));
-ok("the box is empty again and the counter says 0 / 1000", conv.q === "" && conv.cnt === "0 / 1000", JSON.stringify(conv));
+ok("the box is empty again, the counter says 0 / 1000 and the button says Ask", conv.q === "" && conv.cnt === "0 / 1000" && conv.bt === "Ask", JSON.stringify(conv));
 await ev(`window.__delay = 0; UI.wlc.msgs = Array.from({ length: 10 }, (_, i) => ({ me: i % 2 === 0, t: "Message number " + i + " in a long chat about training, food and rest. ".repeat(3) })); render(); true`); await sleep(200);
 await ev(`document.getElementById("wlc-q").value = "One more?"; true`); await click('[data-act="wlc-send"]'); await sleep(500);
-ok("a long chat scrolls inside the stream and stays at the newest message", await ev(`(() => { const l = document.getElementById("wlc-log"); return l.scrollHeight > l.clientHeight + 40 && l.scrollTop + l.clientHeight >= l.scrollHeight - 3; })()`), await ev(`(() => { const l = document.getElementById("wlc-log"); return [l.scrollTop, l.clientHeight, l.scrollHeight].join("/"); })()`));
+ok("a long chat scrolls inside the thread and stays at the newest message", await ev(`(() => { const l = document.getElementById("wlc-log"); return l.scrollHeight > l.clientHeight + 40 && l.scrollTop + l.clientHeight >= l.scrollHeight - 3; })()`), await ev(`(() => { const l = document.getElementById("wlc-log"); return [l.scrollTop, l.clientHeight, l.scrollHeight].join("/"); })()`));
 ok("the page itself is not pushed past the viewport by a long chat", await ev(`document.documentElement.scrollWidth <= innerWidth && document.getElementById("wlc").getBoundingClientRect().height < 900`));
 for (const mode of ["light", "dark", "oled"]) { await setMode(mode); await goto("#/coach"); await sleep(250);
-  const a = await contrast(".wlc-msg.me .wlc-bubble"), b = await contrast(".wlc-msg:not(.me) .wlc-bubble"), c = await contrast(".wlc-note"), d = await contrast(".wlc-empty", ".wlc-stream");
-  ok(`${mode}: your bubble, the coach's bubble and the note meet 4.5:1`, a >= 4.5 && b >= 4.5 && c >= 4.5, [a, b, c].map(x => x.toFixed(2)).join(","));
+  const a = await contrast(".wlc-msg.me .wlc-bubble"), b = await contrast(".wlc-msg:not(.me) .wlc-bubble"), c = await contrastStack(".wlc-note"), d = await contrastStack('[data-act="wlc-send"]');
+  ok(`${mode}: your bubble, the coach's bubble, the note and the Ask button meet 4.5:1`, a >= 4.5 && b >= 4.5 && c >= 4.5 && d >= 4.5, [a, b, c, d].map(x => x.toFixed(2)).join(","));
   await shot("coach-1280-" + mode); }
 await setMode("light");
 await ev(`UI.wlc = {}; render(); true`); await view(390, 844); await goto("#/coach"); await sleep(500);
 const phn = await ev(`(() => { const s = document.querySelector('[data-act="wlc-send"]').getBoundingClientRect(), c = document.querySelector(".wlc-composer").getBoundingClientRect(); return { sendR: Math.round(s.right), compR: Math.round(c.right), sw: document.documentElement.scrollWidth, iw: innerWidth, chips: [...document.querySelectorAll(".wlc-chips .chip")].every(x => x.getBoundingClientRect().right <= innerWidth) }; })()`);
-ok("on a phone the composer and the suggestions stay inside the screen", phn.sw <= phn.iw && phn.sendR <= phn.compR && phn.compR <= phn.iw && phn.chips, JSON.stringify(phn));
+ok("on a phone the box and the suggestions stay inside the screen", phn.sw <= phn.iw && phn.sendR <= phn.compR && phn.compR <= phn.iw && phn.chips, JSON.stringify(phn));
 await shot("coach-390"); await view(1280, 900);
+await ev(`SB.user = null; render(); true`); await goto("#/coach"); await sleep(300);
+const out = await ev(`(() => { const c = document.getElementById("wlc"); const b = c.querySelector('[data-act="sb-open"]'); return { h2: c.querySelector("h2")?.textContent, txt: /Sign in to chat with WL Coach/.test(c.textContent), btn: b?.textContent.trim(), v: b?.dataset.v, h: b?.getBoundingClientRect().height, box: !!c.querySelector("#wlc-q, [data-act=\\"wlc-send\\"]") }; })()`);
+ok("signed out, the card says why chat needs an account and offers a Sign in button, with no box to type in", out.h2 === "Ask WL Coach" && out.txt && out.btn === "Sign in" && out.v === "in" && out.h >= 43.5 && !out.box, JSON.stringify(out));
+await ev(`SB.user = { id: "u_me", email: "me@example.com" }; render(); true`);
+
+console.log("--- 8b. Personal coach page (8.6.15): the hero, the tabs, the check-in beside the read-out, and the five questions");
+await goto("#/coach"); await ev(`document.querySelector('[data-act="coach-tab"][data-v="ask"]')?.click(); true`); await sleep(400);
+const hero = await ev(`(() => { const h = document.querySelector("#sec-coach .cp-hero"), cd = coachDef(P()); return h ? { name: h.querySelector(".ch-name h2")?.textContent, want: coachName(P()), pill: h.querySelector(".ch-pill")?.textContent, sub: cd.sub, say: h.querySelector(".coach-say")?.textContent.trim().length, av: h.querySelector(".cp-av")?.getAttribute("aria-hidden"), avIcon: !!h.querySelector(".cp-av svg, .cp-av .ico"), meta: h.querySelector(".cp-meta")?.innerText.replace(/\\s+/g, " ").trim(), one: (h.innerText.match(new RegExp(coachName(P()), "g")) || []).length } : null; })()`);
+ok("the hero names your coach once, with its style pill, its line for today and a decorative avatar", hero && hero.name === hero.want && hero.one === 1 && hero.pill === hero.sub && hero.say > 10 && hero.av === "true" && hero.avIcon, JSON.stringify(hero));
+ok("under it one line reads Goal, Style, Level and Frequency from the profile", /^Goal: .+ · Style: .+ · Level: .+ · Frequency: Not set$/.test(hero.meta), hero.meta);
+await ev(`P().freq = 4; render(); true`); await sleep(200);
+ok("with a frequency set it says how many days a week", await ev(`/Frequency: 4 days a week$/.test(document.querySelector(".cp-meta").innerText.replace(/\\s+/g, " ").trim())`));
+await ev(`delete P().freq; render(); true`); await sleep(200);
+const en = await ev(`(() => { const det = adherence(P()), a = adherenceDelta(P()), r = document.querySelector(".cp-hero .en-ring"), go = { Calories: "#/nutrition", Log: "#/nutrition", Session: "#/workouts" };
+  const els = [...document.querySelectorAll(".cp-hero .mech-checks .mck")];
+  return { aria: r?.getAttribute("aria-label"), want: a.today + "% of today's checks done", role: r?.getAttribute("role"), num: r?.querySelector(".mech-num")?.textContent, pct: a.today + "%", numHidden: r?.querySelector(".mech-num")?.getAttribute("aria-hidden"), side: !!document.querySelector(".cp-hero .mech-side"),
+    checks: els.map((e, i) => { const c = det.checks[i] || {}; return { k: c.k, ok: c.ok, good: c.ok ? e.tagName === "SPAN" && e.classList.contains("ok") && e.querySelector(".sr-only")?.textContent === " done" : e.tagName === "A" && e.getAttribute("href") === go[c.k] && e.querySelector(".sr-only")?.textContent === " not done yet", h: e.getBoundingClientRect().height }; }) }; })()`);
+ok("The Enforcer shows today's score as a ring a screen reader can read, with the change since yesterday beside it", en.role === "img" && en.aria === en.want && en.num === en.pct && en.numHidden === "true" && en.side, JSON.stringify(en));
+ok("each of today's checks is a pill: a done one says done, one still to do is a link to where it gets logged", en.checks.length === 3 && en.checks.map(c => c.k).join() === "Calories,Session,Log" && en.checks.every(c => c.good && c.h >= 35.5) && en.checks.some(c => !c.ok), JSON.stringify(en.checks));
+await click('.cp-hero a.mck[href="#/workouts"]'); await sleep(400);
+ok("the Session pill takes you to Workouts", await ev(`location.hash === "#/workouts"`));
+await goto("#/coach"); await sleep(300);
+for (const persona of ["motivator", "strategist"]) { await ev(`P().coachPersona = ${JSON.stringify(persona)}; render(); true`); await sleep(250);
+  ok(`${persona}: the hero swaps to that coach's name, pill and own mechanic`, await ev(`(() => { const h = document.querySelector(".cp-hero"); return h.querySelector(".ch-pill").textContent === coachDef(P()).sub && h.querySelector(".ch-name h2").textContent === coachName(P()) && !!h.querySelector(".cp-mech .mech") && !h.querySelector(".en-ring"); })()`)); }
+await ev(`P().coachPersona = "enforcer"; render(); true`); await sleep(250);
+const tb = await ev(`(() => { const t = document.querySelector("#sec-coach .ctabs"), r = t.getBoundingClientRect(), hero = document.querySelector(".cp-hero").getBoundingClientRect(), tabs = [...t.querySelectorAll('[role="tab"]')].map(x => x.getBoundingClientRect()); return { w: Math.round(r.width), hw: Math.round(hero.width), left: Math.abs(r.left - hero.left) < 2, oneRow: new Set(tabs.map(x => Math.round(x.top))).size === 1, n: tabs.length, h: Math.min(...tabs.map(x => x.height)) }; })()`);
+ok("the Ask / Today / Plan / Settings tabs are a compact bar on the left, not the full width", tb.n === 4 && tb.oneRow && tb.left && tb.w < tb.hw * 0.75 && tb.h >= 43.5, JSON.stringify(tb));
+const cpair = await ev(`(() => { const q = s => document.querySelector("#coach-context " + s)?.getBoundingClientRect(); const a = q(".cc-check"), b = q(".cc-ready"), s = q(".cc-short"), p = document.getElementById("coach-context").getBoundingClientRect(); const t = trainingAdvice(P()), c = intakeContext(P());
+  return { side: !!a && !!b && a.right <= b.left + 1 && Math.abs(a.top - b.top) < 2, short: !!s, wantShort: !!shortfallAdvice(P()), full: s ? Math.abs(s.width - p.width) < 2 && s.top >= Math.max(a.bottom, b.bottom) - 1 : null, level: document.querySelector(".cc-verdict").dataset.l, lv: t.level, h3: document.querySelector(".cc-verdict h3").textContent, why: document.querySelector(".cc-ready p.small").textContent === t.why, strip: document.querySelector(".cc-strip").innerText.replace(/\\s+/g, " ").trim(), days: c.days, dot: document.querySelector(".cc-dot").getAttribute("aria-hidden"), ans: document.querySelector('[data-act="coach-answer"]').getBoundingClientRect().height }; })()`);
+ok("the check-in question and the training read-out sit side by side", cpair.side, JSON.stringify(cpair));
+ok("the read-out's headline follows the real training advice, and the advice is shown word for word", cpair.level === cpair.lv && cpair.h3 === { easy: "Keep it moderate", push: "Good week to push", moderate: "Hold the volume", normal: "Train as planned" }[cpair.lv] && cpair.why && cpair.dot === "true", JSON.stringify(cpair));
+ok("its strip counts the days with food logged in the last 7, from the logs", cpair.strip === `Days with food logged ${cpair.days} of the last 7` && cpair.days === 5, cpair.strip);
+ok("You're eating short gets its own full-width card under the pair when intake really falls short", cpair.short && cpair.wantShort && cpair.full, JSON.stringify(cpair));
+ok("the Answer button is 44px", cpair.ans >= 43.5, cpair.ans);
+await ev(`P().calorieGoal = 600; render(); true`); await sleep(250);
+ok("with intake close to the target there is no eating-short card", await ev(`!shortfallAdvice(P()) && !document.querySelector("#coach-context .cc-short")`));
+await ev(`P().calorieGoal = 2000; window.__coachKeep = JSON.stringify(P().coach || null); P().coach = Object.assign(P().coach || {}, { baseline: null, skipped: false }); render(); true`); await sleep(250);
+const nd = await ev(`(() => { const n = document.getElementById("coach-nudge"); return n ? { h2: n.querySelector(".cn-head h2")?.textContent, pill: n.querySelector(".cn-head .pill-goal")?.textContent, btn: n.querySelector('[data-act="coach-tab"][data-v="settings"]')?.textContent, h: n.getBoundingClientRect().height } : null; })()`);
+ok("before any of the five questions is answered, a slim strip says 0 of 5 answered and offers Answer them", nd && nd.h2 === "Five quick questions" && nd.pill === "0 of 5 answered" && nd.btn === "Answer them" && nd.h < 160, JSON.stringify(nd));
+await ev(`P().coach.baseline = { pushups: 10 }; render(); true`); await sleep(250);
+ok("once one is answered the strip goes, so the count is never wrong", await ev(`!document.getElementById("coach-nudge")`));
+await ev(`P().coach = JSON.parse(window.__coachKeep); render(); true`); await sleep(200);
+await ev(`P().coach = Object.assign(P().coach || {}, { baseline: null, skipped: false }); render(); true`); await sleep(200);
+for (const mode of ["light", "dark", "oled"]) { await setMode(mode); await goto("#/coach"); await sleep(250);
+  const c = { pill: await contrastStack(".cp-hero .ch-pill"), meta: await contrastStack(".cp-meta b"), check: await contrastStack(".cp-hero .mck.no"), strip: await contrastStack(".cc-strip b"), verdict: await contrastStack(".cc-verdict h3"), nudge: await contrastStack("#coach-nudge .pill-goal") };
+  ok(`${mode}: the style pill, the profile line, a to-do pill, the days strip, the headline and the 0 of 5 pill meet 4.5:1`, Object.values(c).every(x => x >= 4.5), JSON.stringify(Object.fromEntries(Object.entries(c).map(([k, v]) => [k, +v.toFixed(2)]))));
+  await shot("coach-page-1280-" + mode); }
+await setMode("light"); await view(390, 844); await goto("#/coach"); await sleep(500);
+const cph = await ev(`(() => { const id = document.querySelector(".cp-id").getBoundingClientRect(), m = document.querySelector(".cp-mech").getBoundingClientRect(), a = document.querySelector(".cc-check").getBoundingClientRect(), b = document.querySelector(".cc-ready").getBoundingClientRect(); return { sw: document.documentElement.scrollWidth, iw: innerWidth, heroStack: m.top >= id.bottom - 1, pairStack: b.top >= a.bottom - 1 }; })()`);
+ok("on a phone the coach page does not scroll sideways, the mechanic goes under the name, and the check-in goes above the read-out", cph.sw <= cph.iw && cph.heroStack && cph.pairStack, JSON.stringify(cph));
+await shot("coach-page-390"); await view(1280, 900);
+await ev(`P().coach = JSON.parse(window.__coachKeep); render(); true`);
 
 console.log("--- 9. Profile: quick setup chips for the basics that are still empty");
 await ev(`window.__keep = { name: P().name, age: P().age, sex: P().sex, heightCm: P().heightCm, weightKg: P().weightKg, units: P().units }; Object.assign(P(), { name: "", age: null, sex: "", heightCm: null, weightKg: null, units: "metric" }); S.logs = {}; saveProfile(); true`);
@@ -356,10 +461,13 @@ await ev(`wlaSetLang("es"); true`); await sleep(500);
 await goto("#/nutrition"); await sleep(500);
 ok("Spanish: + Log reads + Registrar, with a Spanish name for the meal slot", await ev(`(() => { const b = document.querySelector(".mt-log"); return b.textContent.trim() === "+ Registrar" && /^Registrar /.test(b.getAttribute("aria-label")) && !/Breakfast|Lunch|Dinner/.test(b.getAttribute("aria-label")); })()`), await ev(`document.querySelector(".mt-log")?.getAttribute("aria-label")`));
 ok("Spanish: the privacy accordion and the hover hint are translated", await ev(`(() => { const t = document.querySelector("#sec-nutrition")?.innerText || document.body.innerText; return /Cómo funciona la privacidad|Pasa el cursor sobre una barra/.test(t); })()`));
+ok("Spanish: Guess, the menu button, the drinks tile and the weight units are translated, and Estimar sits beside the calories box", await ev(`(() => { const t = document.querySelector("#sec-nutrition").innerText, b = document.querySelector(".nl-guess"), i = document.getElementById("m-cal"); return b.textContent.trim() === "Estimar" && b.getBoundingClientRect().left >= i.getBoundingClientRect().right - 1 && /Ver el menú de hoy/.test(t) && /Bebidas · Alcohol/.test(t) && /Acepta lb, kg o st/.test(t) && i.placeholder === "Del catálogo"; })()`), await ev(`[document.querySelector(".nl-guess")?.textContent, document.querySelector(".nl-guess")?.getBoundingClientRect().width, document.getElementById("m-cal")?.placeholder].join(" | ")`));
+ok("Spanish: the Calories hint fits beside Estimar", await fits("m-cal"));
 await goto("#/workouts"); await sleep(500);
 ok("Spanish: the new Workouts rows are translated (the import card, the estimate pill, the minute chips and the stepper names)", await ev(`(() => { const t = document.getElementById("app").innerText, lab = s => document.querySelector(s)?.getAttribute("aria-label"); return /Importar entrenamientos/.test(t) && /Añade los minutos para una estimación/.test(t) && lab(".wk-presets") === "Minutos rápidos" && lab('[data-act="wgoal"][data-d="1"]') === "Más entrenamientos por semana" && !/Import workouts|Add minutes for an estimate/.test(t); })()`), await ev(`[document.querySelector(".wk-presets")?.getAttribute("aria-label"), document.querySelector('[data-act="wgoal"][data-d="1"]')?.getAttribute("aria-label")].join("|")`));
 await goto("#/coach"); await ev(`SB.user = { id: "u_me" }; P().coachChatConsent = true; UI.wlc = {}; render(); true`); await sleep(500);
-ok("Spanish: the coach note, the suggested questions and the empty line are translated", await ev(`(() => { const t = document.getElementById("wlc").innerText; return /Aún no ve tus registros/.test(t) && /¿Qué debo comer después de entrenar\\?/.test(t) && /Haz una pregunta/.test(t) && !/Suggested questions/.test(t); })()`), await ev(`document.getElementById("wlc")?.innerText.slice(0, 300)`));
+ok("Spanish: the coach note, the suggested questions and the Ask button are translated", await ev(`(() => { const t = document.getElementById("wlc").innerText; return /Aún no ve tus registros/.test(t) && /¿Qué debo comer después de entrenar\\?/.test(t) && document.querySelector('[data-act="wlc-send"]').textContent.trim() === "Preguntar" && !/Suggested questions/.test(t); })()`), await ev(`document.getElementById("wlc")?.innerText.slice(0, 300)`));
+ok("Spanish: the coach page's headline, days strip and five-questions pill are translated", await (async () => { await ev(`P().coach = Object.assign(P().coach || {}, { baseline: null, skipped: false }); render(); true`); await sleep(400); return ev(`(() => { const v = document.querySelector(".cc-verdict h3").textContent, s = document.querySelector(".cc-strip").innerText, n = document.querySelector("#coach-nudge .pill-goal")?.textContent; return !/^(Keep it moderate|Good week to push|Hold the volume|Train as planned)$/.test(v) && /Días con comida registrada/.test(s) && /de los últimos 7/.test(s) && n === "0 de 5 respondidas"; })()`); })(), await ev(`[document.querySelector(".cc-verdict h3")?.textContent, document.querySelector(".cc-strip")?.innerText, document.querySelector("#coach-nudge .pill-goal")?.textContent].join(" | ")`));
 await click('.wlc-chips .chip');
 ok("Spanish: a suggested question fills the box in Spanish", await ev(`document.getElementById("wlc-q").value === "¿Qué debo comer después de entrenar?"`), await ev(`document.getElementById("wlc-q")?.value`));
 await goto("#/settings/appearance"); await sleep(500);
@@ -381,7 +489,10 @@ else {
     "Nutrition, photo opt-in with the privacy details closed": { js: `P().photoAiConsent = false; location.hash = "#/nutrition"; render(); true`, see: "#food-photo-optin details.po-how:not([open])" },
     "Nutrition, privacy details open": { js: `P().photoAiConsent = false; location.hash = "#/nutrition"; render(); setTimeout(() => document.querySelector("#food-photo-optin details.po-how summary")?.click(), 100); true`, see: "#food-photo-optin details.po-how[open]" },
     "Workouts": { js: `location.hash = "#/workouts"; render(); true`, see: ".wk-goal .day-dot" },
-    "Coach chat with a conversation": { js: `UI.wlc = { msgs: [{ me: true, t: "What should I eat?" }, { me: false, t: "Eggs and plantain." }] }; location.hash = "#/coach"; render(); true`, see: ".wlc-msg.me" },
+    "Nutrition with today's menu and the drinks panel open": { js: `UI.nmMenu = true; UI.drinkOpen = true; location.hash = "#/nutrition"; render(); true`, see: "#drinks-panel" },
+    "Coach page with the five questions strip": { js: `UI.nmMenu = false; UI.drinkOpen = false; P().coach = Object.assign(P().coach || {}, { baseline: null, skipped: false }); location.hash = "#/coach"; render(); true`, see: "#coach-nudge .pill-goal" },
+    "Coach chat signed out": { js: `SB.user = null; UI.wlc = {}; location.hash = "#/coach"; render(); true`, see: '#wlc [data-act="sb-open"]' },
+    "Coach chat with a conversation": { js: `SB.user = { id: "u_me", email: "me@example.com" }; UI.wlc = { msgs: [{ me: true, t: "What should I eat?" }, { me: false, t: "Eggs and plantain." }] }; location.hash = "#/coach"; render(); true`, see: ".wlc-msg.me" },
     "Coach chat while it thinks": { js: `UI.wlc = { msgs: [{ me: true, t: "Hello" }], busy: true }; location.hash = "#/coach"; render(); true`, see: ".wlc-typing" },
     "Profile with quick setup chips": { js: `Object.assign(P(), { name: "", age: null, heightCm: null }); location.hash = "#/settings/profile"; render(); true`, see: ".pf-quick .pf-q" },
     "Appearance with the glass at 35%": { js: `P().look = Object.assign(P().look || {}, { opacity: .35 }); applyOpacity(P()); location.hash = "#/settings/appearance"; render(); true`, see: ".gp-card" },

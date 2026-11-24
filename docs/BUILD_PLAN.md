@@ -23,6 +23,8 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.6.15 | Personal coach page: hero with the coach's live mechanic (the Enforcer's score as a ring with check pills that link to where each is logged), compact tabs, one Ask WL Coach card with a Sign in button when signed out, the check-in beside the training read-out with a days-logged strip, eating-short as its own card, and a slim five-questions strip | IN PROGRESS: PR #99 |
+| 8.6.14 | Daily nutrition: Log a meal beside Meals on today (meal tag, Guess joined to Calories), See today's menu inside that card, Today at a glance as four tiles with a Drinks · Alcohol panel, Last 7 days beside a one-row Log your weight (638 elements, under the 1,000 limit) | IN PROGRESS: PR #99 |
 | 8.6.13 | Performance: the Nutrition page builds its dish suggestions on first use of the meal box (1,010 to 713 elements, back under the 1,000 release-gate limit) | IN PROGRESS: PR #99 |
 | 8.6.12 | Premium trust and FAQ: What stays open on Free as a card of six icon tiles with a heading, the three questions in one card with chevrons, About Premium with a gold tint and crown; two older Premium labels and the notification stack fixed for accessibility | IN PROGRESS: PR #99 |
 | 8.6.11 | Appearance and Profile: live glass preview with Frosted, Balanced and Solid presets, a Smooth motion style with Try this motion, and Quick setup chips for an empty profile | IN PROGRESS: PR #99 |

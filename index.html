@@ -3879,7 +3879,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.13", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.15", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3893,6 +3893,24 @@ const APP_VERSION = { update: "8.6", build: "8.6.13", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.15",
+      area:"Coach",
+      title:"The Personal coach page: a hero with your coach's live score, compact tabs, one Ask card, the check-in beside the training read-out, and a slim five-questions strip",
+      bug:"On the Coach page the hero stacked the coach's name, line and mechanic in a tall card, the four tabs stretched across the whole width, the chat card had an avatar and a second heading, and the check-in question, the training read-out and the eating-short advice were piled into one long card. The five questions card was as big as a full section. Chris's Personal Coach design tightens all of it.",
+      fix:"Hero: an avatar in the coach's colour, the name with its style pill, today's line, one profile line (Goal · Style · Level · Frequency) and the coach's own mechanic on the right. The Enforcer's score is now a ring that a screen reader reads as N% of today's checks done, with the change since yesterday beside it, and each check is a pill: a done one is ticked, one still to do is a link to where it gets logged (Calories and Log go to Nutrition, Session to Workouts). The Motivator's momentum and the Strategist's dial are unchanged. Tabs: Ask, Today, Plan and Settings are a compact bar on the left (still one row on a phone). Ask WL Coach is one card: the title with the honest note (can't see your logs, not medical advice), the suggested questions, the conversation once there is one (an empty one takes no room), then the box with an Ask button that says Thinking… while it waits. Signed out, the card has a Sign in button that opens the sign-in card. Replies are still plain text. The check-in question now sits beside Training against what you're actually eating, which gains a headline taken from the same training advice (Keep it moderate, Good week to push, Hold the volume or Train as planned), keeps the advice word for word, and ends with a strip counting the days with food logged out of the last 7. You're eating short is its own full-width card under them, only when it applies. Five quick questions is a slim strip with 0 of 5 answered (it shows only while none are answered, so the count is always right) and Answer them, which opens the questions on the Settings tab as before. Left out of the design on purpose: the Uses your profile & logs pill (the chat cannot see logs), wellness quick-reply pills (the questions are open), simulated replies, a five-question drawer on the page (they stay on Settings), and the sample Today, Plan and Settings panels.",
+      where:"index.html: coachView() (hero), coachMechanic() (Enforcer branch), coachChatCard(), coachContextCard(), coachNudgeCard(), the 8.6.14 and 8.6.15 Spanish block (headlines, days strip, 0 of 5 answered), and the Coach page and WL Coach rules in the sectors-css style block. tests/browser/sectors.mjs sections 8, 8b, 12 and 13. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"CHROME=/path/to/chrome CI=1 node tests/browser/sectors.mjs (sections 8 and 8b); navtidy.mjs, motion.mjs and coachchat.mjs pass without changes. By hand: open Coach. The Enforcer shows a ring and three pills; tap a grey pill to go where it is logged. Switch the coach in Settings > Coach to see the other two heroes.",
+      limits:"The four headlines are new short summaries of the existing advice, not new advice. Their Spanish, like the rest, has had no native-speaker review. Checked in headless Chrome at 1280 and 390 wide, in light, dark and OLED; not on a real phone."
+    },
+    { id:"8.6.14",
+      area:"Daily nutrition",
+      title:"Log a meal sits beside Meals on today, today's menu opens from that card, Today at a glance is four tiles with a Drinks · Alcohol panel, and Log your weight is one row",
+      bug:"After 8.6.8 the Nutrition page put Today's meals as three cards above the form, a stack of glance, drinks and weight cards on the right, and Meals on today at the bottom beside the chart, so what you had just logged was a long way from where you logged it, and the drinks box filled a card even on a day with no drinks. Chris's Nutrition & Weight design puts the form and the day's meals side by side.",
+      fix:"Log a meal is on the left, with a tag naming the meal it will log (it follows the Meal menu, survives a redraw, and goes back to the time-of-day guess after a meal is logged). Guess is joined to the right end of the Calories box and opens the meal builder as before; the box's hint now reads From catalog. On Premium, From a photo and Eating out chips sit under What did you eat?. The Portion wheel stays. Meals on today is on the right: each meal with a slot chip, its name, calories, Extras and delete; an empty day says so in one line. See today's menu opens today's three picks (breakfast, lunch and dinner, each with + Log) inside that card, and logging a pick folds the menu again. While extras are being added the Anything added? card takes that place, as before. Today at a glance comes next: day arrows with the date, and four tiles for Meals, Snacks, the Total (how much is left of the target, or how far over, with a bar) and Drinks · Alcohol (how many and their calories, or Nothing today). Tapping the drinks tile opens the whole drink log as a panel under the card; Close folds it and puts the focus back on the tile. Last 7 days sits beside Log your weight, whose weight, date and Save are now on one row with Accepts lb, kg or st in the heading. Left out of the design on purpose: its sample numbers, the target-line toggle, a drinks popover, the Half / Regular / Large pill (the Portion wheel stays) and the code-export bar.",
+      where:"index.html: nutritionView(), mealsOnCard(), mealsTodayCard(), glanceCardNutrition(), weightLogCard(), drinksSection() (new panel option), the nm-menu, drinks-tile and nl-photo cases, the Meal menu change listener, log-meal and log-pick (reset the slot, fold the menu), a circle icon, the 8.6.14 Spanish block, and the Daily nutrition rules in the sectors-css style block. tests/browser/sectors.mjs sections 1 to 5, 12 and 13. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"CHROME=/path/to/chrome CI=1 node tests/browser/sectors.mjs (sections 1 to 5) and node tests/perf/measure.mjs --gate (nutrition has DOM nodes: 638, limit 1000). By hand: open Log > Meals. Change the Meal menu and watch the tag; tap See today's menu and + Log a dish; tap the Drinks · Alcohol tile, log a drink, then Close.",
+      limits:"From a photo and Eating out are Premium only, as their features are. The drinks panel follows the day picked in the glance card. Checked in headless Chrome at 1280, 1024, 820, 390 and 360 wide, in light, dark and OLED; not on a real iPhone or iPad."
+    },
     { id:"8.6.13",
       area:"Performance",
       title:"The Nutrition page builds its 300-odd dish suggestions only when the meal box is first used",
@@ -11692,7 +11710,7 @@ const I = {
  moon:'<path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.6 8.6 0 1 0 10.7 10.7z"/>',
  moonfill:'<path d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5a8.6 8.6 0 1 0 10.7 10.7z" fill="currentColor" stroke="none"/>',
  sunmoon:'<circle cx="6.9" cy="12" r="3.1"/><path d="M6.9 5.9v1.3M6.9 16.8v1.3M1.8 12h1.3M4 9.1l.9.9M4 14.9l.9-.9"/><path d="M21.5 14.7a4.7 4.7 0 0 1-5.8-5.8 4.9 4.9 0 1 0 5.8 5.8z"/>',
- chevR:'<path d="M9 5l7 7-7 7"/>', flip:'<path d="M20 11a8 8 0 0 0-14.5-3M4 5v4h4M4 13a8 8 0 0 0 14.5 3M20 19v-4h-4"/>',
+ chevR:'<path d="M9 5l7 7-7 7"/>', circle:'<circle cx="12" cy="12" r="7"/>', flip:'<path d="M20 11a8 8 0 0 0-14.5-3M4 5v4h4M4 13a8 8 0 0 0 14.5 3M20 19v-4h-4"/>',
  chevU:'<path d="M5 15l7-7 7 7"/>',
  chevD:'<path d="M5 9l7 7 7-7"/>',
  grip:'<circle cx="9" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1.3" fill="currentColor" stroke="none"/>',
@@ -11946,7 +11964,7 @@ const WL_ES_UI = {
   "Snack":"Bocadillo", "Log a meal":"Registrar una comida", "Log meal":"Registrar comida", "Log this meal":"Registrar esta comida",
   "Meal":"Comida", "Date":"Fecha", "What did you eat?":"¿Qué comiste?", "Calories":"Calorías", "Portion":"Porción",
   "Regular portion":"Porción normal", "Half portion":"Media porción", "Smaller portion":"Porción pequeña", "Large portion":"Porción grande", "Double portion":"Porción doble",
-  "Start typing: jollof, waakye, egusi…":"Empieza a escribir: jollof, waakye, egusi…", "Filled from the catalog":"Se completa desde el catálogo",
+  "Start typing: jollof, waakye, egusi…":"Empieza a escribir: jollof, waakye, egusi…", "Filled from the catalog":"Se completa desde el catálogo", "From catalog":"Del catálogo",
   "Guess the calories":"Estimar las calorías", "From a photo":"Desde una foto", "Eating out":"Comer fuera",
   "Today":"Hoy", "Previous day":"Día anterior", "Next day":"Día siguiente", "Change day":"Cambiar de día", "Left":"Restantes", "Total":"Total",
   "Extras":"Extras", "Remove":"Quitar", "Add":"Añadir", "Done":"Listo", "Nothing added":"Nada añadido", "Anything added?":"¿Añadiste algo?",
@@ -12108,6 +12126,13 @@ Object.assign(WL_ES, {
   "Bouncy adds the spring animations. Smooth keeps the motion but glides, with no spring. Reduced turns them off, and your device's own \"reduce motion\" setting always wins.":"Animado añade movimientos elásticos. Suave mantiene el movimiento pero se desliza, sin rebote. Reducido los desactiva, y el ajuste de \"reducir movimiento\" de tu dispositivo siempre manda.",
   "Quick setup: tap to fill in":"Configuración rápida: toca para completar", "Quick setup":"Configuración rápida", "Add name":"Añadir nombre", "Add age":"Añadir edad", "Add sex":"Añadir sexo", "Add height":"Añadir estatura", "Add weight":"Añadir peso",
   "What should I eat after a workout?":"¿Qué debo comer después de entrenar?", "Best West African high-protein breakfast?":"¿Cuál es un buen desayuno alto en proteína de África Occidental?", "Sore legs after soccer: stretch or rest?":"Piernas doloridas tras jugar al fútbol: ¿estirar o descansar?", "How much water should I drink?":"¿Cuánta agua debo beber?"
+});
+// 8.6.14 and 8.6.15: the Nutrition and Coach layout revamp.
+Object.assign(WL_ES, {
+  "Guess":"Estimar", "Drinks · Alcohol":"Bebidas · Alcohol", "Nothing logged":"Nada registrado", "Accepts lb, kg or st":"Acepta lb, kg o st", "Hide today's menu":"Ocultar el menú de hoy",
+  "Days with food logged":"Días con comida registrada", "of the last 7":"de los últimos 7", "0 of 5 answered":"0 de 5 respondidas",
+  "Keep it moderate":"Mantén un ritmo moderado", "Good week to push":"Buena semana para exigirte", "Hold the volume":"Mantén el volumen", "Train as planned":"Entrena según lo planeado",
+  "So the coach knows where to start you. Every one is optional, they take about a minute and live on the Settings tab.":"Para que el entrenador sepa por dónde empezarte. Todas son opcionales, llevan un minuto y están en la pestaña Ajustes."
 });
 // ---- Spanish catalog text ----
 // Recipe prose (descriptions, steps, ingredient names, snack instructions) lives in i18n/es-recipes.js.
@@ -13248,17 +13273,16 @@ function projectionCard(p, compact){
   </section>`;
 }
 // The Meals detail page (Nutrition): today's planned Breakfast, Lunch and Dinner, the plan link and the food-culture prompt.
+// 8.6.14: it lives inside Meals on today, behind See today's menu, one row per pick with a + Log that logs it for today.
 function mealsTodayCard(p){
   const picks = dailyPicks(today(), p);
-  // 8.6.8: one card per pick (slot, calories, name, where it is from and how long it takes) and a + Log that logs it for today.
-  return `<section class="card" id="meals-today">
-    <div class="setrow"><div class="setlabel"><div class="eyebrow">Picked for you today</div><h2 style="margin-top:4px">Today's meals</h2>
-      ${cultureTag(p)}</div><a class="btn sm" href="#/recipes">${p.plan ? "See full plan" : "Build a plan"}</a></div>
-    <div class="mtgrid">${picks.map((d,i) => { const sl = SLOTS[i] || ["", ""], note = goalNote(d,p);
-      return `<div class="li mt-card" data-slot="${esc(sl[0])}"><span class="grow stk"><span class="mt-top"><span class="eyebrow mt-slot">${esc(tr(sl[1]))}</span><span class="tab mt-cal">≈${d.cal} cal</span></span><a class="mt-name" href="${dishLink(d)}"><b>${esc(d.n)}</b></a><span class="tiny muted">${esc(d.c)} · ${d.t[1]} min cook${note ? " · " + esc(note) : ""}</span></span>
+  return `<div id="meals-today" class="nm-menu"${UI.nmMenu ? "" : " hidden"}>
+    <div class="setrow"><div class="setlabel"><div class="eyebrow">Picked for you today</div>${cultureTag(p)}</div><a class="btn sm" href="#/recipes">${p.plan ? "See full plan" : "Build a plan"}</a></div>
+    <div class="list">${picks.map((d,i) => { const sl = SLOTS[i] || ["", ""], note = goalNote(d,p);
+      return `<div class="li mt-row" data-slot="${esc(sl[0])}"><span class="grow"><a class="mt-name" href="${dishLink(d)}"><b>${esc(d.n)}</b></a><span class="tiny muted">${esc(tr(sl[1]))} · <span class="tab">≈${d.cal} cal</span> · ${esc(d.c)} · ${d.t[1]} min cook${note ? " · " + esc(note) : ""}</span></span>
         <button type="button" class="btn sm mt-log" data-act="log-pick" data-i="${i}" aria-label="${esc(tr("Log"))} ${esc(d.n)} ${esc(tr(sl[1]))}">+ ${esc(tr("Log"))}</button></div>`; }).join("")}</div>
     <p class="tiny faint">Changes daily. ${p.diet || p.allergies ? "Filtered for your food preference and allergies." : "Add food preferences or allergies in Settings to filter these."}</p>
-  </section>`;
+  </div>`;
 }
 function workoutsCard(p){
   const done = weekWorkouts(p); const goal = p.workoutGoal;
@@ -13348,38 +13372,38 @@ function nutritionView(p){
   const snacks = onDate("snacks", date);
   const pend = UI.pendingExtras && meals.find(m => m.id === UI.pendingExtras);
   const slotGuess = new Date().getHours() < 11 ? "breakfast" : new Date().getHours() < 16 ? "lunch" : "dinner";
+  const slotNow = UI.prefill?.slot || UI.mSlot || slotGuess;
+  const prem = typeof isPremium === "function" && isPremium();
+  // 8.6.14: Log a meal beside Meals on today, then the day's glance strip (with the drinks tile), then Last 7 days beside Log your weight.
   return `
-  ${mealsTodayCard(p)}
-  <div class="grid g2">
-    <section class="card">
-      <h2>Log a meal</h2>
+  <div class="grid g2 nut-top">
+    <section class="card nut-log">
+      <div class="row between"><h2>Log a meal</h2><span class="nl-tag" id="m-slot-tag">${esc(tr(SLOTS.find(s => s[0] === slotNow)?.[1] || ""))}</span></div>
       <div class="form">
-        <label class="f">Meal<select id="m-slot">${opt(SLOTS, UI.prefill?.slot || slotGuess)}</select></label>
+        <label class="f">Meal<select id="m-slot">${opt(SLOTS, slotNow)}</select></label>
         <label class="f">Date<input type="date" id="m-date" value="${date}" max="${today()}"></label>
         <label class="f full">What did you eat?<input type="text" id="m-name" list="dishlist" value="${esc(UI.prefill?.name || "")}" placeholder="Start typing: jollof, waakye, egusi…"></label>
-        <label class="f">Calories<input type="number" id="m-cal" min="0" max="5000" value="${UI.prefill?.cal ?? ""}" placeholder="Filled from the catalog"></label>
+        ${prem ? `<div class="nl-chips"><button type="button" class="chip nl-chip" data-act="nl-photo">${icon("camera","",15)} From a photo</button><input type="file" id="meal-shot-in" accept="image/*" capture="environment" hidden><a class="chip nl-chip" href="#/premium/restaurant">${icon("food","",15)} Eating out</a></div>` : ""}
+        <div class="nl-calw"><label class="f" for="m-cal">Calories</label><div class="nl-calbox"><input type="number" id="m-cal" min="0" max="5000" value="${UI.prefill?.cal ?? ""}" placeholder="From catalog"><button type="button" class="nl-guess" data-act="mb-guess" aria-label="${esc(tr("Guess the calories"))}">${icon("spark","",14)} ${esc(tr("Guess"))}</button></div></div>
         <label class="f">Portion<select id="m-portion" data-wheel>${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
       </div>
       ${quickLogBlock(date)}
-      <div class="row"><button class="btn primary" data-act="log-meal">Log meal</button><button class="btn" data-act="mb-guess">${icon("spark")} Guess the calories</button>${
-        typeof isPremium === "function" && isPremium() ? `<label class="btn photo-btn">${icon("camera","",16)} From a photo<input type="file" id="meal-shot-in" accept="image/*" capture="environment" hidden></label><a class="btn" href="#/premium/restaurant">${icon("food","",16)} Eating out</a>` : ""}</div>
       ${typeof voiceMealButton === "function" ? voiceMealButton(p) : ""}
-      <p class="small muted">${WLA.lang === "es" ? "Deja el campo de calorías vacío y pulsa Estimar las calorías. Describe la comida con tus palabras y ajusta las porciones. También puedes añadir una foto." : 'Leave the calorie box empty and hit <b>Guess the calories</b>. Type it how you\'d say it, like "rice and stew with chicken", and you can adjust each portion. Or snap a photo below.'}</p>
+      <button class="btn primary nl-log" data-act="log-meal">Log meal</button>
+      <p class="small muted">${WLA.lang === "es" ? "Deja el campo de calorías vacío y pulsa Estimar. Describe la comida con tus palabras y ajusta las porciones. También puedes añadir una foto." : 'Leave the calorie box empty and hit <b>Guess</b>. Type it how you\'d say it, like "rice and stew with chicken", and you can adjust each portion. Or snap a photo below.'}</p>
     </section>
-    <div class="stack nut-side">
-      ${pend ? extrasPanel(pend) : glanceCardNutrition(p, date, meals, snacks)}
-      ${typeof drinksSection === "function" ? drinksSection(p) : ""}
-      ${weightLogCard(p)}
-    </div>
+    ${pend ? extrasPanel(pend) : mealsOnCard(p, date, meals)}
   </div>
   ${typeof mealPhotoCard === "function" ? mealPhotoCard(p) : ""}
-  ${typeof photoStrip === "function" && typeof isPremium === "function" && isPremium() ? photoStrip(p, date) : ""}
   ${mealBuilderCard(p)}
-  ${foodPhotoCard(p)}
+  ${glanceCardNutrition(p, date, meals, snacks)}
+  ${UI.drinkOpen && typeof drinksSection === "function" ? drinksSection(p, { panel: true }) : ""}
   <div class="grid g2 nut-lower">
-  ${mealsOnCard(p, date, meals)}
-  <section class="card"><div class="row between"><div><h2>Last 7 days</h2><div class="tiny muted">Hover a bar for the day's calories.</div></div>${p.calorieGoal ? `<span class="pill-goal tab" title="Your daily calorie target">Target ${p.calorieGoal.toLocaleString()} cal</span>` : `<a class="small" href="#/settings">Add a target line</a>`}</div>${weekChart(p, true)}</section>
+  <section class="card nut-week"><div class="row between"><div><h2>Last 7 days</h2><div class="tiny muted">Hover a bar for the day's calories.</div></div>${p.calorieGoal ? `<span class="pill-goal tab" title="Your daily calorie target">Target ${p.calorieGoal.toLocaleString()} cal</span>` : `<a class="small" href="#/settings">Add a target line</a>`}</div>${weekChart(p, true)}</section>
+  ${weightLogCard(p)}
   </div>
+  ${typeof photoStrip === "function" && prem ? photoStrip(p, date) : ""}
+  ${foodPhotoCard(p)}
   ${projectionCard(p)}`;
 }
 // ---- dish suggestions ----
@@ -13392,34 +13416,51 @@ function ensureDishList(){
   document.body.append(d);
 }
 document.addEventListener("focusin", e => { if (e.target.matches?.('input[list="dishlist"]')) ensureDishList(); });
-// 8.6.8: the three cards that make up the right-hand column of the Nutrition page (and the Meals on today card beside Last 7 days).
-// Today at a glance: a ring for how much of the calorie target is eaten (only when a target is set) and three tiles.
+// The slot pill beside Log a meal follows the Meal dropdown, and the choice is kept for the next redraw.
+document.addEventListener("change", e => {
+  if (e.target.id !== "m-slot") return;
+  UI.mSlot = e.target.value;
+  const tag = document.getElementById("m-slot-tag"); if (tag) tag.textContent = tr(SLOTS.find(s => s[0] === e.target.value)?.[1] || "");
+});
+// 8.6.8 / 8.6.14: the day's glance strip, Log your weight and Meals on today on the Nutrition page.
+// At a glance: how many meals and snacks, the day's total (with what is left of the target when one is set), and a Drinks · Alcohol tile
+// that opens the drinks panel below it. Every number is the day's own log.
 function glanceCardNutrition(p, date, meals, snacks){
-  const eaten = intakeOn(date), goal = p.calorieGoal, pct = goal ? eaten / goal : 0;
-  const mealCal = meals.reduce((a,m) => a + mealTotal(m), 0), snackCal = snacks.reduce((a,x) => a + x.cal, 0) + drinkKcalOn(date);
-  const tile = (label, v) => `<div class="gl-tile"><div class="tiny muted">${label}</div><div class="num mid">${v.toLocaleString()}</div></div>`;
-  return `<section class="card nut-glance"><div class="row between"><h2>${WLA.lang === "es" ? `Resumen de ${date === today() ? "hoy" : fmtDay(date)}` : `${date === today() ? "Today" : fmtDay(date)} at a glance`}</h2><div class="btn-group" role="group" aria-label="Change day"><button class="btn sm icon-btn" data-act="day" data-v="-1" aria-label="Previous day">${icon("chevL","",16)}</button><button class="btn sm icon-btn" data-act="day" data-v="1" aria-label="Next day"${date >= today() ? " disabled" : ""}>${icon("chevR","",16)}</button></div></div>
-    <div class="gl-body">${goal ? ringHTML(pct, `<span class="rc-main">${Math.round(pct * 100)}%</span>`, `${Math.round(pct * 100)}% of your ${goal.toLocaleString()} calorie target eaten`, pct > 1 ? "var(--warn)" : "var(--c-food)", 84) : ""}
-      <div class="gl-tiles">${tile("Meals", mealCal)}${tile(`Snacks${drinkKcalOn(date) ? " + drinks" : ""}`, snackCal)}${tile(goal ? "Left" : "Total", goal ? goal - eaten : eaten)}</div></div>
+  const eaten = intakeOn(date), goal = p.calorieGoal, isToday = date === today(), es = WLA.lang === "es";
+  const dr = drinksOn(date), dk = drinkKcalOn(date), open = !!UI.drinkOpen;
+  const tile = (label, v, sub = "") => `<div class="gl-tile"><div class="tiny muted">${label}</div><div class="num mid">${v}</div>${sub}</div>`;
+  const left = goal ? goal - eaten : 0;
+  const totSub = goal ? `<div class="gl-sub tiny muted">${left >= 0 ? `${left.toLocaleString()} left of ${goal.toLocaleString()}` : `${(-left).toLocaleString()} over ${goal.toLocaleString()}`}</div><div class="bar gl-bar${left < 0 ? " over" : ""}" aria-hidden="true"><i style="width:${Math.min(100, Math.round(eaten / goal * 100))}%"></i></div>` : "";
+  const drinkTxt = dr.length ? `${dr.length} drink${dr.length === 1 ? "" : "s"} · ${dk.toLocaleString()} cal` : tr(isToday ? "Nothing today" : "Nothing logged");
+  return `<section class="card nut-glance"><div class="row between"><h2>${es ? (isToday ? "Resumen de hoy" : "Resumen del día") : (isToday ? "Today at a glance" : "Day at a glance")}</h2>
+    <div class="gl-day" role="group" aria-label="Change day"><button class="btn sm icon-btn" data-act="day" data-v="-1" aria-label="Previous day">${icon("chevL","",16)}</button><span class="gl-date tab">${fmtDay(date)}</span><button class="btn sm icon-btn" data-act="day" data-v="1" aria-label="Next day"${date >= today() ? " disabled" : ""}>${icon("chevR","",16)}</button></div></div>
+    <div class="gl-tiles">${tile(tr("Meals"), meals.length)}${tile(tr("Snacks"), snacks.length)}${tile(tr("Total"), `${eaten.toLocaleString()} <small>cal</small>`, totSub)}
+      <button type="button" class="gl-tile gl-drinks" data-act="drinks-tile" aria-expanded="${open}"${open ? ' aria-controls="drinks-panel"' : ""}><span class="tiny muted">${esc(tr("Drinks · Alcohol"))}</span><span class="gl-dval"><span>${esc(drinkTxt)}</span>${icon("chevR","",16)}</span></button></div>
     ${burnedOn(date,p) ? `<p class="small muted">Estimated burn: ${Math.round(burnedOn(date,p)).toLocaleString()} cal including ${onDate("workouts",date).length} workout${onDate("workouts",date).length===1?"":"s"}.</p>` : ""}
   </section>`;
 }
 // Log your weight: the field, the date and Save on one row, then the last five weigh-ins.
 function weightLogCard(p){
-  return `<section class="card nut-weight"><h2>Log your weight</h2>
-    <div class="nw-row"><label class="f nw-val">Weight<input type="text" inputmode="decimal" autocomplete="off" id="w-val" placeholder="${esc(weightPlaceholder(p))}"></label><label class="f nw-date">Date<input type="date" id="w-date" value="${today()}" max="${today()}"></label><button class="btn primary" data-act="log-weight">Save weight</button></div>
+  return `<section class="card nut-weight"><div class="row between"><h2>Log your weight</h2><span class="tiny muted">${esc(tr("Accepts lb, kg or st"))}</span></div>
+    <div class="nw-row"><label class="f nw-val">Weight<input type="text" inputmode="decimal" autocomplete="off" id="w-val" placeholder="${esc(weightPlaceholder(p))}"></label><label class="f nw-date">Date<input type="date" id="w-date" value="${today()}" max="${today()}"></label><button class="btn primary" data-act="log-weight">Save</button></div>
     <p class="tiny muted">Type it however you like: <b>155</b>, <b>70 kg</b>, <b>11 st 4</b>. Without a unit it's read as ${p.units === "metric" ? "kilograms" : "pounds"}.</p>
     ${UI.weightErr ? `<div class="note">${esc(UI.weightErr)}</div>` : ""}
     ${(() => { const ws = entries("weights").sort((a,b)=>a.date<b.date?1:-1).slice(0,5); return ws.length ? `<div class="list small">${ws.map(w => `<div class="li"><span>${fmtDay(w.date)}</span><span class="row" style="gap:6px"><span class="tab">${fmtWeight(w.kg)}</span><button class="btn sm ghost" data-act="del-weight" data-id="${w.id}" aria-label="Delete">${icon("x")}</button></span></div>`).join("")}</div>` : `<p class="small muted">Weigh-ins let you compare the estimate with what really happened.</p>`; })()}
   </section>`;
 }
+// Meals on today: each meal with its slot, calories and Extras; when the day is empty, a short line and See today's menu,
+// which opens today's three picks (mealsTodayCard) inside this card.
 function mealsOnCard(p, date, meals){
+  const es = WLA.lang === "es", isToday = date === today(), open = !!UI.nmMenu;
+  const menuBtn = `<button type="button" class="btn sm nm-menu-btn" data-act="nm-menu" aria-expanded="${open}" aria-controls="meals-today">${esc(tr(open ? "Hide today's menu" : "See today's menu"))}</button>`;
   return `<section class="card nut-meals">
-    <div class="row between"><h2>${WLA.lang === "es" ? `Comidas ${date === today() ? "de hoy" : `del ${fmtDay(date)}`}` : `Meals on ${date === today() ? "today" : fmtDay(date)}`}</h2><span class="small muted tab pill-goal">${meals.reduce((a,m)=>a+mealTotal(m),0).toLocaleString()} cal</span></div>
-    ${meals.length ? `<div class="list">${meals.map(m => `<div class="li"><div class="grow"><div class="eyebrow" style="color:var(--gold)">${SLOTS.find(s=>s[0]===m.slot)?.[1]}</div><b>${esc(m.name)}</b> <span class="tab muted small">${m.cal} cal</span>${m.est ? ` <span class="guess">${icon("spark")} estimate</span>` : ""}
+    <div class="row between"><h2>${es ? `Comidas ${isToday ? "de hoy" : `del ${fmtDay(date)}`}` : `Meals on ${isToday ? "today" : fmtDay(date)}`}</h2><span class="small muted tab pill-goal">${meals.reduce((a,m)=>a+mealTotal(m),0).toLocaleString()} cal</span></div>
+    ${meals.length ? `<div class="list nm-list">${meals.map(m => `<div class="li nm-row"><div class="grow"><div class="nm-line"><span class="nm-slot" data-slot="${esc(m.slot)}">${esc(tr(SLOTS.find(s=>s[0]===m.slot)?.[1] || ""))}</span><b>${esc(m.name)}</b></div><span class="tiny muted"><span class="tab">${m.cal} cal</span>${m.est ? ` · <span class="guess">${icon("spark")} estimate</span>` : ""}</span>
       ${(m.extras||[]).length ? `<ul class="clean small muted" style="margin-top:4px">${m.extras.map(x => `<li>+ ${esc(x.name)} <span class="tab">${x.cal} cal</span></li>`).join("")}</ul>` : ""}
-      </div><div class="row" style="gap:6px">${m.photo && !UI.locked ? `<button class="mealthumb" data-act="ms-view" data-id="${m.id}" aria-label="Photo of ${esc(m.name)}"><img src="${m.photo}" alt=""></button>` : ""}<span class="tab"><b>${mealTotal(m)}</b></span><button class="btn sm ghost" data-act="extras" data-id="${m.id}">Extras</button><button class="btn sm ghost" data-act="del-meal" data-id="${m.id}" aria-label="Delete ${esc(m.name)}">${icon("x","")}</button></div></div>`).join("")}</div>`
-      : `${emptyState("meals", WLA.lang === "es" ? `No hay comidas registradas${date === today() ? " hoy" : ""}. Registra una arriba o deja que el entrenador elija según tu cultura gastronómica.` : `No meals logged${date === today() ? " yet today" : ""}. Log one above, or let the coach pick from your food culture.`, [tr("See today's menu"),"#/culture"])}`}
+      </div><div class="row nm-act">${m.photo && !UI.locked ? `<button class="mealthumb" data-act="ms-view" data-id="${m.id}" aria-label="Photo of ${esc(m.name)}"><img src="${m.photo}" alt=""></button>` : ""}<span class="tab nm-total"><b>${mealTotal(m).toLocaleString()}</b> cal</span><button class="btn sm ghost" data-act="extras" data-id="${m.id}">Extras</button><button class="btn sm ghost" data-act="del-meal" data-id="${m.id}" aria-label="Delete ${esc(m.name)}">${icon("x","")}</button></div></div>`).join("")}</div>
+      <div class="nm-more">${menuBtn}</div>`
+      : `<div class="nm-empty"><span class="nm-bowl" aria-hidden="true">${icon("food","",18)}</span><span class="small muted nm-etext">${es ? `No hay comidas registradas${isToday ? " hoy" : ` el ${fmtDay(date)}`}. Registra una o elige del menú de hoy.` : `No meals logged ${isToday ? "yet today" : `on ${fmtDay(date)}`}. Log one, or pick from today's menu.`}</span>${menuBtn}</div>`}
+    ${mealsTodayCard(p)}
   </section>`;
 }
 function extrasPanel(m){
@@ -13933,14 +13974,19 @@ function coachView(p){
   const sport = p.sport && SPORTS[p.sport];
   const tab = COACH_TABS.some(t => t[0] === UI.coachTab) ? UI.coachTab : "ask";
   const panel = (k, html) => `<div class="cpanel stack lg" role="tabpanel" id="cpanel-${k}" data-v="${k}" aria-labelledby="ctab-${k}"${tab === k ? "" : " hidden"}>${html}</div>`;
+  const cd = coachDef(p);
+  // 8.6.15: the coach's mark in its own colour, the name with its style pill, today's line, the coach's own daily read-out on the right
+  // (the Enforcer's ring and checks, the Motivator's momentum, the Strategist's intensity dial), and the starting point underneath.
   return `
-  <section class="card hero" style="--hero-tint:var(--c-coach)">
-    <div class="row between"><div class="row" style="gap:6px;align-items:center"><span class="eyebrow" style="color:var(--c-coach)">${esc(coachName(p))}</span></div>
-      <span class="cbadge" title="${esc(coachDef(p).sub)}">${coachIcon(coachDef(p).id, 20)} <span class="tiny muted">${esc(coachDef(p).sub)}</span></span></div>
-    <p class="tiny muted" style="margin:2px 0 0">${esc(typeof coachGreetingRich === "function" ? coachGreetingRich(p) : coachGreeting(p))}</p>
-    <p class="coach-say" style="font-size:18px;font-family:var(--display);font-weight:600">${esc(motivation(p))}</p>
-    ${typeof coachMechanic === "function" ? coachMechanic(p) : ""}
-    <div class="row small muted"><span>Goal: <b>${esc(GOALS.find(g=>g[0]===p.goal)?.[1] || "Not set")}</b></span><span>Style: <b>${esc(STYLES.find(g=>g[0]===p.style)?.[1] || "Not set")}</b></span><span>Level: <b>${esc(LEVELS.find(g=>g[0]===p.level)?.[1])}</b></span><span>${p.freq ? `${p.freq} days a week` : "Frequency not set"}</span></div>
+  <section class="card hero cp-hero" style="--hero-tint:var(--c-coach);${coachTone(cd.id)}">
+    <div class="cp-top">
+      <div class="cp-id"><span class="cp-av" aria-hidden="true">${coachIcon(cd.id, 26)}</span>
+        <div class="cp-txt"><div class="ch-name"><h2>${esc(coachName(p))}</h2><span class="ch-pill">${esc(cd.sub)}</span></div>
+          <p class="coach-say">${esc(motivation(p))}</p>
+          <p class="tiny muted">${esc(typeof coachGreetingRich === "function" ? coachGreetingRich(p) : coachGreeting(p))}</p></div></div>
+      ${typeof coachMechanic === "function" ? `<div class="cp-mech">${coachMechanic(p)}</div>` : ""}
+    </div>
+    <div class="cp-meta small muted"><span>Goal: <b>${esc(GOALS.find(g=>g[0]===p.goal)?.[1] || "Not set")}</b></span><span class="cp-dot" aria-hidden="true">·</span><span>Style: <b>${esc(STYLES.find(g=>g[0]===p.style)?.[1] || "Not set")}</b></span><span class="cp-dot" aria-hidden="true">·</span><span>Level: <b>${esc(LEVELS.find(g=>g[0]===p.level)?.[1])}</b></span><span class="cp-dot" aria-hidden="true">·</span><span>Frequency: <b>${p.freq ? `${p.freq} days a week` : "Not set"}</b></span></div>
   </section>
 
   <div class="ctabs" role="tablist" aria-label="${esc(tr("Coach sections"))}">${COACH_TABS.map(([k, l]) => `<button type="button" class="ctab" role="tab" id="ctab-${k}" data-act="coach-tab" data-v="${k}" aria-controls="cpanel-${k}" aria-selected="${tab === k}" tabindex="${tab === k ? 0 : -1}">${l}</button>`).join("")}</div>
@@ -14035,8 +14081,9 @@ function todayWorkoutCard(p){
 // still runs conversation, then questions, then workouts.
 function coachNudgeCard(p){
   if (hasBaseline(baselineOf(p)) || p.coach?.skipped) return "";
-  return `<section class="card" id="coach-nudge"><div class="setrow"><div class="setlabel"><div class="eyebrow" style="color:var(--c-coach)">Five quick questions</div>
-    <h2 style="margin-top:4px">So the coach knows where to start you</h2><span class="small muted">Every one is optional. They take about a minute and live on the Settings tab.</span></div>
+  // 8.6.15: a slim strip. It only shows while none are saved, so the count is honest at 0 of 5.
+  return `<section class="card cn-strip" id="coach-nudge"><div class="setrow"><div class="setlabel"><div class="cn-head"><h2>Five quick questions</h2><span class="pill-goal tab">${esc(tr("0 of 5 answered"))}</span></div>
+    <span class="small muted">So the coach knows where to start you. Every one is optional, they take about a minute and live on the Settings tab.</span></div>
     <button class="btn primary setctl" data-act="coach-tab" data-v="settings" data-go="#baseline [data-st-focus]">Answer them</button></div></section>`;
 }
 function buildICS(p){
@@ -14056,8 +14103,8 @@ function buildICS(p){
 // not saved on the device, and the function logs each exchange to ai_coach_logs (readable only by that person).
 function coachChatCard(){
   const C = UI.wlc || {}, p = P();
-  const head = `<div class="eyebrow">Chat with your coach</div><h2>Ask WL Coach</h2>`;
-  if (!SB.user || !sbClient()) return `<section class="card" id="wlc">${head}<p class="small muted">Sign in to chat with WL Coach. Chat needs an account because your questions are sent to our server, and from there to an AI service, to be answered.</p></section>`;
+  const head = `<div class="wlc-head"><h2>Ask WL Coach</h2></div>`;
+  if (!SB.user || !sbClient()) return `<section class="card wlc-card" id="wlc">${head}<div class="wlc-out"><p class="small muted">Sign in to chat with WL Coach. Chat needs an account because your questions are sent to our server, and from there to an AI service, to be answered.</p>${sbClient() ? `<button type="button" class="btn sm primary" data-act="sb-open" data-v="in" aria-haspopup="dialog">${esc(tr("Sign in"))}</button>` : ""}</div></section>`;
   if (!p.coachChatConsent) return `<section class="card" id="wlc">${head}
     <p class="small muted">Before your first question, here is exactly what happens to it:</p>
     <ul class="clean small optin">
@@ -14067,20 +14114,18 @@ function coachChatCard(){
     </ul>
     <div class="row" style="margin-top:6px"><button class="btn primary" data-act="wlc-optin"${C.consenting ? " disabled" : ""}>${C.consenting ? "Saving…" : "Allow coach chat"}</button></div>
     ${C.err ? `<div class="note" role="alert">${esc(C.err)}</div>` : ""}</section>`;
-  // 8.6.10: a chat window. Your questions on the right, the coach on the left, three dots while it thinks, suggested questions that fill the box
-  // (they never send by themselves: a send goes to a server), and a counter. The reply is still shown as plain text.
+  // 8.6.10 / 8.6.15: one card. The title and the honest note on one row, suggested questions (they fill the box and never send by
+  // themselves: a send goes to a server), the conversation once there is one (yours on the right, the coach on the left, three dots
+  // while it thinks), and the box with its Ask button. The reply is still shown as plain text.
   const msgs = (C.msgs || []).map(m => `<div class="wlc-msg${m.me ? " me" : ""}"><span class="sr-only">${m.me ? "You" : "WL Coach"}: </span><div class="wlc-bubble">${esc(m.t)}</div></div>`).join("")
     + (C.busy ? `<div class="wlc-msg"><div class="wlc-bubble wlc-typing" role="status" aria-label="${esc(tr("WL Coach is thinking"))}"><span></span><span></span><span></span></div></div>` : "");
   return `<section class="card wlc-card" id="wlc">
-    <div class="wlc-head"><span class="wlc-av" aria-hidden="true">${icon("compass","",22)}</span>
-      <div class="wlc-title"><div class="eyebrow">Chat with your coach</div><h2>Ask WL Coach</h2></div>
-      <span class="pill-goal wlc-note">Can't see your logs yet · Not medical advice</span></div>
-    <p class="small muted">Training and food questions. WL Coach can't see your logs yet, so tell it what it needs to know. It is not medical advice.</p>
+    <div class="wlc-head"><h2>Ask WL Coach</h2><span class="pill-goal wlc-note">Can't see your logs yet · Not medical advice</span></div>
     ${WLA.lang === "es" ? '<p class="tiny muted">Puedes escribir en español; algunas respuestas del servicio pueden llegar en inglés.</p>' : ""}
-    <div id="wlc-log" class="wlc-stream" aria-live="polite">${msgs || `<p class="wlc-empty small muted">${esc(tr("Ask a training or food question to start."))}</p>`}</div>
     <div class="wlc-chips" role="group" aria-label="${esc(tr("Suggested questions"))}">${WLC_ASKS.map((q, i) => `<button type="button" class="chip" data-act="wlc-ask" data-i="${i}">${esc(tr(q))}</button>`).join("")}</div>
-    <div class="wlc-composer"><textarea id="wlc-q" rows="2" maxlength="1000" aria-label="${esc(tr("Your question"))}" placeholder="${esc(tr("For example: what should I eat after a workout?"))}">${esc(C.q || "")}</textarea>
-      <button type="button" class="wlc-send" data-act="wlc-send" aria-label="${esc(C.busy ? tr("Thinking…") : tr("Send"))}"${C.busy ? " disabled" : ""}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button></div>
+    <div id="wlc-log" class="wlc-stream" aria-live="polite">${msgs}</div>
+    <div class="wlc-composer"><textarea id="wlc-q" rows="2" maxlength="1000" aria-label="${esc(tr("Your question"))}" placeholder="${esc(tr("Ask anything about your workouts, meals or goals"))}">${esc(C.q || "")}</textarea>
+      <button type="button" class="btn primary wlc-send" data-act="wlc-send"${C.busy ? " disabled" : ""}>${esc(C.busy ? tr("Thinking…") : tr("Ask"))}</button></div>
     ${C.err ? `<div class="note" role="alert">${esc(C.err)}</div>` : ""}
   </section>`;
 }
@@ -14501,11 +14546,17 @@ document.addEventListener("click", async e => {
       const cal = base * portion;
       const m = { id: uid(), date: val("m-date") || today(), slot: val("m-slot"), name: portion !== 1 ? `${name} (${portion}× portion)` : name, cal: Math.round(cal), dish: dish?.id || null, extras: [] };
       if (UI.mealShot?.data) { m.photo = UI.mealShot.data; UI.mealShot = null; }
-      addEntry("meals", m); UI.pendingExtras = m.id; UI.navDate = m.date; UI.prefill = null; render(); toast("Meal logged", "success"); checkCelebrations(); checkAwards(); break; }
+      addEntry("meals", m); UI.pendingExtras = m.id; UI.navDate = m.date; UI.prefill = null; UI.mSlot = null; render(); toast("Meal logged", "success"); checkCelebrations(); checkAwards(); break; }
     case "log-pick": { // 8.6.8: the + Log on a Today's meals card logs that pick for today, one regular portion, the same way Log meal does
       const d = dailyPicks(today(), P())[+t.dataset.i]; if (!d) return;
       const m = { id: uid(), date: today(), slot: SLOTS[+t.dataset.i]?.[0] || "lunch", name: d.n, cal: Math.round(d.cal), dish: d.id || null, extras: [] };
-      addEntry("meals", m); UI.pendingExtras = m.id; UI.navDate = m.date; UI.prefill = null; render(); toast("Meal logged", "success"); checkCelebrations(); checkAwards(); break; }
+      addEntry("meals", m); UI.pendingExtras = m.id; UI.navDate = m.date; UI.prefill = null; UI.nmMenu = false; render(); toast("Meal logged", "success"); checkCelebrations(); checkAwards(); break; }
+    case "nm-menu": UI.nmMenu = !UI.nmMenu; render(); break; // 8.6.14: See today's menu opens the three picks inside Meals on today
+    case "drinks-tile": { // 8.6.14: the Drinks · Alcohol tile opens the drinks panel; Close in the panel shuts it and hands focus back to the tile
+      const closing = !!UI.drinkOpen; UI.drinkOpen = !closing; render();
+      if (closing) document.querySelector(".gl-drinks")?.focus();
+      break; }
+    case "nl-photo": document.getElementById("meal-shot-in")?.click(); break; // the From a photo chip opens the same camera or file chooser as before
     case "quick-food": UI.prefill = { name: t.dataset.name, cal: t.dataset.cal ? +t.dataset.cal : "", slot: t.dataset.slot }; render(); document.getElementById("m-name")?.focus(); break;
     case "repeat-day": {
       const date = t.dataset.date || today(), src = onDate("meals", addDays(date, -1)), have = onDate("meals", date);
@@ -16436,31 +16487,35 @@ function coachContextCard(p){
   const s = shortfallAdvice(p);
   const c = intakeContext(p);
   const A = UI.coachAns || {};
-  return `<section class="card" id="coach-context">
+  // 8.6.15: two cards side by side, the check-in question on the left and the training read-out on the right.
+  const verdict = t.level === "easy" ? "Keep it moderate" : t.level === "push" ? "Good week to push" : t.level === "moderate" ? "Hold the volume" : "Train as planned";
+  return `<div class="grid g2 cc-pair" id="coach-context">
+  <section class="card cc-check">
     <div class="eyebrow" style="color:var(--c-coach)">Check-in · ${esc(q.theme === "consistency" ? "consistency" : q.theme)}</div>
-    <h2>The coach has a question</h2>
+    <h2 class="sr-only">The coach has a question</h2>
     <div class="coach-says"><span class="cb">${icon("coach")}</span><div class="bubble">${esc(q.q)}</div></div>
     <label class="f full">Your answer (optional)<input type="text" id="coach-ans" value="${esc(A.text || "")}" placeholder="A sentence is plenty"></label>
-    <div class="row"><button class="btn" data-act="coach-answer">Answer</button><button class="btn ghost" data-act="coach-skip-q">Ask me something else</button></div>
+    <div class="row"><button class="btn primary" data-act="coach-answer">Answer</button><button class="btn ghost" data-act="coach-skip-q">Ask me something else</button></div>
     ${(p.coach?.answers || []).length ? `<details class="how"><summary>What you've told the coach (${p.coach.answers.length})</summary>
       <ul class="clean small">${p.coach.answers.slice(-6).reverse().map(a => `<li><b>${esc(a.q)}</b><br><span class="muted">${esc(a.a)} · ${fmtDay(a.d)}</span></li>`).join("")}</ul></details>` : ""}
-    <hr class="divider">
-    <div class="eyebrow">Training against what you're actually eating</div>
-    <div class="well stack" style="gap:8px">
-      <div class="pr"><span class="next">${t.level === "easy" ? "Keep it moderate" : t.level === "push" ? "Good week to push" : t.level === "moderate" ? "Hold the volume" : "Train as planned"}</span></div>
-      <p class="small">${esc(t.why)}</p>
-      ${c.avg != null ? `<p class="tiny faint">Based on ${c.days} logged day${c.days === 1 ? "" : "s"} averaging ${c.avg.toLocaleString()} cal${c.maint ? `, against about ${c.maint.toLocaleString()} to hold steady` : ""}.</p>` : ""}
-    </div>
-    ${s ? `<div class="well stack" style="gap:8px">
-      <div class="eyebrow" style="color:var(--c-nutrition)">You're eating short</div>
+  </section>
+  <section class="card cc-ready">
+    <h2 class="eyebrow">Training against what you're actually eating</h2>
+    <div class="cc-verdict" data-l="${esc(t.level)}"><span class="cc-dot" aria-hidden="true"></span><h3>${verdict}</h3></div>
+    <p class="small">${esc(t.why)}</p>
+    ${c.avg != null ? `<p class="tiny faint">Based on ${c.days} logged day${c.days === 1 ? "" : "s"} averaging ${c.avg.toLocaleString()} cal${c.maint ? `, against about ${c.maint.toLocaleString()} to hold steady` : ""}.</p>` : ""}
+    <div class="cc-strip"><span>${esc(tr("Days with food logged"))}</span><b class="tab">${c.days} ${esc(tr("of the last 7"))}</b></div>
+  </section>
+    ${s ? `<section class="card cc-short">
+      <h2 class="eyebrow" style="color:var(--c-nutrition)">You're eating short</h2>
       <p class="small">${esc(s.line)}</p>
       ${s.dense.length ? `<div><div class="tiny muted" style="margin-bottom:6px">From your own food culture, these close the gap:</div>
         <div class="chips">${s.dense.map(d => `<a class="chip" href="${dishLink(d)}">${esc(d.n)} <span class="tab muted">${d.cal} cal</span></a>`).join("")}</div></div>` : ""}
       ${s.snacks.length ? `<div><div class="tiny muted" style="margin-bottom:6px">Or a snack:</div>
         <div class="chips">${s.snacks.map(x => `<span class="chip">${esc(x.n)} <span class="tab muted">${x.cal} cal</span></span>`).join("")}</div></div>` : ""}
       <p class="tiny faint">${esc(s.supplements)}</p>
-    </div>` : ""}
-  </section>`;
+    </section>` : ""}
+  </div>`;
 }
 
 // ---------- 5 + 6. Equipment and limitations ----------
@@ -16520,10 +16575,15 @@ function drinksSection(p, opts = {}){
   const qty = UI.drinkQty || 1;
   const cats = [...new Set(DRINKS.map(x => x.cat))];
   const open = opts.open || UI.drinkOpen || list.length > 0;
-  return `
-  <details class="card drinkbox"${open ? " open" : ""}>
+  // 8.6.14: on the Nutrition page the Drinks · Alcohol tile opens this as a panel (a card with a Close button) instead of a fold-away box.
+  const head = opts.panel
+    ? `<section class="card drinkbox drink-panel" id="drinks-panel" aria-labelledby="drinks-h">
+  <div class="row between"><h2 id="drinks-h">${esc(tr("Drinks · Alcohol"))}</h2><button type="button" class="btn sm" data-act="drinks-tile" aria-expanded="true" aria-controls="drinks-panel">${esc(tr("Close"))}</button></div>`
+    : `<details class="card drinkbox"${open ? " open" : ""}>
   <summary class="drinkhead"><span class="grow"><span class="eyebrow" style="color:var(--c-water)">Drinks</span>
-    <b>Alcohol</b></span>${drinkKcalOn(date) ? `<span class="tab">${drinkKcalOn(date).toLocaleString()} cal today</span>` : `<span class="small muted">Nothing today</span>`}${icon("chevR","dchev",16)}</summary>
+    <b>Alcohol</b></span>${drinkKcalOn(date) ? `<span class="tab">${drinkKcalOn(date).toLocaleString()} cal today</span>` : `<span class="small muted">Nothing today</span>`}${icon("chevR","dchev",16)}</summary>`;
+  return `
+  ${head}
   <div class="stack lg" style="margin-top:12px">
   <section class="sub">
     <div class="setrow"><div class="setlabel">
@@ -16557,7 +16617,7 @@ function drinksSection(p, opts = {}){
     <p class="small muted">${wk.kcal > 0 ? `That's about ${Math.round(wk.kcal / 7).toLocaleString()} calories a day, or ${(wk.kcal / 3500).toFixed(2)} lb worth of energy across the week.` : "Nothing logged this week."}</p>
     <p class="tiny faint">Counting calories is all this does. If you ever want to look at your drinking itself rather than its calories, a doctor is a better place to start than an app.</p>
   </section>
-  </div></details>`;
+  </div>${opts.panel ? "</section>" : "</details>"}`;
 }
 
 // Remember whether the drinks section is folded open, so picking a drink (which re-renders)
@@ -19268,11 +19328,15 @@ function coachMechanic(p = P()){
   if (id === "enforcer") {
     const a = adherenceDelta(p), det = adherence(p);
     const sign = a.delta > 0 ? "+" : "";
+    // 8.6.15: today's score as a ring, and each check as a pill; one still to do is a link to where it gets logged.
+    const C = 2 * Math.PI * 27, go = { Calories: "#/nutrition", Log: "#/nutrition", Session: "#/workouts" };
     return `<div class="mech mech-en">
-      <span class="mech-num">${a.today}<i>%</i></span>
+      <span class="en-ring" role="img" aria-label="${a.today}% of today's checks done"><svg viewBox="0 0 68 68" width="64" height="64" aria-hidden="true"><circle cx="34" cy="34" r="27" fill="none" stroke="var(--line)" stroke-width="6.5"/><circle cx="34" cy="34" r="27" fill="none" stroke="${a.today >= 100 ? "var(--good)" : "var(--cc, var(--accent))"}" stroke-width="6.5" stroke-linecap="round" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${(C * (1 - a.today / 100)).toFixed(2)}" transform="rotate(-90 34 34)"/></svg><span class="mech-num" aria-hidden="true">${a.today}<i>%</i></span></span>
       <span class="mech-side">${a.delta ? `<b class="mono ${a.delta < 0 ? "down" : "up"}">${sign}${a.delta}%</b>
         <span class="tiny muted">vs yesterday (${a.yesterday}%)</span>` : `<span class="tiny muted">Same as yesterday (${a.yesterday}%)</span>`}</span>
-      <span class="mech-checks">${det.checks.map(c => `<span class="mck ${c.ok ? "ok" : "no"}">${c.ok ? icon("check","",13) : icon("x","",13)} ${esc(c.k)}</span>`).join("")}</span>
+      <span class="mech-checks">${det.checks.map(c => c.ok
+        ? `<span class="mck ok">${icon("check","",13)} ${esc(c.k)}<span class="sr-only"> done</span></span>`
+        : `<a class="mck no" href="${go[c.k] || "#/nutrition"}">${icon("circle","",13)} ${esc(c.k)}<span class="sr-only"> not done yet</span></a>`).join("")}</span>
     </div>`;
   }
   const rec = recommendedIntensity(p), cur = currentIntensity(p), sh = intensityShape(p);
@@ -26771,37 +26835,64 @@ html .side .nav a[aria-current="page"]::before,html .side .nav button.prem-trigg
 </style>
 <style id="sectors-css">
 /* 8.6.8+: the six-sector revamp. Every rule is scoped to the page it restyles, and uses the app's own tokens. */
-/* ---- Daily nutrition ---- */
-.mtgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
-.mt-card.li{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:12px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface)}
-.mt-card.li:first-child{border-top:1px solid var(--line)}
-.mt-card .grow{display:flex;flex-direction:column;gap:6px}
-.mt-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.mt-slot.eyebrow{display:inline-flex;align-items:center;gap:6px;color:var(--text);font-weight:600;text-transform:none;letter-spacing:0;font-size:calc(12px * var(--text-scale,1))}
-.mt-slot.eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gold)}
-.mt-card[data-slot="lunch"] .mt-slot::before{background:var(--good)}
-.mt-card[data-slot="dinner"] .mt-slot::before{background:var(--accent)}
-.mt-cal{color:var(--muted);font-size:calc(13px * var(--text-scale,1))}
+/* ---- Daily nutrition (8.6.14: Log a meal beside Meals on today, the glance strip, Last 7 days beside Log your weight) ---- */
+.nut-top{align-items:stretch}
+.nut-log,.nut-meals{display:flex;flex-direction:column;gap:12px;min-width:0}
+.nut-log h2,.nut-meals h2,.nut-glance h2,.nut-weight h2{margin:0}
+.nl-tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--text);font-size:calc(12px * var(--text-scale,1));font-weight:700;white-space:nowrap}
+.nl-chips{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;margin-top:-2px}
+.nl-chip{display:inline-flex;align-items:center;gap:6px;color:var(--text);text-decoration:none}
+.nl-calw{display:flex;flex-direction:column;gap:6px;min-width:0;align-self:start}
+.nl-calbox{display:flex;min-width:0}
+.nl-calbox input[type=number]{flex:1 1 auto;min-width:0;border-radius:var(--r-sm) 0 0 var(--r-sm)}
+.nl-guess{flex:none;min-height:44px;display:inline-flex;align-items:center;gap:4px;padding:0 10px;border:1px solid var(--line2);border-radius:0 var(--r-sm) var(--r-sm) 0;background:var(--accent-soft);color:var(--text);font:inherit;font-size:calc(13px * var(--text-scale,1));font-weight:700;cursor:pointer}
+.nl-guess:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+@media (hover:hover) and (pointer:fine){.nl-guess:hover{background:color-mix(in srgb,var(--accent) 22%,var(--surface))}}
+.nl-log{width:100%;justify-content:center;margin-top:auto}
+.nm-empty{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px;border:1px dashed var(--line2);border-radius:var(--r-sm)}
+.nm-bowl{flex:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--raise);color:var(--muted)}
+.nm-etext{flex:1 1 180px;min-width:0}
+.nm-more{display:flex}
+.nm-line{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap}
+.nm-slot{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;background:var(--accent-soft);color:var(--text);font-size:calc(11.5px * var(--text-scale,1));font-weight:700}
+.nm-row .grow > .tiny{display:block;margin-top:3px}
+.nm-act{gap:6px;flex:none}
+.nm-total{white-space:nowrap}
+.nm-menu{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.nm-menu[hidden]{display:none}
+.mt-row .grow{display:flex;flex-direction:column;gap:2px;min-width:0}
+.mt-row .grow .tiny{display:block}
 .mt-name{color:var(--text);text-decoration:none}
-.mt-name b{display:block;font-size:calc(16px * var(--text-scale,1));line-height:1.25}
+.mt-name b{display:block;font-size:calc(15px * var(--text-scale,1));line-height:1.25}
 .mt-name:hover b,.mt-name:focus-visible b{text-decoration:underline;text-underline-offset:3px}
-.mt-log{align-self:flex-end;background:color-mix(in srgb,var(--good) 14%,var(--surface));color:var(--good);border:1px solid color-mix(in srgb,var(--good) 35%,transparent)}
-.nut-side{gap:16px;min-width:0}
-.gl-body{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.gl-tiles{flex:1 1 220px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.gl-tile{background:var(--raise);border-radius:var(--r-sm);padding:10px 8px;text-align:center}
+.mt-log{flex:none;background:color-mix(in srgb,var(--good) 14%,var(--surface));color:var(--good);border:1px solid color-mix(in srgb,var(--good) 35%,transparent)}
+.gl-day{display:inline-flex;align-items:center;gap:2px;padding:2px;border:1px solid var(--line);border-radius:12px;background:var(--raise)}
+.gl-day .btn{border-color:transparent;background:transparent}
+.gl-date{padding:0 6px;font-weight:700;font-size:calc(13px * var(--text-scale,1));white-space:nowrap}
+.gl-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.gl-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.gl-tile{display:flex;flex-direction:column;gap:4px;min-width:0;background:var(--raise);border-radius:var(--r-sm);padding:12px 14px;text-align:left}
 .gl-tile .num{display:block}
-.nw-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:end}
-.nw-row .f{margin:0}
-.nw-row .btn{grid-column:1 / -1}
+.gl-tile .num small{font-size:.55em;font-weight:600;color:var(--muted)}
+.gl-tile .muted,.gl-tile .num small{color:color-mix(in srgb,var(--muted) 72%,var(--text))} /* the tiles sit on the raised colour, so their small text is a step stronger to keep 4.5:1 */
+.gl-bar{height:5px;margin-top:2px;background:color-mix(in srgb,var(--text) 10%,transparent)}
+.gl-bar.over i{background:var(--warn)}
+.gl-drinks{border:1px solid transparent;font:inherit;color:var(--text);cursor:pointer;min-height:44px}
+@media (hover:hover) and (pointer:fine){.gl-drinks:hover{border-color:var(--line2)}}
+.gl-drinks[aria-expanded="true"]{border-color:var(--accent)}
+.gl-drinks:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.gl-dval{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:auto;font-weight:700;font-size:calc(14px * var(--text-scale,1))}
+.gl-dval .ico{flex:none;color:var(--muted)}
+.nw-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.nw-row .f{flex:1 1 156px;margin:0}
+.nw-row .nw-date{flex-basis:180px}
+.nw-row .btn{flex:0 0 auto}
 .chart-svg.narrow{width:100%;min-width:300px;max-width:560px;height:auto;margin-inline:auto;display:block}
 .pill-goal{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:var(--raise);color:color-mix(in srgb,var(--text) 72%,var(--raise));font-size:calc(12px * var(--text-scale,1));font-weight:600;white-space:nowrap}
 .po-row{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .po-text{flex:1 1 320px;min-width:0}
 .po-act{flex:0 0 auto}
 .po-how{border-top:1px solid var(--line);padding-top:10px}
-.nut-meals .empty,.nut-meals .emptystate,.nut-meals [class*="empty"]{border:1px dashed var(--line2);border-radius:var(--r-sm)}
-@media (max-width:600px){.mt-card.li{flex-direction:row;align-items:center}.mt-log{align-self:center}}
 /* ---- Workouts ---- */
 #sec-workouts > .scgrid.plain{order:-1}
 .wk-import h2{margin:0}
@@ -26822,15 +26913,52 @@ html .side .nav a[aria-current="page"]::before,html .side .nav button.prem-trigg
 .wrow .grow b{display:block}
 .wr-nums{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right;flex:none}
 .wr-kcal{color:var(--good);font-size:calc(12px * var(--text-scale,1));font-weight:600}
+/* ---- Coach page (8.6.15): the hero, compact tabs, the check-in beside the training read-out, the slim five-questions strip ---- */
+.cp-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.cp-id{display:flex;gap:14px;align-items:flex-start;flex:1 1 320px;min-width:0}
+.cp-av{flex:none;width:52px;height:52px;border-radius:15px;display:grid;place-items:center;background:var(--cc);color:#fff;box-shadow:0 6px 16px color-mix(in srgb,var(--cc) 30%,transparent)}
+.cp-txt{display:flex;flex-direction:column;gap:4px;min-width:0}
+.cp-txt .coach-say{margin:2px 0 0;font-size:calc(17px * var(--text-scale,1));font-family:var(--display);font-weight:600;line-height:1.35}
+.cp-txt .tiny{margin:0}
+.cp-mech{flex:0 1 400px;min-width:0}
+.cp-mech .mech{margin-top:0}
+.cp-meta{display:flex;flex-wrap:wrap;gap:4px 10px;padding-top:12px;margin-top:4px;border-top:1px solid var(--line)}
+.cp-meta b{color:var(--text)}
+.en-ring{position:relative;display:grid;place-items:center;width:64px;height:64px}
+.en-ring svg{position:absolute;inset:0}
+.en-ring .mech-num{position:relative;font-size:calc(17px * var(--text-scale,1));letter-spacing:-.02em}
+.en-ring .mech-num i{font-size:.7em;margin-left:1px}
+a.mck{color:var(--muted);text-decoration:none}
+.mech-en .mck{min-height:36px;padding:4px 12px;font-size:calc(12.5px * var(--text-scale,1))}
+@media (hover:hover) and (pointer:fine){a.mck:hover{color:var(--text);border-color:var(--line2)}}
+a.mck:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#sec-coach .ctabs{display:inline-grid;grid-template-columns:repeat(4,auto);justify-self:start;align-self:flex-start;width:max-content;max-width:100%}
+#sec-coach .ctab{padding:0 20px}
+@media (max-width:600px){#sec-coach .ctabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:auto;align-self:stretch;justify-self:stretch}#sec-coach .ctab{padding:0 8px}}
+.cc-pair{align-items:stretch}
+.cc-pair > .card{display:flex;flex-direction:column;gap:10px;min-width:0}
+.cc-pair .row{margin:0}
+.cc-pair h2.eyebrow{margin:0}
+.cc-pair > .cc-short{grid-column:1/-1}
+.cc-short > *{margin:0}
+.cc-verdict{display:flex;align-items:center;gap:10px}
+.cc-verdict h3{margin:0;font-size:calc(18px * var(--text-scale,1))}
+.cc-dot{flex:none;width:10px;height:10px;border-radius:50%;background:var(--good)}
+.cc-verdict[data-l="easy"] .cc-dot{background:var(--warn)}
+.cc-verdict[data-l="moderate"] .cc-dot{background:var(--gold)}
+.cc-ready > p{margin:0}
+.cc-strip{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding:10px 13px;border-radius:var(--r-sm);background:var(--raise);font-size:calc(13px * var(--text-scale,1));color:var(--muted)}
+.cc-strip b{color:var(--text)}
+.cn-head{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap}
+.cn-head h2{margin:0;font-size:calc(17px * var(--text-scale,1))}
 /* ---- WL Coach chat ---- */
-.wlc-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.wlc-av{position:relative;flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--c-coach);color:var(--surface)}
-.wlc-av::after{content:"";position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;background:var(--good);border:2px solid var(--surface)}
-.wlc-title{flex:1 1 180px;min-width:0}
-.wlc-title h2{margin:0}
+.wlc-head{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.wlc-head h2{margin:0}
 .wlc-note{white-space:normal}
-.wlc-stream{display:flex;flex-direction:column;gap:10px;min-height:140px;max-height:min(58vh,520px);overflow-y:auto;padding:14px;border:1px solid var(--line);border-radius:var(--r);background:color-mix(in srgb,var(--raise) 55%,var(--surface))}
-.wlc-empty{margin:auto;text-align:center;max-width:36ch}
+.wlc-out{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:var(--r-sm);background:var(--raise)}
+.wlc-out p{margin:0;flex:1 1 260px}
+.wlc-stream{display:flex;flex-direction:column;gap:10px;max-height:min(58vh,520px);overflow-y:auto;padding:14px;border:1px solid var(--line);border-radius:var(--r);background:color-mix(in srgb,var(--raise) 55%,var(--surface))}
+.wlc-stream:empty{padding:0;border:0;background:none;margin-top:-8px}
 .wlc-msg{display:flex;max-width:100%}
 .wlc-msg.me{justify-content:flex-end}
 .wlc-bubble{max-width:min(92%,640px);padding:10px 14px;border-radius:16px 16px 16px 6px;background:var(--surface);border:1px solid var(--line);color:var(--text);font-size:calc(14px * var(--text-scale,1));line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -26847,13 +26975,14 @@ html .side .nav a[aria-current="page"]::before,html .side .nav button.prem-trigg
 .wlc-composer:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
 .wlc-composer textarea{flex:1;min-width:0;min-height:44px;max-height:140px;resize:none;border:0;outline:0;background:transparent;box-shadow:none;padding:6px 0;font:inherit;color:var(--text)}
 .wlc-composer .wl-count{align-self:flex-end;margin:0;padding-bottom:12px;white-space:nowrap}
-.wlc-send{flex:none;width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);cursor:pointer}
-.wlc-send:disabled{opacity:.5;cursor:default}
+.wlc-send{flex:none;min-height:44px;padding:0 18px}
+.wlc-send:disabled{opacity:.6;cursor:default}
 /* ---- Profile quick setup ---- */
 .pf-quick{display:flex;flex-direction:column;gap:8px;margin-top:6px}
 .pf-q{border-style:dashed}
 /* ---- touch size: every new tappable control is 44px tall at any width ---- */
-.mt-log,.pf-q,.wk-presets .chip,.actq,.wlc-chips .chip,.op-presets .chip{min-height:44px}
+.mt-log,.pf-q,.wk-presets .chip,.actq,.wlc-chips .chip,.op-presets .chip,.nl-chip,.nm-menu-btn,.nm-act .btn,.nw-row .btn,.gl-day .btn,.cc-pair .btn{min-height:44px}
+.nm-act .btn.ghost,.gl-day .btn{min-width:44px}
 .po-how summary{display:flex;align-items:center;min-height:44px}
 /* ---- Glass & motion ---- */
 .op-presets{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
