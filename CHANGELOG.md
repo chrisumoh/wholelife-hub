@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.29, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.30, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.30 · Workouts: Log a workout: one activity chip row with a searchable More menu; Food focus: a joined segmented control with a mix bar
+
+- **Problem:** In Log a workout the activity showed twice (a current-activity row with Change, quick picks and a plain dropdown underneath), and the picker was a long grid of tiles. In Settings > Goals & food the Food focus buttons ran past the right edge of the card and the percentages were one cramped line.
+- **Change:** Log a workout now has one row of activity chips (Strength training, Running, Walking, Cycling, HIIT / circuits, Soccer) with a check on the chosen one, and a More +38 chip that opens a searchable list of every activity grouped as before with its calories an hour. Pick something from More and it is pinned beside the chips. The stray dropdown under the chips is gone, and the minutes, date and notes you typed are kept when you pick. Food focus is now a three-part segmented control that fits the card (a check marks the chosen one), with a bar showing the West Africa, rest of Africa and rest of the world split, a legend and a chip with the dish and region counts. Arrow keys move between the chips and between the Food focus options.
+- **Where:** index.html: workoutsView() activity block, M3_ACTS, settings food-focus card, cases act-more and pick-act, actMoreClose() and the More, search and arrow-key listeners, enhanceSelect() (data-noenhance), .m3-* CSS, #w-type.visually-tight, APP_VERSION, WLH.changelog. tests/browser/workouts.mjs, compact.mjs, sectors.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Workouts > Manual entry > Log a workout: tap a chip, tap More, type pilat, pick Pilates (it appears as a seventh chip), then Save. Settings > Goals & food > Food focus: tap each option and watch the bar and percentages change. Try an iPad width and a phone.
+- **Known limits:** Checked in headless Chrome only. The calories an hour in the More menu use your latest weigh-in weight (or the app default). The chip row is 44px tall for touch rather than the mock-up's 36px.
 
 ## 8.6.29 · Coach: Weekly check-in: floating pace pointer, status pill, compact metrics, a two-item improve list and icon energy chips
 

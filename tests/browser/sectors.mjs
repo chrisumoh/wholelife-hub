@@ -205,13 +205,20 @@ ok("it still reads Workouts, Minutes and Streak with this week's numbers", await
 const eq = await g("#sec-workouts .wk-tools > section:first-child"), im = await g(".wk-import");
 ok("Snap gym equipment and Import workouts sit side by side", eq && im && eq.r <= im.l + 1 && Math.abs(eq.t - im.t) < 2, JSON.stringify({ eq, im }));
 ok("Import workouts keeps its toggle, and says there is no automatic sync", await ev(`(() => { const c = document.querySelector(".wk-import"); return /Import workouts/.test(c.querySelector("h2").textContent) && /no automatic sync/.test(c.textContent) && c.querySelector('[data-act="imp-toggle"]').textContent.trim() === "Import from Apple Health or another app"; })()`));
-const qp = await ev(`[...document.querySelectorAll(".actquick .actq")].map(b => ({ v: b.dataset.v, h: b.getBoundingClientRect().height, ic: !!b.querySelector(".wi") }))`);
-ok("five quick activity picks, the current one (Strength training) not among them, each 44px with its icon", qp.length === 5 && qp.map(b => b.v).join() === "run,walk,cycle,hiit,soccer" && qp.every(b => b.h >= 43.5 && b.ic), JSON.stringify(qp));
+const qp = await ev(`[...document.querySelectorAll(".m3-chips > [role=radio]")].map(b => ({ v: b.dataset.v, h: b.getBoundingClientRect().height, on: b.getAttribute("aria-checked") === "true" }))`);
+ok("six activity chips in one row (Strength training checked), each 44px", qp.length === 6 && qp.map(b => b.v).join() === "strength,run,walk,cycle,hiit,soccer" && qp.filter(b => b.on).length === 1 && qp[0].on && qp.every(b => b.h >= 43.5), JSON.stringify(qp));
 await ev(`document.getElementById("w-min").value = "33"; document.getElementById("w-note").value = "tempo"; true`);
-await click('.actquick [data-v="walk"]'); await sleep(250);
-ok("tapping Walking selects it, and the minutes and notes already typed are kept", await ev(`val("w-type") === "walk" && document.getElementById("w-min").value === "33" && document.getElementById("w-note").value === "tempo" && document.querySelector(".actcur b").textContent === ACT.walk.n`));
-ok("the picks follow the choice: Strength training is offered again and Walking is not", await ev(`(() => { const v = [...document.querySelectorAll(".actquick .actq")].map(b => b.dataset.v); return v.includes("strength") && !v.includes("walk") && v.length === 5; })()`));
-ok("the folded Change picker and its Done button still work", await (async () => { await click('[data-act="act-toggle"]'); const open = await ev(`document.querySelectorAll(".actbtn").length === ACTIVITIES.length && !document.querySelector(".actquick")`); await click('[data-act="act-toggle"]'); return open && await ev(`document.querySelectorAll(".actbtn").length === 0 && !!document.querySelector(".actquick")`); })());
+await click('.m3-chips > [data-v="walk"]'); await sleep(250);
+ok("tapping Walking selects it, and the minutes and notes already typed are kept", await ev(`val("w-type") === "walk" && document.getElementById("w-min").value === "33" && document.getElementById("w-note").value === "tempo" && document.querySelector('.m3-chips [aria-checked="true"]').dataset.v === "walk"`));
+ok("the More menu lists every activity, filters by search, and picking one pins it beside the chips", await (async () => {
+  await click('[data-act="act-more"]'); await sleep(150);
+  const all = await ev(`document.querySelectorAll(".m3-opt").length === ACTIVITIES.length`);
+  await ev(`(() => { const q = document.getElementById("act-q"); q.value = "pilat"; q.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`);
+  const some = await ev(`[...document.querySelectorAll(".m3-opt")].filter(o => !o.hidden).map(o => o.dataset.v).join() === "pilates"`);
+  await click('.m3-opt[data-v="pilates"]'); await sleep(250);
+  const pinned = await ev(`(() => { const c = [...document.querySelectorAll(".m3-chips > [role=radio]")]; return c.length === 7 && c[6].dataset.v === "pilates" && c[6].getAttribute("aria-checked") === "true" && val("w-type") === "pilates"; })()`);
+  await click('.m3-chips > [data-v="walk"]'); await sleep(250);
+  return all && some && pinned; })());
 const chips = await ev(`[...document.querySelectorAll(".wk-presets .chip")].map(c => ({ t: c.textContent, v: c.dataset.v, h: c.getBoundingClientRect().height, p: c.getAttribute("aria-pressed") }))`);
 ok("four minute chips, 20m 30m 45m 60m, each 44px", chips.map(c => c.t).join() === "20m,30m,45m,60m" && chips.every(c => c.h >= 43.5), JSON.stringify(chips));
 await ev(`document.getElementById("w-min").value = ""; wEstimate(); true`);

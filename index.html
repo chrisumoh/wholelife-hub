@@ -3884,7 +3884,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.29", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.30", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3898,6 +3898,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.29", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.30",
+      area:"Workouts",
+      title:"Log a workout: one activity chip row with a searchable More menu; Food focus: a joined segmented control with a mix bar",
+      bug:"In Log a workout the activity showed twice (a current-activity row with Change, quick picks and a plain dropdown underneath), and the picker was a long grid of tiles. In Settings > Goals & food the Food focus buttons ran past the right edge of the card and the percentages were one cramped line.",
+      fix:"Log a workout now has one row of activity chips (Strength training, Running, Walking, Cycling, HIIT / circuits, Soccer) with a check on the chosen one, and a More +38 chip that opens a searchable list of every activity grouped as before with its calories an hour. Pick something from More and it is pinned beside the chips. The stray dropdown under the chips is gone, and the minutes, date and notes you typed are kept when you pick. Food focus is now a three-part segmented control that fits the card (a check marks the chosen one), with a bar showing the West Africa, rest of Africa and rest of the world split, a legend and a chip with the dish and region counts. Arrow keys move between the chips and between the Food focus options.",
+      where:"index.html: workoutsView() activity block, M3_ACTS, settings food-focus card, cases act-more and pick-act, actMoreClose() and the More, search and arrow-key listeners, enhanceSelect() (data-noenhance), .m3-* CSS, #w-type.visually-tight, APP_VERSION, WLH.changelog. tests/browser/workouts.mjs, compact.mjs, sectors.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Workouts > Manual entry > Log a workout: tap a chip, tap More, type pilat, pick Pilates (it appears as a seventh chip), then Save. Settings > Goals & food > Food focus: tap each option and watch the bar and percentages change. Try an iPad width and a phone.",
+      limits:"Checked in headless Chrome only. The calories an hour in the More menu use your latest weigh-in weight (or the app default). The chip row is 44px tall for touch rather than the mock-up's 36px." },
     { id:"8.6.29",
       area:"Coach",
       title:"Weekly check-in: floating pace pointer, status pill, compact metrics, a two-item improve list and icon energy chips",
@@ -6146,6 +6154,7 @@ const ACTIVITIES = [
 {k:"other",n:"Other",met:5,g:"other"}
 ];
 const ACT = Object.fromEntries(ACTIVITIES.map(a=>[a.k,a]));
+const M3_ACTS = ["strength","run","walk","cycle","hiit","soccer"]; // the chips always shown; any other choice is pinned beside them
 
 const EX = {
  fullbody:{beginner:[["Goblet squat","3 × 10"],["Push-ups (knees ok)","3 × 8"],["Dumbbell row","3 × 10 each"],["Glute bridge","3 × 12"],["Plank","3 × 20 s"]],
@@ -13706,9 +13715,18 @@ function workoutsView(p){
     <section class="card"><div class="eyebrow">Manual entry</div><h3>Log a workout</h3>
       <div class="form">
         <div class="f full" role="group" aria-label="Activity"><span>Activity</span>
-          ${(() => { const cur = UI.prefillW?.type || UI.pickAct || "strength"; const ca = ACT[cur] || ACTIVITIES[0];
-            return UI.actOpen ? `${ACT_GROUPS.map(([g, gn]) => `<div class="actgroup" role="group" aria-label="${esc(gn)}"><div class="actgh">${esc(gn)}</div><span class="actpick">${ACTIVITIES.filter(a => a.g === g).map(a => `<button type="button" class="actbtn" data-act="pick-act" data-v="${a.k}" aria-pressed="${(UI.prefillW?.type || UI.pickAct || "strength") === a.k}" title="${esc(a.n)}">${wicon(a.k, 40)}<span class="tiny">${esc(a.n)}</span></button>`).join("")}</span></div>`).join("")}<button type="button" class="btn sm" data-act="act-toggle" aria-expanded="true">Done</button>` : `<div class="actcur">${wicon(ca.k, 40)}<b class="grow">${esc(ca.n)}</b><button type="button" class="btn sm" data-act="act-toggle" aria-expanded="false">Change</button></div><div class="actquick" role="group" aria-label="Quick picks">${quickActs(cur).map(a => `<button type="button" class="chip actq" data-act="pick-act" data-v="${a.k}">${wicon(a.k, 22)}<span>${esc(a.n)}</span></button>`).join("")}</div>`; })()}
-          <select id="w-type" class="visually-tight" aria-label="Activity">${opt(ACTIVITIES.map(a=>[a.k,a.n]), UI.prefillW?.type || UI.pickAct || "strength")}</select></div>
+          ${(() => { const cur = UI.prefillW?.type || UI.pickAct || "strength"; const kgW = latestWeightKg(p);
+            const shown = M3_ACTS.includes(cur) || !ACT[cur] ? M3_ACTS : [...M3_ACTS, cur];
+            const chip = k => { const on = k === cur; return `<button type="button" class="m3-chip" role="radio" aria-checked="${on}" tabindex="${on ? 0 : -1}" data-act="pick-act" data-v="${k}">${on ? `<span class="m3-chk" aria-hidden="true">${icon("check","",16)}</span>` : wicon(k, 22)}<span>${esc(ACT[k].n)}</span></button>`; };
+            return `<div class="m3-chips" role="radiogroup" aria-label="Activity">${shown.map(chip).join("")}
+              <div class="m3-more">
+                <button type="button" class="m3-chip tonal" data-act="act-more" aria-haspopup="dialog" aria-expanded="false" aria-controls="act-menu"><span>More</span><span class="m3-n">+${ACTIVITIES.length - M3_ACTS.length}</span>${icon("chevdown","m3-chev",14)}</button>
+                <div class="m3-menu" id="act-menu" role="dialog" aria-label="Search all ${ACTIVITIES.length} activities">
+                  <div class="m3-search"><input type="search" id="act-q" placeholder="Search ${ACTIVITIES.length} activities" aria-label="Search activities" autocomplete="off"></div>
+                  <div class="m3-list">${ACT_GROUPS.map(([g, gn]) => `<div class="m3-cat actgh" data-g="${g}">${esc(gn)}</div>${ACTIVITIES.filter(a => a.g === g).map(a => `<button type="button" class="m3-opt actopt" data-act="pick-act" data-v="${a.k}" data-q="${esc((a.n + " " + gn).toLowerCase())}" aria-pressed="${a.k === cur}">${wicon(a.k, 22)}<span class="grow">${esc(a.n)}</span><span class="m3-met">${workoutKcal({ type: a.k, minutes: 60 }, kgW).toLocaleString()} cal/hr</span></button>`).join("")}`).join("")}
+                    <div class="m3-none" hidden>No activities match</div></div>
+                </div></div></div>`; })()}
+          <select id="w-type" class="wl-native" data-noenhance aria-label="Activity" tabindex="-1" aria-hidden="true">${opt(ACTIVITIES.map(a=>[a.k,a.n]), UI.prefillW?.type || UI.pickAct || "strength")}</select></div>
         <label class="f">Minutes<input type="number" id="w-min" min="1" max="600" value="${UI.wDraft?.minutes ?? UI.prefillW?.minutes ?? ""}" placeholder="45"></label>
         <label class="f">Date<input type="date" id="w-d" value="${esc(UI.wDraft?.date || today())}" max="${today()}"></label>
         <label class="f">Calories (optional)<input type="number" id="w-cal" min="0" max="5000" value="${UI.wDraft?.cal ?? ""}" placeholder="Estimated if blank"></label>
@@ -14515,6 +14533,22 @@ function aprClose(){
 }
 document.addEventListener("click", e => { if (!e.target.closest?.(".fpick, .apr-i")) aprClose(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape") aprClose(); });
+// 8.6.30: the activity "More" menu closes on an outside click or Escape, its search filters in place, and the chip and segment groups move with the arrow keys.
+function actMoreClose(){ document.querySelectorAll(".m3-more.open").forEach(m => { m.classList.remove("open"); m.querySelector(".m3-chip")?.setAttribute("aria-expanded", "false"); }); }
+document.addEventListener("click", e => { if (!e.target.closest?.(".m3-more")) actMoreClose(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { const o = document.querySelector(".m3-more.open .m3-chip"); actMoreClose(); o?.focus(); } });
+document.addEventListener("input", e => { const q = e.target.closest?.("#act-q"); if (!q) return; const v = q.value.trim().toLowerCase(), list = q.closest(".m3-menu").querySelector(".m3-list"); let any = false;
+  list.querySelectorAll(".m3-opt").forEach(o => { const hit = !v || o.dataset.q.includes(v); o.hidden = !hit; any = any || hit; });
+  list.querySelectorAll(".m3-cat").forEach(c => { let n = c.nextElementSibling, show = false; while (n && n.classList.contains("m3-opt")) { if (!n.hidden) show = true; n = n.nextElementSibling; } c.hidden = !show; });
+  list.querySelector(".m3-none").hidden = any; });
+document.addEventListener("keydown", e => {
+  if (!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) return;
+  const cur = e.target.closest?.('.m3-chips > [role="radio"], .m3-seg > [role="radio"]'); if (!cur) return;
+  const all = [...cur.parentElement.querySelectorAll(':scope > [role="radio"]')], i = all.indexOf(cur);
+  const next = all[(i + (e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : all.length - 1)) % all.length]; if (!next || next === cur) return;
+  e.preventDefault(); const v = next.dataset.v, a = next.dataset.act; next.click();
+  document.querySelector(`[data-act="${a}"][data-v="${v}"][role="radio"]`)?.focus();
+});
 document.addEventListener("mouseover", e => { if (e.target.closest?.("#ui-ts-drawer")) clearTimeout(tsPrevT); });
 document.addEventListener("mouseout", e => { const d = e.target.closest?.("#ui-ts-drawer"); if (d && !d.contains(e.relatedTarget)) tsPreview(); });
 function aprInfo(label, tip){
@@ -14637,8 +14671,12 @@ function settingsView(p){
 <section class="card" id="food-focus">
     <h2>Food focus</h2>
     <p class="small muted">Sets the mix of dishes in meal plans and daily picks. The recipe library always shows everything.</p>
-    <div class="seg" role="group" aria-label="Food focus">${Object.entries(FOCUS).map(([k,f]) => `<button data-act="focus" data-v="${k}" aria-pressed="${(p.focus||"west")===k}">${f.label}</button>`).join("")}</div>
-    <p class="tiny muted tab">West Africa ${Math.round(mixOf(p).west*100)}% · rest of Africa ${Math.round(mixOf(p).africa*100)}% · rest of the world ${Math.round(mixOf(p).world*100)}% · ${DISHES.length} dishes from ${new Set(DISHES.map(d=>d.r)).size} regions</p>
+    ${(() => { const cur = p.focus || "west", m = mixOf(p), pc = n => Math.round(n * 100);
+      return `<div class="m3-seg" role="radiogroup" aria-label="Food focus">${Object.entries(FOCUS).map(([k,f]) => `<button type="button" role="radio" data-act="focus" data-v="${k}" aria-checked="${cur === k}" aria-pressed="${cur === k}" tabindex="${cur === k ? 0 : -1}"><span class="m3-chk" aria-hidden="true">${icon("check","",15)}</span><span>${f.label}</span></button>`).join("")}</div>
+      <div class="m3-mix">
+        <div class="m3-bar" role="img" aria-label="Dish mix: West Africa ${pc(m.west)}%, rest of Africa ${pc(m.africa)}%, rest of the world ${pc(m.world)}%"><i style="width:${pc(m.west)}%;background:var(--c-nutrition)"></i><i style="width:${pc(m.africa)}%;background:var(--c-coach)"></i><i style="width:${pc(m.world)}%;background:#6366F1"></i></div>
+        <div class="m3-foot"><div class="m3-leg"><span><i style="background:var(--c-nutrition)"></i>West Africa <b class="tab">${pc(m.west)}%</b></span><span><i style="background:var(--c-coach)"></i>Rest of Africa <b class="tab">${pc(m.africa)}%</b></span><span><i style="background:#6366F1"></i>Rest of the world <b class="tab">${pc(m.world)}%</b></span></div>
+          <span class="m3-tonal tab">${DISHES.length} dishes · ${new Set(DISHES.map(d=>d.r)).size} regions</span></div></div>`; })()}
   </section>`,
     household: `<section class="card">
     <div class="setrow"><div class="setlabel"><div class="eyebrow">Household</div><h2 style="margin-top:4px">Profiles</h2></div><button class="btn primary setctl" data-act="new-profile">${icon("plus")} Add a profile</button></div>
@@ -14856,7 +14894,8 @@ document.addEventListener("click", async e => {
     case "ring-day": UI.ringDay = t.dataset.v; render(); document.querySelector(`.rday[data-v="${t.dataset.v}"]`)?.focus(); break;
     case "w-preset": { const i = document.getElementById("w-min"); if (i) { i.value = t.dataset.v; wEstimate(); } break; }
     case "wgoal": { const n = Math.max(1, Math.min(14, (p.workoutGoal || 0) + +t.dataset.d)); if (n !== p.workoutGoal) { p.workoutGoal = n; saveProfile(); render(); } document.querySelector(`[data-act="wgoal"][data-d="${t.dataset.d}"]:not([disabled])`)?.focus(); break; }
-    case "act-toggle": wSaveDraft(); UI.actOpen = !UI.actOpen; render(); document.querySelector('[data-act="act-toggle"]')?.focus(); break;
+    case "act-more": { const m = t.closest(".m3-more"), on = !m.classList.contains("open"); m.classList.toggle("open", on);
+      if (on) { const r = m.getBoundingClientRect(), box = m.closest(".card")?.getBoundingClientRect(); m.classList.toggle("end", r.left + 330 > Math.min(innerWidth - 16, box ? box.right : innerWidth)); } t.setAttribute("aria-expanded", String(on)); if (on) { const q = m.querySelector("#act-q"); q?.focus({ preventScroll: true }); } break; }
     case "sc-tip": t.closest(".sc")?.classList.toggle("tipon"); break;
     case "imp-toggle": wSaveDraft(); UI.impOpen = !UI.impOpen; render(); break;
     case "pg": UI[t.dataset.k] = +t.dataset.v; UI.focus = `pg-${t.dataset.k}-${t.dataset.v}`; render(); break;
@@ -14942,7 +14981,7 @@ document.addEventListener("click", async e => {
       applyTextScale(p); render();
       break;
     }
-    case "pick-act": { wSaveDraft(); UI.pickAct = t.dataset.v; UI.actOpen = false; const sel = document.getElementById("w-type"); if (sel) sel.value = t.dataset.v; render(); break; }
+    case "pick-act": { wSaveDraft(); UI.pickAct = t.dataset.v; actMoreClose(); const sel = document.getElementById("w-type"); if (sel) sel.value = t.dataset.v; render(); break; }
     case "focus": p.focus = t.dataset.v; saveProfile(); render(); toast(`Food focus: ${FOCUS[p.focus].label}`); break;
     case "lock-now": lockNow(); break;
     case "erase-ask": UI.confirmErase = true; render(); break;
@@ -26020,7 +26059,7 @@ function tourGuideCard(){
     if (t.disabled !== sel.disabled) t.disabled = sel.disabled;
   }
   function enhanceSelect(sel){
-    if (sel.multiple || sel.size > 1 || sel.hasAttribute("data-wheel")) return;
+    if (sel.multiple || sel.size > 1 || sel.hasAttribute("data-wheel") || sel.hasAttribute("data-noenhance")) return;
     if (coarse()) {
       if (sel._wl) { sel._wl.remove(); sel._wl = null; sel.classList.remove("wl-native"); sel.removeAttribute("aria-hidden"); sel.removeAttribute("tabindex"); }
       return;
@@ -27514,5 +27553,47 @@ a.mck:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 :root[data-scheme="light"] .wci-chip.on{color:color-mix(in srgb,var(--cc) 75%,#000)}
 .wci-banner{margin-top:12px;padding:11px 13px;border-radius:12px;background:color-mix(in srgb,var(--cc) 14%,transparent);border:1px solid color-mix(in srgb,var(--cc) 35%,transparent);font-size:calc(12.5px * var(--text-scale,1));line-height:1.45}
 @media (max-width:640px){.wci-metrics{grid-template-columns:1fr}.wci-pointer{font-size:calc(10.5px * var(--text-scale,1))}}
+/* ---- 8.6.30 Material 3 fixes: one chip row for the workout activity, a joined segmented Food focus with a mix bar ---- */
+.m3-chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;position:relative;margin-top:6px}
+.m3-chip{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 8px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--text);font:inherit;font-size:calc(13px * var(--text-scale,1));font-weight:600;white-space:nowrap;cursor:pointer;overflow:hidden;transition:background-color var(--dur-tap),border-color var(--dur-tap)}
+.m3-chip::before{content:"";position:absolute;inset:0;background:currentColor;opacity:0;pointer-events:none;transition:opacity var(--dur-tap)}
+.m3-chip:hover::before{opacity:.07}.m3-chip:active::before{opacity:.12}
+.m3-chip[aria-checked="true"]{background:var(--accent-soft);border-color:transparent;color:var(--text)}
+.m3-chk{display:inline-grid;place-items:center;width:22px;height:22px;color:var(--accent)}
+.m3-chip.tonal{background:var(--raise);border-color:transparent;color:var(--muted);padding:0 12px}
+.m3-chip.tonal[aria-expanded="true"]{background:var(--accent-soft);color:var(--text)}
+.m3-n{opacity:.72;font-size:calc(11.5px * var(--text-scale,1))}
+.m3-chev{transition:transform var(--dur-tap)}
+.m3-chip[aria-expanded="true"] .m3-chev{transform:rotate(180deg)}
+.m3-more{position:relative;display:inline-flex}
+.m3-menu{position:absolute;left:0;top:calc(100% + 8px);z-index:40;width:330px;max-width:calc(100vw - 44px);border-radius:16px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.97);transition:opacity var(--dur-tap),transform var(--dur-tap),visibility var(--dur-tap)}
+.m3-more.end .m3-menu{left:auto;right:0}
+.m3-more.open .m3-menu{opacity:1;visibility:visible;transform:none}
+:root[data-motion="reduced"] .m3-menu{transition:none}
+.m3-search{padding:10px;border-bottom:1px solid var(--line)}
+.m3-search input{width:100%;min-height:44px;border-radius:999px;padding:0 14px;background:var(--raise);border:1px solid var(--line);color:var(--text);font:inherit;font-size:calc(13px * var(--text-scale,1))}
+.m3-list{max-height:290px;overflow-y:auto;padding:6px}
+.m3-cat{padding:8px 10px 4px;font-size:calc(10.5px * var(--text-scale,1));font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.m3-opt{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:6px 10px;border:0;border-radius:10px;background:transparent;color:var(--text);font:inherit;font-size:calc(13px * var(--text-scale,1));text-align:left;cursor:pointer}
+.m3-opt:hover{background:var(--raise)}
+.m3-opt[aria-pressed="true"]{background:var(--accent-soft);font-weight:600}
+.m3-opt[hidden],.m3-cat[hidden]{display:none}
+.m3-met{font-size:calc(11px * var(--text-scale,1));color:var(--muted)}
+.m3-none{padding:20px 12px;text-align:center;font-size:calc(12.5px * var(--text-scale,1));color:var(--muted)}
+.m3-seg{display:flex;width:100%;margin-top:12px;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.m3-seg button{flex:1 1 0;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 10px;border:0;border-left:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:calc(13px * var(--text-scale,1));font-weight:600;cursor:pointer;text-align:center;line-height:1.15}
+.m3-seg button:first-child{border-left:0}
+.m3-seg button[aria-checked="true"]{background:var(--accent-soft);color:var(--text)}
+.m3-seg .m3-chk{display:none;width:16px;height:16px;flex:none}
+.m3-seg button[aria-checked="true"] .m3-chk{display:inline-grid}
+.m3-mix{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+.m3-bar{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--raise)}
+.m3-bar i{display:block;height:100%;transition:width var(--dur-page) var(--ease-spring)}
+.m3-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px}
+.m3-leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:calc(12px * var(--text-scale,1));color:var(--muted)}
+.m3-leg span{display:inline-flex;align-items:center;gap:6px}
+.m3-leg i{width:8px;height:8px;border-radius:50%;flex:none}
+.m3-leg b{color:var(--text)}
+.m3-tonal{padding:3px 10px;border-radius:999px;background:var(--raise);color:var(--muted);font-size:calc(11.5px * var(--text-scale,1));font-weight:600;white-space:nowrap}
 </style>
 </body></html>
