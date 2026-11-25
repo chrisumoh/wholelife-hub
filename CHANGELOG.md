@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.28, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.29, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.29 · Coach: Weekly check-in: floating pace pointer, status pill, compact metrics, a two-item improve list and icon energy chips
+
+- **Problem:** The Weekly check-in card was a tall stack: a big empty bar with the pointer lost inside it, three wordy columns, every improvement tip printed in full and plain energy buttons.
+- **Change:** The card now has a status pill (for example 3 sessions to go, or On track) in the header; a slim pace rail with a Should be here pointer above it and the seven days of the week under it, with a green dot on every day you trained; three compact tiles (Target pace, Logged, and Food tracking with seven bars for the last 7 days); How you can improve shows the first two tips as one line each (tap a row for the rest of it) and the others sit under Show all; and the energy question has an icon on each answer, with a coloured note under it saying how your next session is scaled. All numbers still come from your own logs, nothing is simulated.
+- **Where:** index.html: checkinCard(), WCI_ENERGY, I.chevdown, .wci-* CSS, cases wci-exp and wci-all, APP_VERSION, WLH.changelog. tests/browser/motion.mjs (fill selector). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Coach > Today, scroll to Weekly check-in. Tap a tip row to open it, tap Show all to see the rest, tap an energy answer (Strategist coach) to see the note. Check light and dark and a phone width.
+- **Known limits:** Checked in headless Chrome only. The design's Log quick button, tappable food bars and per-tip action pills and Done ticks were left out because they were simulated in the mock-up and would not change real data.
 
 ## 8.6.28 · Icons: Health data icon is folder-heart
 

@@ -3884,7 +3884,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.28", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.29", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3898,6 +3898,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.28", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.29",
+      area:"Coach",
+      title:"Weekly check-in: floating pace pointer, status pill, compact metrics, a two-item improve list and icon energy chips",
+      bug:"The Weekly check-in card was a tall stack: a big empty bar with the pointer lost inside it, three wordy columns, every improvement tip printed in full and plain energy buttons.",
+      fix:"The card now has a status pill (for example 3 sessions to go, or On track) in the header; a slim pace rail with a Should be here pointer above it and the seven days of the week under it, with a green dot on every day you trained; three compact tiles (Target pace, Logged, and Food tracking with seven bars for the last 7 days); How you can improve shows the first two tips as one line each (tap a row for the rest of it) and the others sit under Show all; and the energy question has an icon on each answer, with a coloured note under it saying how your next session is scaled. All numbers still come from your own logs, nothing is simulated.",
+      where:"index.html: checkinCard(), WCI_ENERGY, I.chevdown, .wci-* CSS, cases wci-exp and wci-all, APP_VERSION, WLH.changelog. tests/browser/motion.mjs (fill selector). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Coach > Today, scroll to Weekly check-in. Tap a tip row to open it, tap Show all to see the rest, tap an energy answer (Strategist coach) to see the note. Check light and dark and a phone width.",
+      limits:"Checked in headless Chrome only. The design's Log quick button, tappable food bars and per-tip action pills and Done ticks were left out because they were simulated in the mock-up and would not change real data." },
     { id:"8.6.28",
       area:"Icons",
       title:"Health data icon is folder-heart",
@@ -11803,6 +11811,7 @@ function commitVitals(acc){
 }
 // =================== UI HELPERS ===================
 const I = {
+  chevdown:'<polyline points="6 9 12 15 18 9"/>',
   wifi:'<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/>',
   download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
  home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
@@ -14744,6 +14753,8 @@ document.addEventListener("click", async e => {
     case "ci-st-save": { const p2 = P();
       setDaily(p2, { done: true, intensity: currentIntensity(p2) });
       toast(`Today is ${INTENSITIES.find(i => i[0] === currentIntensity(p2))[1].toLowerCase()}.`); render(); break; }
+    case "wci-exp": { const it = t.closest(".wci-item"); if (it) { const on = it.classList.toggle("is-expanded"); t.setAttribute("aria-expanded", String(on)); } break; }
+    case "wci-all": { const d = document.getElementById("wciMore"); if (d) { const on = d.classList.toggle("is-open"); t.setAttribute("aria-expanded", String(on)); const l = t.querySelector("span"); if (l) l.textContent = on ? "Collapse" : "Show all " + (document.querySelectorAll("#checkin .wci-item").length); } break; }
     case "coach-feel": { const p2 = P(); p2.coach = p2.coach || {}; p2.coach.today = p2.coach.today === t.dataset.v ? null : t.dataset.v;
       saveProfile(); render(); break; }
     case "trophy-pop": { const el = t.querySelector("svg") || t;
@@ -16344,44 +16355,73 @@ function planDaysHTML(p, pl, live){
 }
 
 // ---------- B3. Weekly check-in ----------
+// 8.6.29: pace rail with a floating pointer, a status pill, three compact metrics, a two-item improve list with a drawer, and icon energy chips.
+const WCI_ENERGY = [["good","Good","#10B981",'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'],
+  ["ok","So-so","#38BDF8",'<path d="M2 12c2.4-3.2 4.8-3.2 7.2 0s4.8 3.2 7.2 0 4-2.5 5.6 0"/>'],
+  ["low","Low","#F59E0B",'<rect x="2" y="7" width="17" height="10" rx="2"/><line x1="22" x2="22" y1="11" y2="13"/><line x1="6" x2="6" y1="11" y2="13"/>'],
+  ["sore","Sore","#F97316",'<path d="M12 3l7.5 3.1v5.4c0 4.8-3.2 8.4-7.5 9.8-4.3-1.4-7.5-5-7.5-9.8V6.1z"/>'],
+  ["short","Short on time","#A78BFA",'<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/>']];
 function checkinCard(p){
   const c = weeklyCheckin(p);
   const pl = c.plan;
-  const pos = pl ? Math.min(100, Math.max(0, Math.round(((c.idx + 1) / pl.days) * 100))) : Math.round((((parseYmd(today()).getDay() + 6) % 7) + 1) / 7 * 100);
+  const dow = (parseYmd(today()).getDay() + 6) % 7;
+  const pos = pl ? Math.min(100, Math.max(0, Math.round(((c.idx + 1) / pl.days) * 100))) : Math.round((dow + 1) / 7 * 100);
   const donePos = c.donePct != null ? Math.min(100, c.donePct * pos / 100) : c.weekPlanned ? Math.min(100, c.doneWeek / c.weekPlanned * 100) : 0;
-  return `<section class="card" id="checkin">
-    <div class="setrow"><div class="setlabel"><div class="eyebrow" style="color:var(--c-coach)">Weekly check-in</div>
-      <h2 style="margin-top:4px">${pl ? `Day ${Math.max(1, c.idx + 1)} of your ${pl.days}-day plan` : `Week of ${fmtDay(c.ws)}`}</h2></div></div>
-    <div class="timeline" role="img" aria-label="${pl ? `You are ${pos}% through the plan and have completed ${c.donePct ?? 0}% of the sessions due` : `You are ${pos}% through this week`}">
-      <i class="fill" style="width:${donePos}%"></i>
-      <span class="mark${pos > 60 ? " right" : ""}" style="left:${pos}%" data-label="Should be here"></span>
+  const done = pl ? (c.doneAll ?? 0) : c.doneWeek, due = pl ? (c.dueWorkouts ?? 0) : c.weekPlanned;
+  const ok = pl ? done >= due : c.doneWeek > 0;
+  const status = pl ? (done >= due ? "On track" : `${due - done} behind`)
+    : c.doneWeek >= c.weekPlanned ? "Weekly target hit" : c.doneWeek > 0 ? `On pace · ${c.weekPlanned - c.doneWeek} to go` : `${c.weekPlanned} session${c.weekPlanned === 1 ? "" : "s"} to go`;
+  const wkDone = new Set(weekWorkouts(p).map(w => w.date));
+  const DN = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const days = DN.map((n, i) => { const d = addDays(c.ws, i); return `<div class="wci-day${i === dow ? " is-today" : ""}${wkDone.has(d) ? " is-done" : ""}"><span class="wci-day-dot" aria-hidden="true"></span><span>${n}</span></div>`; }).join("");
+  const food = Array.from({ length: 7 }, (_, i) => { const d = addDays(today(), i - 6); const on = loggedFood(d); return `<span class="wci-food-dot${on ? " is-logged" : ""}" title="${esc(fmtDay(d))}: ${on ? "food logged" : "not logged"}"></span>`; }).join("");
+  const persona = typeof coachDef === "function" ? coachDef(p).id : "strategist";
+  const rec = (r, i) => { const m = /^(.+?[.!?])\s+(.+)$/s.exec(r); const title = m ? m[1] : r, rest = m ? m[2] : "";
+    return `<div class="wci-item${rest ? "" : " no-more"}"><div class="wci-item__row"${rest ? ` data-act="wci-exp" role="button" tabindex="0" aria-expanded="false"` : ""}>
+      <span class="wci-item__num">${i + 1}</span><span class="wci-item__title">${esc(title)}</span>${rest ? `<span class="wci-expand" aria-hidden="true">${icon("chevdown","",14)}</span>` : ""}</div>
+      ${rest ? `<p class="wci-item__detail">${esc(rest)}</p>` : ""}</div>`; };
+  const top = c.recs.slice(0, 2).map((r, i) => rec(r, i)).join(""), more = c.recs.slice(2).map((r, i) => rec(r, i + 2)).join("");
+  const feel = p.coach?.today;
+  return `<section class="card wci" id="checkin">
+    <div class="wci-head"><div><div class="eyebrow" style="color:var(--c-coach)">Weekly check-in</div>
+      <h2 style="margin-top:4px">${pl ? `Day ${Math.max(1, c.idx + 1)} of your ${pl.days}-day plan` : `Week of ${fmtDay(c.ws)}`}</h2></div>
+      <span class="wci-status ${ok ? "pace" : "behind"}"><i aria-hidden="true"></i>${esc(status)}</span></div>
+    <div class="wci-pace">
+      <div class="wci-rail-wrap"><div class="wci-pointer" style="left:clamp(15%,${pos}%,85%)">Should be here${pl ? "" : ` · ${DN[dow]}`}</div>
+        <div class="wci-track" role="img" aria-label="${pl ? `You are ${pos}% through the plan and have completed ${c.donePct ?? 0}% of the sessions due` : `You are ${pos}% through this week`}">
+          <i class="wci-fill" style="width:${donePos}%"></i><span class="wci-tick" style="left:${pos}%"></span></div></div>
+      <div class="wci-days" aria-label="Workout days this week">${days}</div></div>
+    <div class="wci-metrics">
+      <div class="wci-metric"><span class="wci-lab" style="--cc:var(--c-coach)">Target pace</span>
+        <div class="wci-val">${due}</div>
+        <span class="wci-sub">${pl ? `session${due === 1 ? "" : "s"} due by today` : `session${due === 1 ? "" : "s"} planned`}</span>
+        ${c.calTarget ? `<span class="wci-sub">${c.calTarget.toLocaleString()} cal a day</span>` : ""}
+        ${c.shouldKg != null ? `<span class="wci-sub">about ${fmtWeight(c.shouldKg, p)}</span>` : ""}</div>
+      <div class="wci-metric"><span class="wci-lab" style="--cc:var(${done ? "--c-nutrition" : "--c-activity"})">Logged</span>
+        <div class="wci-val">${done}</div>
+        <span class="wci-sub">${pl ? `of ${due} session${due === 1 ? "" : "s"} so far` : `of ${due} session${due === 1 ? "" : "s"} this week`}</span>
+        ${c.avgCal != null ? `<span class="wci-sub">${c.avgCal.toLocaleString()} cal a day average</span>` : ""}
+        ${c.nowKg != null ? `<span class="wci-sub">${fmtWeight(c.nowKg, p)} at last weigh-in</span>` : ""}</div>
+      <div class="wci-metric"><span class="wci-lab" style="--cc:var(--c-nutrition)">Food tracking</span>
+        <div class="wci-val">${c.loggedDays} / 7</div>
+        <div><div class="wci-food" role="img" aria-label="${c.loggedDays} of the last 7 days have food logged">${food}</div>
+          <span class="wci-sub" style="display:block;margin-top:5px">${c.loggedDays === 0 ? "no food logged yet" : "days logged"}</span></div></div>
     </div>
-    <div class="checkin">
-      <div class="ci-col target"><div class="eyebrow">Where you should be</div>
-        <div class="num">${pl ? `${c.dueWorkouts}` : `${c.weekPlanned}`}</div>
-        <div class="small muted">${pl ? `session${c.dueWorkouts === 1 ? "" : "s"} due by today` : `session${c.weekPlanned === 1 ? "" : "s"} planned this week`}</div>
-        ${c.calTarget ? `<div class="small muted">${c.calTarget.toLocaleString()} cal a day</div>` : ""}
-        ${c.shouldKg != null ? `<div class="small muted">about ${fmtWeight(c.shouldKg, p)}</div>` : ""}</div>
-      <div class="ci-col actual"><div class="eyebrow">Where you are</div>
-        <div class="num">${pl ? `${c.doneAll ?? 0}` : `${c.doneWeek}`}</div>
-        <div class="small muted">${pl ? `session${(c.doneAll ?? 0) === 1 ? "" : "s"} logged` : `logged this week`}</div>
-        ${c.avgCal != null ? `<div class="small muted">${c.avgCal.toLocaleString()} cal a day average</div>` : `<div class="small muted">no food logged yet</div>`}
-        ${c.nowKg != null ? `<div class="small muted">${fmtWeight(c.nowKg, p)} at last weigh-in</div>` : ""}</div>
-      <div class="ci-col gap"><div class="eyebrow">${esc(typeof gapTitle === "function" ? gapTitle(p) : "The gap")}</div>
-        <div class="num">${pl && c.dueWorkouts != null ? (c.doneAll >= c.dueWorkouts ? "On track" : `${c.dueWorkouts - c.doneAll} behind`) : c.doneWeek >= c.weekPlanned ? "On track" : `${c.weekPlanned - c.doneWeek} to go`}</div>
-        <div class="small muted">${c.loggedDays} of the last 7 days ${c.loggedDays === 1 ? "has" : "have"} food logged</div>
-        ${(typeof coachDef === "function" && coachDef(p).id === "motivator") ? `<div class="nextstep">${icon("spark","",14)} <span>${esc(
-          c.loggedDays >= 5 ? "You've logged most days. Want to try keeping that run going tomorrow?"
-          : c.loggedDays > 0 ? "Want to try logging just tomorrow's breakfast? One meal keeps the run alive."
-          : "Want to try logging one meal today? That's the whole next step.")}</span></div>` : ""}</div>
+    ${persona === "motivator" ? `<div class="nextstep">${icon("spark","",14)} <span>${esc(
+      c.loggedDays >= 5 ? "You've logged most days. Want to try keeping that run going tomorrow?"
+      : c.loggedDays > 0 ? "Want to try logging just tomorrow's breakfast? One meal keeps the run alive."
+      : "Want to try logging one meal today? That's the whole next step.")}</span></div>` : ""}
+    <div class="wci-improve">
+      <div class="wci-sec"><div class="wci-sec-l"><h3>${esc(persona === "motivator" ? "What to try next" : persona === "enforcer" ? "Adjustments" : "How you can improve")}</h3><span class="wci-count">${c.recs.length} left</span></div>
+        ${more ? `<button type="button" class="wci-toggle" data-act="wci-all" aria-expanded="false" aria-controls="wciMore"><span>Show all ${c.recs.length}</span>${icon("chevdown","",14)}</button>` : ""}</div>
+      <div class="wci-list">${top}</div>
+      ${more ? `<div class="wci-drawer" id="wciMore"><div class="wci-drawer__in"><div class="wci-list" style="padding-top:8px">${more}</div></div></div>` : ""}
     </div>
-    <div><div class="eyebrow" style="margin-bottom:8px">${esc(typeof coachDef === "function" ? (coachDef(p).id === "motivator" ? "What to try next" : coachDef(p).id === "enforcer" ? "Adjustments" : "How you can improve") : "How you can improve")}</div>
-      <ul class="recs">${c.recs.map((r, i) => `<li><span class="n">${i + 1}</span><span>${esc(r)}</span></li>`).join("")}</ul>
-      ${(typeof coachDef === "function" && coachDef(p).id === "strategist") ? `<div class="coachask">
-        <b>${esc(coachVoice(p).ask)}</b>
-        <div class="chips" data-ring>${[["good","Good"],["ok","So-so"],["low","Low"],["sore","Sore"],["short","Short on time"]]
-          .map(([k, l]) => `<button class="chip${p.coach?.today === k ? " on" : ""}" data-act="coach-feel" data-v="${k}">${l}</button>`).join("")}</div>
-        <span class="tiny muted">${esc(feelAdvice(p))}</span></div>` : ""}</div>
+    ${persona === "strategist" ? `<div class="wci-energy">
+      <div class="wci-energy__head"><h3>${esc(coachVoice(p).ask)}</h3><span class="wci-sub">Scales your next session</span></div>
+      <div class="wci-chips" role="group" aria-label="Energy check-in">${WCI_ENERGY.map(([k, l, col, g]) =>
+        `<button type="button" class="chip wci-chip${feel === k ? " on" : ""}" data-act="coach-feel" data-v="${k}" aria-pressed="${feel === k}" style="--cc:${col}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${g}</svg><span>${l}</span></button>`).join("")}</div>
+      ${feel ? `<div class="wci-banner" role="status" style="--cc:${WCI_ENERGY.find(e => e[0] === feel)?.[2] || "var(--accent)"}">${esc(feelAdvice(p))}</div>` : `<span class="wci-sub" style="display:block;margin-top:10px">${esc(feelAdvice(p))}</span>`}</div>` : ""}
   </section>`;
 }
 
@@ -27408,5 +27448,71 @@ a.mck:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .prem-store-page .prem-feat-head{color:color-mix(in srgb,var(--text) 75%,var(--surface))}
 .prem-store-page .prem-mini button:not([aria-pressed="true"]){color:color-mix(in srgb,var(--text) 72%,var(--raise))}
 .prem-about > :not(.pa-crown){position:relative}
+/* ---- 8.6.29 Weekly check-in: pace rail, status pill, compact metrics, improve list, energy chips ---- */
+.wci{display:flex;flex-direction:column;gap:20px}
+.wci h3{margin:0}
+.wci-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px}
+.wci-status{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:999px;font-size:calc(12.5px * var(--text-scale,1));font-weight:700;border:1px solid color-mix(in srgb,var(--cc) 30%,transparent);background:color-mix(in srgb,var(--cc) 14%,transparent);color:var(--cc)}
+.wci-status i{width:7px;height:7px;border-radius:50%;background:var(--cc)}
+.wci-status.behind{--cc:#F97316}.wci-status.pace{--cc:#10B981}
+:root[data-scheme="light"] .wci-status{color:color-mix(in srgb,var(--cc) 75%,#000)}
+.wci-pace{padding:2px}
+.wci-rail-wrap{position:relative;padding-top:34px}
+.wci-pointer{position:absolute;top:0;transform:translateX(-50%);padding:4px 10px;border-radius:999px;background:var(--raise);border:1px solid var(--line);color:var(--text);font-size:calc(11px * var(--text-scale,1));font-weight:600;white-space:nowrap;box-shadow:var(--shadow);z-index:3;transition:left var(--dur-page) var(--ease-spring)}
+.wci-pointer::after{content:"";position:absolute;left:50%;bottom:-4px;width:7px;height:7px;background:var(--raise);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:translateX(-50%) rotate(45deg)}
+.wci-track{position:relative;height:10px;border-radius:999px;background:var(--raise);border:1px solid var(--line)}
+.wci-fill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--c-activity),var(--c-coach));transition:width var(--dur-page) var(--ease-spring);transform-origin:left center;animation:fillIn var(--dur-page) var(--ease-spring) both}
+.wci-tick{position:absolute;top:-4px;bottom:-4px;width:2.5px;transform:translateX(-50%);border-radius:999px;background:var(--text);z-index:2;transition:left var(--dur-page) var(--ease-spring)}
+:root[data-motion="reduced"] .wci-fill,:root[data-motion="reduced"] .wci-tick,:root[data-motion="reduced"] .wci-pointer{transition:none;animation:none}
+.wci-days{margin-top:12px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.wci-day{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:calc(11px * var(--text-scale,1));color:var(--faint)}
+.wci-day.is-today{color:var(--text);font-weight:700}
+.wci-day-dot{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.wci-day.is-done .wci-day-dot{background:#10B981;box-shadow:0 0 0 3px color-mix(in srgb,#10B981 20%,transparent)}
+.wci-day.is-today:not(.is-done) .wci-day-dot{background:transparent;border:1.5px solid var(--c-coach)}
+.wci-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.wci-metric{display:flex;flex-direction:column;gap:6px;padding:15px 16px;border-radius:var(--r-sm);background:var(--raise);border:1px solid var(--line);min-width:0}
+.wci-lab{font-size:calc(12px * var(--text-scale,1));font-weight:700;color:var(--cc)}
+:root[data-scheme="light"] .wci-lab{color:color-mix(in srgb,var(--cc) 92%,#000)}
+.wci-val{font-size:calc(28px * var(--text-scale,1));font-weight:800;line-height:1.1;letter-spacing:-.03em}
+.wci-sub{font-size:calc(12px * var(--text-scale,1));color:var(--muted);line-height:1.3}
+.wci-food{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:4px}
+.wci-food-dot{height:6px;border-radius:999px;background:var(--line)}
+.wci-food-dot.is-logged{background:#10B981}
+.wci-improve{display:flex;flex-direction:column;gap:10px}
+.wci-sec{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.wci-sec-l{display:inline-flex;align-items:center;gap:8px}
+.wci-sec h3{font-size:calc(13.5px * var(--text-scale,1))}
+.wci-count{padding:2px 8px;border-radius:999px;background:var(--raise);border:1px solid var(--line);color:var(--muted);font-size:calc(11px * var(--text-scale,1));font-weight:700}
+.wci-toggle{display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:4px 10px;border-radius:999px;border:1px solid transparent;background:transparent;color:var(--c-coach);font:inherit;font-size:calc(12px * var(--text-scale,1));font-weight:600;cursor:pointer}
+.wci-toggle:hover{background:color-mix(in srgb,var(--c-coach) 13%,transparent);border-color:color-mix(in srgb,var(--c-coach) 28%,transparent)}
+.wci-toggle svg,.wci-expand svg{transition:transform .24s var(--ease)}
+.wci-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+.wci-list{display:flex;flex-direction:column;gap:8px}
+.wci-drawer{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows .28s var(--ease),opacity .22s ease,visibility .28s}
+.wci-drawer.is-open{grid-template-rows:1fr;opacity:1;visibility:visible}
+.wci-drawer__in{overflow:hidden}
+:root[data-motion="reduced"] .wci-drawer{transition:none}
+.wci-item{border-radius:var(--r-xs);background:var(--raise);border:1px solid var(--line)}
+.wci-item__row{display:flex;align-items:center;gap:10px;padding:10px 12px;min-height:44px}
+.wci-item:not(.no-more) .wci-item__row{cursor:pointer}
+.wci-item:not(.no-more):hover{border-color:var(--text-faint,var(--muted))}
+.wci-item__num{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,#3B82F6 15%,transparent);border:1px solid color-mix(in srgb,#60A5FA 32%,transparent);color:#3B82F6;font-size:calc(11.5px * var(--text-scale,1));font-weight:700}
+.wci-item__title{flex:1;min-width:0;font-size:calc(13.5px * var(--text-scale,1));font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wci-item.is-expanded .wci-item__title{white-space:normal}
+.wci-expand{flex:none;color:var(--muted);display:grid;place-items:center}
+.wci-item.is-expanded .wci-expand svg{transform:rotate(180deg)}
+.wci-item__detail{display:none;margin:0;padding:0 14px 12px 46px;font-size:calc(12.5px * var(--text-scale,1));line-height:1.5;color:var(--muted)}
+.wci-item.is-expanded .wci-item__detail{display:block}
+.wci-energy{padding:16px 18px;border-radius:var(--r-sm);background:var(--raise);border:1px solid var(--line)}
+.wci-energy__head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 12px;margin-bottom:12px}
+.wci-energy__head h3{font-size:calc(14px * var(--text-scale,1))}
+.wci-chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.wci-chip{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;white-space:nowrap}
+.wci-chip svg{color:var(--cc)}
+.wci-chip.on{background:color-mix(in srgb,var(--cc) 15%,var(--surface));border-color:color-mix(in srgb,var(--cc) 45%,transparent);color:var(--cc)}
+:root[data-scheme="light"] .wci-chip.on{color:color-mix(in srgb,var(--cc) 75%,#000)}
+.wci-banner{margin-top:12px;padding:11px 13px;border-radius:12px;background:color-mix(in srgb,var(--cc) 14%,transparent);border:1px solid color-mix(in srgb,var(--cc) 35%,transparent);font-size:calc(12.5px * var(--text-scale,1));line-height:1.45}
+@media (max-width:640px){.wci-metrics{grid-template-columns:1fr}.wci-pointer{font-size:calc(10.5px * var(--text-scale,1))}}
 </style>
 </body></html>

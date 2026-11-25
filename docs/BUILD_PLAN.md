@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.6.29 | Weekly check-in revamp | IN PROGRESS: PR #105 |
 | 8.6.28 | Health data icon is folder-heart | IN PROGRESS: PR #105 |
 | 8.6.27 | Meal, calorie, snack, plan and sleep icons | IN PROGRESS: PR #105 |
 | 8.6.26 | Move ring uses the sport-shoe icon | IN PROGRESS: PR #105 |
