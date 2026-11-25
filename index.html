@@ -3884,7 +3884,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.26", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.27", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3898,6 +3898,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.26", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.27",
+      area:"Icons",
+      title:"Meal, calorie, snack, plan and sleep icons",
+      bug:"Meals, calories, snacks, the plan and sleep each used a different icon (apple, calendar-check, cookie, journal and moon or bed) that did not match the set you chose.",
+      fix:"Meals now use utensils-crossed, calories use hand-platter, snacks use chocolate-bar, the Plan label uses notebook-pen and Sleep uses bed-double, everywhere those labels have an icon. The Move shoe, the Active energy flame and the Photo estimate apple are unchanged.",
+      where:"index.html: NAV_GLYPH (utensils, platter, chocobar, notepen, beddouble), nutrition/calories/snacks/sleep categories and metrics, meals widgets, NAV_ROUTE_IC, side menu and phone bottom bar, NAV_VIBE, Sleep a night card, APP_VERSION, WLH.changelog. tests/browser/revamp.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Side menu: Meals, Snacks and Plan; phone bottom bar: Plan; Home: Calories eaten and Sleep a night cards; Health data: Calories and Sleep; Snacks page header.",
+      limits:"Checked in headless Chrome only. The meal and snack icons no longer play the old apple and cookie wiggle when tapped." },
     { id:"8.6.26",
       area:"Rings",
       title:"Move ring uses the sport-shoe icon",
@@ -10996,9 +11004,9 @@ const CATS = {
   body:     { n:"Body Measurements", color:"var(--c-body)", icon:"body", metrics:["weight","estimate"] },
   heart:    { n:"Heart", color:"var(--c-heart)", icon:"heartecg", metrics:["rhr","bp"] },
   resp:     { n:"Respiratory", color:"var(--c-resp)", icon:"bloodo2", metrics:["spo2"] },
-  sleep:    { n:"Sleep", color:"var(--c-sleep)", icon:"bed", metrics:["sleep"] },
-  nutrition:{ n:"Nutrition", color:"var(--c-nutrition)", icon:"apple", metrics:["calories","water"], page:"#/nutrition" },
-  snacks:   { n:"Snacks", color:"var(--c-snack)", icon:"cookie", metrics:["snacks"], page:"#/snacks" }
+  sleep:    { n:"Sleep", color:"var(--c-sleep)", icon:"beddouble", metrics:["sleep"] },
+  nutrition:{ n:"Nutrition", color:"var(--c-nutrition)", icon:"utensils", metrics:["calories","water"], page:"#/nutrition" },
+  snacks:   { n:"Snacks", color:"var(--c-snack)", icon:"chocobar", metrics:["snacks"], page:"#/snacks" }
 };
 const catLink = k => CATS[k].page || `#/cat/${k}`;
 const vitalsOf = (date) => { const L = S.logs[S.activeId]?.[monthOf(date)]; return L?.vitals?.[date] || null; };
@@ -11012,11 +11020,11 @@ function setVital(date, key, value){
 function vitalDates(key){ const out = []; const byP = S.logs[S.activeId] || {}; for (const m in byP) for (const [d, v] of Object.entries(byP[m].vitals || {})) if (v[key] != null) out.push(d); return out.sort().reverse(); }
 const mlToOz = ml => ml / 29.5735;
 const METRICS = {
-  calories:{ n:"Calories eaten", cat:"nutrition", icon:"apple", unit:()=>"cal", get:d => loggedFood(d) ? intakeOn(d) : null, fmt:v => Math.round(v).toLocaleString(), link:"#/nutrition" },
+  calories:{ n:"Calories eaten", cat:"nutrition", icon:"platter", unit:()=>"cal", get:d => loggedFood(d) ? intakeOn(d) : null, fmt:v => Math.round(v).toLocaleString(), link:"#/nutrition" },
   water:   { n:"Water", cat:"nutrition", icon:"glass", color:"var(--c-water)", unit:p => p.units === "metric" ? "mL" : "fl oz", get:d => vitalsOf(d)?.water ?? null, fmt:(v,p) => p.units === "metric" ? Math.round(v).toLocaleString() : round(mlToOz(v)).toLocaleString(),
              fields:p => [["water", p.units === "metric" ? "Water (mL)" : "Water (fl oz)", 0, p.units === "metric" ? 8000 : 270]], toStore:(k,v,p) => p.units === "metric" ? v : v * 29.5735, add:true,
              about:"Needs vary with body size, heat and activity. The National Academies suggest about 3.7 L (125 fl oz) a day for men and 2.7 L (91 fl oz) for women, counting all drinks and food." },
-  snacks:  { n:"Snacks", cat:"snacks", icon:"cookie", unit:()=>"cal", get:d => { const s = onDate("snacks", d); return s.length ? s.reduce((a,x)=>a+x.cal,0) : null; }, fmt:v => Math.round(v).toLocaleString(), link:"#/snacks" },
+  snacks:  { n:"Snacks", cat:"snacks", icon:"chocobar", unit:()=>"cal", get:d => { const s = onDate("snacks", d); return s.length ? s.reduce((a,x)=>a+x.cal,0) : null; }, fmt:v => Math.round(v).toLocaleString(), link:"#/snacks" },
   workouts:{ n:"Workouts", cat:"activity", icon:"dumbbell", unit:()=>"min", get:d => { const w = onDate("workouts", d); return w.length ? w.reduce((a,x)=>a+(x.minutes||0),0) : null; }, fmt:v => Math.round(v), link:"#/workouts" },
   steps:   { n:"Steps", cat:"activity", icon:"steps", unit:()=>"steps", get:d => vitalsOf(d)?.steps ?? null, fmt:v => Math.round(v).toLocaleString(), fields:()=>[["steps","Steps",0,100000]], add:true,
              about:"More daily steps are linked with a lower risk of early death. In a 2022 analysis of 15 studies (Paluch et al., The Lancet Public Health), the benefit leveled off around 6,000–8,000 steps for adults 60 and older and 8,000–10,000 for younger adults." },
@@ -11033,7 +11041,7 @@ const METRICS = {
              about:"The American Heart Association lists normal as below 120/80 mmHg, elevated as 120–129 over below 80, and high blood pressure as 130/80 or higher. Sit quietly for 5 minutes, feet flat, arm at heart level, and take two readings." },
   spo2:    { n:"Blood oxygen", cat:"resp", icon:"bloodo2", unit:()=>"%", get:d => vitalsOf(d)?.spo2 ?? null, fmt:v => round(v), fields:()=>[["spo2","Blood oxygen (%)",50,100]], add:true, chartMin:true,
              about:"Healthy blood oxygen is usually 95–100%. Home pulse oximeters and watches can read wrong with cold hands, movement or nail polish, and the FDA has warned they can be less accurate on darker skin. Talk to a doctor if you're regularly below 95% or short of breath." },
-  sleep:   { n:"Sleep", cat:"sleep", icon:"bed", unit:()=>"hr", get:d => vitalsOf(d)?.sleep ?? null, fmt:v => `${Math.floor(v/60)}<small> hr </small>${Math.round(v%60)}<small> min</small>`, num:v => v/60, html:true,
+  sleep:   { n:"Sleep", cat:"sleep", icon:"beddouble", unit:()=>"hr", get:d => vitalsOf(d)?.sleep ?? null, fmt:v => `${Math.floor(v/60)}<small> hr </small>${Math.round(v%60)}<small> min</small>`, num:v => v/60, html:true,
              fields:()=>[["sleepH","Hours",0,16],["sleepM","Minutes",0,59]], add:true,
              about:"The CDC recommends at least 7 hours of sleep a night for adults 18 to 60. Imported Apple Health sleep counts time asleep, not time in bed." }
 };
@@ -11180,7 +11188,7 @@ function largeOf(p, k){
 // Meals and Coach are not METRICS; each has its own definition.
 function mealsDef(p, L){
   const picks = dailyPicks(today(), p), planned = picks.reduce((a, d) => a + (d.cal || 0), 0), meals = onDate("meals", today()), logged = meals.length;
-  const o = { key:"meals", href:"#/nutrition", color:"var(--c-nutrition)", icon:"apple", name:"Meals", when:"Today",
+  const o = { key:"meals", href:"#/nutrition", color:"var(--c-nutrition)", icon:"utensils", name:"Meals", when:"Today",
     val: picks.length ? `<div class="mval">${countUp(planned.toLocaleString())}<small> cal</small></div>` : NODATA,
     sub: picks.length ? `${picks.length} planned · ${logged} logged` : "", chart: picks.length ? barsSVG(picks.map(d => d.cal || 0), "var(--c-nutrition)", 14, 6) : "" };
   if (L) {
@@ -11365,7 +11373,7 @@ function weeklyStatsRow(p){
     mt || mp ? statCard("Workout minutes", mt + " min", mt, mp, "run", "workouts", "Logged workout minutes, week so far.") : "",
     kt || kp ? statCard("Workout calories", kt + " kcal", kt, kp, "spark", "summary", "Extra calories from logged workouts, week so far.") : "",
     wa == null && wp == null ? "" : statCard("Water a day", wa == null ? "-" : (wa / 1000).toFixed(1) + " L", wa, wp, "glass", "health", "Average on days you logged water."),
-    sa == null && sp == null ? "" : statCard("Sleep a night", sa == null ? "-" : (sa / 60).toFixed(1) + " h", sa, sp, "moon", "coach", "Average on nights you logged sleep.")
+    sa == null && sp == null ? "" : statCard("Sleep a night", sa == null ? "-" : (sa / 60).toFixed(1) + " h", sa, sp, "beddouble", "coach", "Average on nights you logged sleep.")
   ].join("");
   return cards ? `<h2 class="sec-title">This week</h2><div class="scgrid">${cards}</div>` : "";
 }
@@ -11868,6 +11876,11 @@ const I = {
 // 8.6.4: four menu glyphs that no other row uses (Log was a bare plus, Plan repeated Recipes' chef hat, Progress repeated
 // Health data's grid, Coach was generic sparkles). Drawn once here and shared by the side menu, the phone bottom bar and CI.
 const NAV_GLYPH = {
+ utensils:'<path d="m16 2-2.3 2.3a3 3 0 0 0 0 4.2l1.8 1.8a3 3 0 0 0 4.2 0L22 8"/><path d="M15 15 3.3 3.3a4.2 4.2 0 0 0 0 6l7.3 7.3c.7.7 2 .7 2.8 0L15 15Zm0 0 7 7"/><path d="m2.1 21.8 6.4-6.3"/><path d="m19 5-7 7"/>',
+ platter:'<path d="M12 3V2"/><path d="m15.4 17.4 3.2-2.8a2 2 0 1 1 2.8 2.9l-3.6 3.3c-.7.8-1.7 1.2-2.8 1.2h-4c-1.1 0-2.1-.4-2.8-1.2l-1.302-1.464A1 1 0 0 0 6.151 19H5"/><path d="M2 14h12a2 2 0 0 1 0 4h-2"/><path d="M4 10h16"/><path d="M5 10a7 7 0 0 1 14 0"/><path d="M5 14v6a1 1 0 0 1-1 1H2"/>',
+ chocobar:'<path d="M12 2v10"/><path d="M17 12V4.4a.4.4 0 00-.4-.4A1.6 1.6 0 0115 2.4a.4.4 0 00-.4-.4H9a2 2 0 00-2 2v8"/><path d="M5 14a2 2 0 012-2h10a2 2 0 012 2v2a1 1 0 01-1 1 2 2 0 01-.9-.203l-1.2-.594a2 2 0 00-1.8 0l-1.2.594a2 2 0 01-1.8 0l-1.2-.594a2 2 0 00-1.8 0l-1.2.594a2 2 0 01-.9.198A1 1 0 015 16z"/><path d="M7 16.748V20a2 2 0 002 2h6a2 2 0 002-2v-3.252"/><path d="M7 7h10"/>',
+ notepen:'<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/>',
+ beddouble:'<path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 4v6"/><path d="M2 18h20"/>',
   journal:'<rect x="4" y="3.5" width="13" height="17" rx="2"/><path d="M8 8h5M8 12h4M8 16h2"/><path d="M15.5 14.5l4-4a1.4 1.4 0 0 1 2 2l-4 4-2.8.8.8-2.8z"/>',
   calcheck:'<rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M8 2.5v3.5M16 2.5v3.5M3.5 9.5h17"/><path d="M9.2 14.8l2 2 4-4"/>',
   whistle:'<path d="M10 6v4"/><path d="M21 6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-5.675A7 7 0 1 1 9 6z"/>',
@@ -12881,12 +12894,12 @@ function toggleNavGroup(id){
 }
 // 8.6.4: each page has its own colour, shown only while you are on it (icon, a 3px edge and a faint tint), so the menu stays quiet.
 // [light, dark]: the light values keep 3:1 for the icon on the tint (Snacks and Achievements are a little deeper than first drawn).
-const NAV_VIBE = { heartecg:["#E11D48","#FB7185"], apple:["#059669","#34D399"], cookie:["#DD4F06","#FB923C"], dumbbell:["#2563EB","#60A5FA"],
+const NAV_VIBE = { heartecg:["#E11D48","#FB7185"], utensils:["#059669","#34D399"], chocobar:["#DD4F06","#FB923C"], dumbbell:["#2563EB","#60A5FA"],
   chefhat:["#0D9488","#2DD4BF"], globe:["#C2410C","#FDBA74"], whistle:["#7C3AED","#A78BFA"], grid:["#0284C7","#38BDF8"],
   medal:["#C26A05","#FBBF24"], gradcap:["#4F46E5","#818CF8"], crown:["#B45309","#FCD34D"], gear:["#334155","#E2E8F0"] };
 const navVibe = ic => NAV_VIBE[ic] ? `--nv:${NAV_VIBE[ic][0]};--nv-d:${NAV_VIBE[ic][1]}` : "";
 // The icon key of the row for the page you are on inside a group, so a shut group can show that page's colour.
-const NAV_ROUTE_IC = { nutrition:"apple", snacks:"cookie", workouts:"dumbbell", recipes:"chefhat", culture:"globe", health:"grid", browse:"grid", cat:"grid", metric:"grid", awards:"medal" };
+const NAV_ROUTE_IC = { nutrition:"utensils", snacks:"chocobar", workouts:"dumbbell", recipes:"chefhat", culture:"globe", health:"grid", browse:"grid", cat:"grid", metric:"grid", awards:"medal" };
 function sideNav(){
   const link = (href, on, ic, grad, label0, label = tr(label0)) => `<a href="${href}" data-anim="${ic}" data-label="${esc(label)}" title="${esc(label)}" style="${navVibe(ic)}"${on ? ' aria-current="page"' : ""}>${siTile(grad, cicon(ic, "#fff", 22, UI.animIcon === ic && UI.motionOk !== false ? "zap" : ""))}<span>${label}</span></a>`;
   const premOn = typeof isPremium === "function" && isPremium();
@@ -12934,10 +12947,10 @@ function sideNav(){
     </div>`;
   };
   const groupsHTML =
-    group("log", "Log", cicon("journal", "#fff", 22), SI_GRAD.meals, link("#/nutrition", UI.route === "nutrition", "apple", SI_GRAD.meals, "Meals")
-      + link("#/snacks", UI.route === "snacks", "cookie", SI_GRAD.snacks, "Snacks")
+    group("log", "Log", cicon("journal", "#fff", 22), SI_GRAD.meals, link("#/nutrition", UI.route === "nutrition", "utensils", SI_GRAD.meals, "Meals")
+      + link("#/snacks", UI.route === "snacks", "chocobar", SI_GRAD.snacks, "Snacks")
       + link("#/workouts", UI.route === "workouts", "dumbbell", SI_GRAD.workouts, "Workouts & imports"))
-    + group("plan", "Plan", cicon("calcheck", "#fff", 22), SI_GRAD.recipes, link("#/recipes", UI.route === "recipes", "chefhat", SI_GRAD.recipes, "Recipes & meal plans")
+    + group("plan", "Plan", cicon("notepen", "#fff", 22), SI_GRAD.recipes, link("#/recipes", UI.route === "recipes", "chefhat", SI_GRAD.recipes, "Recipes & meal plans")
       + link("#/culture", UI.route === "culture", "globe", SI_GRAD.culture, "Food culture"))
     + link("#/coach", UI.route === "coach", "whistle", SI_GRAD.coach, "Coach")
     + group("progress", "Progress", cicon("trendup", "#fff", 22), SI_GRAD.health, link("#/health", inHealth, "grid", SI_GRAD.health, "Health data")
@@ -12970,7 +12983,7 @@ function bottomBarHTML(){
     return `<button type="button" class="bb-item${on ? " on" : ""}" data-act="sheet" data-v="${id}" aria-haspopup="dialog" aria-expanded="false">${icon(ic, "", 22)}<span>${esc(tr(label))}</span></button>`;
   };
   const lnk = (href, on, ic, label) => `<a class="bb-item" href="${href}"${on ? ' aria-current="page"' : ""}>${icon(ic, "", 22)}<span>${esc(tr(label))}</span></a>`;
-  return `<nav class="bottombar" aria-label="${esc(tr("Mobile navigation"))}">${lnk("#/home", r === "home", "home", "Today")}${btn("log", "Log", "journal")}${btn("plan", "Plan", "calcheck")}${lnk("#/coach", r === "coach", "whistle", "Coach")}${btn("more", "More", "menu")}</nav>`;
+  return `<nav class="bottombar" aria-label="${esc(tr("Mobile navigation"))}">${lnk("#/home", r === "home", "home", "Today")}${btn("log", "Log", "journal")}${btn("plan", "Plan", "notepen")}${lnk("#/coach", r === "coach", "whistle", "Coach")}${btn("more", "More", "menu")}</nav>`;
 }
 function openNavSheet(id, trigger){
   const [title, rows] = NAV_SHEETS[id] || NAV_SHEETS.more;
@@ -13904,7 +13917,7 @@ function snacksView(p){
     : `Showing ${list.length} snack${list.length === 1 ? "" : "s"} in ${all ? "all regions" : regName}${noAl ? " · no allergens listed" : ""}`;
   const pill = es ? `${log.length} registrado${log.length === 1 ? "" : "s"} · ${logCal.toLocaleString("es")} cal` : `${log.length} logged · ${logCal.toLocaleString()} cal`;
   return `
-  <section class="card cathead" style="--cc:var(--c-snack)">${cicon("cookie","var(--c-snack)",44)}<div><h2>Snacks</h2><p class="small muted">${log.length ? (es ? `${logCal.toLocaleString("es")} cal de ${log.length} bocadillo${log.length===1?"":"s"} hoy` : `${logCal.toLocaleString()} cal from ${log.length} snack${log.length===1?"":"s"} today`) : tr("Nothing logged yet today")}</p></div></section>
+  <section class="card cathead" style="--cc:var(--c-snack)">${cicon("chocobar","var(--c-snack)",44)}<div><h2>Snacks</h2><p class="small muted">${log.length ? (es ? `${logCal.toLocaleString("es")} cal de ${log.length} bocadillo${log.length===1?"":"s"} hoy` : `${logCal.toLocaleString()} cal from ${log.length} snack${log.length===1?"":"s"} today`) : tr("Nothing logged yet today")}</p></div></section>
   <div class="grid g2">
     <section class="card" id="snack-today" tabindex="-1"><div class="setrow"><div class="setlabel"><div class="eyebrow">Separate from meals</div><h2 style="margin-top:4px">Today's snacks</h2></div><span class="num mid">${logCal} <span class="small muted">cal</span></span></div>
       ${log.length ? `<div class="list">${log.map(s => `<div class="li"><span class="grow">${esc(s.name)} <span class="muted small">× ${s.qty||1}</span></span><span class="tab">${s.cal} cal</span><button class="btn sm ghost" data-act="del-snack" data-id="${s.id}" aria-label="Delete">${icon("x")}</button></div>`).join("")}</div>` : `<div class="empty small">Nothing logged yet. Pick from the list or add your own.</div>`}
@@ -18303,7 +18316,7 @@ function glassPreview(p){
 // ---- widget layouts (8.2.7): one engine for Summary and every page ----
 // Summary keeps its list in p.widgets, every other page in p.layouts[page]. Both are read and written through wlGet and wlSet,
 // so size, order, hide and add behave the same everywhere. A hidden widget is any widget on that page's list that is not shown.
-const EXTRA_WIDGETS = { meals:{ n:"Today's meals", icon:"apple", color:"var(--c-nutrition)" }, coach:{ n:"Coach", icon:"stopwatch", color:"var(--c-coach)" } };
+const EXTRA_WIDGETS = { meals:{ n:"Today's meals", icon:"utensils", color:"var(--c-nutrition)" }, coach:{ n:"Coach", icon:"stopwatch", color:"var(--c-coach)" } };
 const DEFAULT_WIDGETS = [{k:"meals",size:"m"},{k:"calories",size:"s"},{k:"estimate",size:"s"},{k:"workouts",size:"s"},{k:"steps",size:"s"},{k:"sleep",size:"s"},{k:"rhr",size:"s"},{k:"coach",size:"m"}];
 const PAGE_WIDGETS = {
   nutrition: ["water","estimate","calories","meals"],

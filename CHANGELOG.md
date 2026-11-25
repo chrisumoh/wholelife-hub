@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.26, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.27, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.27 · Icons: Meal, calorie, snack, plan and sleep icons
+
+- **Problem:** Meals, calories, snacks, the plan and sleep each used a different icon (apple, calendar-check, cookie, journal and moon or bed) that did not match the set you chose.
+- **Change:** Meals now use utensils-crossed, calories use hand-platter, snacks use chocolate-bar, the Plan label uses notebook-pen and Sleep uses bed-double, everywhere those labels have an icon. The Move shoe, the Active energy flame and the Photo estimate apple are unchanged.
+- **Where:** index.html: NAV_GLYPH (utensils, platter, chocobar, notepen, beddouble), nutrition/calories/snacks/sleep categories and metrics, meals widgets, NAV_ROUTE_IC, side menu and phone bottom bar, NAV_VIBE, Sleep a night card, APP_VERSION, WLH.changelog. tests/browser/revamp.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Side menu: Meals, Snacks and Plan; phone bottom bar: Plan; Home: Calories eaten and Sleep a night cards; Health data: Calories and Sleep; Snacks page header.
+- **Known limits:** Checked in headless Chrome only. The meal and snack icons no longer play the old apple and cookie wiggle when tapped.
 
 ## 8.6.26 · Rings: Move ring uses the sport-shoe icon
 
