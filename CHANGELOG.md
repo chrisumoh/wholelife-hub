@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.34, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.35, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.35 · Database: A table for account-based Premium, ready for the new payment provider
+
+- **Problem:** Lemon Squeezy is closing on 31 March 2027, and Premium today depends on its emailed license keys, which the replacement provider does not have.
+- **Change:** A new table, entitlements, will hold each account's paid subscription (plan, status and period end). A person can read only their own row; only a server function can write it. One subscription covers the signed-in account only. The two server functions that fill it and the app change that reads it come in later builds, once the provider is set up. Nothing in the app changes yet.
+- **Where:** supabase/migrations/20261125220000_wlh_8_6_35_entitlements.sql (new, not yet applied to the live project), docs/DATABASE.md, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Nothing to see in the app yet. After the migration is applied, a signed-in person who selects from entitlements gets an empty list, and any insert from the app is refused.
+- **Known limits:** Not applied to the live Supabase project yet, and nothing writes or reads the table until the later builds. A multi-account household plan would need a members table in its own migration.
 
 ## 8.6.34 · Settings: Eighteen FAQs in four groups on the Bug reports & FAQs page
 
