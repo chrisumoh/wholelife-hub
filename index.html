@@ -3884,7 +3884,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.33", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.34", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3898,6 +3898,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.33", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.34",
+      area:"Settings",
+      title:"Eighteen FAQs in four groups on the Bug reports & FAQs page",
+      bug:"The FAQs card had five answers and nothing on accounts, sync, deleting data, Coach privacy, activating Premium, refunds or imports.",
+      fix:"The FAQs are grouped under Account & data, Coach & privacy, Premium & billing and Help, and all start collapsed. Eight show first with a Show all 18 questions button. The answers follow what the app really does: guest and signed-in storage, what syncs, offline use, Delete everything versus Delete my account, the JSON export, the passcode limit, file-only imports, what WL Coach can see, the separate AI and photo switches, a plain no on medical advice, license-key activation, Free versus Premium, and the 14-day refund. A short not-medical-advice note sits at the top of the card.",
+      where:"index.html: WL_FAQ_GROUPS, WL_FAQS, faqCard(), faq-all case, .faq-grp CSS, APP_VERSION, WLH.changelog. tests/browser/revamp.mjs (two FAQ checks). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Settings > Bug reports & FAQs: eight questions, all closed. Press Show all 18 questions for the rest. Open any answer and follow its link.",
+      limits:"The new answers are in English only for now (Spanish still covers the group names). Which Premium features are Ready is shown with the app's own labels, In Testing and In Progress. The Premium page keeps its own three FAQs." },
     { id:"8.6.33",
       area:"Settings",
       title:"A separate Bug reports & FAQs menu, with a red bug icon",
@@ -5053,15 +5061,34 @@ const APP_VERSION = { update: "8.6", build: "8.6.33", channel: "Dev Testing", da
 const SHOWTEST_KEY = "wlh.showtesting";
 function showTestingFeatures(){ try { return localStorage.getItem(SHOWTEST_KEY) === "1"; } catch { return false; } }
 // Settings > Bug reports & FAQs. The Premium page keeps its own copy of the first three answers.
+const WL_FAQ_GROUPS = ["Account & data", "Coach & privacy", "Premium & billing", "Help"];
+// [group, question, answer (trusted markup, no user text), shown before "Show all"]
 const WL_FAQS = [
-  ["What happens to my logs if I cancel?","Nothing is deleted. Premium features lock; your logs, history and export stay yours."],
-  ["Can I cancel anytime?","Yes — Settings > Premium > Manage subscription. You keep Premium until the end of the period you paid for."],
-  ["How does billing work?","Plans are billed through Lemon Squeezy and renew automatically until you cancel. The price on the plan you pick is the price you pay."],
-  ["How do I report a bug?","Open Settings > Bug reports & FAQs, press Copy log for a bug report, and paste it into your message. The log holds no meals, health values or names."],
-  ["Where is the app tour?","Settings > Data & about > App tour & guide replays the quick tour or tours one area."]
+  [0,"Do I need an account to use WholeLife Hub?","No. As a guest your data stays in this browser. Signing in is what turns on account sync, so your logs follow you to other devices.",1],
+  [0,"What syncs between my devices, and what stays on this device?","Once you sign in, your logs, profiles and eligible photos sync through your account, with or without a passcode. Form-check videos, Premium status and your consent switches stay on the device.",1],
+  [0,"Can I use the app offline?","Yes. The app opens without a connection and what you log is kept on the device. If you are signed in, anything logged offline uploads once you are back online. Features that need our server, such as Coach chat, photo estimates, sign-in and Delete my account, need a connection.",0],
+  [0,"What is the difference between Delete everything and Delete my account?","<b>Delete everything</b> (Settings > Privacy &amp; security) erases the profiles and logs held on this device only. Whatever is saved in your account stays there and comes back when you sign in. <b>Delete my account</b> (same page, when signed in) deletes the account and everything synced to it, on every device, and cannot be undone. A Premium subscription is separate: cancel it first.",1],
+  [0,"How do I download a copy of my data?","Go to <a href=\"#/settings/privacy\">Settings &gt; Privacy &amp; security</a> and press <b>Download (JSON)</b> under Export my data. You get one JSON file with your logs, plans and settings. The same button is under Settings &gt; Data &amp; about.",1],
+  [0,"What happens if I forget my passcode?","The passcode is never stored, so it cannot be recovered, and the encrypted copy on this device cannot be opened without it. You can erase the data on this device and start over. If you were signed in, your account copy is not encrypted by the passcode and syncs back when you sign in again.",0],
+  [0,"Can I import Apple Health or other fitness data?","Yes, from a file you choose, on <a href=\"#/workouts\">Workouts &amp; imports</a>. The file is read in your browser and is not uploaded. There is no automatic connection to Apple Health or any other health service.",0],
+  [1,"What can WL Coach see about me?","Coach chat is off until you allow it, and only works signed in. Your question is sent through our server to Anthropic, the company that makes Claude. Sharing your profile and the last 7 days of meals, snacks, workouts and weigh-ins is a separate choice that covers every profile on the account. You can stop it any time. Names, email, photos, drinks and vitals are never sent.",1],
+  [1,"How do I turn off AI or photo sharing?","In <a href=\"#/settings/privacy\">Settings &gt; Privacy &amp; security</a> there is a separate switch for each: Photo meal logging &amp; equipment photos, Food search, Coach chat, and Coach sees your profile and last 7 days. Turning one off stops it at once.",1],
+  [1,"Is WL Coach medical advice?","<b>No.</b> WL Coach and every calorie, protein and health estimate in the app are for personal tracking only. They are not medical or nutrition advice. Talk to a doctor or dietitian about health decisions.",1],
+  [2,"What happens to my logs if I cancel?","Nothing is deleted. Premium features lock; your logs, history and export stay yours.",0],
+  [2,"Can I cancel anytime?","Yes. Use Settings &gt; Premium &gt; Manage subscription. You keep Premium until the end of the period you paid for.",0],
+  [2,"How does billing work?","Plans are billed through Lemon Squeezy and renew automatically until you cancel. The price on the plan you pick is the price you pay.",0],
+  [2,"How do I activate Premium after paying, or on another device?","Lemon Squeezy emails you a license key after checkout. Paste it into <a href=\"#/settings/premium\">Settings &gt; Premium</a> under Have a license key, and press <b>Activate</b>. Do the same on any other device you use.",1],
+  [2,"What is included in Free, and which Premium features are available now?","Your core tracker, your data, offline use, dark mode, English and Spanish, passcode lock, multiple profiles and data export stay free. See the full list on the <a href=\"#/premium\">Premium page</a> (Compare plans). Features marked <b>In Testing</b> work now; <b>In Progress</b> ones are still being built.",0],
+  [2,"How do I request a refund?","Every charge has 14 days. Write to us within 14 days of the charge, with your order number if you have it, and we refund it in full. Read the full policy on the <a href=\"#/refunds\">Refunds page</a>.",0],
+  [3,"How do I report a bug?","Open this page, press <b>Copy log for a bug report</b> under Diagnostics, and paste it into your message. The log holds no meals, health values or names.",0],
+  [3,"Where is the app tour?","<a href=\"#/settings/about\">Settings &gt; Data &amp; about</a> &gt; App tour &amp; guide replays the quick tour or tours one area.",0]
 ];
 function faqCard(){
-  return `<section class="card" id="faqs"><h2>FAQs</h2><div class="prem-faqs">${WL_FAQS.map(([q, a]) => `<details class="wl-faq"><summary>${esc(tr(q))}</summary><p>${esc(tr(a))}</p></details>`).join("")}</div></section>`;
+  const all = !!UI.faqAll, shown = WL_FAQS.filter(f => all || f[3]);
+  return `<section class="card" id="faqs"><h2>FAQs</h2>
+    <p class="advice-banner">WholeLife Hub is a tracking tool. WL Coach and its estimates are not medical advice.</p>
+    ${WL_FAQ_GROUPS.map((g, i) => { const rows = shown.filter(f => f[0] === i); return rows.length ? `<h3 class="faq-grp">${esc(tr(g))}</h3><div class="prem-faqs">${rows.map(f => `<details class="wl-faq"><summary>${esc(tr(f[1]))}</summary><p>${f[2]}</p></details>`).join("")}</div>` : ""; }).join("")}
+    <button type="button" class="btn sm" data-act="faq-all" aria-expanded="${all}">${all ? "Show fewer questions" : `Show all ${WL_FAQS.length} questions`}</button></section>`;
 }
 // Settings -> Bug reports & FAQs: the same information for testers on phones (no DevTools needed).
 function diagCard(){
@@ -14938,6 +14965,7 @@ document.addEventListener("click", async e => {
     case "wgoal": { const n = Math.max(1, Math.min(14, (p.workoutGoal || 0) + +t.dataset.d)); if (n !== p.workoutGoal) { p.workoutGoal = n; saveProfile(); render(); } document.querySelector(`[data-act="wgoal"][data-d="${t.dataset.d}"]:not([disabled])`)?.focus(); break; }
     case "act-more": { const m = t.closest(".m3-more"), on = !m.classList.contains("open"); m.classList.toggle("open", on); t.setAttribute("aria-expanded", String(on)); if (on) { const q = m.querySelector("#act-q"); q?.focus({ preventScroll: true }); } break; }
     case "sc-tip": t.closest(".sc")?.classList.toggle("tipon"); break;
+    case "faq-all": UI.faqAll = !UI.faqAll; render(); break;
     case "imp-toggle": wSaveDraft(); UI.impOpen = !UI.impOpen; render(); break;
     case "pg": UI[t.dataset.k] = +t.dataset.v; UI.focus = `pg-${t.dataset.k}-${t.dataset.v}`; render(); break;
     case "dpv": UI.dpv = UI.dpv === t.dataset.id ? null : t.dataset.id; render(); break;
@@ -26828,6 +26856,8 @@ h2.sec-title + .mgrid .mhead svg.ci{
 .wl-pill{display:inline-flex;align-items:center;border:1px solid rgba(127,127,127,.4);border-radius:999px;padding:8px 12px;font-size:13px;min-height:44px}
 .prem-stays{align-self:stretch;text-align:left}
 .advice-banner{border:1px solid rgba(127,127,127,.4);border-radius:12px;padding:10px 12px;font-size:13px}
+.faq-grp{margin:16px 0 8px;font-size:15px}
+#faqs .btn{margin-top:14px}
 .prem-faqs{align-self:stretch;text-align:left}
 .wl-faq{border-top:1px solid rgba(127,127,127,.35)}
 .wl-faq summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}

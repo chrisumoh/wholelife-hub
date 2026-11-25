@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.33, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.34, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.34 · Settings: Eighteen FAQs in four groups on the Bug reports & FAQs page
+
+- **Problem:** The FAQs card had five answers and nothing on accounts, sync, deleting data, Coach privacy, activating Premium, refunds or imports.
+- **Change:** The FAQs are grouped under Account & data, Coach & privacy, Premium & billing and Help, and all start collapsed. Eight show first with a Show all 18 questions button. The answers follow what the app really does: guest and signed-in storage, what syncs, offline use, Delete everything versus Delete my account, the JSON export, the passcode limit, file-only imports, what WL Coach can see, the separate AI and photo switches, a plain no on medical advice, license-key activation, Free versus Premium, and the 14-day refund. A short not-medical-advice note sits at the top of the card.
+- **Where:** index.html: WL_FAQ_GROUPS, WL_FAQS, faqCard(), faq-all case, .faq-grp CSS, APP_VERSION, WLH.changelog. tests/browser/revamp.mjs (two FAQ checks). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Settings > Bug reports & FAQs: eight questions, all closed. Press Show all 18 questions for the rest. Open any answer and follow its link.
+- **Known limits:** The new answers are in English only for now (Spanish still covers the group names). Which Premium features are Ready is shown with the app's own labels, In Testing and In Progress. The Premium page keeps its own three FAQs.
 
 ## 8.6.33 · Settings: A separate Bug reports & FAQs menu, with a red bug icon
 

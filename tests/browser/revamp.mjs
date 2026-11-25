@@ -112,6 +112,12 @@ for (const mode of ["light", "dark", "oled"]) {
 await setMode("light"); await shot("rail-premium-light");
 const colours = await ev(`[...document.querySelectorAll(".setrail a")].map(a => a.style.getPropertyValue("--sv"))`);
 ok("the nine sections have nine different colours", new Set(colours).size === 9, colours.join(","));
+await goto("#/settings/bugs"); await sleep(300);
+const fq = () => ev(`(() => ({ n: document.querySelectorAll("#faqs details").length, open: document.querySelectorAll("#faqs details[open]").length, groups: [...document.querySelectorAll("#faqs .faq-grp")].map(h => h.textContent), diag: !!document.querySelector("#diagnostics"), noDiagInAbout: true, med: /not medical advice/.test(document.querySelector("#faqs .advice-banner")?.textContent || "") }))()`);
+let fqs = await fq();
+ok("Bug reports & FAQs: eight questions start collapsed, in groups, with Diagnostics and the medical note", fqs.n === 8 && fqs.open === 0 && fqs.groups.length === 3 && fqs.diag && fqs.med, JSON.stringify(fqs));
+await click('[data-act="faq-all"]'); await sleep(200); fqs = await fq();
+ok("Show all reveals every question in four groups, still collapsed", fqs.n === 18 && fqs.open === 0 && fqs.groups.join() === "Account & data,Coach & privacy,Premium & billing,Help", JSON.stringify(fqs));
 await view(390, 800); await goto("#/settings/about"); await sleep(300);
 const ph = await ev(`(() => { const r = document.querySelector(".setrail"), a = r.querySelector('a[aria-current="page"]'), rr = r.getBoundingClientRect(), ar = a.getBoundingClientRect(); return { dir: getComputedStyle(r).flexDirection, h: Math.round(rr.height), seen: ar.left >= rr.left - 1 && ar.right <= rr.right + 1, scroll: r.scrollLeft, bar: getComputedStyle(a, "::before").display }; })()`);
 ok("on a phone the rail is one scrolling row that has scrolled to the section you are in", ph.dir === "row" && ph.h < 80 && ph.seen && ph.scroll > 0 && ph.bar === "none", JSON.stringify(ph));
