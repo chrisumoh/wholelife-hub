@@ -66,10 +66,10 @@ console.log("--- 1. Menu: a glyph of its own for every row, a colour only on the
 await view(1280, 900); await setMode("light"); await goto("#/home");
 const glyphs = await ev(`[...document.querySelectorAll(".side .nav a svg.ci, .side .nav button.prem-trigger svg.ci, .side .nav .navdisc svg.ci")].map(s => [...s.classList].find(c => /^ci-/.test(c)))`);
 ok("every menu row has its own glyph (no two rows share one)", glyphs.length >= 8 && new Set(glyphs).size === glyphs.length, glyphs.join(","));
-ok("Log, Plan, Coach and Progress use the four new glyphs", ["ci-journal", "ci-calcheck", "ci-compass", "ci-trendup"].every(g => glyphs.includes(g)), glyphs.join(","));
+ok("Log, Plan, Coach and Progress use the four new glyphs", ["ci-journal", "ci-calcheck", "ci-whistle", "ci-trendup"].every(g => glyphs.includes(g)), glyphs.join(","));
 await view(390, 800); await sleep(300);
 const bar = await ev(`[...document.querySelectorAll(".bottombar .bb-item svg")].map(s => s.dataset.icon)`);
-ok("the phone bottom bar shows the same journal, plan and compass glyphs, all different", bar.length === 5 && new Set(bar).size === 5 && ["journal", "calcheck", "compass"].every(g => bar.includes(g)), bar.join(","));
+ok("the phone bottom bar shows the same journal, plan and whistle glyphs, all different", bar.length === 5 && new Set(bar).size === 5 && ["journal", "calcheck", "whistle"].every(g => bar.includes(g)), bar.join(","));
 await view(1280, 900);
 const NAV = `(() => { const t = window.__t, out = [], a = document.querySelector('.side .nav a[aria-current="page"], .side .nav button.prem-trigger[aria-current="page"]'); if (!a) return ["no row is marked as the current page"];
   const cs = getComputedStyle(a), ic = getComputedStyle(a.querySelector(".si-tile svg")).color, side = getComputedStyle(document.querySelector(".side")).backgroundColor, lab = getComputedStyle(a.querySelector(":scope > span:not(.si-tile)")).color;

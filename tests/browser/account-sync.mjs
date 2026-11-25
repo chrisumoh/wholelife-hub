@@ -250,7 +250,7 @@ await d2.ev(`removePasscode().then(() => true)`); await d2.synced();
 
 console.log("--- 8. Sync photos switch");
 await d1.ev(`document.querySelector('[data-act="sync-photos-toggle"]') ? 1 : (location.hash = "#/settings/privacy", render(), 1)`);
-ok("the switch is on by default and sits in Settings > Privacy", await d1.waitFor(`document.querySelector('[data-act="sync-photos-toggle"]')?.getAttribute("aria-pressed") === "true"`, 5000));
+ok("the switch is on by default and sits in Settings > Privacy", await d1.waitFor(`document.querySelector('[data-act="sync-photos-toggle"]')?.getAttribute("aria-checked") === "true"`, 5000));
 await d1.ev(`document.querySelector('[data-act="sync-photos-toggle"]').click(); true`);
 ok("turned off", await d1.ev(`S.syncPhotos === false`));
 const filesBefore = Object.keys(files()).length;

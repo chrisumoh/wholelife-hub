@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.22, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.23, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.23 · Look: Whistle, flag and crown icons, no gold selection ring, and one switch style everywhere
+
+- **Problem:** The Coach, Goals & food and Premium icons were not the ones you chose, a thin gold ring sat over the chosen option in segmented controls (such as lb · ft) and day pickers, and the app's on/off switches did not share one look.
+- **Change:** Coach is now a whistle, Goals & food a flag and Premium a crown (the Lucide icons you sent) in the Settings sidebar; the Coach link in the main menu and the phone bottom bar also uses the whistle. The gold sliding ring is no longer drawn (the chosen option keeps its raised pill, and the chosen day keeps its accent border). Every on/off switch (.sw buttons, the voice and sharing .vtoggle buttons, and the On/Off buttons for Sync photos and the privacy permissions, which are now real switches) now has the outlined-track, round-thumb style from your sw-4 code, 52 by 28. Its colours come from the theme instead of fixed hex values: the track outline and thumb are the text colour mixed into the surface when off and the accent when on, so light, dark, OLED and every accent colour follow. Checkboxes, segmented controls and other inputs are untouched.
+- **Where:** index.html: NAV_GLYPH (compass renamed whistle), SET_GLYPH (setCoach, setGoals, setPremium), NAV_VIBE, sideNav(), bottomBarHTML(), CSS .sw and .vtoggle (shared --sw-* tokens), .focus-ring border colour, APP_VERSION, WLH.changelog. docs/BUILD_PLAN.md, README.md, CHANGELOG.md.
+- **How to test:** Settings: Coach, Goals & food and Premium show a whistle, flag and crown in the sidebar. Settings > Profile (lb · ft / kg · cm) and Home > Rings (day picker): no gold ring. Settings > Privacy & security, Reminders, Friends and Coach voice switches: all the same outlined style; change Settings > Appearance (light, dark, OLED, an accent) and the switches follow.
+- **Known limits:** Checked in headless Chrome only, not on a phone. The ring element still exists (it is only transparent), so the sliding code is unchanged. Gold on Premium cards, medals and badges is a design colour, not a selection ring, and was left as it is.
 
 ## 8.6.22 · Coach: WL Coach can use your profile and last 7 days if you choose, and looks up real recipes on the web
 
