@@ -51,7 +51,7 @@ const txt = () => ev(`document.getElementById("wlc")?.innerText || ""`);
 await ev(`SB.user = null; true`); await goCoach();
 ok("signed out: asks to sign in and has no send button", /Sign in to chat/.test(await txt()) && !(await ev(`!!document.querySelector('[data-act="wlc-send"]')`)));
 
-await ev(`SB.user = { id: "u_me", email: "me@example.com" }; window.__calls = [];
+await ev(`SB.user = { id: "u_me", email: "me@example.com" }; STORE_UID = "u_me"; window.__calls = [];
   window.fetch = async (u, o) => { if (String(u).includes("/functions/v1/wl-coach")) { window.__calls.push({ u: String(u), o }); return new Response(JSON.stringify({ state: window.__reply || "ok", reply: "Eggs <b>and</b> plantain." }), { status: 200 }); } return new Response("{}", { status: 404 }); };
   sbClient().auth.getSession = async () => ({ data: { session: { access_token: "tok-123" } } });
   window.__rpc = []; window.__rpcFail = false; sbClient().rpc = async (n, a) => { window.__rpc.push({ n, a }); return window.__rpcFail ? { error: { message: "down" } } : { error: null }; };
@@ -161,5 +161,12 @@ ok("with storage blocked, a failed stop is still pending in memory", await ev(`c
 await ev(`document.getElementById("wlc-q").value = "Lunch?"; document.querySelector('[data-act="wlc-send"]').click(); true`); await sleep(400);
 ok("with storage blocked, Send still sends nothing until the account confirms", await ev(`window.__calls.length === 0`));
 await ev(`Storage.prototype.setItem = window.__ls.s; Storage.prototype.getItem = window.__ls.g; window.__rpcFail = false; true`);
+// Sign-in fires an auth event before the matching account store has loaded. A guest/absent profile must not erase the pending stop.
+await ev(`coachCtxMark("u_me"); window.__rpc.length = 0; window.__profileBeforeSignIn = S.profiles; window.__activeBeforeSignIn = S.activeId;
+  S.profiles = []; S.activeId = null; STORE_UID = null; coachWithdrawRetry(); true`); await sleep(200);
+ok("sign-in before account load retains the pending stop without an on-write", await ev(`coachCtxPending() && window.__rpc.length === 0`));
+await ev(`S.profiles = window.__profileBeforeSignIn; S.activeId = window.__activeBeforeSignIn; STORE_UID = "u_me";
+  P().coachChatConsent = true; coachWithdrawRetry(); true`); await sleep(200);
+ok("after account load the pending stop is confirmed with the plain version", await ev(`!coachCtxPending() && window.__rpc.length === 1 && window.__rpc[0].a.p_on === true && window.__rpc[0].a.p_version === TERMS_VERSION`));
 ok("no script errors", errors.length === 0, errors.join(" | "));
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
