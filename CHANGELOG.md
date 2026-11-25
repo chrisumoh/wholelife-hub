@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.27, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.28, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.28 · Icons: Health data icon is folder-heart
+
+- **Problem:** The Health data label in the side menu used a plain grid icon.
+- **Change:** Health data now shows the folder-heart icon you sent in the side menu and in the page lists that point to it. Browse, Category and Metric keep the grid.
+- **Where:** index.html: NAV_GLYPH (folderheart), side menu Progress group link, NAV_ROUTE_IC, NAV_VIBE, page list in the route table, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Side menu > Progress > Health data shows a folder with a heart, in light and dark; it tints blue when the page is open.
+- **Known limits:** Checked in headless Chrome only.
 
 ## 8.6.27 · Icons: Meal, calorie, snack, plan and sleep icons
 
