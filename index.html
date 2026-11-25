@@ -3875,7 +3875,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 </style><div id="app"></div>
 <script>
 // =================== DEVELOPER LOG + CHANGE LOG (for testers) ===================
-// Open DevTools and type WLH.help(). On a phone, use Settings -> Data & about -> Diagnostics.
+// Open DevTools and type WLH.help(). On a phone, use Settings -> Bug reports & FAQs.
 // The runtime log records errors, warnings, route changes, slow renders and menu / camera /
 // microphone outcomes. It is kept in memory only (never saved, never uploaded) and holds no
 // meal names, health values or other personal data: just event names, routes and error text.
@@ -3884,7 +3884,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.32", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.33", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3898,6 +3898,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.32", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.33",
+      area:"Settings",
+      title:"A separate Bug reports & FAQs menu, with a red bug icon",
+      bug:"Bug reports sat inside Data & about under the name Diagnostics, and the answers to common questions were only on the Premium page, so neither was easy to find.",
+      fix:"Settings has a new last entry under App, Bug reports & FAQs, with the bug icon in red. It holds the Diagnostics card (copy the log for a bug report, clear it, show features in testing, latest events and what changed) and a FAQs card with five answers, including how to report a bug. Data & about keeps the tour, your data and how the numbers work. The Premium page keeps its own three answers.",
+      where:"index.html: SET_RAIL, SET_RAIL_ICON, SET_VIBE, SET_TABS, SET_GLYPH (setBug), settingsView() (bugs section, about section), WL_FAQS, faqCard(), diagCard() comments, tour text that named Diagnostics, WL_ES (Bug reports & FAQs), APP_VERSION, WLH.changelog. tests/browser/pickers.mjs, revamp.mjs (nine sections). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Settings > Bug reports & FAQs (last row of the App group, red bug icon): Copy log for a bug report, then open the FAQs. Settings > Data & about no longer shows Diagnostics.",
+      limits:"The Premium page still has its own FAQ list; say if you want it moved. The two new answers are how-to steps only." },
     { id:"8.6.32",
       area:"Workouts",
       title:"Accessibility fix for Food focus, and the activity menu always stays inside the card",
@@ -5044,7 +5052,18 @@ const APP_VERSION = { update: "8.6", build: "8.6.32", channel: "Dev Testing", da
 // aid rather than a profile preference.
 const SHOWTEST_KEY = "wlh.showtesting";
 function showTestingFeatures(){ try { return localStorage.getItem(SHOWTEST_KEY) === "1"; } catch { return false; } }
-// Settings -> Data & about: the same information for testers on phones (no DevTools needed).
+// Settings > Bug reports & FAQs. The Premium page keeps its own copy of the first three answers.
+const WL_FAQS = [
+  ["What happens to my logs if I cancel?","Nothing is deleted. Premium features lock; your logs, history and export stay yours."],
+  ["Can I cancel anytime?","Yes — Settings > Premium > Manage subscription. You keep Premium until the end of the period you paid for."],
+  ["How does billing work?","Plans are billed through Lemon Squeezy and renew automatically until you cancel. The price on the plan you pick is the price you pay."],
+  ["How do I report a bug?","Open Settings > Bug reports & FAQs, press Copy log for a bug report, and paste it into your message. The log holds no meals, health values or names."],
+  ["Where is the app tour?","Settings > Data & about > App tour & guide replays the quick tour or tours one area."]
+];
+function faqCard(){
+  return `<section class="card" id="faqs"><h2>FAQs</h2><div class="prem-faqs">${WL_FAQS.map(([q, a]) => `<details class="wl-faq"><summary>${esc(tr(q))}</summary><p>${esc(tr(a))}</p></details>`).join("")}</div></section>`;
+}
+// Settings -> Bug reports & FAQs: the same information for testers on phones (no DevTools needed).
 function diagCard(){
   const W = window.WLH; if (!W) return "";
   const errs = W.errors().length;
@@ -10885,13 +10904,13 @@ function sceneLayer(p){
 }
 
 // =================== SETTINGS (tabbed) ===================
-const SET_RAIL = [["You",["profile","coach","goals","household"]],["App",["appearance","premium","privacy","about"]]];
+const SET_RAIL = [["You",["profile","coach","goals","household"]],["App",["appearance","premium","privacy","about","bugs"]]];
 // 8.6.4: each Settings section has its own outline glyph and its own colour. The colour shows only on the section you are in
 // (icon, well, edge); every other row stays grey. Pairs are [light, dark]; the light ones are dark enough for 3:1 on their own tint.
-const SET_RAIL_ICON = { profile:"setProfile", coach:"setCoach", goals:"setGoals", household:"setHousehold", appearance:"setAppearance", premium:"setPremium", privacy:"setPrivacy", about:"setData" };
+const SET_RAIL_ICON = { profile:"setProfile", coach:"setCoach", goals:"setGoals", household:"setHousehold", appearance:"setAppearance", premium:"setPremium", privacy:"setPrivacy", about:"setData", bugs:"setBug" };
 const SET_VIBE = { profile:["#2563EB","#60A5FA"], coach:["#7C3AED","#A78BFA"], goals:["#047857","#34D399"], household:["#0F766E","#2DD4BF"],
-  appearance:["#BE185D","#F472B6"], premium:["#B45309","#FBBF24"], privacy:["#4F46E5","#818CF8"], about:["#0369A1","#38BDF8"] };
-const SET_TABS = [["profile","Profile"],["coach","Coach"],["appearance","Appearance"],["goals","Goals & food"],["household","Household"],["premium","Premium"],["privacy","Privacy & security"],["about","Data & about"]];
+  appearance:["#BE185D","#F472B6"], premium:["#B45309","#FBBF24"], privacy:["#4F46E5","#818CF8"], about:["#0369A1","#38BDF8"], bugs:["#B91C1C","#F87171"] };
+const SET_TABS = [["profile","Profile"],["coach","Coach"],["appearance","Appearance"],["goals","Goals & food"],["household","Household"],["premium","Premium"],["privacy","Privacy & security"],["about","Data & about"],["bugs","Bug reports & FAQs"]];
 const initials = n => (n || "").trim().split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join("").toUpperCase() || "?";
 function factRow(k, v){ return `<dt>${esc(k)}</dt><dd>${v}</dd>`; }
 function profileGroup(p, key, title, factsHtml, formHtml){
@@ -11944,6 +11963,7 @@ const SET_GLYPH = {
   setAppearance:'<rect x="4" y="4" width="6.2" height="16" rx="2"/><path d="M10.2 6.8l4.4-1.3a2 2 0 0 1 2.4 1.4l1.5 5.2"/><path d="M10.2 13.2l6.8-2.4a2 2 0 0 1 2.5 1.2l1 2.8a2 2 0 0 1-1.2 2.5l-10 3.5"/><circle cx="7.1" cy="16.8" r="1" fill="currentColor" stroke="none"/>',
   setPremium:'<path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" />',
   setPrivacy:'<path d="M12 3L4.5 6.1v5.5c0 4.8 3.2 8.4 7.5 9.9 4.3-1.5 7.5-5.1 7.5-9.9V6.1L12 3z"/><circle cx="12" cy="10.8" r="1.7"/><path d="M12 12.5v3.3"/>',
+  setBug:'<path d="M12 20v-9"/><path d="M14 7a4 4 0 0 1 4 4v3a6 6 0 0 1-12 0v-3a4 4 0 0 1 4-4z"/><path d="M14.12 3.88 16 2"/><path d="M21 21a4 4 0 0 0-3.81-4"/><path d="M21 5a4 4 0 0 1-3.55 3.97"/><path d="M22 13h-4"/><path d="M3 21a4 4 0 0 1 3.81-4"/><path d="M3 5a4 4 0 0 0 3.55 3.97"/><path d="M6 13H2"/><path d="m8 2 1.88 1.88"/><path d="M9 7.13V6a3 3 0 1 1 6 0v1.13"/>',
   setData:'<ellipse cx="9.8" cy="6" rx="6.3" ry="2.4"/><path d="M3.5 6v10.8c0 1.3 2.8 2.4 6.3 2.4.7 0 1.4 0 2-.1"/><path d="M16.1 6v4.6"/><path d="M3.5 11.4c0 1.3 2.8 2.4 6.3 2.4.9 0 1.7-.1 2.5-.2"/><circle cx="17.2" cy="17.2" r="4.1"/><path d="M17.2 16.9v2"/><circle cx="17.2" cy="15.2" r="0.6" fill="currentColor" stroke="none"/>'
 };
 Object.assign(I, SET_GLYPH, { search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>' });
@@ -12110,7 +12130,7 @@ const WL_ES = {
   "Food culture":"Cultura gastronómica", "Personal coach":"Entrenador personal", "Health data":"Datos de salud",
   "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Today":"Hoy", "More":"Más", "Next step":"Siguiente paso", "Browse by category":"Ver por categoría", "Every metric in this category is already pinned above.":"Todas las métricas de esta categoría ya están fijadas arriba.", "Show badges":"Mostrar insignias", "Every badge is earned. Nothing is locked.":"Todas las insignias están conseguidas. Nada está bloqueado.", "You're all caught up for today.":"Hoy estás al día.", "Log water":"Registrar agua", "Log food":"Registrar comida", "Log weight":"Registrar peso", "Open workout":"Abrir entrenamiento", "No food logged yet today":"Aún no has registrado comida hoy", "No weigh-in in the last 7 days":"Sin pesaje en los últimos 7 días", "Open":"Abrir", "Mobile navigation":"Navegación móvil", "1½ servings":"1½ porciones", "No allergens":"Sin alérgenos", "Sort":"Ordenar", "Default order":"Orden predeterminado", "Lowest calories":"Menos calorías", "Highest calories":"Más calorías", "Clear filters":"Quitar filtros", "Recipe":"Receta", "Servings":"Porciones", "Coach sections":"Secciones del entrenador", "Five quick questions":"Cinco preguntas rápidas", "Answer them":"Responder", "No plan yet":"Aún no hay plan", "See my week":"Ver mi semana", "Go to the questions":"Ir a las preguntas", "Pick how many days you can train and build a plan on the Plan tab.":"Elige cuántos días puedes entrenar y crea un plan en la pestaña Planificar.", "Nothing is planned for today. The whole week is on the Plan tab.":"Hoy no hay nada planeado. Toda la semana está en la pestaña Planificar.", "Every one is optional. They take about a minute and live on the Settings tab.":"Todas son opcionales. Toman un minuto y están en la pestaña Ajustes.", "Answer the five questions on the Settings tab first and the plan fits you better.":"Responde primero las cinco preguntas de la pestaña Ajustes y el plan se ajustará mejor a ti.", "Close":"Cerrar", "Go Premium":"Hazte Premium", "Grocery list builder":"Generador de lista de compras", "Pantry mode":"Modo despensa", "Photo meal logging":"Registro de comidas con foto", "Restaurant mode":"Modo restaurante", "Micronutrient gaps":"Carencias de micronutrientes", "Progressive programs":"Programas progresivos", "Form check camera":"Cámara de revisión de técnica", "Body progress studio":"Estudio de progreso corporal", "Recovery score":"Puntuación de recuperación", "Weekly review PDF":"Informe semanal en PDF", "Voice coach":"Entrenador por voz", "Habit experiments":"Experimentos de hábitos", "Coach sharing":"Compartir con un entrenador", "Family challenges":"Retos familiares", "Community recipes":"Recetas de la comunidad", "Doctor visit prep":"Preparar la visita al médico", "Cycle-aware plans":"Planes según tu ciclo", "Fasting & Ramadan mode":"Modo ayuno y Ramadán", "Budget mode":"Modo presupuesto",
   "Profile":"Perfil", "Coach":"Entrenador", "Appearance":"Apariencia", "Goals & food":"Metas y comida", "Household":"Hogar",
-  "App":"Aplicación", "Settings sections":"Secciones de ajustes", "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información",
+  "App":"Aplicación", "Settings sections":"Secciones de ajustes", "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información", "Bug reports & FAQs":"Errores y preguntas frecuentes",
   "Display":"Pantalla", "Automatic":"Automático", "Light":"Claro", "Dark":"Oscuro", "OLED black":"Negro OLED",
   "Accent color":"Color de acento", "Text size":"Tamaño del texto", "Motion":"Movimiento", "UI style":"Estilo de interfaz",
   "Rounded":"Redondeado", "Crisp":"Nítido", "Language":"Idioma", "Review changes":"Revisar cambios",
@@ -14749,7 +14769,7 @@ function settingsView(p){
     <p class="small muted">Each of these asked you once, the first time you tried to use it. Turn any of them back off here — the feature stops immediately and asks again next time.</p>
     ${typeof consentCenter === "function" ? consentCenter(p) : ""}
   </section>`,
-    about: `${typeof tourGuideCard === "function" ? tourGuideCard() : ""}${typeof diagCard === "function" ? diagCard() : ""}<section class="card">
+    about: `${typeof tourGuideCard === "function" ? tourGuideCard() : ""}<section class="card">
     <h2>Your data</h2>
     <div class="stats">${(() => { const c = k => entries(k).length; const vd = Object.values(S.logs[p.id] || {}).reduce((a, L) => a + Object.keys(L.vitals || {}).length, 0); const size = new Blob([JSON.stringify({ profiles:S.profiles, logs:S.logs })]).size;
       return [["Meals", c("meals")],["Snacks", c("snacks")],["Workouts", c("workouts")],["Weigh-ins", c("weights")],["Days of vitals", vd],["Profiles", S.profiles.length],["Stored size", size > 1048576 ? `${round(size/1048576,1)} MB` : `${Math.max(1, Math.round(size/1024))} KB`]].map(([l, v]) => `<div><span class="tiny muted">${l}</span><b>${v}</b></div>`).join(""); })()}</div>
@@ -14768,7 +14788,8 @@ function settingsView(p){
       <li><b>Dish calories</b> are estimates for typical home recipes and portions. For exact values, check ingredients in <a href="https://fdc.nal.usda.gov" target="_blank" rel="noopener">USDA FoodData Central</a>.</li>
     </ul>
     <p class="tiny faint">Whole Life Hub is for personal tracking and isn't medical or nutrition advice.</p>
-  </section>`
+  </section>`,
+    bugs: `${typeof diagCard === "function" ? diagCard() : ""}${faqCard()}`
   };
   return `<div class="set-layout">${rail}<div class="set-body">${sections[tab]}</div></div>`;
 }
@@ -25803,7 +25824,7 @@ const TOUR_DEFS = {
     { route:"nutrition", card:"Log a meal", title:"Inside the pages you use",
       body:"Premium tools appear where they help. On Meals, subscribers get From a photo and Restaurant mode next to the normal logging buttons." },
     { title:"Still being built",
-      body:"Features that aren't ready yet are hidden from the Premium list. Testers can show them in Settings › Data & about › Diagnostics." }
+      body:"Features that aren't ready yet are hidden from the Premium list. Testers can show them in Settings › Bug reports & FAQs." }
   ]},
   privacy: { name:"Privacy & data", blurb:"Passcode, permissions, export", steps:[
     { route:"settings/privacy", sel:"#security", title:"Passcode",

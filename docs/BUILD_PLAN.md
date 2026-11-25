@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.6.33 | Bug reports & FAQs menu in Settings | IN PROGRESS: PR #105 |
 | 8.6.32 | Food focus accessibility fix and activity menu fit | IN PROGRESS: PR #105 |
 | 8.6.31 | Photo estimate, streak, minutes, workout, coach and active energy icons | IN PROGRESS: PR #105 |
 | 8.6.30 | Material 3 fixes: workout activity chips and Food focus | IN PROGRESS: PR #105 |

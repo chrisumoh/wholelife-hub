@@ -57,7 +57,7 @@ console.log("--- 1. Settings rail: the left rail replaced the sliding-pill tab s
 await goto("#/settings"); await sleep(500);
 const rail = () => ev(`(() => { const r = document.querySelector(".setrail"), act = r ? [...r.querySelectorAll('a[aria-current="page"]')] : []; return r ? { n: r.querySelectorAll("a").length, groups: [...r.querySelectorAll(".setrail-lbl")].map(x => x.textContent), active: act.map(a => a.textContent.trim()), minH: Math.min(...[...r.querySelectorAll("a")].map(a => a.getBoundingClientRect().height)), dir: getComputedStyle(r.querySelector("a")).flexDirection, tabsLeft: document.querySelectorAll(".set-layout .tabs").length } : null; })()`);
 let rl = await rail();
-ok("8 rail rows in the You and App groups, Profile active", rl && rl.n === 8 && rl.groups.join() === "You,App" && rl.active.join() === "Profile", JSON.stringify(rl));
+ok("9 rail rows in the You and App groups, Profile active", rl && rl.n === 9 && rl.groups.join() === "You,App" && rl.active.join() === "Profile", JSON.stringify(rl));
 ok("every row is at least 44px tall and icon and label sit side by side", rl && rl.minH >= 44 && rl.dir === "row", JSON.stringify(rl));
 ok("the shared .tabs class is not used inside the layout", rl && rl.tabsLeft === 0, JSON.stringify(rl));
 await ev(`document.querySelector('.setrail a[href="#/settings/appearance"]').click(); true`); await sleep(500);
@@ -75,7 +75,7 @@ ok("it opens as a list you can pick from, like Meal", await ev(`(() => { const s
 ok("the Meal select beside it is a dropdown too", await ev(`(() => { const s = document.getElementById("m-slot"); return !s._wheel && !!s._wl; })()`));
 ok("no wheel appears where no select asks for one (Settings)", await ev(`(async () => { location.hash = "#/settings"; await new Promise(r => setTimeout(r, 600)); return document.querySelectorAll(".wl-wheel").length === 0; })()`));
 await ev(`document.documentElement.dataset.motion = "reduced"; true`);
-const rm = await ev(`(() => ({ m: document.documentElement.dataset.motion, rail: !!document.querySelector(".setrail") && document.querySelectorAll(".setrail a").length === 8 }))()`);
+const rm = await ev(`(() => ({ m: document.documentElement.dataset.motion, rail: !!document.querySelector(".setrail") && document.querySelectorAll(".setrail a").length === 9 }))()`);
 ok("reduced motion keeps the Settings rail intact (the sliding pill went with the tab strip)", rm.m === "reduced" && rm.rail, JSON.stringify(rm));
 
 ok("no script errors", errors.length === 0, errors.join(" | "));

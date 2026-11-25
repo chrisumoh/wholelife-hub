@@ -91,10 +91,10 @@ ok("a shut group that holds the current page shows a dot in that page's colour",
 
 console.log("--- 2. Settings rail: an icon well, a colour of its own per section, shown only on the current one");
 await view(1280, 900);
-const SECTIONS = ["profile", "coach", "goals", "household", "appearance", "premium", "privacy", "about"];
+const SECTIONS = ["profile", "coach", "goals", "household", "appearance", "premium", "privacy", "about", "bugs"];
 await goto("#/settings");
 const rail = await ev(`(() => { const items = [...document.querySelectorAll(".setrail a.setrail-item")], r = document.querySelector(".setrail").getBoundingClientRect(); return { n: items.length, icons: items.map(a => a.querySelector("svg").dataset.icon), well: items.map(a => { const w = a.querySelector(".sr-well").getBoundingClientRect(), s = a.querySelector("svg").getBoundingClientRect(); return [Math.round(w.width), Math.round(w.height), Math.round(s.width)].join("x"); }), w: Math.round(r.width), radius: getComputedStyle(document.querySelector(".setrail")).borderRadius, groups: [...document.querySelectorAll(".setrail-lbl")].map(x => x.textContent), tall: Math.min(...items.map(a => a.getBoundingClientRect().height)) }; })()`);
-ok("the rail has 8 rows in two groups, each with its own glyph", rail.n === 8 && new Set(rail.icons).size === 8 && rail.icons.every(i => /^set[A-Z]/.test(i)) && rail.groups.join() === "You,App", JSON.stringify(rail));
+ok("the rail has 9 rows in two groups, each with its own glyph", rail.n === 9 && new Set(rail.icons).size === 9 && rail.icons.every(i => /^set[A-Z]/.test(i)) && rail.groups.join() === "You,App", JSON.stringify(rail));
 ok("each icon sits in a 32px well and is 20px, rows are 44px tall, the rail is 272px wide with 20px corners", rail.well.every(w => w === "32x32x20") && rail.tall >= 43.9 && Math.abs(rail.w - 272) <= 1 && rail.radius === "20px", JSON.stringify(rail));
 for (const mode of ["light", "dark", "oled"]) {
   await setMode(mode); const bad = [];
@@ -111,7 +111,7 @@ for (const mode of ["light", "dark", "oled"]) {
 }
 await setMode("light"); await shot("rail-premium-light");
 const colours = await ev(`[...document.querySelectorAll(".setrail a")].map(a => a.style.getPropertyValue("--sv"))`);
-ok("the eight sections have eight different colours", new Set(colours).size === 8, colours.join(","));
+ok("the nine sections have nine different colours", new Set(colours).size === 9, colours.join(","));
 await view(390, 800); await goto("#/settings/about"); await sleep(300);
 const ph = await ev(`(() => { const r = document.querySelector(".setrail"), a = r.querySelector('a[aria-current="page"]'), rr = r.getBoundingClientRect(), ar = a.getBoundingClientRect(); return { dir: getComputedStyle(r).flexDirection, h: Math.round(rr.height), seen: ar.left >= rr.left - 1 && ar.right <= rr.right + 1, scroll: r.scrollLeft, bar: getComputedStyle(a, "::before").display }; })()`);
 ok("on a phone the rail is one scrolling row that has scrolled to the section you are in", ph.dir === "row" && ph.h < 80 && ph.seen && ph.scroll > 0 && ph.bar === "none", JSON.stringify(ph));

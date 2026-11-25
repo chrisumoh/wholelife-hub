@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.32, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.33, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.33 · Settings: A separate Bug reports & FAQs menu, with a red bug icon
+
+- **Problem:** Bug reports sat inside Data & about under the name Diagnostics, and the answers to common questions were only on the Premium page, so neither was easy to find.
+- **Change:** Settings has a new last entry under App, Bug reports & FAQs, with the bug icon in red. It holds the Diagnostics card (copy the log for a bug report, clear it, show features in testing, latest events and what changed) and a FAQs card with five answers, including how to report a bug. Data & about keeps the tour, your data and how the numbers work. The Premium page keeps its own three answers.
+- **Where:** index.html: SET_RAIL, SET_RAIL_ICON, SET_VIBE, SET_TABS, SET_GLYPH (setBug), settingsView() (bugs and about sections), WL_FAQS, faqCard(), tour text that named Diagnostics, WL_ES, APP_VERSION, WLH.changelog. tests/browser/pickers.mjs, revamp.mjs (nine sections). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Settings > Bug reports & FAQs (last row of the App group, red bug icon): Copy log for a bug report, then open the FAQs. Settings > Data & about no longer shows Diagnostics.
+- **Known limits:** The Premium page still has its own FAQ list; say if you want it moved. The two new answers are how-to steps only.
 
 ## 8.6.32 · Workouts: Accessibility fix for Food focus, and the activity menu always stays inside the card
 
