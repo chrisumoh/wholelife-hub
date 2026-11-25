@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.25, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.26, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.26 · Rings: Move ring uses the sport-shoe icon
+
+- **Problem:** The Move ring's label on the Home rings card used an apple icon.
+- **Change:** The Move row of the rings legend now shows the sport-shoe icon you sent (stroke style, same green as before). Only that one icon changed; the ring colours, numbers and links are the same.
+- **Where:** index.html: CI (new sportshoe glyph), RING_DEFS (Move row icon), APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Home > Today at a glance (the rings card): the Move row now has a shoe next to its name, in light and dark.
+- **Known limits:** Checked in headless Chrome only. The apple icon is still used elsewhere (Meals, the menu); only the Move ring changed.
 
 ## 8.6.25 · Appearance: Glass & motion: one sliding three-way track for opacity presets and motion, and a Replay motion button
 
