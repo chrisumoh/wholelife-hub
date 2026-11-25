@@ -3884,7 +3884,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.30", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.31", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3898,6 +3898,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.30", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.31",
+      area:"Icons",
+      title:"Photo estimate, streak, minutes, workout, coach and active energy icons, each in its own colour",
+      bug:"Photo estimate used an apple, Streak a sparkle, Minutes a running figure, Coach a stopwatch and Active energy a flame, and the Streak and Minutes tiles shared colours with other tiles.",
+      fix:"Photo estimate now uses image-down (purple), Streak uses the flame (orange tile), Minutes uses the hourglass (teal tile), Workouts use the dumbbell everywhere they have an icon, Coach uses the whistle (blue) and Active energy uses the zap in yellow. The yellow follows the theme so it stays readable on white. The From a photo chip on Meals uses image-down too.",
+      where:"index.html: NAV_GLYPH (imagedown, flamel, hourglass, dumbbell, zap), photo estimate heads, workoutStatsRow(), weeklyStatsRow(), ps-streak, coach insight, METRICS.active, EXTRA_WIDGETS.coach, the Coach card, --si-streak and --si-minutes colours, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Workouts: the Workouts, Minutes and Streak tiles. Nutrition: Photo estimate card and the From a photo chip on Log a meal. Home > Edit widgets: add Active energy and Coach and look at their headings. The streak badge sits on the Coach and Summary page headers.",
+      limits:"Checked in headless Chrome only. The older dumbbell, flame and stopwatch drawings are still in the code but no longer used for these labels; the Move ring shoe, Activity category flame and the award medals are unchanged." },
     { id:"8.6.30",
       area:"Workouts",
       title:"Log a workout: one activity chip row with a searchable More menu; Food focus: a joined segmented control with a mix bar",
@@ -11053,7 +11061,7 @@ const METRICS = {
   workouts:{ n:"Workouts", cat:"activity", icon:"dumbbell", unit:()=>"min", get:d => { const w = onDate("workouts", d); return w.length ? w.reduce((a,x)=>a+(x.minutes||0),0) : null; }, fmt:v => Math.round(v), link:"#/workouts" },
   steps:   { n:"Steps", cat:"activity", icon:"steps", unit:()=>"steps", get:d => vitalsOf(d)?.steps ?? null, fmt:v => Math.round(v).toLocaleString(), fields:()=>[["steps","Steps",0,100000]], add:true,
              about:"More daily steps are linked with a lower risk of early death. In a 2022 analysis of 15 studies (Paluch et al., The Lancet Public Health), the benefit leveled off around 6,000–8,000 steps for adults 60 and older and 8,000–10,000 for younger adults." },
-  active:  { n:"Active energy", cat:"activity", icon:"flame", unit:()=>"cal", get:d => vitalsOf(d)?.active ?? null, fmt:v => Math.round(v).toLocaleString(), fields:()=>[["active","Active calories",0,6000]], add:true,
+  active:  { n:"Active energy", cat:"activity", icon:"zap", color:"var(--cat-gold)", unit:()=>"cal", get:d => vitalsOf(d)?.active ?? null, fmt:v => Math.round(v).toLocaleString(), fields:()=>[["active","Active calories",0,6000]], add:true,
              about:"Calories burned by movement, on top of what your body burns at rest. It isn't added to the weight estimate, which already counts your logged workouts, so nothing is counted twice." },
   weight:  { n:"Weight", cat:"body", icon:"scale", unit:p => p.units === "metric" ? "kg" : "lb", get:d => entries("weights").find(w => w.date === d)?.kg ?? null, fmt:(v,p) => p.units === "metric" ? round(v,1) : round(kgToLb(v),1),
              fields:p => [["weight", "Weight", W_MIN_KG, W_MAX_KG]], text:["weight"], add:true, chartMin:true,
@@ -11229,7 +11237,7 @@ function mealsDef(p, L){
 }
 function coachWDef(p, L){
   const streak = currentStreak(p), tip = motivation(p);
-  const o = { key:"coach", href:"#/coach", color:"var(--c-coach)", icon:"stopwatch", name:"Coach", when:"Today",
+  const o = { key:"coach", href:"#/coach", color:"var(--c-coach)", icon:"whistle", name:"Coach", when:"Today",
     val: `<div class="mval">${streak}<small> ${streak === 1 ? "day" : "days"} in a row</small></div>`, sub: tip, subL: "" };
   if (L) {
     const dow = new Date().getDay(), day = p.workoutPlan?.days?.find(d => d.dow === dow), done = onDate("workouts", today()).length > 0;
@@ -11395,7 +11403,7 @@ function weeklyStatsRow(p){
   const v = k => weekPair(d => vitalsOf(d)?.[k] ?? null), [w1, w0] = v("water"), [s1, s0] = v("sleep");
   const mt = sumN(m1), mp = sumN(m0), kt = sumN(k1), kp = sumN(k0), wa = avgN(w1), wp = avgN(w0), sa = avgN(s1), sp = avgN(s0);
   const cards = [
-    mt || mp ? statCard("Workout minutes", mt + " min", mt, mp, "run", "workouts", "Logged workout minutes, week so far.") : "",
+    mt || mp ? statCard("Workout minutes", mt + " min", mt, mp, "hourglass", "minutes", "Logged workout minutes, week so far.") : "",
     kt || kp ? statCard("Workout calories", kt + " kcal", kt, kp, "spark", "summary", "Extra calories from logged workouts, week so far.") : "",
     wa == null && wp == null ? "" : statCard("Water a day", wa == null ? "-" : (wa / 1000).toFixed(1) + " L", wa, wp, "glass", "health", "Average on days you logged water."),
     sa == null && sp == null ? "" : statCard("Sleep a night", sa == null ? "-" : (sa / 60).toFixed(1) + " h", sa, sp, "beddouble", "coach", "Average on nights you logged sleep.")
@@ -11409,8 +11417,8 @@ function workoutStatsRow(p){
   const b = ch && CH.boards[ch.id], me = ch && b.find(m => m.is_you);
   const cards = [
     { l:"Workouts", v:String(sumN(m1)), cur:sumN(m1), prev:sumN(m0), i:"dumbbell", g:"workouts" },
-    { l:"Minutes", v:String(sumN(t1)), cur:sumN(t1), prev:sumN(t0), i:"run", g:"meals" },
-    { l:"Streak", v:currentStreak(p) + "d", i:"spark", g:"summary" },
+    { l:"Minutes", v:String(sumN(t1)), cur:sumN(t1), prev:sumN(t0), i:"hourglass", g:"minutes" },
+    { l:"Streak", v:currentStreak(p) + "d", i:"flamel", g:"streak" },
     ch ? { l:ch.title, v:`${1 + b.filter(m => +m.total > +me.total).length} of ${b.length}`, i:"trophy", g:"awards" } : null
   ].filter(Boolean);
   return `<div class="scgrid plain">${cards.map(c => `<div class="sc"><span class="sc-ic" style="--a:var(--si-${c.g}-a);--b:var(--si-${c.g}-b)">${icon(c.i, "", 18)}</span>
@@ -11503,7 +11511,7 @@ function homeView(p){
       <span class="sr-only" id="lu-live" aria-live="polite"></span>
     </div>
     <div class="ps-actions">
-      <span class="ps-streak" title="Current workout streak">${icon("spark","",15)} ${currentStreak(p)}d</span>
+      <span class="ps-streak" title="Current workout streak">${icon("flamel","",15)} ${currentStreak(p)}d</span>
     </div>
   </div>
   ${nextStepCard(p)}
@@ -11534,7 +11542,7 @@ function trendsSection(p){
 function highlightsSection(p){
   const items = [];
   const streak = typeof currentStreak === "function" ? currentStreak(p) : 0;
-  if (streak > 0) items.push({ icon:"stopwatch", color:"var(--c-coach)", title:"Workout streak", body:`${streak} day${streak === 1 ? "" : "s"} in a row`, href:"#/coach" });
+  if (streak > 0) items.push({ icon:"flamel", color:"var(--c-activity)", title:"Workout streak", body:`${streak} day${streak === 1 ? "" : "s"} in a row`, href:"#/coach" });
   const pr = projection(p);
   if (pr.ready && pr.days) {
     const per = p.units === "metric" ? `${round(Math.abs(pr.kgPerWeek), 2)} kg` : `${round(Math.abs(pr.lbPerWeek), 1)} lb`;
@@ -11907,6 +11915,11 @@ const NAV_GLYPH = {
  chocobar:'<path d="M12 2v10"/><path d="M17 12V4.4a.4.4 0 00-.4-.4A1.6 1.6 0 0115 2.4a.4.4 0 00-.4-.4H9a2 2 0 00-2 2v8"/><path d="M5 14a2 2 0 012-2h10a2 2 0 012 2v2a1 1 0 01-1 1 2 2 0 01-.9-.203l-1.2-.594a2 2 0 00-1.8 0l-1.2.594a2 2 0 01-1.8 0l-1.2-.594a2 2 0 00-1.8 0l-1.2.594a2 2 0 01-.9.198A1 1 0 015 16z"/><path d="M7 16.748V20a2 2 0 002 2h6a2 2 0 002-2v-3.252"/><path d="M7 7h10"/>',
  notepen:'<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/>',
  folderheart:'<path d="M10.638 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v3.417"/><path d="M14.62 18.8A2.25 2.25 0 1 1 18 15.836a2.25 2.25 0 1 1 3.38 2.966l-2.626 2.856a.998.998 0 0 1-1.507 0z"/>',
+ imagedown:'<path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21"/><path d="m14 19 3 3v-5.5"/><path d="m17 22 3-3"/><circle cx="9" cy="9" r="2"/>',
+ flamel:'<path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"/>',
+ hourglass:'<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+ dumbbell:'<path d="M17.596 12.768a2 2 0 1 0 2.829-2.829l-1.768-1.767a2 2 0 0 0 2.828-2.829l-2.828-2.828a2 2 0 0 0-2.829 2.828l-1.767-1.768a2 2 0 1 0-2.829 2.829z"/><path d="m2.5 21.5 1.4-1.4"/><path d="m20.1 3.9 1.4-1.4"/><path d="M5.343 21.485a2 2 0 1 0 2.829-2.828l1.767 1.768a2 2 0 1 0 2.829-2.829l-6.364-6.364a2 2 0 1 0-2.829 2.829l1.768 1.767a2 2 0 0 0-2.828 2.829z"/><path d="m9.6 14.4 4.8-4.8"/>',
+ zap:'<path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"/>',
  beddouble:'<path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 4v6"/><path d="M2 18h20"/>',
   journal:'<rect x="4" y="3.5" width="13" height="17" rx="2"/><path d="M8 8h5M8 12h4M8 16h2"/><path d="M15.5 14.5l4-4a1.4 1.4 0 0 1 2 2l-4 4-2.8.8.8-2.8z"/>',
   calcheck:'<rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M8 2.5v3.5M16 2.5v3.5M3.5 9.5h17"/><path d="M9.2 14.8l2 2 4-4"/>',
@@ -13536,7 +13549,7 @@ function nutritionView(p){
         <div class="nl-chips full"><button type="button" class="chip nl-chip" data-act="off-open" aria-expanded="${!!UI.offOpen}" aria-controls="off-panel">${WLA.lang === "es" ? "Buscar más alimentos" : "Search more foods"}</button></div>
         ${UI.offOpen ? offPanel(p) : ""}
         ${UI.offNote ? `<p class="small muted full" role="status">${esc(UI.offNote)}</p>` : ""}
-        ${prem ? `<div class="nl-chips"><button type="button" class="chip nl-chip" data-act="nl-photo">${icon("camera","",15)} From a photo</button><input type="file" id="meal-shot-in" accept="image/*" capture="environment" hidden><a class="chip nl-chip" href="#/premium/restaurant">${icon("food","",15)} Eating out</a></div>` : ""}
+        ${prem ? `<div class="nl-chips"><button type="button" class="chip nl-chip" data-act="nl-photo">${icon("imagedown","",15)} From a photo</button><input type="file" id="meal-shot-in" accept="image/*" capture="environment" hidden><a class="chip nl-chip" href="#/premium/restaurant">${icon("food","",15)} Eating out</a></div>` : ""}
         <div class="nl-calw"><label class="f" for="m-cal">Calories</label><div class="nl-calbox"><input type="number" id="m-cal" min="0" max="5000" value="${UI.prefill?.cal ?? ""}" placeholder="From catalog"><button type="button" class="nl-guess" data-act="mb-guess" aria-label="${esc(tr("Guess the calories"))}">${icon("spark","",14)} ${esc(tr("Guess"))}</button></div></div>
         <label class="f">Portion<select id="m-portion">${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
       </div>
@@ -16167,7 +16180,7 @@ function photoAiOptIn(kind){
   // 8.6.8: a compact card; the three privacy points sit in a "How privacy works" disclosure, with the key fact kept in view next to the Allow button.
   return `<section class="card shot po-card" id="${kind}-photo-optin">
     <div class="po-row"><div class="po-text">
-      <div class="mhead" style="color:var(--c-food)">${cicon("apple","var(--c-food)",18)}<b>Photo estimate</b></div><h2 style="margin-top:4px">${esc(copy.h)}</h2>
+      <div class="mhead" style="color:var(--c-body)">${cicon("imagedown","var(--c-body)",18)}<b>Photo estimate</b></div><h2 style="margin-top:4px">${esc(copy.h)}</h2>
       <p class="small muted">${esc(copy.d)}</p><p class="small muted">Nothing is sent unless you use this.</p></div>
       <div class="po-act"><button class="btn primary" data-act="photoai-optin">Allow photo estimates</button></div></div>
     <details class="po-how how"><summary>How privacy works</summary>
@@ -16185,7 +16198,7 @@ function foodPhotoCard(p){
   const st = UI.foodShot || {};
   const e = st.est;
   return `<section class="card shot" id="food-photo">
-    <div class="setrow"><div class="setlabel"><div class="mhead" style="color:var(--c-food)">${cicon("apple","var(--c-food)",18)}<b>Photo estimate</b></div>
+    <div class="setrow"><div class="setlabel"><div class="mhead" style="color:var(--c-body)">${cicon("imagedown","var(--c-body)",18)}<b>Photo estimate</b></div>
       <h2 style="margin-top:4px">Snap your plate</h2></div>
       ${UI.visionOk === false ? `<span class="guess setctl">Offline estimate</span>` : ""}</div>
     <p class="small muted">Take a picture of your food and the coach will guess what's on the plate and how many calories it is. It's a guess from a picture, not a measurement. Check it before you log it.</p>
@@ -18404,7 +18417,7 @@ function glassPreview(p){
 // ---- widget layouts (8.2.7): one engine for Summary and every page ----
 // Summary keeps its list in p.widgets, every other page in p.layouts[page]. Both are read and written through wlGet and wlSet,
 // so size, order, hide and add behave the same everywhere. A hidden widget is any widget on that page's list that is not shown.
-const EXTRA_WIDGETS = { meals:{ n:"Today's meals", icon:"utensils", color:"var(--c-nutrition)" }, coach:{ n:"Coach", icon:"stopwatch", color:"var(--c-coach)" } };
+const EXTRA_WIDGETS = { meals:{ n:"Today's meals", icon:"utensils", color:"var(--c-nutrition)" }, coach:{ n:"Coach", icon:"whistle", color:"var(--c-coach)" } };
 const DEFAULT_WIDGETS = [{k:"meals",size:"m"},{k:"calories",size:"s"},{k:"estimate",size:"s"},{k:"workouts",size:"s"},{k:"steps",size:"s"},{k:"sleep",size:"s"},{k:"rhr",size:"s"},{k:"coach",size:"m"}];
 const PAGE_WIDGETS = {
   nutrition: ["water","estimate","calories","meals"],
@@ -27595,5 +27608,7 @@ a.mck:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .m3-leg i{width:8px;height:8px;border-radius:50%;flex:none}
 .m3-leg b{color:var(--text)}
 .m3-tonal{padding:3px 10px;border-radius:999px;background:var(--raise);color:var(--muted);font-size:calc(11.5px * var(--text-scale,1));font-weight:600;white-space:nowrap}
+/* ---- 8.6.31 icon colours: Streak orange, Minutes teal ---- */
+:root{--si-streak-a:#FB923C;--si-streak-b:#EA580C;--si-minutes-a:#2DD4BF;--si-minutes-b:#0D9488}
 </style>
 </body></html>

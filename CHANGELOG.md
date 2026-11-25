@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.30, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.31, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.31 · Icons: Photo estimate, streak, minutes, workout, coach and active energy icons, each in its own colour
+
+- **Problem:** Photo estimate used an apple, Streak a sparkle, Minutes a running figure, Coach a stopwatch and Active energy a flame, and the Streak and Minutes tiles shared colours with other tiles.
+- **Change:** Photo estimate now uses image-down (purple), Streak uses the flame (orange tile), Minutes uses the hourglass (teal tile), Workouts use the dumbbell everywhere they have an icon, Coach uses the whistle (blue) and Active energy uses the zap in yellow. The yellow follows the theme so it stays readable on white. The From a photo chip on Meals uses image-down too.
+- **Where:** index.html: NAV_GLYPH (imagedown, flamel, hourglass, dumbbell, zap), photo estimate heads, workoutStatsRow(), weeklyStatsRow(), ps-streak, coach insight, METRICS.active, EXTRA_WIDGETS.coach, the Coach card, --si-streak and --si-minutes colours, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Workouts: the Workouts, Minutes and Streak tiles. Nutrition: Photo estimate card and the From a photo chip on Log a meal. Home > Edit widgets: add Active energy and Coach and look at their headings. The streak badge sits on the Coach and Summary page headers.
+- **Known limits:** Checked in headless Chrome only. The older dumbbell, flame and stopwatch drawings are still in the code but no longer used for these labels; the Move ring shoe, Activity category flame and the award medals are unchanged.
 
 ## 8.6.30 · Workouts: Log a workout: one activity chip row with a searchable More menu; Food focus: a joined segmented control with a mix bar
 
