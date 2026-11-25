@@ -23,7 +23,8 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
-| 8.6.21 | Coach thinking animations: a different loader and colour for each coach | IN PROGRESS: PR #102 |
+| 8.6.22 | Coach: optional profile and last-7-days context, web search for recipes | IN PROGRESS: branch build-8.6.22, function not deployed |
+| 8.6.21 | Coach thinking animations: a different loader and colour for each coach | DONE: PR #102 merged |
 | 8.6.20 | Log a meal > Portion is a standard dropdown list again instead of the wheel | IN PROGRESS: PR #102 |
 | 8.6.19 | Open Food Facts search in Log a meal (opt-in, text only, logged as an estimate) | IN PROGRESS: PR #102 |
 | 8.6.18 | Protein worked out from the catalog dishes you log (Today at a glance line, coach item), West African dishes first in shortfall suggestions when no culture is set, wl-coach Spanish replies deployed (version 3) | IN PROGRESS: this PR |
