@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.23, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.24, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.24 · Appearance: Compact Typography & layout: a typeface list, a size slider with a live preview, and a switch for larger sizes
+
+- **Problem:** Settings > Appearance > Typography & layout was tall: eight large typeface cards, a text-size slider with an always-open preview and a plain checkbox for the larger sizes.
+- **Change:** The section is now the compact layout you sent. Typeface is one row with a button that shows the chosen font and opens a short list (Readable and Editorial tags, a tick on the chosen one); it closes when you pick, click away or press Escape. Text size is one row with the size chip, a Reset button that only shows when the size is not the default, and the slider. The live preview folds out under the slider while you change the size or typeface, folds away after 3 seconds and stays open while the pointer is over it. Each of the two rows has a small i button with the explanation (on hover, focus or tap). Larger accessibility sizes is now a switch in the same style as the others. The app's own sizes (xSmall to AX5, Large the default), saving, Save or Discard review and Spanish are unchanged; the page, not the design file, supplies the colours.
+- **Where:** index.html: fontPicker(), aprInfo(), FONT_TAGS, textSizeRow(), tsPreview(), aprClose(), the font-menu, apr-tip and ts-ax-toggle cases, the ui-ts slider handler, CSS .apr-row, .apr-i, .fpick, .fopt and .ts-drawer (the old .font-grid and .font-card rules are gone), APP_VERSION, WLH.changelog. tests/browser/revamp.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Settings > Appearance, the Typography & layout card: press the typeface button and pick one; drag the text size and watch the preview open and close; press Reset; turn on Larger accessibility sizes and drag past Large; try light, dark and OLED and a phone width.
+- **Known limits:** Checked in headless Chrome only, not on a phone. The preview line uses the page's own text sizes, so it matches the app, not the design file's pixel list. The two tooltips are English only, as the old helper text was.
 
 ## 8.6.23 · Look: Whistle, flag and crown icons, no gold selection ring, and one switch style everywhere
 

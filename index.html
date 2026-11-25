@@ -3884,7 +3884,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.23", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.24", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3898,6 +3898,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.23", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.24",
+      area:"Appearance",
+      title:"Compact Typography & layout: a typeface list, a size slider with a live preview, and a switch for larger sizes",
+      bug:"Settings > Appearance > Typography & layout was tall: eight large typeface cards, a text-size slider with an always-open preview and a plain checkbox for the larger sizes.",
+      fix:"The section is now the compact layout you sent. Typeface is one row with a button that shows the chosen font and opens a short list (Readable and Editorial tags, a tick on the chosen one); it closes when you pick, click away or press Escape. Text size is one row with the size chip, a Reset button that only shows when the size is not the default, and the slider. The live preview folds out under the slider while you change the size or typeface, folds away after 3 seconds and stays open while the pointer is over it. Each of the two rows has a small i button with the explanation (on hover, focus or tap). Larger accessibility sizes is now a switch in the same style as the others. The app's own sizes (xSmall to AX5, Large the default), saving, Save or Discard review and Spanish are unchanged; the page, not the design file, supplies the colours.",
+      where:"index.html: fontPicker(), aprInfo(), FONT_TAGS, textSizeRow(), tsPreview(), aprClose(), the font-menu, apr-tip and ts-ax-toggle cases, the ui-ts slider handler, CSS .apr-row, .apr-i, .fpick, .fopt and .ts-drawer (the old .font-grid and .font-card rules are gone), APP_VERSION, WLH.changelog. tests/browser/revamp.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Settings > Appearance, the Typography & layout card: press the typeface button and pick one; drag the text size and watch the preview open and close; press Reset; turn on Larger accessibility sizes and drag past Large; try light, dark and OLED and a phone width.",
+      limits:"Checked in headless Chrome only, not on a phone. The preview line uses the page's own text sizes, so it matches the app, not the design file's pixel list. The two tooltips are English only, as the old helper text was." },
     { id:"8.6.23",
       area:"Look",
       title:"Whistle, flag and crown icons, no gold selection ring, and one switch style everywhere",
@@ -14445,12 +14453,33 @@ function accentSwatchHTML(k, l, c, cur){
   return `<button type="button" class="swatch-lg${dyn ? " dyn" : ""} ${checkCls}" style="--sw:${esc(c)}"
     data-act="look-accent" data-v="${k}" aria-pressed="${pressed}" aria-label="${esc(l)}" title="${esc(l)}">${icon("check","",18)}</button>`;
 }
+// ---- compact typography row (8.6.24) ----
+// The live preview opens while you change the size or typeface and folds away after 3 s (it stays open under the pointer).
+let tsPrevT = 0;
+function tsPreview(){
+  const d = document.getElementById("ui-ts-drawer"); if (!d) return;
+  d.classList.add("open"); clearTimeout(tsPrevT);
+  if (!d.matches(":hover")) tsPrevT = setTimeout(() => document.getElementById("ui-ts-drawer")?.classList.remove("open"), 3000);
+}
+function aprClose(){
+  document.querySelectorAll(".fpick.open").forEach(b => { b.classList.remove("open"); b.querySelector(".fpick-btn")?.setAttribute("aria-expanded", "false"); });
+  document.querySelectorAll(".apr-i.open").forEach(b => { b.classList.remove("open"); b.setAttribute("aria-expanded", "false"); });
+}
+document.addEventListener("click", e => { if (!e.target.closest?.(".fpick, .apr-i")) aprClose(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") aprClose(); });
+document.addEventListener("mouseover", e => { if (e.target.closest?.("#ui-ts-drawer")) clearTimeout(tsPrevT); });
+document.addEventListener("mouseout", e => { const d = e.target.closest?.("#ui-ts-drawer"); if (d && !d.contains(e.relatedTarget)) tsPreview(); });
+function aprInfo(label, tip){
+  return `<button type="button" class="apr-i" data-act="apr-tip" aria-label="${esc(label)}" aria-expanded="false"><i aria-hidden="true">i</i><span class="apr-tipbox" role="tooltip">${esc(tip)}</span></button>`;
+}
+// 8.6.24: one compact row. A button shows the chosen typeface and opens a short list (replaces the grid of eight cards).
+const FONT_TAGS = { atkinson:"Readable", lora:"Editorial", dyslexic:"Readable" };
 function fontPicker(p){
   const cur = FONTS.some(f => f[0] === p.look?.font) ? p.look.font : "system";
-  return `<div class="setgroup"><div class="setlabel">${tr("Typeface")}</div>
-    <div class="font-grid" role="radiogroup" aria-label="${esc(tr("Typeface"))}">${FONTS.map(([k,l,stack]) => `<button type="button" class="font-card" role="radio" aria-checked="${cur===k}" data-act="look-font" data-v="${k}" style="font-family:${esc(stack)}">
-      <b>${esc(l)}</b><span class="fc-sample">Eat well, move well</span>${cur===k ? `<i class="fc-tick" aria-hidden="true">${icon("check","",14)}</i>` : ""}</button>`).join("")}</div>
-    <span class="tiny muted">Applies everywhere in the app. Atkinson Hyperlegible and OpenDyslexic are built for easier reading; Lora is a serif for a softer, editorial feel.</span></div>`;
+  const now = FONTS.find(f => f[0] === cur);
+  return `<div class="apr-row"><div class="apr-rl"><span id="apr-font-l">${tr("Typeface")}</span>${aprInfo("About typefaces", "Applies everywhere in the app. Atkinson Hyperlegible and OpenDyslexic are built for easier reading; Lora is a serif for a softer, editorial feel.")}</div>
+    <div class="fpick"><button type="button" class="fpick-btn" data-act="font-menu" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="apr-font-l" style="font-family:${esc(now[2])}"><span>${esc(now[1])}</span>${icon("chevD","",14)}</button>
+      <div class="fpick-menu" role="listbox" aria-label="${esc(tr("Typeface"))}">${FONTS.map(([k,l,stack]) => `<button type="button" class="fopt" role="option" aria-selected="${cur===k}" data-act="look-font" data-v="${k}"><span style="font-family:${esc(stack)}">${esc(l)}</span><span class="fopt-r">${FONT_TAGS[k] ? `<span class="fopt-tag">${FONT_TAGS[k]}</span>` : ""}<span class="fopt-tick">${cur===k ? icon("check","",14) : ""}</span></span></button>`).join("")}</div></div></div>`;
 }
 
 // v12.0: Dynamic Type-style text size. One slider re-scales every text style in the app at once
@@ -14466,18 +14495,16 @@ function textSizeRow(p){
   const idx = textSizeStep(p);
   const step = TEXT_SIZES[idx];
   const label = idx === 3 ? `${step[1]} (Default)` : step[1];
-  return `<div class="setgroup"><div class="setlabel apr-lbl"><span>${tr("Text size")}</span><span class="apr-chip" id="ui-ts-label">${esc(label)}</span></div>
+  return `<div class="apr-row apr-ts"><div class="apr-top2"><div class="apr-rl"><label for="ui-ts">${tr("Text size")}</label>${aprInfo("About text size", "Scales every piece of text in the app together, the same way Apple's Dynamic Type works -- layout and spacing stay put, only text grows or shrinks.")}</div>
+      <div class="apr-rr"><span class="apr-chip" id="ui-ts-label">${esc(label)}</span><button class="btn sm ghost" type="button" data-act="ts-reset"${idx === 3 && !allowAX ? " hidden" : ""}>Reset</button></div></div>
     <div class="tsrow">
       <span class="ts-a sm" aria-hidden="true">Aa</span>
       <input type="range" id="ui-ts" min="0" max="${maxIdx}" step="1" value="${Math.min(idx, maxIdx)}" aria-label="Text size" aria-valuemin="0" aria-valuemax="${maxIdx}" aria-valuenow="${Math.min(idx, maxIdx)}" aria-valuetext="${esc(label)}">
       <span class="ts-a lg" aria-hidden="true">Aa</span>
-      <button class="btn sm" type="button" data-act="ts-reset">Reset</button>
     </div>
-    <div class="tspreview" id="ui-ts-preview" style="font-size:calc(17px * ${step[2]})">The quick brown fox jumps over the lazy dog.</div>
-    <div class="setrow" style="margin-top:2px">
-      <span class="tiny muted">Scales every piece of text in the app together, the same way Apple's Dynamic Type works -- layout and spacing stay put, only text grows or shrinks.</span>
-      <label class="tiny muted ts-ax-label"><input type="checkbox" data-act="ts-ax-toggle" ${allowAX ? "checked" : ""}> Larger accessibility sizes</label>
-    </div></div>`;
+    <div class="ts-drawer" id="ui-ts-drawer" aria-live="polite"><div class="ts-drawer-in"><div class="tspreview" id="ui-ts-preview" style="font-size:calc(17px * ${step[2]})">The quick brown fox jumps over the lazy dog.</div></div></div></div>
+  <div class="apr-row"><span class="apr-rl" id="ts-ax-l">Larger accessibility sizes</span>
+    <button type="button" class="sw setctl" role="switch" aria-checked="${allowAX}" aria-labelledby="ts-ax-l" data-act="ts-ax-toggle"></button></div>`;
 }
 
 // =================== SETTINGS ===================
@@ -14850,16 +14877,18 @@ document.addEventListener("click", async e => {
     case "look-save": wlaSave(p); break;
     case "look-discard": wlaDiscard(p); break;
     case "look-scene": case "look-motion": case "look-font": {
-      p.look = { mode:"auto", accent:"blue", motion:"full", font:"system", ...(p.look||{}) }; p.look[a.slice(5)] = t.dataset.v; saveProfile(); render();
+      p.look = { mode:"auto", accent:"blue", motion:"full", font:"system", ...(p.look||{}) }; p.look[a.slice(5)] = t.dataset.v; saveProfile(); render(); if (a === "look-font") { aprClose(); tsPreview(); }
       break;
     }
+    case "font-menu": { const box = t.closest(".fpick"), open = !box.classList.contains("open"); aprClose(); box.classList.toggle("open", open); t.setAttribute("aria-expanded", String(open)); break; }
+    case "apr-tip": { const open = !t.classList.contains("open"); aprClose(); t.classList.toggle("open", open); t.setAttribute("aria-expanded", String(open)); break; }
     case "ts-reset": wlaSetLook(p, { textSize:"l", largerAX:false }); break;
     case "ts-ax-toggle": {
-      wlaSnap(p); p.look = { ...(p.look || {}), largerAX: t.checked };
+      const on = t.getAttribute("aria-checked") !== "true"; wlaSnap(p); p.look = { ...(p.look || {}), largerAX: on };
       // Turning the range back down to "Standard" while sitting on an AX step drops back to
       // xxxLarge (the top of the standard range) rather than silently keeping an AX scale that
       // the UI no longer shows a step for -- same clamp textSizeStep() already applies on read.
-      if (!t.checked && TEXT_SIZES.findIndex(s => s[0] === p.look.textSize) > TEXT_SIZE_STD_MAX) p.look.textSize = TEXT_SIZES[TEXT_SIZE_STD_MAX][0];
+      if (!on && TEXT_SIZES.findIndex(s => s[0] === p.look.textSize) > TEXT_SIZE_STD_MAX) p.look.textSize = TEXT_SIZES[TEXT_SIZE_STD_MAX][0];
       applyTextScale(p); render();
       break;
     }
@@ -15044,6 +15073,8 @@ document.addEventListener("input", e => {
     t.setAttribute("aria-valuenow", String(idx)); t.setAttribute("aria-valuetext", label);
     const lbl = document.getElementById("ui-ts-label"); if (lbl) lbl.textContent = label;
     const prev = document.getElementById("ui-ts-preview"); if (prev) prev.style.fontSize = `calc(17px * ${step[2]})`;
+    tsPreview();
+    const rb = document.querySelector('[data-act="ts-reset"]'); if (rb) rb.hidden = idx === 3 && !allowAX;
     wlaRefreshBar(p); // the review list follows the slider; the profile is written on Save
   }
 });
@@ -26914,14 +26945,35 @@ html .side .nav a[aria-current="page"]::before,html .side .nav button.prem-trigg
 .apr-val{font-size:calc(13px * var(--text-scale,1));font-weight:600;text-transform:none;letter-spacing:0;color:var(--text)}
 .apr-chip{display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--accent) 14%,var(--surface));color:var(--text);font-size:calc(12px * var(--text-scale,1));font-weight:700;text-transform:none;letter-spacing:0}
 .apr-swatches{gap:8px 12px;padding:0}
-.font-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.font-card{position:relative;display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0;min-height:56px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--raise);color:var(--text);text-align:left;cursor:pointer}
-.font-card b{padding-right:22px;overflow-wrap:anywhere;font-size:calc(13px * var(--text-scale,1));font-weight:700;line-height:1.3}
-.font-card .fc-sample{overflow-wrap:anywhere;font-size:calc(12px * var(--text-scale,1));font-weight:400;line-height:1.3;color:var(--apr-soft)}
-.font-card[aria-checked="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
-.font-card .fc-tick{position:absolute;top:8px;right:8px;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--accent-ink,#fff)}
-.font-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-@media (hover:hover) and (pointer:fine){.font-card:not([aria-checked="true"]):hover{border-color:var(--line2)}}
+.apr-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:16px;border-top:1px solid var(--line)}
+.apr-h + .apr-row{padding-top:0;border-top:0}
+.apr-rl{display:inline-flex;align-items:center;gap:8px;min-width:0;font-size:calc(14px * var(--text-scale,1));font-weight:600}
+.apr-rl label{cursor:pointer}
+.apr-rr{display:inline-flex;align-items:center;gap:8px}
+.apr-ts{flex-direction:column;align-items:stretch;gap:12px}
+.apr-top2{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.apr-i{position:relative;display:inline-grid;place-items:center;flex:none;width:18px;height:18px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--raise);color:var(--muted);cursor:pointer}
+.apr-i i{font-size:11px;font-weight:700;line-height:1}
+.apr-i:hover,.apr-i.open{border-color:var(--accent);color:var(--accent)}
+.apr-tipbox{position:absolute;left:-8px;bottom:calc(100% + 9px);width:268px;max-width:calc(100vw - 48px);padding:9px 12px;border-radius:11px;background:var(--text);color:var(--surface);font-size:calc(12px * var(--text-scale,1));font-style:normal;font-weight:500;line-height:1.42;text-align:left;box-shadow:var(--shadow);opacity:0;pointer-events:none;transform:translateY(5px);transition:opacity .16s ease,transform .18s var(--ease-spring);z-index:40}
+.apr-i:hover .apr-tipbox,.apr-i:focus-visible .apr-tipbox,.apr-i.open .apr-tipbox{opacity:1;transform:none}
+.fpick{position:relative;flex:none}
+.fpick-btn{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:var(--raise);color:var(--text);font-size:calc(13.5px * var(--text-scale,1));font-weight:600;cursor:pointer}
+.fpick-btn svg{color:var(--muted);transition:transform .2s var(--ease-spring)}
+.fpick.open .fpick-btn,.fpick-btn:hover{border-color:var(--accent)}
+.fpick.open .fpick-btn svg{transform:rotate(180deg)}
+.fpick-menu{position:absolute;right:0;top:calc(100% + 8px);width:300px;max-width:calc(100vw - 40px);display:flex;flex-direction:column;gap:2px;padding:6px;border-radius:14px;background:var(--surface);border:1px solid var(--line2);box-shadow:var(--shadow);z-index:50;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-6px);transition:opacity .17s ease,transform .2s var(--ease-spring),visibility .17s}
+.fpick.open .fpick-menu{opacity:1;visibility:visible;pointer-events:auto;transform:none}
+.fopt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:8px 10px;border:0;border-radius:10px;background:transparent;color:var(--text);text-align:left;font-size:calc(13.5px * var(--text-scale,1));font-weight:600;cursor:pointer}
+.fopt:hover{background:var(--raise)}
+.fopt[aria-selected="true"]{background:color-mix(in srgb,var(--accent) 12%,var(--surface));color:var(--accent)}
+.fopt-r{display:inline-flex;align-items:center;gap:6px;flex:none}
+.fopt-tag{padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--raise);color:var(--muted);font-family:var(--font,inherit);font-size:calc(10.5px * var(--text-scale,1));font-weight:600;line-height:1.3}
+.fopt-tick{display:inline-grid;place-items:center;width:14px;height:14px}
+.ts-drawer{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .26s var(--ease-spring),opacity .22s ease}
+.ts-drawer.open{grid-template-rows:1fr;opacity:1}
+.ts-drawer-in{overflow:hidden}
+:root[data-motion="reduced"] .ts-drawer,:root[data-motion="reduced"] .fpick-menu,:root[data-motion="reduced"] .apr-tipbox{transition:none}
 .apr-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding-top:20px;border-top:1px solid var(--line)}
 .apr-two .seg{display:flex;width:100%;align-self:stretch}
 .apr-two .seg button{flex:1;min-width:0}

@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.6.24 | Compact Typography & layout card in Settings > Appearance | IN PROGRESS: PR #105 |
 | 8.6.23 | Whistle, flag and crown icons, gold selection ring removed, one switch style | IN PROGRESS: branch claude/project-thread-ba1t0v |
 | 8.6.22 | Coach: optional profile and last-7-days context, web search for recipes | IN PROGRESS: branch build-8.6.22, function not deployed |
 | 8.6.21 | Coach thinking animations: a different loader and colour for each coach | DONE: PR #102 merged |
