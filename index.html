@@ -3884,7 +3884,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.24", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.25", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3898,6 +3898,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.24", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.25",
+      area:"Appearance",
+      title:"Glass & motion: one sliding three-way track for opacity presets and motion, and a Replay motion button",
+      bug:"The Glass & motion card in Settings > Appearance looked uneven: the opacity presets were separate round chips, the motion choice was a different style of control, and the motion demo was a puck sliding along a bar.",
+      fix:"The card now follows the design you sent. The opacity presets (Frosted 35%, Balanced 70%, Solid 100%) and the Motion choice (Bouncy, Smooth, Reduced) are the same three-way track, with one highlight that slides to the chosen option; the presets show no highlight when the slider sits between them. Each group has a small icon tile. The puck demo is replaced by a Replay motion button that plays the glass preview card's entrance in the chosen style (a light spring for Bouncy, a glide for Smooth), and it reads Motion is off and is disabled when Reduced is chosen or the device's own reduce-motion setting is on. The glass preview with today's real calories, the opacity slider and Reset, the saved settings and Spanish are unchanged (the design's sample Daily check-in card was not used, because the page shows your real data).",
+      where:"index.html: opacityRow(), gmLabel(), GM_ICON, the Glass & motion section of the Appearance page, the mo-replay click handler, the ui-op-ws handler (highlight follows the slider), WL_ES (Replay motion, Motion is off), CSS .gm-track, .gm-lbl, .gm-ic, .gm-replay (the old .mo-demo, .mo-track and .mo-puck rules and MOTION_NAMES are gone), APP_VERSION, WLH.changelog. tests/browser/sectors.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Settings > Appearance > Glass & motion: pick each preset and drag the slider (the highlight moves, and clears between presets); pick each motion and press Replay motion; choose Reduced and see the button turn off; try dark, light and a phone width, and Spanish.",
+      limits:"Checked in headless Chrome only, not on a phone. The Spanish for the two new strings was written by Claude and has not had a native-speaker review." },
     { id:"8.6.24",
       area:"Appearance",
       title:"Compact Typography & layout: a typeface list, a size slider with a live preview, and a switch for larger sizes",
@@ -12214,7 +12222,7 @@ Object.assign(WL_ES, {
   "Import workouts":"Importar entrenamientos", "Bring sessions in from Apple Health, Google Health, Fitbit, Strava, Garmin and most other apps with an export file. There is no automatic sync.":"Trae sesiones de Apple Health, Google Health, Fitbit, Strava, Garmin y la mayoría de las apps con un archivo de exportación. No hay sincronización automática.",
   "Add minutes for an estimate":"Añade los minutos para una estimación", "Quick picks":"Atajos", "Quick minutes":"Minutos rápidos", "Fewer workouts per week":"Menos entrenamientos por semana", "More workouts per week":"Más entrenamientos por semana", "Workouts per week":"Entrenamientos por semana",
   "Can't see your logs yet · Not medical advice":"Aún no ve tus registros · No es consejo médico", "WL Coach is thinking":"WL Coach está pensando", "Ask a training or food question to start.":"Haz una pregunta de entrenamiento o comida para empezar.", "Suggested questions":"Preguntas sugeridas",
-  "Smooth":"Suave", "Smooth glide":"Deslizamiento suave", "Bouncy spring":"Rebote elástico", "Reduced (instant)":"Reducido (instantáneo)", "Try this motion":"Probar este movimiento", "Frosted":"Esmerilado", "Balanced":"Equilibrado", "Solid":"Sólido", "Today's calories":"Calorías de hoy", "Nothing logged yet today":"Nada registrado hoy", "Opacity presets":"Ajustes de opacidad",
+  "Smooth":"Suave", "Smooth glide":"Deslizamiento suave", "Bouncy spring":"Rebote elástico", "Reduced (instant)":"Reducido (instantáneo)", "Try this motion":"Probar este movimiento", "Replay motion":"Repetir movimiento", "Motion is off":"El movimiento está desactivado", "Frosted":"Esmerilado", "Balanced":"Equilibrado", "Solid":"Sólido", "Today's calories":"Calorías de hoy", "Nothing logged yet today":"Nada registrado hoy", "Opacity presets":"Ajustes de opacidad",
   "Bouncy adds the spring animations. Smooth keeps the motion but glides, with no spring. Reduced turns them off, and your device's own \"reduce motion\" setting always wins.":"Animado añade movimientos elásticos. Suave mantiene el movimiento pero se desliza, sin rebote. Reducido los desactiva, y el ajuste de \"reducir movimiento\" de tu dispositivo siempre manda.",
   "Quick setup: tap to fill in":"Configuración rápida: toca para completar", "Quick setup":"Configuración rápida", "Add name":"Añadir nombre", "Add age":"Añadir edad", "Add sex":"Añadir sexo", "Add height":"Añadir estatura", "Add weight":"Añadir peso",
   "What should I eat after a workout?":"¿Qué debo comer después de entrenar?", "Best West African high-protein breakfast?":"¿Cuál es un buen desayuno alto en proteína de África Occidental?", "Sore legs after soccer: stretch or rest?":"Piernas doloridas tras jugar al fútbol: ¿estirar o descansar?", "How much water should I drink?":"¿Cuánta agua debo beber?"
@@ -14555,11 +14563,11 @@ function settingsView(p){
     <section class="card apr-card" aria-labelledby="apr-h3"><h3 class="apr-h" id="apr-h3">Glass &amp; motion</h3>
       ${glassPreview(p)}
       ${opacityRow(p)}
-      <div class="setgroup"><div class="setlabel">${tr("Motion")}</div>
-        <div class="seg" role="group" aria-label="Motion"><button data-act="look-motion" data-v="full" aria-pressed="${(p.look?.motion||"full")==="full"}">Bouncy</button><button data-act="look-motion" data-v="smooth" aria-pressed="${p.look?.motion==="smooth"}">Smooth</button><button data-act="look-motion" data-v="reduced" aria-pressed="${p.look?.motion==="reduced"}">Reduced</button></div>
+      <div class="setgroup">${gmLabel("motion", tr("Motion"))}
+        ${(() => { const m = p.look?.motion || "full", at = ["full","smooth","reduced"].indexOf(m), off = m === "reduced" || (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches);
+          return `<div class="gm-track" role="group" aria-label="Motion" style="--choice:${Math.max(at, 0)}"><button type="button" class="chip" data-act="look-motion" data-v="full" aria-pressed="${m==="full"}">Bouncy</button><button type="button" class="chip" data-act="look-motion" data-v="smooth" aria-pressed="${m==="smooth"}">Smooth</button><button type="button" class="chip" data-act="look-motion" data-v="reduced" aria-pressed="${m==="reduced"}">Reduced</button></div>
         <span class="tiny muted">Bouncy adds the spring animations. Smooth keeps the motion but glides, with no spring. Reduced turns them off, and your device's own "reduce motion" setting always wins.</span>
-        <div class="mo-demo"><span class="mo-track" aria-hidden="true"><span class="mo-puck" id="mo-puck">${icon("chevR","",14)} ${esc(tr(MOTION_NAMES[p.look?.motion || "full"] || MOTION_NAMES.full))}</span></span>
-          <button type="button" class="btn sm" data-act="mo-test">Try this motion</button></div></div>
+        <button type="button" class="btn sm gm-replay" data-act="mo-replay"${off ? " disabled" : ""}>${tr(off ? "Motion is off" : "Replay motion")}</button>`; })()}</div>
     </section>
     ${reviewBar(p)}
   </div>`;
@@ -18186,6 +18194,8 @@ const WS_HANDLERS = {
     const out = document.getElementById("ui-op-val"); if (out) out.textContent = `${Math.round(o * 100)}%`;
     const gb = document.getElementById("gp-badge"); if (gb) gb.textContent = `${Math.round(o * 100)}% glass`;
     document.querySelectorAll(".op-presets .chip").forEach(c => c.setAttribute("aria-pressed", String(+c.dataset.v === Math.round(o * 100))));
+    const tr3 = document.querySelector(".op-presets"), at = [35, 70, 100].indexOf(Math.round(o * 100));
+    if (tr3) { tr3.toggleAttribute("data-none", at < 0); if (at >= 0) tr3.style.setProperty("--choice", String(at)); }
     clearTimeout(applyOpacity._t); applyOpacity._t = setTimeout(() => saveProfile(), 400);
   }
 };
@@ -18259,19 +18269,21 @@ const WS_HANDLERS = {
   scan(document.body);
 })();
 
+const GM_ICON = { glass:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></svg>', motion:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>' };
+const gmLabel = (k, text) => `<div class="setlabel gm-lbl"><span class="gm-ic" aria-hidden="true">${GM_ICON[k]}</span>${text}</div>`;
 function opacityRow(p){
   const v = Math.round(((p.look?.opacity ?? 1)) * 100);
-  return `<div class="setgroup"><div class="setlabel">Interface opacity</div>
+  const pre = [[35,"Frosted"],[70,"Balanced"],[100,"Solid"]], at = pre.findIndex(x => x[0] === v);
+  return `<div class="setgroup">${gmLabel("glass", tr("Interface opacity"))}
     <div class="oprow">
       ${glassSliderHTML({ id: "ui-op-ws", value: v, min: 35, max: 100, step: 5, label: "Interface opacity", text: `${v}%` })}
       <span class="opval" id="ui-op-val">${v}%</span>
       <button class="btn sm" data-act="op-reset">Reset</button>
     </div>
-    <div class="op-presets" role="group" aria-label="Opacity presets">${[[35,"Frosted"],[70,"Balanced"],[100,"Solid"]].map(([n, l]) => `<button type="button" class="chip" data-act="op-set" data-v="${n}" aria-pressed="${v === n}">${tr(l)} ${n}%</button>`).join("")}</div>
+    <div class="op-presets gm-track" role="group" aria-label="Opacity presets" style="--choice:${Math.max(at, 0)}"${at < 0 ? ' data-none="1"' : ""}>${pre.map(([n, l]) => `<button type="button" class="chip" data-act="op-set" data-v="${n}" aria-pressed="${v === n}">${tr(l)} <small>${n}%</small></button>`).join("")}</div>
     <span class="tiny muted">Sets how see-through the glass is on every panel, card and menu, live. Text stays at full contrast at every setting, so it never becomes hard to read.</span></div>`;
 }
 // 8.6.11: a live preview of the glass: a card over a soft backdrop that follows the slider, holding today's real calorie ring.
-const MOTION_NAMES = { full: "Bouncy spring", smooth: "Smooth glide", reduced: "Reduced (instant)" };
 function glassPreview(p){
   const eaten = intakeOn(today()), goal = p.calorieGoal, v = Math.round((p.look?.opacity ?? 1) * 100), pct = goal ? eaten / goal : 0;
   const line = goal ? `${eaten.toLocaleString()} of ${goal.toLocaleString()} cal` : eaten ? `${eaten.toLocaleString()} cal eaten` : "Nothing logged yet today";
@@ -18501,9 +18513,16 @@ document.addEventListener("click", e => {
   const t = e.target.closest('[data-act="op-set"]'); const p = t && P(); if (!p) return;
   p.look = { ...(p.look || {}), opacity: Math.max(35, Math.min(100, +t.dataset.v || 100)) / 100 }; applyOpacity(p); saveProfile(); render();
 });
-document.addEventListener("click", e => { // Try this motion: slide the puck with the easing and speed the chosen mode uses
-  const t = e.target.closest('[data-act="mo-test"]'); if (!t) return;
-  document.getElementById("mo-puck")?.classList.toggle("shifted");
+let moAnim;
+document.addEventListener("click", e => { // Replay motion: the glass preview card above comes in the way the chosen motion style moves
+  const t = e.target.closest('[data-act="mo-replay"]'); if (!t || t.disabled) return;
+  const card = document.querySelector(".gp-card"); if (!card?.animate) return;
+  moAnim?.cancel();
+  const m = P()?.look?.motion || "full";
+  const start = { transform:"translateY(14px) scale(.985)", opacity:.7 }, end = { transform:"translateY(0) scale(1)", opacity:1 };
+  moAnim = m === "full"
+    ? card.animate([start, { ...end, transform:"translateY(-6px) scale(1.012)", offset:.52 }, end], { duration:540, easing:"cubic-bezier(.2,.65,.28,1)" })
+    : card.animate([start, end], { duration:340, easing:"cubic-bezier(.2,.75,.25,1)" });
 });
 document.addEventListener("input", e => {
   if (e.target.id !== "ui-op") return;
@@ -27313,17 +27332,25 @@ a.mck:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .nm-act .btn.ghost,.gl-day .btn{min-width:44px}
 .po-how summary{display:flex;align-items:center;min-height:44px}
 /* ---- Glass & motion ---- */
-.op-presets{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
+.gm-lbl{display:flex;align-items:center;gap:9px}
+.gm-ic{display:grid;place-items:center;flex:none;width:27px;height:27px;border-radius:8px;background:var(--raise);color:var(--muted)}
+.gm-ic svg{width:16px;height:16px}
+/* A three-way track: one highlight slides to the chosen option (Glass presets and Motion). */
+.gm-track{isolation:isolate;position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:10px 0 6px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--raise)}
+.gm-track::before{content:"";position:absolute;z-index:-1;inset:4px auto 4px 4px;width:calc((100% - 8px) / 3);border-radius:8px;background:var(--surface);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 45%,var(--line)),var(--shadow);transform:translateX(calc(var(--choice,0) * 100%));transition:transform .22s cubic-bezier(.2,.75,.25,1)}
+.gm-track[data-none]::before{opacity:0}
+.gm-track .chip{display:grid;align-content:center;justify-items:center;min-height:44px;margin:0;padding:4px 2px;border:0;border-radius:8px;background:transparent;box-shadow:none;color:var(--muted);font-size:calc(14px * var(--text-scale,1));font-weight:500;line-height:1.25;text-align:center;white-space:normal}
+.gm-track .chip small{display:block;margin-top:2px;font-size:calc(12px * var(--text-scale,1));color:var(--muted)}
+.gm-track .chip[aria-pressed="true"]{color:var(--text);font-weight:650;background:transparent;animation:none}
+.gm-track[data-none] .chip[aria-pressed="true"]{color:var(--muted);font-weight:500}
+.gm-track .chip:hover{color:var(--text)}
+.gm-replay{margin-top:8px}
+:root[data-motion="reduced"] .gm-track::before{transition:none}
 .gp{border-radius:var(--r);padding:22px 18px;margin-bottom:14px;background:radial-gradient(circle at 18% 30%,color-mix(in srgb,#34D399 45%,var(--ground)) 0,transparent 55%),radial-gradient(circle at 85% 20%,color-mix(in srgb,#38BDF8 45%,var(--ground)) 0,transparent 50%),radial-gradient(circle at 60% 95%,color-mix(in srgb,#FB923C 40%,var(--ground)) 0,transparent 55%),var(--ground)}
 .gp-card{display:flex;align-items:center;gap:14px;flex-wrap:wrap;max-width:460px;margin-inline:auto;padding:14px 16px;border-radius:var(--r);border:1px solid color-mix(in srgb,var(--text) 14%,transparent);background:color-mix(in srgb,var(--surface) calc(var(--ui-op,1) * 100%),transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:var(--text)}
 .gp .rc-main{font-size:calc(14px * var(--text-scale,1))}
 .gp-txt{display:flex;flex-direction:column;gap:2px;flex:1 1 140px;min-width:0}
 .gp-badge{padding:4px 10px;border-radius:999px;background:var(--text);color:var(--surface);font-size:calc(12px * var(--text-scale,1));font-weight:600;white-space:nowrap}
-.mo-demo{display:flex;align-items:center;gap:12px;margin-top:8px}
-.mo-track{flex:1;min-width:0;display:block;padding:6px;border-radius:12px;background:var(--raise);overflow:hidden}
-.mo-puck{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:calc(13px * var(--text-scale,1));white-space:nowrap;transition:transform var(--dur-page) var(--ease-spring)}
-.mo-puck.shifted{transform:translateX(clamp(0px, calc(100cqw - 100%), 9999px))}
-.mo-track{container-type:inline-size}
 :root[data-motion="smooth"]{--ease-spring:cubic-bezier(.4,0,.2,1);--ease:cubic-bezier(.4,0,.2,1);--dur-tap:220ms;--dur-popup:300ms;--dur-menu:380ms;--dur-page:540ms}
 /* ---- Premium trust and FAQ ---- */
 .prem-store-page .prem-stays{padding:18px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}

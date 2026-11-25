@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.24, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.25, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.25 · Appearance: Glass & motion: one sliding three-way track for opacity presets and motion, and a Replay motion button
+
+- **Problem:** The Glass & motion card in Settings > Appearance looked uneven: the opacity presets were separate round chips, the motion choice was a different style of control, and the motion demo was a puck sliding along a bar.
+- **Change:** The card now follows the design you sent. The opacity presets (Frosted 35%, Balanced 70%, Solid 100%) and the Motion choice (Bouncy, Smooth, Reduced) are the same three-way track, with one highlight that slides to the chosen option; the presets show no highlight when the slider sits between them. Each group has a small icon tile. The puck demo is replaced by a Replay motion button that plays the glass preview card's entrance in the chosen style (a light spring for Bouncy, a glide for Smooth), and it reads Motion is off and is disabled when Reduced is chosen or the device's own reduce-motion setting is on. The glass preview with today's real calories, the opacity slider and Reset, the saved settings and Spanish are unchanged (the design's sample Daily check-in card was not used, because the page shows your real data).
+- **Where:** index.html: opacityRow(), gmLabel(), GM_ICON, the Glass & motion section of the Appearance page, the mo-replay click handler, the ui-op-ws handler (highlight follows the slider), WL_ES (Replay motion, Motion is off), CSS .gm-track, .gm-lbl, .gm-ic, .gm-replay (the old .mo-demo, .mo-track and .mo-puck rules and MOTION_NAMES are gone), APP_VERSION, WLH.changelog. tests/browser/sectors.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Settings > Appearance > Glass & motion: pick each preset and drag the slider (the highlight moves, and clears between presets); pick each motion and press Replay motion; choose Reduced and see the button turn off; try dark, light and a phone width, and Spanish.
+- **Known limits:** Checked in headless Chrome only, not on a phone. The Spanish for the two new strings was written by Claude and has not had a native-speaker review.
 
 ## 8.6.24 · Appearance: Compact Typography & layout: a typeface list, a size slider with a live preview, and a switch for larger sizes
 
