@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.31, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.32, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.32 · Workouts: Accessibility fix for Food focus, and the activity menu always stays inside the card
+
+- **Problem:** The checks on the last push found two faults: the Food focus options carried an attribute that screen readers do not allow on a radio button, and on narrow screens the activity More menu could stick out past the edge.
+- **Change:** Food focus options now use only the checked state a radio button should have. The More menu is anchored to the chip row and is never wider than it, so it stays inside the card at phone and tablet widths.
+- **Where:** index.html: food-focus buttons, .m3-more and .m3-menu CSS, act-more case, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Settings > Goals & food: Food focus still switches. Workouts > Log a workout > More: open it at phone and tablet width; it sits under the chips and inside the card.
+- **Known limits:** The accessibility check could not be run here (it needs a library that is not available offline), so it is confirmed only by the next CI run.
 
 ## 8.6.31 · Icons: Photo estimate, streak, minutes, workout, coach and active energy icons, each in its own colour
 

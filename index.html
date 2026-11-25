@@ -3884,7 +3884,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.31", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.32", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3898,6 +3898,14 @@ const APP_VERSION = { update: "8.6", build: "8.6.31", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.32",
+      area:"Workouts",
+      title:"Accessibility fix for Food focus, and the activity menu always stays inside the card",
+      bug:"The checks on the last push found two faults: the Food focus options carried an attribute that screen readers do not allow on a radio button, and on narrow screens the activity More menu could stick out past the edge.",
+      fix:"Food focus options now use only the checked state a radio button should have. The More menu is anchored to the chip row and is never wider than it, so it stays inside the card at phone and tablet widths.",
+      where:"index.html: food-focus buttons, .m3-more and .m3-menu CSS, act-more case, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Settings > Goals & food: Food focus still switches. Workouts > Log a workout > More: open it at phone and tablet width; it sits under the chips and inside the card.",
+      limits:"The accessibility check could not be run here (it needs a library that is not available offline), so it is confirmed only by the next CI run." },
     { id:"8.6.31",
       area:"Icons",
       title:"Photo estimate, streak, minutes, workout, coach and active energy icons, each in its own colour",
@@ -14685,7 +14693,7 @@ function settingsView(p){
     <h2>Food focus</h2>
     <p class="small muted">Sets the mix of dishes in meal plans and daily picks. The recipe library always shows everything.</p>
     ${(() => { const cur = p.focus || "west", m = mixOf(p), pc = n => Math.round(n * 100);
-      return `<div class="m3-seg" role="radiogroup" aria-label="Food focus">${Object.entries(FOCUS).map(([k,f]) => `<button type="button" role="radio" data-act="focus" data-v="${k}" aria-checked="${cur === k}" aria-pressed="${cur === k}" tabindex="${cur === k ? 0 : -1}"><span class="m3-chk" aria-hidden="true">${icon("check","",15)}</span><span>${f.label}</span></button>`).join("")}</div>
+      return `<div class="m3-seg" role="radiogroup" aria-label="Food focus">${Object.entries(FOCUS).map(([k,f]) => `<button type="button" role="radio" data-act="focus" data-v="${k}" aria-checked="${cur === k}" tabindex="${cur === k ? 0 : -1}"><span class="m3-chk" aria-hidden="true">${icon("check","",15)}</span><span>${f.label}</span></button>`).join("")}</div>
       <div class="m3-mix">
         <div class="m3-bar" role="img" aria-label="Dish mix: West Africa ${pc(m.west)}%, rest of Africa ${pc(m.africa)}%, rest of the world ${pc(m.world)}%"><i style="width:${pc(m.west)}%;background:var(--c-nutrition)"></i><i style="width:${pc(m.africa)}%;background:var(--c-coach)"></i><i style="width:${pc(m.world)}%;background:#6366F1"></i></div>
         <div class="m3-foot"><div class="m3-leg"><span><i style="background:var(--c-nutrition)"></i>West Africa <b class="tab">${pc(m.west)}%</b></span><span><i style="background:var(--c-coach)"></i>Rest of Africa <b class="tab">${pc(m.africa)}%</b></span><span><i style="background:#6366F1"></i>Rest of the world <b class="tab">${pc(m.world)}%</b></span></div>
@@ -14907,8 +14915,7 @@ document.addEventListener("click", async e => {
     case "ring-day": UI.ringDay = t.dataset.v; render(); document.querySelector(`.rday[data-v="${t.dataset.v}"]`)?.focus(); break;
     case "w-preset": { const i = document.getElementById("w-min"); if (i) { i.value = t.dataset.v; wEstimate(); } break; }
     case "wgoal": { const n = Math.max(1, Math.min(14, (p.workoutGoal || 0) + +t.dataset.d)); if (n !== p.workoutGoal) { p.workoutGoal = n; saveProfile(); render(); } document.querySelector(`[data-act="wgoal"][data-d="${t.dataset.d}"]:not([disabled])`)?.focus(); break; }
-    case "act-more": { const m = t.closest(".m3-more"), on = !m.classList.contains("open"); m.classList.toggle("open", on);
-      if (on) { const r = m.getBoundingClientRect(), box = m.closest(".card")?.getBoundingClientRect(); m.classList.toggle("end", r.left + 330 > Math.min(innerWidth - 16, box ? box.right : innerWidth)); } t.setAttribute("aria-expanded", String(on)); if (on) { const q = m.querySelector("#act-q"); q?.focus({ preventScroll: true }); } break; }
+    case "act-more": { const m = t.closest(".m3-more"), on = !m.classList.contains("open"); m.classList.toggle("open", on); t.setAttribute("aria-expanded", String(on)); if (on) { const q = m.querySelector("#act-q"); q?.focus({ preventScroll: true }); } break; }
     case "sc-tip": t.closest(".sc")?.classList.toggle("tipon"); break;
     case "imp-toggle": wSaveDraft(); UI.impOpen = !UI.impOpen; render(); break;
     case "pg": UI[t.dataset.k] = +t.dataset.v; UI.focus = `pg-${t.dataset.k}-${t.dataset.v}`; render(); break;
@@ -27578,9 +27585,8 @@ a.mck:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .m3-n{opacity:.72;font-size:calc(11.5px * var(--text-scale,1))}
 .m3-chev{transition:transform var(--dur-tap)}
 .m3-chip[aria-expanded="true"] .m3-chev{transform:rotate(180deg)}
-.m3-more{position:relative;display:inline-flex}
-.m3-menu{position:absolute;left:0;top:calc(100% + 8px);z-index:40;width:330px;max-width:calc(100vw - 44px);border-radius:16px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.97);transition:opacity var(--dur-tap),transform var(--dur-tap),visibility var(--dur-tap)}
-.m3-more.end .m3-menu{left:auto;right:0}
+.m3-more{display:inline-flex}
+.m3-menu{position:absolute;left:0;top:calc(100% + 8px);z-index:40;width:min(340px,100%);border-radius:16px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.97);transition:opacity var(--dur-tap),transform var(--dur-tap),visibility var(--dur-tap)}
 .m3-more.open .m3-menu{opacity:1;visibility:visible;transform:none}
 :root[data-motion="reduced"] .m3-menu{transition:none}
 .m3-search{padding:10px;border-bottom:1px solid var(--line)}
