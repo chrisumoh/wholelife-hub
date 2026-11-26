@@ -23,6 +23,7 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.6.36 | Phone layout fixes: switches, sticky bar, Date field, FAQ rows | IN PROGRESS: this PR |
 | 8.6.35 | Entitlements table for account-based Premium | IN PROGRESS: PR #105 |
 | 8.6.34 | Eighteen grouped FAQs | IN PROGRESS: PR #105 |
 | 8.6.33 | Bug reports & FAQs menu in Settings | IN PROGRESS: PR #105 |
