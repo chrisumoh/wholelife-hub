@@ -79,27 +79,27 @@ const anim = await ev(`(() => { const host = document.createElement("div"); docu
 ok("each wheel is its own animated group, and ball markings move with the ball", anim.length === 0, anim.join(", "));
 
 console.log("--- 3. the picker");
-ok("the picker starts collapsed: one current activity, no group tiles", await ev(`document.querySelectorAll(".actbtn").length === 0 && !!document.querySelector(".actcur")`));
-await click('[data-act="act-toggle"]'); await sleep(250);
-const pick = await ev(`(() => { const groups = [...document.querySelectorAll(".actgroup")]; return { n: groups.length, heads: groups.map(g => g.querySelector(".actgh").textContent), btns: document.querySelectorAll(".actbtn").length, icons: document.querySelectorAll(".actbtn .wi-svg").length, sel: document.getElementById("w-type").options.length, ungrouped: [...document.querySelectorAll(".actbtn")].filter(b => !b.closest(".actgroup")).length, label: document.querySelector('[role="group"][aria-label="Activity"]') ? true : false }; })()`);
-ok("the Activity picker has all seven group headings", pick.n === 7 && pick.heads.join("|") === "Cardio|Strength and studio|Team sports|Racket and club sports|Combat|Water and outdoors|Other", pick.heads.join("|"));
-ok("every activity has a button with its icon, and the hidden select lists them all", pick.btns === L.keys.length && pick.icons === L.keys.length && pick.sel === L.keys.length && pick.ungrouped === 0, JSON.stringify(pick));
-ok("the picker is a labelled group (not one big label around buttons)", pick.label);
+ok("the picker starts as one chip row with a More menu", await ev(`document.querySelectorAll(".m3-chips > [role=radio]").length === 6 && !!document.querySelector('[data-act="act-more"]')`));
+await click('[data-act="act-more"]'); await sleep(250);
+const pick = await ev(`(() => { const heads = [...document.querySelectorAll(".m3-menu .actgh")]; return { n: heads.length, heads: heads.map(h => h.textContent), btns: document.querySelectorAll(".m3-opt").length, icons: document.querySelectorAll(".m3-opt .wi-svg").length, sel: document.getElementById("w-type").options.length, label: document.querySelector('[role="radiogroup"][aria-label="Activity"]') ? true : false }; })()`);
+ok("the More menu has all seven group headings", pick.n === 7 && pick.heads.join("|") === "Cardio|Strength and studio|Team sports|Racket and club sports|Combat|Water and outdoors|Other", pick.heads.join("|"));
+ok("every activity has a menu row with its icon, and the hidden select lists them all", pick.btns === L.keys.length && pick.icons === L.keys.length && pick.sel === L.keys.length, JSON.stringify(pick));
+ok("the picker is a labelled radio group", pick.label);
 for (const w of [375, 820, 1440]) {
   await view(w); await sleep(300);
-  const fit = await ev(`(() => { const out = []; for (const b of document.querySelectorAll(".actbtn")) { const r = b.getBoundingClientRect(), t = b.querySelector(".tiny"), p = b.parentElement.getBoundingClientRect(); if (r.width < 60) out.push(b.title + " is " + Math.round(r.width) + "px wide"); if (r.height < 44) out.push(b.title + " is " + Math.round(r.height) + "px tall"); if (r.right > p.right + 1 || r.left < p.left - 1) out.push(b.title + " sticks out"); if (t.scrollHeight > t.clientHeight + 1 && t.scrollHeight > t.clientHeight * 1.0 && t.textContent.length > 26) out.push(b.title + " name is cut"); } return { out, scroll: document.documentElement.scrollWidth > innerWidth }; })()`);
-  ok(`${w}px: every tile is at least 60px wide and 44px tall, inside its group, and the page does not scroll sideways`, fit.out.length === 0 && !fit.scroll, JSON.stringify(fit).slice(0, 300));
+  const fit = await ev(`(() => { const out = []; for (const b of [...document.querySelectorAll(".m3-chips > [role=radio], .m3-chips .m3-chip"), ...document.querySelectorAll(".m3-opt")]) { const r = b.getBoundingClientRect(); if (r.height < 43.5) out.push((b.dataset.v || b.textContent) + " is " + Math.round(r.height) + "px tall"); } const m = document.querySelector(".m3-menu").getBoundingClientRect(); if (m.right > innerWidth + 1 || m.left < -1) out.push("menu sticks out"); return { out, scroll: document.documentElement.scrollWidth > innerWidth }; })()`);
+  ok(`${w}px: every chip and menu row is 44px tall, the menu stays on screen, and the page does not scroll sideways`, fit.out.length === 0 && !fit.scroll, JSON.stringify(fit).slice(0, 300));
 }
 await view(1440); await sleep(300);
 
 console.log("--- 4. logging with a new activity");
-await click('[data-act="pick-act"][data-v="pilates"]'); await sleep(250);
-ok("tapping Pilates selects it and folds the picker back to Pilates", await ev(`document.getElementById("w-type").value === "pilates" && document.querySelectorAll(".actbtn").length === 0 && document.querySelector(".actcur b").textContent === "Pilates"`));
+await click('.m3-opt[data-v="pilates"]'); await sleep(250);
+ok("tapping Pilates selects it and pins it beside the chips", await ev(`document.getElementById("w-type").value === "pilates" && !document.querySelector(".m3-more.open") && document.querySelector('.m3-chips [aria-checked="true"]').dataset.v === "pilates"`));
 await ev(`(() => { document.getElementById("w-min").value = "60"; return true; })()`);
 await click('[data-act="log-workout"]'); await sleep(400);
 const e1 = await ev(`(() => { const w = entries("workouts").find(x => x.type === "pilates"); return w ? { type: w.type, min: w.minutes, kcal: workoutKcal(w, 70), row: !!document.querySelector(".wrow .wi-pilates") } : null; })()`);
 ok("it is saved as Pilates, its calories come from its MET (3 x 70 kg x 1 h = 210) and its own icon shows in the list", e1 && e1.type === "pilates" && e1.kcal === 210 && e1.row, JSON.stringify(e1));
-await click('[data-act="act-toggle"]'); await sleep(200); await click('[data-act="pick-act"][data-v="jumprope"]'); await ev(`(() => { document.getElementById("w-min").value = "30"; return true; })()`); await click('[data-act="log-workout"]'); await sleep(400);
+await click('.m3-opt[data-v="jumprope"]'); await ev(`(() => { document.getElementById("w-min").value = "30"; return true; })()`); await click('[data-act="log-workout"]'); await sleep(400);
 ok("Jump rope for 30 minutes at 70 kg estimates 11.8 x 70 x 0.5 = 413", await ev(`workoutKcal(entries("workouts").find(x => x.type === "jumprope"), 70) === 413`));
 ok("an old saved type with no group still shows its icon and calories", await ev(`workoutKcal({ type: "walk", minutes: 60 }, 70) === 245 && wicon("walk", 30).includes("wi-walk") && wicon("nonsense", 30).includes("wi-other")`));
 

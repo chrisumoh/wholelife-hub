@@ -2,9 +2,113 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.22, 2026-11-24. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.35, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.35 · Database: A table for account-based Premium, ready for the new payment provider
+
+- **Problem:** Lemon Squeezy is closing on 31 March 2027, and Premium today depends on its emailed license keys, which the replacement provider does not have.
+- **Change:** A new table, entitlements, will hold each account's paid subscription (plan, status and period end). A person can read only their own row; only a server function can write it. One subscription covers the signed-in account only. The two server functions that fill it and the app change that reads it come in later builds, once the provider is set up. Nothing in the app changes yet.
+- **Where:** supabase/migrations/20261125222308_wlh_8_6_35_entitlements.sql (new; applied to the live project on 2026-11-25), docs/DATABASE.md, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Nothing to see in the app yet. A signed-in person who selects from entitlements gets an empty list, and any insert from the app is refused.
+- **Known limits:** Applied to the live Supabase project on 2026-11-25, but nothing writes or reads the table until the later builds. A multi-account household plan would need a members table in its own migration.
+
+## 8.6.34 · Settings: Eighteen FAQs in four groups on the Bug reports & FAQs page
+
+- **Problem:** The FAQs card had five answers and nothing on accounts, sync, deleting data, Coach privacy, activating Premium, refunds or imports.
+- **Change:** The FAQs are grouped under Account & data, Coach & privacy, Premium & billing and Help, and all start collapsed. Eight show first with a Show all 18 questions button. The answers follow what the app really does: guest and signed-in storage, what syncs, offline use, Delete everything versus Delete my account, the JSON export, the passcode limit, file-only imports, what WL Coach can see, the separate AI and photo switches, a plain no on medical advice, license-key activation, Free versus Premium, and the 14-day refund. A short not-medical-advice note sits at the top of the card.
+- **Where:** index.html: WL_FAQ_GROUPS, WL_FAQS, faqCard(), faq-all case, .faq-grp CSS, APP_VERSION, WLH.changelog. tests/browser/revamp.mjs (two FAQ checks). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Settings > Bug reports & FAQs: eight questions, all closed. Press Show all 18 questions for the rest. Open any answer and follow its link.
+- **Known limits:** The new answers are in English only for now (Spanish still covers the group names). Which Premium features are Ready is shown with the app's own labels, In Testing and In Progress. The Premium page keeps its own three FAQs.
+
+## 8.6.33 · Settings: A separate Bug reports & FAQs menu, with a red bug icon
+
+- **Problem:** Bug reports sat inside Data & about under the name Diagnostics, and the answers to common questions were only on the Premium page, so neither was easy to find.
+- **Change:** Settings has a new last entry under App, Bug reports & FAQs, with the bug icon in red. It holds the Diagnostics card (copy the log for a bug report, clear it, show features in testing, latest events and what changed) and a FAQs card with five answers, including how to report a bug. Data & about keeps the tour, your data and how the numbers work. The Premium page keeps its own three answers.
+- **Where:** index.html: SET_RAIL, SET_RAIL_ICON, SET_VIBE, SET_TABS, SET_GLYPH (setBug), settingsView() (bugs and about sections), WL_FAQS, faqCard(), tour text that named Diagnostics, WL_ES, APP_VERSION, WLH.changelog. tests/browser/pickers.mjs, revamp.mjs (nine sections). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Settings > Bug reports & FAQs (last row of the App group, red bug icon): Copy log for a bug report, then open the FAQs. Settings > Data & about no longer shows Diagnostics.
+- **Known limits:** The Premium page still has its own FAQ list; say if you want it moved. The two new answers are how-to steps only.
+
+## 8.6.32 · Workouts: Accessibility fix for Food focus, and the activity menu always stays inside the card
+
+- **Problem:** The checks on the last push found two faults: the Food focus options carried an attribute that screen readers do not allow on a radio button, and on narrow screens the activity More menu could stick out past the edge.
+- **Change:** Food focus options now use only the checked state a radio button should have. The More menu is anchored to the chip row and is never wider than it, so it stays inside the card at phone and tablet widths.
+- **Where:** index.html: food-focus buttons, .m3-more and .m3-menu CSS, act-more case, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Settings > Goals & food: Food focus still switches. Workouts > Log a workout > More: open it at phone and tablet width; it sits under the chips and inside the card.
+- **Known limits:** The accessibility check could not be run here (it needs a library that is not available offline), so it is confirmed only by the next CI run.
+
+## 8.6.31 · Icons: Photo estimate, streak, minutes, workout, coach and active energy icons, each in its own colour
+
+- **Problem:** Photo estimate used an apple, Streak a sparkle, Minutes a running figure, Coach a stopwatch and Active energy a flame, and the Streak and Minutes tiles shared colours with other tiles.
+- **Change:** Photo estimate now uses image-down (purple), Streak uses the flame (orange tile), Minutes uses the hourglass (teal tile), Workouts use the dumbbell everywhere they have an icon, Coach uses the whistle (blue) and Active energy uses the zap in yellow. The yellow follows the theme so it stays readable on white. The From a photo chip on Meals uses image-down too.
+- **Where:** index.html: NAV_GLYPH (imagedown, flamel, hourglass, dumbbell, zap), photo estimate heads, workoutStatsRow(), weeklyStatsRow(), ps-streak, coach insight, METRICS.active, EXTRA_WIDGETS.coach, the Coach card, --si-streak and --si-minutes colours, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Workouts: the Workouts, Minutes and Streak tiles. Nutrition: Photo estimate card and the From a photo chip on Log a meal. Home > Edit widgets: add Active energy and Coach and look at their headings. The streak badge sits on the Coach and Summary page headers.
+- **Known limits:** Checked in headless Chrome only. The older dumbbell, flame and stopwatch drawings are still in the code but no longer used for these labels; the Move ring shoe, Activity category flame and the award medals are unchanged.
+
+## 8.6.30 · Workouts: Log a workout: one activity chip row with a searchable More menu; Food focus: a joined segmented control with a mix bar
+
+- **Problem:** In Log a workout the activity showed twice (a current-activity row with Change, quick picks and a plain dropdown underneath), and the picker was a long grid of tiles. In Settings > Goals & food the Food focus buttons ran past the right edge of the card and the percentages were one cramped line.
+- **Change:** Log a workout now has one row of activity chips (Strength training, Running, Walking, Cycling, HIIT / circuits, Soccer) with a check on the chosen one, and a More +38 chip that opens a searchable list of every activity grouped as before with its calories an hour. Pick something from More and it is pinned beside the chips. The stray dropdown under the chips is gone, and the minutes, date and notes you typed are kept when you pick. Food focus is now a three-part segmented control that fits the card (a check marks the chosen one), with a bar showing the West Africa, rest of Africa and rest of the world split, a legend and a chip with the dish and region counts. Arrow keys move between the chips and between the Food focus options.
+- **Where:** index.html: workoutsView() activity block, M3_ACTS, settings food-focus card, cases act-more and pick-act, actMoreClose() and the More, search and arrow-key listeners, enhanceSelect() (data-noenhance), .m3-* CSS, #w-type.visually-tight, APP_VERSION, WLH.changelog. tests/browser/workouts.mjs, compact.mjs, sectors.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Workouts > Manual entry > Log a workout: tap a chip, tap More, type pilat, pick Pilates (it appears as a seventh chip), then Save. Settings > Goals & food > Food focus: tap each option and watch the bar and percentages change. Try an iPad width and a phone.
+- **Known limits:** Checked in headless Chrome only. The calories an hour in the More menu use your latest weigh-in weight (or the app default). The chip row is 44px tall for touch rather than the mock-up's 36px.
+
+## 8.6.29 · Coach: Weekly check-in: floating pace pointer, status pill, compact metrics, a two-item improve list and icon energy chips
+
+- **Problem:** The Weekly check-in card was a tall stack: a big empty bar with the pointer lost inside it, three wordy columns, every improvement tip printed in full and plain energy buttons.
+- **Change:** The card now has a status pill (for example 3 sessions to go, or On track) in the header; a slim pace rail with a Should be here pointer above it and the seven days of the week under it, with a green dot on every day you trained; three compact tiles (Target pace, Logged, and Food tracking with seven bars for the last 7 days); How you can improve shows the first two tips as one line each (tap a row for the rest of it) and the others sit under Show all; and the energy question has an icon on each answer, with a coloured note under it saying how your next session is scaled. All numbers still come from your own logs, nothing is simulated.
+- **Where:** index.html: checkinCard(), WCI_ENERGY, I.chevdown, .wci-* CSS, cases wci-exp and wci-all, APP_VERSION, WLH.changelog. tests/browser/motion.mjs (fill selector). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Coach > Today, scroll to Weekly check-in. Tap a tip row to open it, tap Show all to see the rest, tap an energy answer (Strategist coach) to see the note. Check light and dark and a phone width.
+- **Known limits:** Checked in headless Chrome only. The design's Log quick button, tappable food bars and per-tip action pills and Done ticks were left out because they were simulated in the mock-up and would not change real data.
+
+## 8.6.28 · Icons: Health data icon is folder-heart
+
+- **Problem:** The Health data label in the side menu used a plain grid icon.
+- **Change:** Health data now shows the folder-heart icon you sent in the side menu and in the page lists that point to it. Browse, Category and Metric keep the grid.
+- **Where:** index.html: NAV_GLYPH (folderheart), side menu Progress group link, NAV_ROUTE_IC, NAV_VIBE, page list in the route table, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Side menu > Progress > Health data shows a folder with a heart, in light and dark; it tints blue when the page is open.
+- **Known limits:** Checked in headless Chrome only.
+
+## 8.6.27 · Icons: Meal, calorie, snack, plan and sleep icons
+
+- **Problem:** Meals, calories, snacks, the plan and sleep each used a different icon (apple, calendar-check, cookie, journal and moon or bed) that did not match the set you chose.
+- **Change:** Meals now use utensils-crossed, calories use hand-platter, snacks use chocolate-bar, the Plan label uses notebook-pen and Sleep uses bed-double, everywhere those labels have an icon. The Move shoe, the Active energy flame and the Photo estimate apple are unchanged.
+- **Where:** index.html: NAV_GLYPH (utensils, platter, chocobar, notepen, beddouble), nutrition/calories/snacks/sleep categories and metrics, meals widgets, NAV_ROUTE_IC, side menu and phone bottom bar, NAV_VIBE, Sleep a night card, APP_VERSION, WLH.changelog. tests/browser/revamp.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Side menu: Meals, Snacks and Plan; phone bottom bar: Plan; Home: Calories eaten and Sleep a night cards; Health data: Calories and Sleep; Snacks page header.
+- **Known limits:** Checked in headless Chrome only. The meal and snack icons no longer play the old apple and cookie wiggle when tapped.
+
+## 8.6.26 · Rings: Move ring uses the sport-shoe icon
+
+- **Problem:** The Move ring's label on the Home rings card used an apple icon.
+- **Change:** The Move row of the rings legend now shows the sport-shoe icon you sent (stroke style, same green as before). Only that one icon changed; the ring colours, numbers and links are the same.
+- **Where:** index.html: CI (new sportshoe glyph), RING_DEFS (Move row icon), APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Home > Today at a glance (the rings card): the Move row now has a shoe next to its name, in light and dark.
+- **Known limits:** Checked in headless Chrome only. The apple icon is still used elsewhere (Meals, the menu); only the Move ring changed.
+
+## 8.6.25 · Appearance: Glass & motion: one sliding three-way track for opacity presets and motion, and a Replay motion button
+
+- **Problem:** The Glass & motion card in Settings > Appearance looked uneven: the opacity presets were separate round chips, the motion choice was a different style of control, and the motion demo was a puck sliding along a bar.
+- **Change:** The card now follows the design you sent. The opacity presets (Frosted 35%, Balanced 70%, Solid 100%) and the Motion choice (Bouncy, Smooth, Reduced) are the same three-way track, with one highlight that slides to the chosen option; the presets show no highlight when the slider sits between them. Each group has a small icon tile. The puck demo is replaced by a Replay motion button that plays the glass preview card's entrance in the chosen style (a light spring for Bouncy, a glide for Smooth), and it reads Motion is off and is disabled when Reduced is chosen or the device's own reduce-motion setting is on. The glass preview with today's real calories, the opacity slider and Reset, the saved settings and Spanish are unchanged (the design's sample Daily check-in card was not used, because the page shows your real data).
+- **Where:** index.html: opacityRow(), gmLabel(), GM_ICON, the Glass & motion section of the Appearance page, the mo-replay click handler, the ui-op-ws handler (highlight follows the slider), WL_ES (Replay motion, Motion is off), CSS .gm-track, .gm-lbl, .gm-ic, .gm-replay (the old .mo-demo, .mo-track and .mo-puck rules and MOTION_NAMES are gone), APP_VERSION, WLH.changelog. tests/browser/sectors.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Settings > Appearance > Glass & motion: pick each preset and drag the slider (the highlight moves, and clears between presets); pick each motion and press Replay motion; choose Reduced and see the button turn off; try dark, light and a phone width, and Spanish.
+- **Known limits:** Checked in headless Chrome only, not on a phone. The Spanish for the two new strings was written by Claude and has not had a native-speaker review.
+
+## 8.6.24 · Appearance: Compact Typography & layout: a typeface list, a size slider with a live preview, and a switch for larger sizes
+
+- **Problem:** Settings > Appearance > Typography & layout was tall: eight large typeface cards, a text-size slider with an always-open preview and a plain checkbox for the larger sizes.
+- **Change:** The section is now the compact layout you sent. Typeface is one row with a button that shows the chosen font and opens a short list (Readable and Editorial tags, a tick on the chosen one); it closes when you pick, click away or press Escape. Text size is one row with the size chip, a Reset button that only shows when the size is not the default, and the slider. The live preview folds out under the slider while you change the size or typeface, folds away after 3 seconds and stays open while the pointer is over it. Each of the two rows has a small i button with the explanation (on hover, focus or tap). Larger accessibility sizes is now a switch in the same style as the others. The app's own sizes (xSmall to AX5, Large the default), saving, Save or Discard review and Spanish are unchanged; the page, not the design file, supplies the colours.
+- **Where:** index.html: fontPicker(), aprInfo(), FONT_TAGS, textSizeRow(), tsPreview(), aprClose(), the font-menu, apr-tip and ts-ax-toggle cases, the ui-ts slider handler, CSS .apr-row, .apr-i, .fpick, .fopt and .ts-drawer (the old .font-grid and .font-card rules are gone), APP_VERSION, WLH.changelog. tests/browser/revamp.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** Settings > Appearance, the Typography & layout card: press the typeface button and pick one; drag the text size and watch the preview open and close; press Reset; turn on Larger accessibility sizes and drag past Large; try light, dark and OLED and a phone width.
+- **Known limits:** Checked in headless Chrome only, not on a phone. The preview line uses the page's own text sizes, so it matches the app, not the design file's pixel list. The two tooltips are English only, as the old helper text was.
+
+## 8.6.23 · Look: Whistle, flag and crown icons, no gold selection ring, and one switch style everywhere
+
+- **Problem:** The Coach, Goals & food and Premium icons were not the ones you chose, a thin gold ring sat over the chosen option in segmented controls (such as lb · ft) and day pickers, and the app's on/off switches did not share one look.
+- **Change:** Coach is now a whistle, Goals & food a flag and Premium a crown (the Lucide icons you sent) in the Settings sidebar; the Coach link in the main menu and the phone bottom bar also uses the whistle. The gold sliding ring is no longer drawn (the chosen option keeps its raised pill, and the chosen day keeps its accent border). Every on/off switch (.sw buttons, the voice and sharing .vtoggle buttons, and the On/Off buttons for Sync photos and the privacy permissions, which are now real switches) now has the outlined-track, round-thumb style from your sw-4 code, 52 by 28. Its colours come from the theme instead of fixed hex values: the track outline and thumb are the text colour mixed into the surface when off and the accent when on, so light, dark, OLED and every accent colour follow. Checkboxes, segmented controls and other inputs are untouched.
+- **Where:** index.html: NAV_GLYPH (compass renamed whistle), SET_GLYPH (setCoach, setGoals, setPremium), NAV_VIBE, sideNav(), bottomBarHTML(), CSS .sw and .vtoggle (shared --sw-* tokens), .focus-ring border colour, APP_VERSION, WLH.changelog. docs/BUILD_PLAN.md, README.md, CHANGELOG.md.
+- **How to test:** Settings: Coach, Goals & food and Premium show a whistle, flag and crown in the sidebar. Settings > Profile (lb · ft / kg · cm) and Home > Rings (day picker): no gold ring. Settings > Privacy & security, Reminders, Friends and Coach voice switches: all the same outlined style; change Settings > Appearance (light, dark, OLED, an accent) and the switches follow.
+- **Known limits:** Checked in headless Chrome only, not on a phone. The ring element still exists (it is only transparent), so the sliding code is unchanged. Gold on Premium cards, medals and badges is a design colour, not a selection ring, and was left as it is.
 
 ## 8.6.22 · Coach: WL Coach can use your profile and last 7 days if you choose, and looks up real recipes on the web
 

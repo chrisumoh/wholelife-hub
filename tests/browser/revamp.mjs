@@ -66,10 +66,10 @@ console.log("--- 1. Menu: a glyph of its own for every row, a colour only on the
 await view(1280, 900); await setMode("light"); await goto("#/home");
 const glyphs = await ev(`[...document.querySelectorAll(".side .nav a svg.ci, .side .nav button.prem-trigger svg.ci, .side .nav .navdisc svg.ci")].map(s => [...s.classList].find(c => /^ci-/.test(c)))`);
 ok("every menu row has its own glyph (no two rows share one)", glyphs.length >= 8 && new Set(glyphs).size === glyphs.length, glyphs.join(","));
-ok("Log, Plan, Coach and Progress use the four new glyphs", ["ci-journal", "ci-calcheck", "ci-compass", "ci-trendup"].every(g => glyphs.includes(g)), glyphs.join(","));
+ok("Log, Plan, Coach and Progress use the four new glyphs", ["ci-journal", "ci-notepen", "ci-whistle", "ci-trendup"].every(g => glyphs.includes(g)), glyphs.join(","));
 await view(390, 800); await sleep(300);
 const bar = await ev(`[...document.querySelectorAll(".bottombar .bb-item svg")].map(s => s.dataset.icon)`);
-ok("the phone bottom bar shows the same journal, plan and compass glyphs, all different", bar.length === 5 && new Set(bar).size === 5 && ["journal", "calcheck", "compass"].every(g => bar.includes(g)), bar.join(","));
+ok("the phone bottom bar shows the same journal, plan and whistle glyphs, all different", bar.length === 5 && new Set(bar).size === 5 && ["journal", "notepen", "whistle"].every(g => bar.includes(g)), bar.join(","));
 await view(1280, 900);
 const NAV = `(() => { const t = window.__t, out = [], a = document.querySelector('.side .nav a[aria-current="page"], .side .nav button.prem-trigger[aria-current="page"]'); if (!a) return ["no row is marked as the current page"];
   const cs = getComputedStyle(a), ic = getComputedStyle(a.querySelector(".si-tile svg")).color, side = getComputedStyle(document.querySelector(".side")).backgroundColor, lab = getComputedStyle(a.querySelector(":scope > span:not(.si-tile)")).color;
@@ -91,10 +91,10 @@ ok("a shut group that holds the current page shows a dot in that page's colour",
 
 console.log("--- 2. Settings rail: an icon well, a colour of its own per section, shown only on the current one");
 await view(1280, 900);
-const SECTIONS = ["profile", "coach", "goals", "household", "appearance", "premium", "privacy", "about"];
+const SECTIONS = ["profile", "coach", "goals", "household", "appearance", "premium", "privacy", "about", "bugs"];
 await goto("#/settings");
 const rail = await ev(`(() => { const items = [...document.querySelectorAll(".setrail a.setrail-item")], r = document.querySelector(".setrail").getBoundingClientRect(); return { n: items.length, icons: items.map(a => a.querySelector("svg").dataset.icon), well: items.map(a => { const w = a.querySelector(".sr-well").getBoundingClientRect(), s = a.querySelector("svg").getBoundingClientRect(); return [Math.round(w.width), Math.round(w.height), Math.round(s.width)].join("x"); }), w: Math.round(r.width), radius: getComputedStyle(document.querySelector(".setrail")).borderRadius, groups: [...document.querySelectorAll(".setrail-lbl")].map(x => x.textContent), tall: Math.min(...items.map(a => a.getBoundingClientRect().height)) }; })()`);
-ok("the rail has 8 rows in two groups, each with its own glyph", rail.n === 8 && new Set(rail.icons).size === 8 && rail.icons.every(i => /^set[A-Z]/.test(i)) && rail.groups.join() === "You,App", JSON.stringify(rail));
+ok("the rail has 9 rows in two groups, each with its own glyph", rail.n === 9 && new Set(rail.icons).size === 9 && rail.icons.every(i => /^set[A-Z]/.test(i)) && rail.groups.join() === "You,App", JSON.stringify(rail));
 ok("each icon sits in a 32px well and is 20px, rows are 44px tall, the rail is 272px wide with 20px corners", rail.well.every(w => w === "32x32x20") && rail.tall >= 43.9 && Math.abs(rail.w - 272) <= 1 && rail.radius === "20px", JSON.stringify(rail));
 for (const mode of ["light", "dark", "oled"]) {
   await setMode(mode); const bad = [];
@@ -111,7 +111,13 @@ for (const mode of ["light", "dark", "oled"]) {
 }
 await setMode("light"); await shot("rail-premium-light");
 const colours = await ev(`[...document.querySelectorAll(".setrail a")].map(a => a.style.getPropertyValue("--sv"))`);
-ok("the eight sections have eight different colours", new Set(colours).size === 8, colours.join(","));
+ok("the nine sections have nine different colours", new Set(colours).size === 9, colours.join(","));
+await goto("#/settings/bugs"); await sleep(300);
+const fq = () => ev(`(() => ({ n: document.querySelectorAll("#faqs details").length, open: document.querySelectorAll("#faqs details[open]").length, groups: [...document.querySelectorAll("#faqs .faq-grp")].map(h => h.textContent), diag: !!document.querySelector("#diagnostics"), noDiagInAbout: true, med: /not medical advice/.test(document.querySelector("#faqs .advice-banner")?.textContent || "") }))()`);
+let fqs = await fq();
+ok("Bug reports & FAQs: eight questions start collapsed, in groups, with Diagnostics and the medical note", fqs.n === 8 && fqs.open === 0 && fqs.groups.length === 3 && fqs.diag && fqs.med, JSON.stringify(fqs));
+await click('[data-act="faq-all"]'); await sleep(200); fqs = await fq();
+ok("Show all reveals every question in four groups, still collapsed", fqs.n === 18 && fqs.open === 0 && fqs.groups.join() === "Account & data,Coach & privacy,Premium & billing,Help", JSON.stringify(fqs));
 await view(390, 800); await goto("#/settings/about"); await sleep(300);
 const ph = await ev(`(() => { const r = document.querySelector(".setrail"), a = r.querySelector('a[aria-current="page"]'), rr = r.getBoundingClientRect(), ar = a.getBoundingClientRect(); return { dir: getComputedStyle(r).flexDirection, h: Math.round(rr.height), seen: ar.left >= rr.left - 1 && ar.right <= rr.right + 1, scroll: r.scrollLeft, bar: getComputedStyle(a, "::before").display }; })()`);
 ok("on a phone the rail is one scrolling row that has scrolled to the section you are in", ph.dir === "row" && ph.h < 80 && ph.seen && ph.scroll > 0 && ph.bar === "none", JSON.stringify(ph));
@@ -120,20 +126,22 @@ await view(1280, 900);
 
 console.log("--- 3. Appearance: three cards, swatches and typefaces in the page, no popups");
 await goto("#/settings/appearance");
-const ap = await ev(`(() => { const cards = [...document.querySelectorAll("#appearance .apr-card")], sw = [...document.querySelectorAll(".apr-swatches .swatch-lg")], fonts = [...document.querySelectorAll(".font-card")], two = document.querySelector(".apr-two"); const r = [...two.children].map(c => c.getBoundingClientRect());
-  return { heads: cards.map(c => c.querySelector(".apr-h").textContent), swatches: sw.length, minSw: Math.min(...sw.map(s => s.getBoundingClientRect().height)), pressed: sw.filter(s => s.getAttribute("aria-pressed") === "true").length, fonts: fonts.length, want: FONTS.length, checked: fonts.filter(f => f.getAttribute("aria-checked") === "true").length, cut: fonts.filter(f => [...f.querySelectorAll("b,.fc-sample")].some(e => e.scrollWidth > e.clientWidth + 1)).length, side: r.length === 2 && Math.abs(r[0].top - r[1].top) < 2 && r[0].right <= r[1].left, popups: document.querySelectorAll('[data-act="accent-pop"],[data-act="font-pop"]').length, chip: document.getElementById("ui-ts-label")?.textContent, review: !!document.querySelector("#wl-review") }; })()`);
+const ap = await ev(`(() => { const cards = [...document.querySelectorAll("#appearance .apr-card")], sw = [...document.querySelectorAll(".apr-swatches .swatch-lg")], fonts = [...document.querySelectorAll(".fopt")], two = document.querySelector(".apr-two"); const r = [...two.children].map(c => c.getBoundingClientRect());
+  return { heads: cards.map(c => c.querySelector(".apr-h").textContent), swatches: sw.length, minSw: Math.min(...sw.map(s => s.getBoundingClientRect().height)), pressed: sw.filter(s => s.getAttribute("aria-pressed") === "true").length, fonts: fonts.length, want: FONTS.length, checked: fonts.filter(f => f.getAttribute("aria-selected") === "true").length, cut: fonts.filter(f => [...f.querySelectorAll("span")].some(e => e.scrollWidth > e.clientWidth + 1)).length, side: r.length === 2 && Math.abs(r[0].top - r[1].top) < 2 && r[0].right <= r[1].left, popups: document.querySelectorAll('[data-act="accent-pop"],[data-act="font-pop"]').length, chip: document.getElementById("ui-ts-label")?.textContent, review: !!document.querySelector("#wl-review") }; })()`);
 ok("three cards: Display & theme, Typography & layout, Glass & motion", ap.heads.join("|") === "Display & theme|Typography & layout|Glass & motion", ap.heads.join("|"));
 ok("accent swatches are in the page, 44px tall, one pressed; the accent popup is gone", ap.swatches === await ev(`ACCENTS.length`) && ap.minSw >= 43.9 && ap.pressed === 1 && ap.popups === 0, JSON.stringify(ap));
-ok("typefaces are cards in the page: one per font, one checked, no name or sample cut off", ap.fonts === ap.want && ap.checked === 1 && ap.cut === 0, JSON.stringify(ap));
+ok("typefaces are one compact picker: one option per font, one selected, no name cut off", ap.fonts === ap.want && ap.checked === 1 && ap.cut === 0, JSON.stringify(ap));
 ok("UI style and Language sit side by side", ap.side, JSON.stringify(ap));
 const pick = await ev(`(() => { const s = [...document.querySelectorAll(".apr-swatches .swatch-lg")].find(x => x.getAttribute("aria-pressed") !== "true" && !x.classList.contains("dyn")); return s ? s.dataset.v : null; })()`);
 await click(`.apr-swatches .swatch-lg[data-v="${pick}"]`);
 ok("choosing an accent presses that swatch and lists the change for Save or Discard", await ev(`document.querySelector('.apr-swatches .swatch-lg[data-v="${pick}"]').getAttribute("aria-pressed") === "true" && document.querySelectorAll(".apr-swatches [aria-pressed='true']").length === 1 && !!document.querySelector("#wl-review.show")`));
 await click('#wl-review [data-act="look-discard"]'); await sleep(200);
-const fontPick = await ev(`(() => { const f = [...document.querySelectorAll(".font-card")].find(x => x.getAttribute("aria-checked") !== "true"); return f ? f.dataset.v : null; })()`);
-await click(`.font-card[data-v="${fontPick}"]`);
-ok("choosing a typeface checks that card at once (typefaces save immediately)", await ev(`document.querySelector('.font-card[data-v="${fontPick}"]').getAttribute("aria-checked") === "true" && document.querySelectorAll('.font-card[aria-checked="true"]').length === 1 && P().look.font === ${JSON.stringify(fontPick)}`));
-await click('.font-card[data-v="system"]');
+const fontPick = await ev(`(() => { const f = [...document.querySelectorAll(".fopt")].find(x => x.getAttribute("aria-selected") !== "true"); return f ? f.dataset.v : null; })()`);
+await click('.fpick-btn');
+ok("the typeface button opens the list", await ev(`document.querySelector(".fpick").classList.contains("open") && document.querySelector(".fpick-btn").getAttribute("aria-expanded") === "true"`));
+await click(`.fopt[data-v="${fontPick}"]`);
+ok("choosing a typeface selects it at once (typefaces save immediately)", await ev(`document.querySelector('.fopt[data-v="${fontPick}"]').getAttribute("aria-selected") === "true" && document.querySelectorAll('.fopt[aria-selected="true"]').length === 1 && P().look.font === ${JSON.stringify(fontPick)}`));
+await click('.fpick-btn'); await click('.fopt[data-v="system"]');
 await ev(`(() => { const r = document.getElementById("ui-ts"); r.value = "5"; r.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`); await sleep(250);
 ok("the text-size chip follows the slider", await ev(`document.getElementById("ui-ts-label").textContent === document.getElementById("ui-ts").getAttribute("aria-valuetext")`), await ev(`document.getElementById("ui-ts-label")?.textContent`));
 await click('[data-act="ts-reset"]');

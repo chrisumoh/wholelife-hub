@@ -23,6 +23,19 @@ Rows for 8.2.x and earlier keep the status they had when they were written; ever
 
 | Build | Contents | Status |
 |---|---|---|
+| 8.6.35 | Entitlements table for account-based Premium | IN PROGRESS: PR #105 |
+| 8.6.34 | Eighteen grouped FAQs | IN PROGRESS: PR #105 |
+| 8.6.33 | Bug reports & FAQs menu in Settings | IN PROGRESS: PR #105 |
+| 8.6.32 | Food focus accessibility fix and activity menu fit | IN PROGRESS: PR #105 |
+| 8.6.31 | Photo estimate, streak, minutes, workout, coach and active energy icons | IN PROGRESS: PR #105 |
+| 8.6.30 | Material 3 fixes: workout activity chips and Food focus | IN PROGRESS: PR #105 |
+| 8.6.29 | Weekly check-in revamp | IN PROGRESS: PR #105 |
+| 8.6.28 | Health data icon is folder-heart | IN PROGRESS: PR #105 |
+| 8.6.27 | Meal, calorie, snack, plan and sleep icons | IN PROGRESS: PR #105 |
+| 8.6.26 | Move ring uses the sport-shoe icon | IN PROGRESS: PR #105 |
+| 8.6.25 | Glass & motion card: sliding three-way tracks and Replay motion | IN PROGRESS: PR #105 |
+| 8.6.24 | Compact Typography & layout card in Settings > Appearance | IN PROGRESS: PR #105 |
+| 8.6.23 | Whistle, flag and crown icons, gold selection ring removed, one switch style | IN PROGRESS: branch claude/project-thread-ba1t0v |
 | 8.6.22 | Coach: optional profile and last-7-days context, web search for recipes | IN PROGRESS: branch build-8.6.22, function not deployed |
 | 8.6.21 | Coach thinking animations: a different loader and colour for each coach | DONE: PR #102 merged |
 | 8.6.20 | Log a meal > Portion is a standard dropdown list again instead of the wheel | IN PROGRESS: PR #102 |

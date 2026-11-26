@@ -170,7 +170,7 @@ ok("it does not repeat the percentage or print 0% twice", coach.pct <= 2 && coac
 await shot("coach-clean");
 ok("with no food logged the check-in says so plainly", await ev(`(() => { const t = document.querySelector("#sec-coach").textContent; return t.length > 200 && !/Only 0 days/.test(t); })()`));
 await goto("#/coach/today"); await ev(`document.getElementById("checkin")?.scrollIntoView(); true`); await sleep(200);
-const ci = await ev(`(() => { const f = document.querySelector("#checkin .timeline .fill"); return f ? f.style.width : null; })()`);
+const ci = await ev(`(() => { const f = document.querySelector("#checkin .wci-fill"); return f ? f.style.width : null; })()`);
 ok("the weekly bar's fill shows what was done (nothing), not how far into the week it is", ci === "0%" || ci === "0px" || ci === "", JSON.stringify(ci));
 await shot("checkin-clean");
 

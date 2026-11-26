@@ -946,10 +946,13 @@ select,.setctl select,.setctl input{max-width:100%;min-width:0}
 .remrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px;border-radius:var(--r-sm);background:var(--raise);border:1px solid var(--line);min-width:0}
 .remrow .grow{flex:1 1 160px;min-width:0}
 .remrow input[type=time]{width:auto;flex:none}
-.sw{position:relative;width:48px;height:28px;border-radius:999px;border:1px solid var(--line2);background:var(--surface);cursor:pointer;flex:none;padding:0;transition:background-color var(--dur-menu) var(--ease-smooth),border-color var(--dur-menu) var(--ease-smooth)}
-.sw::after{content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--text);opacity:.55;transition:transform var(--dur-menu) var(--ease-spring),opacity var(--dur-menu) var(--ease-smooth)}
-.sw[aria-checked="true"]{background:var(--accent);border-color:transparent}
-.sw[aria-checked="true"]::after{transform:translateX(20px);background:#fff;opacity:1}
+/* 8.6.23: one switch look everywhere (.sw and .vtoggle): an outlined track and a round thumb. Colours come from the theme (text, surface, accent), so light, dark, OLED and every accent follow. */
+.sw,.vtoggle{--sw-ink:var(--text);--sw-surface:var(--surface);--sw-on:var(--accent);--sw-ring:color-mix(in srgb,var(--sw-ink) 35%,var(--sw-surface));--sw-thumb:color-mix(in srgb,var(--sw-ink) 65%,var(--sw-surface))}
+.sw{position:relative;width:52px;height:28px;min-height:0;border-radius:9999px;border:0;background:transparent;box-shadow:inset 0 0 0 2px var(--sw-ring);cursor:pointer;flex:none;padding:0;transition:box-shadow .3s ease}
+.sw::before{content:"";position:absolute;inset:-6px -2px}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--sw-thumb);opacity:1;transition:transform .3s cubic-bezier(.22,1,.36,1),background .3s ease}
+.sw[aria-checked="true"]{background:transparent;box-shadow:inset 0 0 0 2px var(--sw-on)}
+.sw[aria-checked="true"]::after{transform:translateX(24px);background:var(--sw-on);opacity:1}
 /* Baseline questions */
 .qcard{display:flex;flex-direction:column;gap:14px}
 .qnum{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:calc((13px) * var(--text-scale,1));font-weight:700;flex:none}
@@ -1037,10 +1040,7 @@ select,.setctl select,.setctl input{max-width:100%;min-width:0}
   .icon-btn{width:40px;height:40px}
   .top .btn.icon-btn{width:38px;height:38px}
   .nav a{min-height:42px}
-  /* iOS-sized switch on touch: 52x32 with a 26px knob. */
-  .sw{width:54px;height:36px;min-height:36px}
-  .sw::after{width:28px;height:28px}
-  .sw[aria-checked="true"]::after{transform:translateX(22px)}
+  /* 8.6.23: the switch keeps its 52x28 size on touch; its ::before widens the tap area. */
   select,input[type=time],input[type=date],input[type=number],input[type=text],input[type=search]{min-height:42px}
 }
 
@@ -2913,16 +2913,13 @@ html .side .nav a .si-tile svg{color:#fff}
 
 
 /* Voice coach ------------------------------------------------------------ */
-.vtoggle{display:inline-flex;align-items:center;gap:8px;flex:none;padding:5px 12px 5px 5px;border-radius:999px;
-  border:1px solid var(--line2);background:var(--surface);color:var(--text);cursor:pointer;
-  transition:background var(--dur-tap) var(--ease),border-color var(--dur-tap) var(--ease)}
-.vtoggle .vknob{width:34px;height:20px;border-radius:999px;background:var(--line2);position:relative;
-  transition:background var(--dur-tap) var(--ease)}
-.vtoggle .vknob::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
-  background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform var(--dur-tap) var(--ease)}
-.vtoggle.on{border-color:var(--accent)}
-.vtoggle.on .vknob{background:var(--accent)}
-.vtoggle.on .vknob::after{transform:translateX(14px)}
+.vtoggle{display:inline-flex;align-items:center;gap:10px;flex:none;padding:0;border:0;background:transparent;color:var(--text);cursor:pointer}
+.vtoggle .vknob{width:52px;height:28px;border-radius:9999px;background:transparent;box-shadow:inset 0 0 0 2px var(--sw-ring);position:relative;flex:none;
+  transition:box-shadow .3s ease}
+.vtoggle .vknob::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
+  background:var(--sw-thumb);box-shadow:none;transition:transform .3s cubic-bezier(.22,1,.36,1),background .3s ease}
+.vtoggle.on .vknob{background:transparent;box-shadow:inset 0 0 0 2px var(--sw-on)}
+.vtoggle.on .vknob::after{transform:translateX(24px);background:var(--sw-on)}
 .vnote{display:flex;gap:10px;align-items:flex-start;margin-top:12px}
 .vnote svg{flex:none;margin-top:1px;color:var(--warn)}
 .vtry{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
@@ -3878,7 +3875,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 </style><div id="app"></div>
 <script>
 // =================== DEVELOPER LOG + CHANGE LOG (for testers) ===================
-// Open DevTools and type WLH.help(). On a phone, use Settings -> Data & about -> Diagnostics.
+// Open DevTools and type WLH.help(). On a phone, use Settings -> Bug reports & FAQs.
 // The runtime log records errors, warnings, route changes, slow renders and menu / camera /
 // microphone outcomes. It is kept in memory only (never saved, never uploaded) and holds no
 // meal names, health values or other personal data: just event names, routes and error text.
@@ -3887,7 +3884,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible,[role="switch
 // the plain update number (8.1); every later build that same week adds a patch number in the logs
 // (8.1.1, 8.1.2 ...). The app itself always shows the update (8.1) and its channel.
 // Builds B3-B14 (all on 2026-10-04) predate this scheme and belong to Update 8.0.
-const APP_VERSION = { update: "8.6", build: "8.6.22", channel: "Dev Testing", date: "2026-11-24", week: "Sun 22 Nov – Sat 28 Nov 2026" };
+const APP_VERSION = { update: "8.6", build: "8.6.35", channel: "Dev Testing", date: "2026-11-25", week: "Sun 22 Nov – Sat 28 Nov 2026" };
 (function(){
   const BUILD = `${APP_VERSION.build} (${APP_VERSION.channel}) · ${APP_VERSION.date}`;
   const MAX = 400, buf = [], t0 = performance.now();
@@ -3901,6 +3898,110 @@ const APP_VERSION = { update: "8.6", build: "8.6.22", channel: "Dev Testing", da
   // Every change made in this round of work, newest first. "where" names the functions /
   // selectors to open; "test" is the quickest way to confirm it; "limits" are known gaps.
   const CHANGELOG = [
+    { id:"8.6.35",
+      area:"Database",
+      title:"A table for account-based Premium, ready for the new payment provider",
+      bug:"Lemon Squeezy is closing on 31 March 2027, and Premium today depends on its emailed license keys, which the replacement provider does not have.",
+      fix:"A new table, entitlements, will hold each account's paid subscription (plan, status and period end). A person can read only their own row; only a server function can write it. One subscription covers the signed-in account only. The two server functions that fill it and the app change that reads it come in later builds, once the provider is set up. Nothing in the app changes yet.",
+      where:"supabase/migrations/20261125222308_wlh_8_6_35_entitlements.sql (new; applied to the live project on 2026-11-25), docs/DATABASE.md, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Nothing to see in the app yet. A signed-in person who selects from entitlements gets an empty list, and any insert from the app is refused.",
+      limits:"Applied to the live Supabase project on 2026-11-25, but nothing writes or reads the table until the later builds. A multi-account household plan would need a members table in its own migration." },
+    { id:"8.6.34",
+      area:"Settings",
+      title:"Eighteen FAQs in four groups on the Bug reports & FAQs page",
+      bug:"The FAQs card had five answers and nothing on accounts, sync, deleting data, Coach privacy, activating Premium, refunds or imports.",
+      fix:"The FAQs are grouped under Account & data, Coach & privacy, Premium & billing and Help, and all start collapsed. Eight show first with a Show all 18 questions button. The answers follow what the app really does: guest and signed-in storage, what syncs, offline use, Delete everything versus Delete my account, the JSON export, the passcode limit, file-only imports, what WL Coach can see, the separate AI and photo switches, a plain no on medical advice, license-key activation, Free versus Premium, and the 14-day refund. A short not-medical-advice note sits at the top of the card.",
+      where:"index.html: WL_FAQ_GROUPS, WL_FAQS, faqCard(), faq-all case, .faq-grp CSS, APP_VERSION, WLH.changelog. tests/browser/revamp.mjs (two FAQ checks). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Settings > Bug reports & FAQs: eight questions, all closed. Press Show all 18 questions for the rest. Open any answer and follow its link.",
+      limits:"The new answers are in English only for now (Spanish still covers the group names). Which Premium features are Ready is shown with the app's own labels, In Testing and In Progress. The Premium page keeps its own three FAQs." },
+    { id:"8.6.33",
+      area:"Settings",
+      title:"A separate Bug reports & FAQs menu, with a red bug icon",
+      bug:"Bug reports sat inside Data & about under the name Diagnostics, and the answers to common questions were only on the Premium page, so neither was easy to find.",
+      fix:"Settings has a new last entry under App, Bug reports & FAQs, with the bug icon in red. It holds the Diagnostics card (copy the log for a bug report, clear it, show features in testing, latest events and what changed) and a FAQs card with five answers, including how to report a bug. Data & about keeps the tour, your data and how the numbers work. The Premium page keeps its own three answers.",
+      where:"index.html: SET_RAIL, SET_RAIL_ICON, SET_VIBE, SET_TABS, SET_GLYPH (setBug), settingsView() (bugs section, about section), WL_FAQS, faqCard(), diagCard() comments, tour text that named Diagnostics, WL_ES (Bug reports & FAQs), APP_VERSION, WLH.changelog. tests/browser/pickers.mjs, revamp.mjs (nine sections). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Settings > Bug reports & FAQs (last row of the App group, red bug icon): Copy log for a bug report, then open the FAQs. Settings > Data & about no longer shows Diagnostics.",
+      limits:"The Premium page still has its own FAQ list; say if you want it moved. The two new answers are how-to steps only." },
+    { id:"8.6.32",
+      area:"Workouts",
+      title:"Accessibility fix for Food focus, and the activity menu always stays inside the card",
+      bug:"The checks on the last push found two faults: the Food focus options carried an attribute that screen readers do not allow on a radio button, and on narrow screens the activity More menu could stick out past the edge.",
+      fix:"Food focus options now use only the checked state a radio button should have. The More menu is anchored to the chip row and is never wider than it, so it stays inside the card at phone and tablet widths.",
+      where:"index.html: food-focus buttons, .m3-more and .m3-menu CSS, act-more case, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Settings > Goals & food: Food focus still switches. Workouts > Log a workout > More: open it at phone and tablet width; it sits under the chips and inside the card.",
+      limits:"The accessibility check could not be run here (it needs a library that is not available offline), so it is confirmed only by the next CI run." },
+    { id:"8.6.31",
+      area:"Icons",
+      title:"Photo estimate, streak, minutes, workout, coach and active energy icons, each in its own colour",
+      bug:"Photo estimate used an apple, Streak a sparkle, Minutes a running figure, Coach a stopwatch and Active energy a flame, and the Streak and Minutes tiles shared colours with other tiles.",
+      fix:"Photo estimate now uses image-down (purple), Streak uses the flame (orange tile), Minutes uses the hourglass (teal tile), Workouts use the dumbbell everywhere they have an icon, Coach uses the whistle (blue) and Active energy uses the zap in yellow. The yellow follows the theme so it stays readable on white. The From a photo chip on Meals uses image-down too.",
+      where:"index.html: NAV_GLYPH (imagedown, flamel, hourglass, dumbbell, zap), photo estimate heads, workoutStatsRow(), weeklyStatsRow(), ps-streak, coach insight, METRICS.active, EXTRA_WIDGETS.coach, the Coach card, --si-streak and --si-minutes colours, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Workouts: the Workouts, Minutes and Streak tiles. Nutrition: Photo estimate card and the From a photo chip on Log a meal. Home > Edit widgets: add Active energy and Coach and look at their headings. The streak badge sits on the Coach and Summary page headers.",
+      limits:"Checked in headless Chrome only. The older dumbbell, flame and stopwatch drawings are still in the code but no longer used for these labels; the Move ring shoe, Activity category flame and the award medals are unchanged." },
+    { id:"8.6.30",
+      area:"Workouts",
+      title:"Log a workout: one activity chip row with a searchable More menu; Food focus: a joined segmented control with a mix bar",
+      bug:"In Log a workout the activity showed twice (a current-activity row with Change, quick picks and a plain dropdown underneath), and the picker was a long grid of tiles. In Settings > Goals & food the Food focus buttons ran past the right edge of the card and the percentages were one cramped line.",
+      fix:"Log a workout now has one row of activity chips (Strength training, Running, Walking, Cycling, HIIT / circuits, Soccer) with a check on the chosen one, and a More +38 chip that opens a searchable list of every activity grouped as before with its calories an hour. Pick something from More and it is pinned beside the chips. The stray dropdown under the chips is gone, and the minutes, date and notes you typed are kept when you pick. Food focus is now a three-part segmented control that fits the card (a check marks the chosen one), with a bar showing the West Africa, rest of Africa and rest of the world split, a legend and a chip with the dish and region counts. Arrow keys move between the chips and between the Food focus options.",
+      where:"index.html: workoutsView() activity block, M3_ACTS, settings food-focus card, cases act-more and pick-act, actMoreClose() and the More, search and arrow-key listeners, enhanceSelect() (data-noenhance), .m3-* CSS, #w-type.visually-tight, APP_VERSION, WLH.changelog. tests/browser/workouts.mjs, compact.mjs, sectors.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Workouts > Manual entry > Log a workout: tap a chip, tap More, type pilat, pick Pilates (it appears as a seventh chip), then Save. Settings > Goals & food > Food focus: tap each option and watch the bar and percentages change. Try an iPad width and a phone.",
+      limits:"Checked in headless Chrome only. The calories an hour in the More menu use your latest weigh-in weight (or the app default). The chip row is 44px tall for touch rather than the mock-up's 36px." },
+    { id:"8.6.29",
+      area:"Coach",
+      title:"Weekly check-in: floating pace pointer, status pill, compact metrics, a two-item improve list and icon energy chips",
+      bug:"The Weekly check-in card was a tall stack: a big empty bar with the pointer lost inside it, three wordy columns, every improvement tip printed in full and plain energy buttons.",
+      fix:"The card now has a status pill (for example 3 sessions to go, or On track) in the header; a slim pace rail with a Should be here pointer above it and the seven days of the week under it, with a green dot on every day you trained; three compact tiles (Target pace, Logged, and Food tracking with seven bars for the last 7 days); How you can improve shows the first two tips as one line each (tap a row for the rest of it) and the others sit under Show all; and the energy question has an icon on each answer, with a coloured note under it saying how your next session is scaled. All numbers still come from your own logs, nothing is simulated.",
+      where:"index.html: checkinCard(), WCI_ENERGY, I.chevdown, .wci-* CSS, cases wci-exp and wci-all, APP_VERSION, WLH.changelog. tests/browser/motion.mjs (fill selector). CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Coach > Today, scroll to Weekly check-in. Tap a tip row to open it, tap Show all to see the rest, tap an energy answer (Strategist coach) to see the note. Check light and dark and a phone width.",
+      limits:"Checked in headless Chrome only. The design's Log quick button, tappable food bars and per-tip action pills and Done ticks were left out because they were simulated in the mock-up and would not change real data." },
+    { id:"8.6.28",
+      area:"Icons",
+      title:"Health data icon is folder-heart",
+      bug:"The Health data label in the side menu used a plain grid icon.",
+      fix:"Health data now shows the folder-heart icon you sent in the side menu and in the page lists that point to it. Browse, Category and Metric keep the grid.",
+      where:"index.html: NAV_GLYPH (folderheart), side menu Progress group link, NAV_ROUTE_IC, NAV_VIBE, page list in the route table, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Side menu > Progress > Health data shows a folder with a heart, in light and dark; it tints blue when the page is open.",
+      limits:"Checked in headless Chrome only." },
+    { id:"8.6.27",
+      area:"Icons",
+      title:"Meal, calorie, snack, plan and sleep icons",
+      bug:"Meals, calories, snacks, the plan and sleep each used a different icon (apple, calendar-check, cookie, journal and moon or bed) that did not match the set you chose.",
+      fix:"Meals now use utensils-crossed, calories use hand-platter, snacks use chocolate-bar, the Plan label uses notebook-pen and Sleep uses bed-double, everywhere those labels have an icon. The Move shoe, the Active energy flame and the Photo estimate apple are unchanged.",
+      where:"index.html: NAV_GLYPH (utensils, platter, chocobar, notepen, beddouble), nutrition/calories/snacks/sleep categories and metrics, meals widgets, NAV_ROUTE_IC, side menu and phone bottom bar, NAV_VIBE, Sleep a night card, APP_VERSION, WLH.changelog. tests/browser/revamp.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Side menu: Meals, Snacks and Plan; phone bottom bar: Plan; Home: Calories eaten and Sleep a night cards; Health data: Calories and Sleep; Snacks page header.",
+      limits:"Checked in headless Chrome only. The meal and snack icons no longer play the old apple and cookie wiggle when tapped." },
+    { id:"8.6.26",
+      area:"Rings",
+      title:"Move ring uses the sport-shoe icon",
+      bug:"The Move ring's label on the Home rings card used an apple icon.",
+      fix:"The Move row of the rings legend now shows the sport-shoe icon you sent (stroke style, same green as before). Only that one icon changed; the ring colours, numbers and links are the same.",
+      where:"index.html: CI (new sportshoe glyph), RING_DEFS (Move row icon), APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Home > Today at a glance (the rings card): the Move row now has a shoe next to its name, in light and dark.",
+      limits:"Checked in headless Chrome only. The apple icon is still used elsewhere (Meals, the menu); only the Move ring changed." },
+    { id:"8.6.25",
+      area:"Appearance",
+      title:"Glass & motion: one sliding three-way track for opacity presets and motion, and a Replay motion button",
+      bug:"The Glass & motion card in Settings > Appearance looked uneven: the opacity presets were separate round chips, the motion choice was a different style of control, and the motion demo was a puck sliding along a bar.",
+      fix:"The card now follows the design you sent. The opacity presets (Frosted 35%, Balanced 70%, Solid 100%) and the Motion choice (Bouncy, Smooth, Reduced) are the same three-way track, with one highlight that slides to the chosen option; the presets show no highlight when the slider sits between them. Each group has a small icon tile. The puck demo is replaced by a Replay motion button that plays the glass preview card's entrance in the chosen style (a light spring for Bouncy, a glide for Smooth), and it reads Motion is off and is disabled when Reduced is chosen or the device's own reduce-motion setting is on. The glass preview with today's real calories, the opacity slider and Reset, the saved settings and Spanish are unchanged (the design's sample Daily check-in card was not used, because the page shows your real data).",
+      where:"index.html: opacityRow(), gmLabel(), GM_ICON, the Glass & motion section of the Appearance page, the mo-replay click handler, the ui-op-ws handler (highlight follows the slider), WL_ES (Replay motion, Motion is off), CSS .gm-track, .gm-lbl, .gm-ic, .gm-replay (the old .mo-demo, .mo-track and .mo-puck rules and MOTION_NAMES are gone), APP_VERSION, WLH.changelog. tests/browser/sectors.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Settings > Appearance > Glass & motion: pick each preset and drag the slider (the highlight moves, and clears between presets); pick each motion and press Replay motion; choose Reduced and see the button turn off; try dark, light and a phone width, and Spanish.",
+      limits:"Checked in headless Chrome only, not on a phone. The Spanish for the two new strings was written by Claude and has not had a native-speaker review." },
+    { id:"8.6.24",
+      area:"Appearance",
+      title:"Compact Typography & layout: a typeface list, a size slider with a live preview, and a switch for larger sizes",
+      bug:"Settings > Appearance > Typography & layout was tall: eight large typeface cards, a text-size slider with an always-open preview and a plain checkbox for the larger sizes.",
+      fix:"The section is now the compact layout you sent. Typeface is one row with a button that shows the chosen font and opens a short list (Readable and Editorial tags, a tick on the chosen one); it closes when you pick, click away or press Escape. Text size is one row with the size chip, a Reset button that only shows when the size is not the default, and the slider. The live preview folds out under the slider while you change the size or typeface, folds away after 3 seconds and stays open while the pointer is over it. Each of the two rows has a small i button with the explanation (on hover, focus or tap). Larger accessibility sizes is now a switch in the same style as the others. The app's own sizes (xSmall to AX5, Large the default), saving, Save or Discard review and Spanish are unchanged; the page, not the design file, supplies the colours.",
+      where:"index.html: fontPicker(), aprInfo(), FONT_TAGS, textSizeRow(), tsPreview(), aprClose(), the font-menu, apr-tip and ts-ax-toggle cases, the ui-ts slider handler, CSS .apr-row, .apr-i, .fpick, .fopt and .ts-drawer (the old .font-grid and .font-card rules are gone), APP_VERSION, WLH.changelog. tests/browser/revamp.mjs. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.",
+      test:"Settings > Appearance, the Typography & layout card: press the typeface button and pick one; drag the text size and watch the preview open and close; press Reset; turn on Larger accessibility sizes and drag past Large; try light, dark and OLED and a phone width.",
+      limits:"Checked in headless Chrome only, not on a phone. The preview line uses the page's own text sizes, so it matches the app, not the design file's pixel list. The two tooltips are English only, as the old helper text was." },
+    { id:"8.6.23",
+      area:"Look",
+      title:"Whistle, flag and crown icons, no gold selection ring, and one switch style everywhere",
+      bug:"The Coach, Goals & food and Premium icons were not the ones you chose, a thin gold ring sat over the chosen option in segmented controls (such as lb · ft) and day pickers, and the app's on/off switches did not share one look.",
+      fix:"Coach is now a whistle, Goals & food a flag and Premium a crown (the Lucide icons you sent) in the Settings sidebar; the Coach link in the main menu and the phone bottom bar also uses the whistle. The gold sliding ring is no longer drawn (the chosen option keeps its raised pill, and the chosen day keeps its accent border). Every on/off switch (.sw buttons, the voice and sharing .vtoggle buttons, and the On/Off buttons for Sync photos and the privacy permissions, which are now real switches) now has the outlined-track, round-thumb style from your sw-4 code, 52 by 28. Its colours come from the theme instead of fixed hex values: the track outline and thumb are the text colour mixed into the surface when off and the accent when on, so light, dark, OLED and every accent colour follow. Checkboxes, segmented controls and other inputs are untouched.",
+      where:"index.html: NAV_GLYPH (compass renamed whistle), SET_GLYPH (setCoach, setGoals, setPremium), NAV_VIBE, sideNav(), bottomBarHTML(), CSS .sw and .vtoggle (shared --sw-* tokens), .focus-ring border colour, APP_VERSION, WLH.changelog. docs/BUILD_PLAN.md, README.md, CHANGELOG.md.",
+      test:"Settings: Coach, Goals & food and Premium show a whistle, flag and crown in the sidebar. Settings > Profile (lb · ft / kg · cm) and Home > Rings (day picker): no gold ring. Settings > Privacy & security, Reminders, Friends and Coach voice switches: all the same outlined style; change Settings > Appearance (light, dark, OLED, an accent) and the switches follow.",
+      limits:"Checked in headless Chrome only, not on a phone. The ring element still exists (it is only transparent), so the sliding code is unchanged. Gold on Premium cards, medals and badges is a design colour, not a selection ring, and was left as it is." },
     { id:"8.6.22",
       area:"Coach",
       title:"WL Coach can use your profile and last 7 days if you choose, and looks up real recipes on the web",
@@ -4967,7 +5068,37 @@ const APP_VERSION = { update: "8.6", build: "8.6.22", channel: "Dev Testing", da
 // aid rather than a profile preference.
 const SHOWTEST_KEY = "wlh.showtesting";
 function showTestingFeatures(){ try { return localStorage.getItem(SHOWTEST_KEY) === "1"; } catch { return false; } }
-// Settings -> Data & about: the same information for testers on phones (no DevTools needed).
+// Settings > Bug reports & FAQs. The Premium page keeps its own copy of the first three answers.
+const WL_FAQ_GROUPS = ["Account & data", "Coach & privacy", "Premium & billing", "Help"];
+// [group, question, answer (trusted markup, no user text), shown before "Show all"]
+const WL_FAQS = [
+  [0,"Do I need an account to use WholeLife Hub?","No. As a guest your data stays in this browser. Signing in is what turns on account sync, so your logs follow you to other devices.",1],
+  [0,"What syncs between my devices, and what stays on this device?","Once you sign in, your logs, profiles and eligible photos sync through your account, with or without a passcode. Form-check videos, Premium status and your consent switches stay on the device.",1],
+  [0,"Can I use the app offline?","Yes. The app opens without a connection and what you log is kept on the device. If you are signed in, anything logged offline uploads once you are back online. Features that need our server, such as Coach chat, photo estimates, sign-in and Delete my account, need a connection.",0],
+  [0,"What is the difference between Delete everything and Delete my account?","<b>Delete everything</b> (Settings > Privacy &amp; security) erases the profiles and logs held on this device only. Whatever is saved in your account stays there and comes back when you sign in. <b>Delete my account</b> (same page, when signed in) deletes the account and everything synced to it, on every device, and cannot be undone. A Premium subscription is separate: cancel it first.",1],
+  [0,"How do I download a copy of my data?","Go to <a href=\"#/settings/privacy\">Settings &gt; Privacy &amp; security</a> and press <b>Download (JSON)</b> under Export my data. You get one JSON file with your logs, plans and settings. The same button is under Settings &gt; Data &amp; about.",1],
+  [0,"What happens if I forget my passcode?","The passcode is never stored, so it cannot be recovered, and the encrypted copy on this device cannot be opened without it. You can erase the data on this device and start over. If you were signed in, your account copy is not encrypted by the passcode and syncs back when you sign in again.",0],
+  [0,"Can I import Apple Health or other fitness data?","Yes, from a file you choose, on <a href=\"#/workouts\">Workouts &amp; imports</a>. The file is read in your browser and is not uploaded. There is no automatic connection to Apple Health or any other health service.",0],
+  [1,"What can WL Coach see about me?","Coach chat is off until you allow it, and only works signed in. Your question is sent through our server to Anthropic, the company that makes Claude. Sharing your profile and the last 7 days of meals, snacks, workouts and weigh-ins is a separate choice that covers every profile on the account. You can stop it any time. Names, email, photos, drinks and vitals are never sent.",1],
+  [1,"How do I turn off AI or photo sharing?","In <a href=\"#/settings/privacy\">Settings &gt; Privacy &amp; security</a> there is a separate switch for each: Photo meal logging &amp; equipment photos, Food search, Coach chat, and Coach sees your profile and last 7 days. Turning one off stops it at once.",1],
+  [1,"Is WL Coach medical advice?","<b>No.</b> WL Coach and every calorie, protein and health estimate in the app are for personal tracking only. They are not medical or nutrition advice. Talk to a doctor or dietitian about health decisions.",1],
+  [2,"What happens to my logs if I cancel?","Nothing is deleted. Premium features lock; your logs, history and export stay yours.",0],
+  [2,"Can I cancel anytime?","Yes. Use Settings &gt; Premium &gt; Manage subscription. You keep Premium until the end of the period you paid for.",0],
+  [2,"How does billing work?","Plans are billed through Lemon Squeezy and renew automatically until you cancel. The price on the plan you pick is the price you pay.",0],
+  [2,"How do I activate Premium after paying, or on another device?","Lemon Squeezy emails you a license key after checkout. Paste it into <a href=\"#/settings/premium\">Settings &gt; Premium</a> under Have a license key, and press <b>Activate</b>. Do the same on any other device you use.",1],
+  [2,"What is included in Free, and which Premium features are available now?","Your core tracker, your data, offline use, dark mode, English and Spanish, passcode lock, multiple profiles and data export stay free. See the full list on the <a href=\"#/premium\">Premium page</a> (Compare plans). Features marked <b>In Testing</b> work now; <b>In Progress</b> ones are still being built.",0],
+  [2,"How do I request a refund?","Every charge has 14 days. Write to us within 14 days of the charge, with your order number if you have it, and we refund it in full. Read the full policy on the <a href=\"#/refunds\">Refunds page</a>.",0],
+  [3,"How do I report a bug?","Open this page, press <b>Copy log for a bug report</b> under Diagnostics, and paste it into your message. The log holds no meals, health values or names.",0],
+  [3,"Where is the app tour?","<a href=\"#/settings/about\">Settings &gt; Data &amp; about</a> &gt; App tour &amp; guide replays the quick tour or tours one area.",0]
+];
+function faqCard(){
+  const all = !!UI.faqAll, shown = WL_FAQS.filter(f => all || f[3]);
+  return `<section class="card" id="faqs"><h2>FAQs</h2>
+    <p class="advice-banner">WholeLife Hub is a tracking tool. WL Coach and its estimates are not medical advice.</p>
+    ${WL_FAQ_GROUPS.map((g, i) => { const rows = shown.filter(f => f[0] === i); return rows.length ? `<h3 class="faq-grp">${esc(tr(g))}</h3><div class="prem-faqs">${rows.map(f => `<details class="wl-faq"><summary>${esc(tr(f[1]))}</summary><p>${f[2]}</p></details>`).join("")}</div>` : ""; }).join("")}
+    <button type="button" class="btn sm" data-act="faq-all" aria-expanded="${all}">${all ? "Show fewer questions" : `Show all ${WL_FAQS.length} questions`}</button></section>`;
+}
+// Settings -> Bug reports & FAQs: the same information for testers on phones (no DevTools needed).
 function diagCard(){
   const W = window.WLH; if (!W) return "";
   const errs = W.errors().length;
@@ -6093,6 +6224,7 @@ const ACTIVITIES = [
 {k:"other",n:"Other",met:5,g:"other"}
 ];
 const ACT = Object.fromEntries(ACTIVITIES.map(a=>[a.k,a]));
+const M3_ACTS = ["strength","run","walk","cycle","hiit","soccer"]; // the chips always shown; any other choice is pinned beside them
 
 const EX = {
  fullbody:{beginner:[["Goblet squat","3 × 10"],["Push-ups (knees ok)","3 × 8"],["Dumbbell row","3 × 10 each"],["Glute bridge","3 × 12"],["Plank","3 × 20 s"]],
@@ -10807,13 +10939,13 @@ function sceneLayer(p){
 }
 
 // =================== SETTINGS (tabbed) ===================
-const SET_RAIL = [["You",["profile","coach","goals","household"]],["App",["appearance","premium","privacy","about"]]];
+const SET_RAIL = [["You",["profile","coach","goals","household"]],["App",["appearance","premium","privacy","about","bugs"]]];
 // 8.6.4: each Settings section has its own outline glyph and its own colour. The colour shows only on the section you are in
 // (icon, well, edge); every other row stays grey. Pairs are [light, dark]; the light ones are dark enough for 3:1 on their own tint.
-const SET_RAIL_ICON = { profile:"setProfile", coach:"setCoach", goals:"setGoals", household:"setHousehold", appearance:"setAppearance", premium:"setPremium", privacy:"setPrivacy", about:"setData" };
+const SET_RAIL_ICON = { profile:"setProfile", coach:"setCoach", goals:"setGoals", household:"setHousehold", appearance:"setAppearance", premium:"setPremium", privacy:"setPrivacy", about:"setData", bugs:"setBug" };
 const SET_VIBE = { profile:["#2563EB","#60A5FA"], coach:["#7C3AED","#A78BFA"], goals:["#047857","#34D399"], household:["#0F766E","#2DD4BF"],
-  appearance:["#BE185D","#F472B6"], premium:["#B45309","#FBBF24"], privacy:["#4F46E5","#818CF8"], about:["#0369A1","#38BDF8"] };
-const SET_TABS = [["profile","Profile"],["coach","Coach"],["appearance","Appearance"],["goals","Goals & food"],["household","Household"],["premium","Premium"],["privacy","Privacy & security"],["about","Data & about"]];
+  appearance:["#BE185D","#F472B6"], premium:["#B45309","#FBBF24"], privacy:["#4F46E5","#818CF8"], about:["#0369A1","#38BDF8"], bugs:["#B91C1C","#F87171"] };
+const SET_TABS = [["profile","Profile"],["coach","Coach"],["appearance","Appearance"],["goals","Goals & food"],["household","Household"],["premium","Premium"],["privacy","Privacy & security"],["about","Data & about"],["bugs","Bug reports & FAQs"]];
 const initials = n => (n || "").trim().split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join("").toUpperCase() || "?";
 function factRow(k, v){ return `<dt>${esc(k)}</dt><dd>${v}</dd>`; }
 function profileGroup(p, key, title, factsHtml, formHtml){
@@ -10928,6 +11060,7 @@ const CI = {
   flame:`<path d="M12.6 2c.8 3.4-1.3 5.3-2.9 7.1C8.3 10.7 7 12.5 7 15a5 5 0 0 0 10 0c0-2.3-1.1-3.9-2.3-5.2-.2 1.4-.9 2.4-2 2.9.7-3.8.3-7.4-.1-10.7z" fill="currentColor"/><path d="M12 20.5a2.6 2.6 0 0 1-2.6-2.6c0-1.5 1.2-2.4 2.1-3.6.3 1 .9 1.5 1.6 1.7.6-.7.9-1.3 1-2 .5.8 1 1.8 1 3a2.9 2.9 0 0 1-3.1 3.5z" fill="#fff" opacity=".85"/>`,
   steps:`<ellipse cx="8.3" cy="8.6" rx="3" ry="4.7" fill="currentColor"/><circle cx="8.3" cy="15.4" r="1.9" fill="currentColor"/><ellipse cx="15.7" cy="11.4" rx="3" ry="4.7" fill="currentColor"/><circle cx="15.7" cy="18.2" r="1.9" fill="currentColor"/>`,
   bed:`<path d="M2 19v-9.5h2.2v5H21a1.5 1.5 0 0 1 1.5 1.5v3h-2.2v-2H4.2v2z" fill="currentColor"/><rect x="5" y="10" width="5" height="3.6" rx="1.6" fill="currentColor"/><path d="M11.2 10.2h7.3a3 3 0 0 1 3 3v.6H11.2z" fill="currentColor"/><text x="18.5" y="7.6" text-anchor="middle" font-family="-apple-system,Figtree,Arial,sans-serif" font-weight="800" font-size="5.4" fill="currentColor">z</text><text x="21" y="4.8" text-anchor="middle" font-family="-apple-system,Figtree,Arial,sans-serif" font-weight="800" font-size="4.2" fill="currentColor">z</text>`,
+  sportshoe:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 10.42 4.8-5.07"/><path d="M19 18h3"/><path d="M9.5 22 21.414 9.415A2 2 0 0 0 21.2 6.4l-5.61-4.208A1 1 0 0 0 14 3v2a2 2 0 0 1-1.394 1.906L8.677 8.053A1 1 0 0 0 8 9c-.155 6.393-2.082 9-4 9a2 2 0 0 0 0 4h14"/></g>`,
   apple:`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="p-leaf" d="M12 6.528V3a1 1 0 0 1 1-1h0" /><path class="p-body" d="M18.237 21A15 15 0 0 0 22 11a6 6 0 0 0-10-4.472A6 6 0 0 0 2 11a15.1 15.1 0 0 0 3.763 10 3 3 0 0 0 3.648.648 5.5 5.5 0 0 1 5.178 0A3 3 0 0 0 18.237 21" /></g>`,
   glass:`<path d="M5 2.5h14l-1.9 17.7A2 2 0 0 1 15.1 22H8.9a2 2 0 0 1-2-1.8z" fill="currentColor"/><path d="M7.2 10.6c1.6.9 3.2.9 4.8 0s3.2-.9 4.8 0" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>`,
   body:`<circle cx="12" cy="4.4" r="2.4" fill="currentColor"/><path d="M3.8 8.3h16.4v2.2h-5.3l1 10.8h-2.4l-.9-6.2h-1.2l-.9 6.2H8.1l1-10.8H3.8z" fill="currentColor"/>`,
@@ -10966,9 +11099,9 @@ const CATS = {
   body:     { n:"Body Measurements", color:"var(--c-body)", icon:"body", metrics:["weight","estimate"] },
   heart:    { n:"Heart", color:"var(--c-heart)", icon:"heartecg", metrics:["rhr","bp"] },
   resp:     { n:"Respiratory", color:"var(--c-resp)", icon:"bloodo2", metrics:["spo2"] },
-  sleep:    { n:"Sleep", color:"var(--c-sleep)", icon:"bed", metrics:["sleep"] },
-  nutrition:{ n:"Nutrition", color:"var(--c-nutrition)", icon:"apple", metrics:["calories","water"], page:"#/nutrition" },
-  snacks:   { n:"Snacks", color:"var(--c-snack)", icon:"cookie", metrics:["snacks"], page:"#/snacks" }
+  sleep:    { n:"Sleep", color:"var(--c-sleep)", icon:"beddouble", metrics:["sleep"] },
+  nutrition:{ n:"Nutrition", color:"var(--c-nutrition)", icon:"utensils", metrics:["calories","water"], page:"#/nutrition" },
+  snacks:   { n:"Snacks", color:"var(--c-snack)", icon:"chocobar", metrics:["snacks"], page:"#/snacks" }
 };
 const catLink = k => CATS[k].page || `#/cat/${k}`;
 const vitalsOf = (date) => { const L = S.logs[S.activeId]?.[monthOf(date)]; return L?.vitals?.[date] || null; };
@@ -10982,15 +11115,15 @@ function setVital(date, key, value){
 function vitalDates(key){ const out = []; const byP = S.logs[S.activeId] || {}; for (const m in byP) for (const [d, v] of Object.entries(byP[m].vitals || {})) if (v[key] != null) out.push(d); return out.sort().reverse(); }
 const mlToOz = ml => ml / 29.5735;
 const METRICS = {
-  calories:{ n:"Calories eaten", cat:"nutrition", icon:"apple", unit:()=>"cal", get:d => loggedFood(d) ? intakeOn(d) : null, fmt:v => Math.round(v).toLocaleString(), link:"#/nutrition" },
+  calories:{ n:"Calories eaten", cat:"nutrition", icon:"platter", unit:()=>"cal", get:d => loggedFood(d) ? intakeOn(d) : null, fmt:v => Math.round(v).toLocaleString(), link:"#/nutrition" },
   water:   { n:"Water", cat:"nutrition", icon:"glass", color:"var(--c-water)", unit:p => p.units === "metric" ? "mL" : "fl oz", get:d => vitalsOf(d)?.water ?? null, fmt:(v,p) => p.units === "metric" ? Math.round(v).toLocaleString() : round(mlToOz(v)).toLocaleString(),
              fields:p => [["water", p.units === "metric" ? "Water (mL)" : "Water (fl oz)", 0, p.units === "metric" ? 8000 : 270]], toStore:(k,v,p) => p.units === "metric" ? v : v * 29.5735, add:true,
              about:"Needs vary with body size, heat and activity. The National Academies suggest about 3.7 L (125 fl oz) a day for men and 2.7 L (91 fl oz) for women, counting all drinks and food." },
-  snacks:  { n:"Snacks", cat:"snacks", icon:"cookie", unit:()=>"cal", get:d => { const s = onDate("snacks", d); return s.length ? s.reduce((a,x)=>a+x.cal,0) : null; }, fmt:v => Math.round(v).toLocaleString(), link:"#/snacks" },
+  snacks:  { n:"Snacks", cat:"snacks", icon:"chocobar", unit:()=>"cal", get:d => { const s = onDate("snacks", d); return s.length ? s.reduce((a,x)=>a+x.cal,0) : null; }, fmt:v => Math.round(v).toLocaleString(), link:"#/snacks" },
   workouts:{ n:"Workouts", cat:"activity", icon:"dumbbell", unit:()=>"min", get:d => { const w = onDate("workouts", d); return w.length ? w.reduce((a,x)=>a+(x.minutes||0),0) : null; }, fmt:v => Math.round(v), link:"#/workouts" },
   steps:   { n:"Steps", cat:"activity", icon:"steps", unit:()=>"steps", get:d => vitalsOf(d)?.steps ?? null, fmt:v => Math.round(v).toLocaleString(), fields:()=>[["steps","Steps",0,100000]], add:true,
              about:"More daily steps are linked with a lower risk of early death. In a 2022 analysis of 15 studies (Paluch et al., The Lancet Public Health), the benefit leveled off around 6,000–8,000 steps for adults 60 and older and 8,000–10,000 for younger adults." },
-  active:  { n:"Active energy", cat:"activity", icon:"flame", unit:()=>"cal", get:d => vitalsOf(d)?.active ?? null, fmt:v => Math.round(v).toLocaleString(), fields:()=>[["active","Active calories",0,6000]], add:true,
+  active:  { n:"Active energy", cat:"activity", icon:"zap", color:"var(--cat-gold)", unit:()=>"cal", get:d => vitalsOf(d)?.active ?? null, fmt:v => Math.round(v).toLocaleString(), fields:()=>[["active","Active calories",0,6000]], add:true,
              about:"Calories burned by movement, on top of what your body burns at rest. It isn't added to the weight estimate, which already counts your logged workouts, so nothing is counted twice." },
   weight:  { n:"Weight", cat:"body", icon:"scale", unit:p => p.units === "metric" ? "kg" : "lb", get:d => entries("weights").find(w => w.date === d)?.kg ?? null, fmt:(v,p) => p.units === "metric" ? round(v,1) : round(kgToLb(v),1),
              fields:p => [["weight", "Weight", W_MIN_KG, W_MAX_KG]], text:["weight"], add:true, chartMin:true,
@@ -11003,7 +11136,7 @@ const METRICS = {
              about:"The American Heart Association lists normal as below 120/80 mmHg, elevated as 120–129 over below 80, and high blood pressure as 130/80 or higher. Sit quietly for 5 minutes, feet flat, arm at heart level, and take two readings." },
   spo2:    { n:"Blood oxygen", cat:"resp", icon:"bloodo2", unit:()=>"%", get:d => vitalsOf(d)?.spo2 ?? null, fmt:v => round(v), fields:()=>[["spo2","Blood oxygen (%)",50,100]], add:true, chartMin:true,
              about:"Healthy blood oxygen is usually 95–100%. Home pulse oximeters and watches can read wrong with cold hands, movement or nail polish, and the FDA has warned they can be less accurate on darker skin. Talk to a doctor if you're regularly below 95% or short of breath." },
-  sleep:   { n:"Sleep", cat:"sleep", icon:"bed", unit:()=>"hr", get:d => vitalsOf(d)?.sleep ?? null, fmt:v => `${Math.floor(v/60)}<small> hr </small>${Math.round(v%60)}<small> min</small>`, num:v => v/60, html:true,
+  sleep:   { n:"Sleep", cat:"sleep", icon:"beddouble", unit:()=>"hr", get:d => vitalsOf(d)?.sleep ?? null, fmt:v => `${Math.floor(v/60)}<small> hr </small>${Math.round(v%60)}<small> min</small>`, num:v => v/60, html:true,
              fields:()=>[["sleepH","Hours",0,16],["sleepM","Minutes",0,59]], add:true,
              about:"The CDC recommends at least 7 hours of sleep a night for adults 18 to 60. Imported Apple Health sleep counts time asleep, not time in bed." }
 };
@@ -11150,7 +11283,7 @@ function largeOf(p, k){
 // Meals and Coach are not METRICS; each has its own definition.
 function mealsDef(p, L){
   const picks = dailyPicks(today(), p), planned = picks.reduce((a, d) => a + (d.cal || 0), 0), meals = onDate("meals", today()), logged = meals.length;
-  const o = { key:"meals", href:"#/nutrition", color:"var(--c-nutrition)", icon:"apple", name:"Meals", when:"Today",
+  const o = { key:"meals", href:"#/nutrition", color:"var(--c-nutrition)", icon:"utensils", name:"Meals", when:"Today",
     val: picks.length ? `<div class="mval">${countUp(planned.toLocaleString())}<small> cal</small></div>` : NODATA,
     sub: picks.length ? `${picks.length} planned · ${logged} logged` : "", chart: picks.length ? barsSVG(picks.map(d => d.cal || 0), "var(--c-nutrition)", 14, 6) : "" };
   if (L) {
@@ -11166,7 +11299,7 @@ function mealsDef(p, L){
 }
 function coachWDef(p, L){
   const streak = currentStreak(p), tip = motivation(p);
-  const o = { key:"coach", href:"#/coach", color:"var(--c-coach)", icon:"stopwatch", name:"Coach", when:"Today",
+  const o = { key:"coach", href:"#/coach", color:"var(--c-coach)", icon:"whistle", name:"Coach", when:"Today",
     val: `<div class="mval">${streak}<small> ${streak === 1 ? "day" : "days"} in a row</small></div>`, sub: tip, subL: "" };
   if (L) {
     const dow = new Date().getDay(), day = p.workoutPlan?.days?.find(d => d.dow === dow), done = onDate("workouts", today()).length > 0;
@@ -11332,10 +11465,10 @@ function weeklyStatsRow(p){
   const v = k => weekPair(d => vitalsOf(d)?.[k] ?? null), [w1, w0] = v("water"), [s1, s0] = v("sleep");
   const mt = sumN(m1), mp = sumN(m0), kt = sumN(k1), kp = sumN(k0), wa = avgN(w1), wp = avgN(w0), sa = avgN(s1), sp = avgN(s0);
   const cards = [
-    mt || mp ? statCard("Workout minutes", mt + " min", mt, mp, "run", "workouts", "Logged workout minutes, week so far.") : "",
+    mt || mp ? statCard("Workout minutes", mt + " min", mt, mp, "hourglass", "minutes", "Logged workout minutes, week so far.") : "",
     kt || kp ? statCard("Workout calories", kt + " kcal", kt, kp, "spark", "summary", "Extra calories from logged workouts, week so far.") : "",
     wa == null && wp == null ? "" : statCard("Water a day", wa == null ? "-" : (wa / 1000).toFixed(1) + " L", wa, wp, "glass", "health", "Average on days you logged water."),
-    sa == null && sp == null ? "" : statCard("Sleep a night", sa == null ? "-" : (sa / 60).toFixed(1) + " h", sa, sp, "moon", "coach", "Average on nights you logged sleep.")
+    sa == null && sp == null ? "" : statCard("Sleep a night", sa == null ? "-" : (sa / 60).toFixed(1) + " h", sa, sp, "beddouble", "coach", "Average on nights you logged sleep.")
   ].join("");
   return cards ? `<h2 class="sec-title">This week</h2><div class="scgrid">${cards}</div>` : "";
 }
@@ -11346,8 +11479,8 @@ function workoutStatsRow(p){
   const b = ch && CH.boards[ch.id], me = ch && b.find(m => m.is_you);
   const cards = [
     { l:"Workouts", v:String(sumN(m1)), cur:sumN(m1), prev:sumN(m0), i:"dumbbell", g:"workouts" },
-    { l:"Minutes", v:String(sumN(t1)), cur:sumN(t1), prev:sumN(t0), i:"run", g:"meals" },
-    { l:"Streak", v:currentStreak(p) + "d", i:"spark", g:"summary" },
+    { l:"Minutes", v:String(sumN(t1)), cur:sumN(t1), prev:sumN(t0), i:"hourglass", g:"minutes" },
+    { l:"Streak", v:currentStreak(p) + "d", i:"flamel", g:"streak" },
     ch ? { l:ch.title, v:`${1 + b.filter(m => +m.total > +me.total).length} of ${b.length}`, i:"trophy", g:"awards" } : null
   ].filter(Boolean);
   return `<div class="scgrid plain">${cards.map(c => `<div class="sc"><span class="sc-ic" style="--a:var(--si-${c.g}-a);--b:var(--si-${c.g}-b)">${icon(c.i, "", 18)}</span>
@@ -11440,7 +11573,7 @@ function homeView(p){
       <span class="sr-only" id="lu-live" aria-live="polite"></span>
     </div>
     <div class="ps-actions">
-      <span class="ps-streak" title="Current workout streak">${icon("spark","",15)} ${currentStreak(p)}d</span>
+      <span class="ps-streak" title="Current workout streak">${icon("flamel","",15)} ${currentStreak(p)}d</span>
     </div>
   </div>
   ${nextStepCard(p)}
@@ -11471,7 +11604,7 @@ function trendsSection(p){
 function highlightsSection(p){
   const items = [];
   const streak = typeof currentStreak === "function" ? currentStreak(p) : 0;
-  if (streak > 0) items.push({ icon:"stopwatch", color:"var(--c-coach)", title:"Workout streak", body:`${streak} day${streak === 1 ? "" : "s"} in a row`, href:"#/coach" });
+  if (streak > 0) items.push({ icon:"flamel", color:"var(--c-activity)", title:"Workout streak", body:`${streak} day${streak === 1 ? "" : "s"} in a row`, href:"#/coach" });
   const pr = projection(p);
   if (pr.ready && pr.days) {
     const per = p.units === "metric" ? `${round(Math.abs(pr.kgPerWeek), 2)} kg` : `${round(Math.abs(pr.lbPerWeek), 1)} lb`;
@@ -11757,6 +11890,7 @@ function commitVitals(acc){
 }
 // =================== UI HELPERS ===================
 const I = {
+  chevdown:'<polyline points="6 9 12 15 18 9"/>',
   wifi:'<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/>',
   download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
  home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
@@ -11838,21 +11972,33 @@ const I = {
 // 8.6.4: four menu glyphs that no other row uses (Log was a bare plus, Plan repeated Recipes' chef hat, Progress repeated
 // Health data's grid, Coach was generic sparkles). Drawn once here and shared by the side menu, the phone bottom bar and CI.
 const NAV_GLYPH = {
+ utensils:'<path d="m16 2-2.3 2.3a3 3 0 0 0 0 4.2l1.8 1.8a3 3 0 0 0 4.2 0L22 8"/><path d="M15 15 3.3 3.3a4.2 4.2 0 0 0 0 6l7.3 7.3c.7.7 2 .7 2.8 0L15 15Zm0 0 7 7"/><path d="m2.1 21.8 6.4-6.3"/><path d="m19 5-7 7"/>',
+ platter:'<path d="M12 3V2"/><path d="m15.4 17.4 3.2-2.8a2 2 0 1 1 2.8 2.9l-3.6 3.3c-.7.8-1.7 1.2-2.8 1.2h-4c-1.1 0-2.1-.4-2.8-1.2l-1.302-1.464A1 1 0 0 0 6.151 19H5"/><path d="M2 14h12a2 2 0 0 1 0 4h-2"/><path d="M4 10h16"/><path d="M5 10a7 7 0 0 1 14 0"/><path d="M5 14v6a1 1 0 0 1-1 1H2"/>',
+ chocobar:'<path d="M12 2v10"/><path d="M17 12V4.4a.4.4 0 00-.4-.4A1.6 1.6 0 0115 2.4a.4.4 0 00-.4-.4H9a2 2 0 00-2 2v8"/><path d="M5 14a2 2 0 012-2h10a2 2 0 012 2v2a1 1 0 01-1 1 2 2 0 01-.9-.203l-1.2-.594a2 2 0 00-1.8 0l-1.2.594a2 2 0 01-1.8 0l-1.2-.594a2 2 0 00-1.8 0l-1.2.594a2 2 0 01-.9.198A1 1 0 015 16z"/><path d="M7 16.748V20a2 2 0 002 2h6a2 2 0 002-2v-3.252"/><path d="M7 7h10"/>',
+ notepen:'<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/>',
+ folderheart:'<path d="M10.638 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v3.417"/><path d="M14.62 18.8A2.25 2.25 0 1 1 18 15.836a2.25 2.25 0 1 1 3.38 2.966l-2.626 2.856a.998.998 0 0 1-1.507 0z"/>',
+ imagedown:'<path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21"/><path d="m14 19 3 3v-5.5"/><path d="m17 22 3-3"/><circle cx="9" cy="9" r="2"/>',
+ flamel:'<path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"/>',
+ hourglass:'<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+ dumbbell:'<path d="M17.596 12.768a2 2 0 1 0 2.829-2.829l-1.768-1.767a2 2 0 0 0 2.828-2.829l-2.828-2.828a2 2 0 0 0-2.829 2.828l-1.767-1.768a2 2 0 1 0-2.829 2.829z"/><path d="m2.5 21.5 1.4-1.4"/><path d="m20.1 3.9 1.4-1.4"/><path d="M5.343 21.485a2 2 0 1 0 2.829-2.828l1.767 1.768a2 2 0 1 0 2.829-2.829l-6.364-6.364a2 2 0 1 0-2.829 2.829l1.768 1.767a2 2 0 0 0-2.828 2.829z"/><path d="m9.6 14.4 4.8-4.8"/>',
+ zap:'<path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"/>',
+ beddouble:'<path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 4v6"/><path d="M2 18h20"/>',
   journal:'<rect x="4" y="3.5" width="13" height="17" rx="2"/><path d="M8 8h5M8 12h4M8 16h2"/><path d="M15.5 14.5l4-4a1.4 1.4 0 0 1 2 2l-4 4-2.8.8.8-2.8z"/>',
   calcheck:'<rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M8 2.5v3.5M16 2.5v3.5M3.5 9.5h17"/><path d="M9.2 14.8l2 2 4-4"/>',
-  compass:'<circle cx="12" cy="12" r="9"/><polygon points="15.8 8.2 13.7 13.7 8.2 15.8 10.3 10.3 15.8 8.2"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  whistle:'<path d="M10 6v4"/><path d="M21 6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-5.675A7 7 0 1 1 9 6z"/>',
   trendup:'<polyline points="21 7 13.5 14.5 9.5 10.5 3 17"/><polyline points="15 7 21 7 21 13"/>'
 };
 for (const [k, d] of Object.entries(NAV_GLYPH)) { I[k] = d; CI[k] = `<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</g>`; }
 // 8.6.4: the eight Settings glyphs (ID card, compass, fork and target, house with heart, colour swatches, crown with a glint, shield with a keyhole, database with an info badge).
 const SET_GLYPH = {
   setProfile:'<rect x="3" y="4.5" width="18" height="15" rx="3"/><circle cx="9" cy="10.3" r="2.1"/><path d="M5.9 16.5c.6-1.9 1.7-2.8 3.1-2.8s2.5.9 3.1 2.8"/><path d="M14.5 9.8h3.7M14.5 13.4h2.5"/>',
-  setCoach:'<circle cx="12" cy="12" r="9"/><polygon points="15.9 8.1 13.6 13.6 8.1 15.9 10.4 10.4 15.9 8.1"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>',
-  setGoals:'<path d="M4.8 3.8v5.2a2.2 2.2 0 0 0 4.4 0V3.8"/><path d="M7 3.8v5.2M7 11.2v9"/><circle cx="16.4" cy="12" r="4.8"/><circle cx="16.4" cy="12" r="1.9"/><circle cx="16.4" cy="12" r="0.6" fill="currentColor" stroke="none"/>',
+  setCoach:'<path d="M10 6v4"/><path d="M21 6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-5.675A7 7 0 1 1 9 6z"/>',
+  setGoals:'<path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528"/>',
   setHousehold:'<path d="M3.5 10.8L12 3.8l8.5 7"/><path d="M5.5 9.6v9.6a1.3 1.3 0 0 0 1.3 1.3h10.4a1.3 1.3 0 0 0 1.3-1.3V9.6"/><path d="M12 17.5s-3.5-2.1-3.5-4.2a2 2 0 0 1 3.5-1.3 2 2 0 0 1 3.5 1.3c0 2.1-3.5 4.2-3.5 4.2z"/>',
   setAppearance:'<rect x="4" y="4" width="6.2" height="16" rx="2"/><path d="M10.2 6.8l4.4-1.3a2 2 0 0 1 2.4 1.4l1.5 5.2"/><path d="M10.2 13.2l6.8-2.4a2 2 0 0 1 2.5 1.2l1 2.8a2 2 0 0 1-1.2 2.5l-10 3.5"/><circle cx="7.1" cy="16.8" r="1" fill="currentColor" stroke="none"/>',
-  setPremium:'<path d="M3.5 17.2l1.6-8.4 4.3 3.5L12 6.8l2.6 5.5 4.3-3.5 1.6 8.4H3.5z"/><path d="M4.5 20.2h15"/><path d="M19.5 2.8v3.2M17.9 4.4h3.2"/>',
+  setPremium:'<path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" />',
   setPrivacy:'<path d="M12 3L4.5 6.1v5.5c0 4.8 3.2 8.4 7.5 9.9 4.3-1.5 7.5-5.1 7.5-9.9V6.1L12 3z"/><circle cx="12" cy="10.8" r="1.7"/><path d="M12 12.5v3.3"/>',
+  setBug:'<path d="M12 20v-9"/><path d="M14 7a4 4 0 0 1 4 4v3a6 6 0 0 1-12 0v-3a4 4 0 0 1 4-4z"/><path d="M14.12 3.88 16 2"/><path d="M21 21a4 4 0 0 0-3.81-4"/><path d="M21 5a4 4 0 0 1-3.55 3.97"/><path d="M22 13h-4"/><path d="M3 21a4 4 0 0 1 3.81-4"/><path d="M3 5a4 4 0 0 0 3.55 3.97"/><path d="M6 13H2"/><path d="m8 2 1.88 1.88"/><path d="M9 7.13V6a3 3 0 1 1 6 0v1.13"/>',
   setData:'<ellipse cx="9.8" cy="6" rx="6.3" ry="2.4"/><path d="M3.5 6v10.8c0 1.3 2.8 2.4 6.3 2.4.7 0 1.4 0 2-.1"/><path d="M16.1 6v4.6"/><path d="M3.5 11.4c0 1.3 2.8 2.4 6.3 2.4.9 0 1.7-.1 2.5-.2"/><circle cx="17.2" cy="17.2" r="4.1"/><path d="M17.2 16.9v2"/><circle cx="17.2" cy="15.2" r="0.6" fill="currentColor" stroke="none"/>'
 };
 Object.assign(I, SET_GLYPH, { search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>' });
@@ -11914,7 +12060,7 @@ function closePopover(id){ const p = POPOVERS[id]; const open = document.querySe
 const dishLink = d => `#/recipes/${d.id}`;
 
 const NAV = [
- ["OVERVIEW",[["home","Summary","home"],["health","Health data","grid"],["browse","Browse","grid"],["cat","Category",""],["metric","Metric",""]]],
+ ["OVERVIEW",[["home","Summary","home"],["health","Health data","folderheart"],["browse","Browse","grid"],["cat","Category",""],["metric","Metric",""]]],
  ["TRACK",[["nutrition","Daily nutrition","food"],["workouts","Workouts","run"],["snacks","Snack log","snack"],["alcohol","Alcohol","glass"],["awards","Achievements & Goals","medal"]]],
  ["EAT & TRAIN",[["recipes","Recipes & meal plans","book"],["culture","Food culture","globe"],["coach","Personal coach","coach"],["learn","Learn","gradcap"]]],
  ["PREMIUM",[["premium","Premium","crown"]]],
@@ -12019,7 +12165,7 @@ const WL_ES = {
   "Food culture":"Cultura gastronómica", "Personal coach":"Entrenador personal", "Health data":"Datos de salud",
   "Achievements & Goals":"Logros y metas", "Settings":"Ajustes", "Today":"Hoy", "More":"Más", "Next step":"Siguiente paso", "Browse by category":"Ver por categoría", "Every metric in this category is already pinned above.":"Todas las métricas de esta categoría ya están fijadas arriba.", "Show badges":"Mostrar insignias", "Every badge is earned. Nothing is locked.":"Todas las insignias están conseguidas. Nada está bloqueado.", "You're all caught up for today.":"Hoy estás al día.", "Log water":"Registrar agua", "Log food":"Registrar comida", "Log weight":"Registrar peso", "Open workout":"Abrir entrenamiento", "No food logged yet today":"Aún no has registrado comida hoy", "No weigh-in in the last 7 days":"Sin pesaje en los últimos 7 días", "Open":"Abrir", "Mobile navigation":"Navegación móvil", "1½ servings":"1½ porciones", "No allergens":"Sin alérgenos", "Sort":"Ordenar", "Default order":"Orden predeterminado", "Lowest calories":"Menos calorías", "Highest calories":"Más calorías", "Clear filters":"Quitar filtros", "Recipe":"Receta", "Servings":"Porciones", "Coach sections":"Secciones del entrenador", "Five quick questions":"Cinco preguntas rápidas", "Answer them":"Responder", "No plan yet":"Aún no hay plan", "See my week":"Ver mi semana", "Go to the questions":"Ir a las preguntas", "Pick how many days you can train and build a plan on the Plan tab.":"Elige cuántos días puedes entrenar y crea un plan en la pestaña Planificar.", "Nothing is planned for today. The whole week is on the Plan tab.":"Hoy no hay nada planeado. Toda la semana está en la pestaña Planificar.", "Every one is optional. They take about a minute and live on the Settings tab.":"Todas son opcionales. Toman un minuto y están en la pestaña Ajustes.", "Answer the five questions on the Settings tab first and the plan fits you better.":"Responde primero las cinco preguntas de la pestaña Ajustes y el plan se ajustará mejor a ti.", "Close":"Cerrar", "Go Premium":"Hazte Premium", "Grocery list builder":"Generador de lista de compras", "Pantry mode":"Modo despensa", "Photo meal logging":"Registro de comidas con foto", "Restaurant mode":"Modo restaurante", "Micronutrient gaps":"Carencias de micronutrientes", "Progressive programs":"Programas progresivos", "Form check camera":"Cámara de revisión de técnica", "Body progress studio":"Estudio de progreso corporal", "Recovery score":"Puntuación de recuperación", "Weekly review PDF":"Informe semanal en PDF", "Voice coach":"Entrenador por voz", "Habit experiments":"Experimentos de hábitos", "Coach sharing":"Compartir con un entrenador", "Family challenges":"Retos familiares", "Community recipes":"Recetas de la comunidad", "Doctor visit prep":"Preparar la visita al médico", "Cycle-aware plans":"Planes según tu ciclo", "Fasting & Ramadan mode":"Modo ayuno y Ramadán", "Budget mode":"Modo presupuesto",
   "Profile":"Perfil", "Coach":"Entrenador", "Appearance":"Apariencia", "Goals & food":"Metas y comida", "Household":"Hogar",
-  "App":"Aplicación", "Settings sections":"Secciones de ajustes", "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información",
+  "App":"Aplicación", "Settings sections":"Secciones de ajustes", "Privacy & security":"Privacidad y seguridad", "Data & about":"Datos e información", "Bug reports & FAQs":"Errores y preguntas frecuentes",
   "Display":"Pantalla", "Automatic":"Automático", "Light":"Claro", "Dark":"Oscuro", "OLED black":"Negro OLED",
   "Accent color":"Color de acento", "Text size":"Tamaño del texto", "Motion":"Movimiento", "UI style":"Estilo de interfaz",
   "Rounded":"Redondeado", "Crisp":"Nítido", "Language":"Idioma", "Review changes":"Revisar cambios",
@@ -12201,7 +12347,7 @@ Object.assign(WL_ES, {
   "Import workouts":"Importar entrenamientos", "Bring sessions in from Apple Health, Google Health, Fitbit, Strava, Garmin and most other apps with an export file. There is no automatic sync.":"Trae sesiones de Apple Health, Google Health, Fitbit, Strava, Garmin y la mayoría de las apps con un archivo de exportación. No hay sincronización automática.",
   "Add minutes for an estimate":"Añade los minutos para una estimación", "Quick picks":"Atajos", "Quick minutes":"Minutos rápidos", "Fewer workouts per week":"Menos entrenamientos por semana", "More workouts per week":"Más entrenamientos por semana", "Workouts per week":"Entrenamientos por semana",
   "Can't see your logs yet · Not medical advice":"Aún no ve tus registros · No es consejo médico", "WL Coach is thinking":"WL Coach está pensando", "Ask a training or food question to start.":"Haz una pregunta de entrenamiento o comida para empezar.", "Suggested questions":"Preguntas sugeridas",
-  "Smooth":"Suave", "Smooth glide":"Deslizamiento suave", "Bouncy spring":"Rebote elástico", "Reduced (instant)":"Reducido (instantáneo)", "Try this motion":"Probar este movimiento", "Frosted":"Esmerilado", "Balanced":"Equilibrado", "Solid":"Sólido", "Today's calories":"Calorías de hoy", "Nothing logged yet today":"Nada registrado hoy", "Opacity presets":"Ajustes de opacidad",
+  "Smooth":"Suave", "Smooth glide":"Deslizamiento suave", "Bouncy spring":"Rebote elástico", "Reduced (instant)":"Reducido (instantáneo)", "Try this motion":"Probar este movimiento", "Replay motion":"Repetir movimiento", "Motion is off":"El movimiento está desactivado", "Frosted":"Esmerilado", "Balanced":"Equilibrado", "Solid":"Sólido", "Today's calories":"Calorías de hoy", "Nothing logged yet today":"Nada registrado hoy", "Opacity presets":"Ajustes de opacidad",
   "Bouncy adds the spring animations. Smooth keeps the motion but glides, with no spring. Reduced turns them off, and your device's own \"reduce motion\" setting always wins.":"Animado añade movimientos elásticos. Suave mantiene el movimiento pero se desliza, sin rebote. Reducido los desactiva, y el ajuste de \"reducir movimiento\" de tu dispositivo siempre manda.",
   "Quick setup: tap to fill in":"Configuración rápida: toca para completar", "Quick setup":"Configuración rápida", "Add name":"Añadir nombre", "Add age":"Añadir edad", "Add sex":"Añadir sexo", "Add height":"Añadir estatura", "Add weight":"Añadir peso",
   "What should I eat after a workout?":"¿Qué debo comer después de entrenar?", "Best West African high-protein breakfast?":"¿Cuál es un buen desayuno alto en proteína de África Occidental?", "Sore legs after soccer: stretch or rest?":"Piernas doloridas tras jugar al fútbol: ¿estirar o descansar?", "How much water should I drink?":"¿Cuánta agua debo beber?"
@@ -12851,12 +12997,12 @@ function toggleNavGroup(id){
 }
 // 8.6.4: each page has its own colour, shown only while you are on it (icon, a 3px edge and a faint tint), so the menu stays quiet.
 // [light, dark]: the light values keep 3:1 for the icon on the tint (Snacks and Achievements are a little deeper than first drawn).
-const NAV_VIBE = { heartecg:["#E11D48","#FB7185"], apple:["#059669","#34D399"], cookie:["#DD4F06","#FB923C"], dumbbell:["#2563EB","#60A5FA"],
-  chefhat:["#0D9488","#2DD4BF"], globe:["#C2410C","#FDBA74"], compass:["#7C3AED","#A78BFA"], grid:["#0284C7","#38BDF8"],
+const NAV_VIBE = { heartecg:["#E11D48","#FB7185"], utensils:["#059669","#34D399"], chocobar:["#DD4F06","#FB923C"], dumbbell:["#2563EB","#60A5FA"],
+  chefhat:["#0D9488","#2DD4BF"], globe:["#C2410C","#FDBA74"], whistle:["#7C3AED","#A78BFA"], grid:["#0284C7","#38BDF8"], folderheart:["#0284C7","#38BDF8"],
   medal:["#C26A05","#FBBF24"], gradcap:["#4F46E5","#818CF8"], crown:["#B45309","#FCD34D"], gear:["#334155","#E2E8F0"] };
 const navVibe = ic => NAV_VIBE[ic] ? `--nv:${NAV_VIBE[ic][0]};--nv-d:${NAV_VIBE[ic][1]}` : "";
 // The icon key of the row for the page you are on inside a group, so a shut group can show that page's colour.
-const NAV_ROUTE_IC = { nutrition:"apple", snacks:"cookie", workouts:"dumbbell", recipes:"chefhat", culture:"globe", health:"grid", browse:"grid", cat:"grid", metric:"grid", awards:"medal" };
+const NAV_ROUTE_IC = { nutrition:"utensils", snacks:"chocobar", workouts:"dumbbell", recipes:"chefhat", culture:"globe", health:"folderheart", browse:"grid", cat:"grid", metric:"grid", awards:"medal" };
 function sideNav(){
   const link = (href, on, ic, grad, label0, label = tr(label0)) => `<a href="${href}" data-anim="${ic}" data-label="${esc(label)}" title="${esc(label)}" style="${navVibe(ic)}"${on ? ' aria-current="page"' : ""}>${siTile(grad, cicon(ic, "#fff", 22, UI.animIcon === ic && UI.motionOk !== false ? "zap" : ""))}<span>${label}</span></a>`;
   const premOn = typeof isPremium === "function" && isPremium();
@@ -12904,13 +13050,13 @@ function sideNav(){
     </div>`;
   };
   const groupsHTML =
-    group("log", "Log", cicon("journal", "#fff", 22), SI_GRAD.meals, link("#/nutrition", UI.route === "nutrition", "apple", SI_GRAD.meals, "Meals")
-      + link("#/snacks", UI.route === "snacks", "cookie", SI_GRAD.snacks, "Snacks")
+    group("log", "Log", cicon("journal", "#fff", 22), SI_GRAD.meals, link("#/nutrition", UI.route === "nutrition", "utensils", SI_GRAD.meals, "Meals")
+      + link("#/snacks", UI.route === "snacks", "chocobar", SI_GRAD.snacks, "Snacks")
       + link("#/workouts", UI.route === "workouts", "dumbbell", SI_GRAD.workouts, "Workouts & imports"))
-    + group("plan", "Plan", cicon("calcheck", "#fff", 22), SI_GRAD.recipes, link("#/recipes", UI.route === "recipes", "chefhat", SI_GRAD.recipes, "Recipes & meal plans")
+    + group("plan", "Plan", cicon("notepen", "#fff", 22), SI_GRAD.recipes, link("#/recipes", UI.route === "recipes", "chefhat", SI_GRAD.recipes, "Recipes & meal plans")
       + link("#/culture", UI.route === "culture", "globe", SI_GRAD.culture, "Food culture"))
-    + link("#/coach", UI.route === "coach", "compass", SI_GRAD.coach, "Coach")
-    + group("progress", "Progress", cicon("trendup", "#fff", 22), SI_GRAD.health, link("#/health", inHealth, "grid", SI_GRAD.health, "Health data")
+    + link("#/coach", UI.route === "coach", "whistle", SI_GRAD.coach, "Coach")
+    + group("progress", "Progress", cicon("trendup", "#fff", 22), SI_GRAD.health, link("#/health", inHealth, "folderheart", SI_GRAD.health, "Health data")
       + link("#/awards", UI.route === "awards", "medal", SI_GRAD.awards, "Achievements & Goals"))
     + link("#/learn", UI.route === "learn", "gradcap", SI_GRAD.coach, "Learn");
   const tail = `<div class="navgrp navgrp-static navgrp-tail" data-grp="more"><div class="navgrp-items">${premHub}
@@ -12940,7 +13086,7 @@ function bottomBarHTML(){
     return `<button type="button" class="bb-item${on ? " on" : ""}" data-act="sheet" data-v="${id}" aria-haspopup="dialog" aria-expanded="false">${icon(ic, "", 22)}<span>${esc(tr(label))}</span></button>`;
   };
   const lnk = (href, on, ic, label) => `<a class="bb-item" href="${href}"${on ? ' aria-current="page"' : ""}>${icon(ic, "", 22)}<span>${esc(tr(label))}</span></a>`;
-  return `<nav class="bottombar" aria-label="${esc(tr("Mobile navigation"))}">${lnk("#/home", r === "home", "home", "Today")}${btn("log", "Log", "journal")}${btn("plan", "Plan", "calcheck")}${lnk("#/coach", r === "coach", "compass", "Coach")}${btn("more", "More", "menu")}</nav>`;
+  return `<nav class="bottombar" aria-label="${esc(tr("Mobile navigation"))}">${lnk("#/home", r === "home", "home", "Today")}${btn("log", "Log", "journal")}${btn("plan", "Plan", "notepen")}${lnk("#/coach", r === "coach", "whistle", "Coach")}${btn("more", "More", "menu")}</nav>`;
 }
 function openNavSheet(id, trigger){
   const [title, rows] = NAV_SHEETS[id] || NAV_SHEETS.more;
@@ -13466,7 +13612,7 @@ function nutritionView(p){
         <div class="nl-chips full"><button type="button" class="chip nl-chip" data-act="off-open" aria-expanded="${!!UI.offOpen}" aria-controls="off-panel">${WLA.lang === "es" ? "Buscar más alimentos" : "Search more foods"}</button></div>
         ${UI.offOpen ? offPanel(p) : ""}
         ${UI.offNote ? `<p class="small muted full" role="status">${esc(UI.offNote)}</p>` : ""}
-        ${prem ? `<div class="nl-chips"><button type="button" class="chip nl-chip" data-act="nl-photo">${icon("camera","",15)} From a photo</button><input type="file" id="meal-shot-in" accept="image/*" capture="environment" hidden><a class="chip nl-chip" href="#/premium/restaurant">${icon("food","",15)} Eating out</a></div>` : ""}
+        ${prem ? `<div class="nl-chips"><button type="button" class="chip nl-chip" data-act="nl-photo">${icon("imagedown","",15)} From a photo</button><input type="file" id="meal-shot-in" accept="image/*" capture="environment" hidden><a class="chip nl-chip" href="#/premium/restaurant">${icon("food","",15)} Eating out</a></div>` : ""}
         <div class="nl-calw"><label class="f" for="m-cal">Calories</label><div class="nl-calbox"><input type="number" id="m-cal" min="0" max="5000" value="${UI.prefill?.cal ?? ""}" placeholder="From catalog"><button type="button" class="nl-guess" data-act="mb-guess" aria-label="${esc(tr("Guess the calories"))}">${icon("spark","",14)} ${esc(tr("Guess"))}</button></div></div>
         <label class="f">Portion<select id="m-portion">${opt([["1","Regular portion"],["0.5","Half portion"],["0.75","Smaller portion"],["1.5","Large portion"],["2","Double portion"]], "1")}</select></label>
       </div>
@@ -13645,9 +13791,18 @@ function workoutsView(p){
     <section class="card"><div class="eyebrow">Manual entry</div><h3>Log a workout</h3>
       <div class="form">
         <div class="f full" role="group" aria-label="Activity"><span>Activity</span>
-          ${(() => { const cur = UI.prefillW?.type || UI.pickAct || "strength"; const ca = ACT[cur] || ACTIVITIES[0];
-            return UI.actOpen ? `${ACT_GROUPS.map(([g, gn]) => `<div class="actgroup" role="group" aria-label="${esc(gn)}"><div class="actgh">${esc(gn)}</div><span class="actpick">${ACTIVITIES.filter(a => a.g === g).map(a => `<button type="button" class="actbtn" data-act="pick-act" data-v="${a.k}" aria-pressed="${(UI.prefillW?.type || UI.pickAct || "strength") === a.k}" title="${esc(a.n)}">${wicon(a.k, 40)}<span class="tiny">${esc(a.n)}</span></button>`).join("")}</span></div>`).join("")}<button type="button" class="btn sm" data-act="act-toggle" aria-expanded="true">Done</button>` : `<div class="actcur">${wicon(ca.k, 40)}<b class="grow">${esc(ca.n)}</b><button type="button" class="btn sm" data-act="act-toggle" aria-expanded="false">Change</button></div><div class="actquick" role="group" aria-label="Quick picks">${quickActs(cur).map(a => `<button type="button" class="chip actq" data-act="pick-act" data-v="${a.k}">${wicon(a.k, 22)}<span>${esc(a.n)}</span></button>`).join("")}</div>`; })()}
-          <select id="w-type" class="visually-tight" aria-label="Activity">${opt(ACTIVITIES.map(a=>[a.k,a.n]), UI.prefillW?.type || UI.pickAct || "strength")}</select></div>
+          ${(() => { const cur = UI.prefillW?.type || UI.pickAct || "strength"; const kgW = latestWeightKg(p);
+            const shown = M3_ACTS.includes(cur) || !ACT[cur] ? M3_ACTS : [...M3_ACTS, cur];
+            const chip = k => { const on = k === cur; return `<button type="button" class="m3-chip" role="radio" aria-checked="${on}" tabindex="${on ? 0 : -1}" data-act="pick-act" data-v="${k}">${on ? `<span class="m3-chk" aria-hidden="true">${icon("check","",16)}</span>` : wicon(k, 22)}<span>${esc(ACT[k].n)}</span></button>`; };
+            return `<div class="m3-chips" role="radiogroup" aria-label="Activity">${shown.map(chip).join("")}
+              <div class="m3-more">
+                <button type="button" class="m3-chip tonal" data-act="act-more" aria-haspopup="dialog" aria-expanded="false" aria-controls="act-menu"><span>More</span><span class="m3-n">+${ACTIVITIES.length - M3_ACTS.length}</span>${icon("chevdown","m3-chev",14)}</button>
+                <div class="m3-menu" id="act-menu" role="dialog" aria-label="Search all ${ACTIVITIES.length} activities">
+                  <div class="m3-search"><input type="search" id="act-q" placeholder="Search ${ACTIVITIES.length} activities" aria-label="Search activities" autocomplete="off"></div>
+                  <div class="m3-list">${ACT_GROUPS.map(([g, gn]) => `<div class="m3-cat actgh" data-g="${g}">${esc(gn)}</div>${ACTIVITIES.filter(a => a.g === g).map(a => `<button type="button" class="m3-opt actopt" data-act="pick-act" data-v="${a.k}" data-q="${esc((a.n + " " + gn).toLowerCase())}" aria-pressed="${a.k === cur}">${wicon(a.k, 22)}<span class="grow">${esc(a.n)}</span><span class="m3-met">${workoutKcal({ type: a.k, minutes: 60 }, kgW).toLocaleString()} cal/hr</span></button>`).join("")}`).join("")}
+                    <div class="m3-none" hidden>No activities match</div></div>
+                </div></div></div>`; })()}
+          <select id="w-type" class="wl-native" data-noenhance aria-label="Activity" tabindex="-1" aria-hidden="true">${opt(ACTIVITIES.map(a=>[a.k,a.n]), UI.prefillW?.type || UI.pickAct || "strength")}</select></div>
         <label class="f">Minutes<input type="number" id="w-min" min="1" max="600" value="${UI.wDraft?.minutes ?? UI.prefillW?.minutes ?? ""}" placeholder="45"></label>
         <label class="f">Date<input type="date" id="w-d" value="${esc(UI.wDraft?.date || today())}" max="${today()}"></label>
         <label class="f">Calories (optional)<input type="number" id="w-cal" min="0" max="5000" value="${UI.wDraft?.cal ?? ""}" placeholder="Estimated if blank"></label>
@@ -13874,7 +14029,7 @@ function snacksView(p){
     : `Showing ${list.length} snack${list.length === 1 ? "" : "s"} in ${all ? "all regions" : regName}${noAl ? " · no allergens listed" : ""}`;
   const pill = es ? `${log.length} registrado${log.length === 1 ? "" : "s"} · ${logCal.toLocaleString("es")} cal` : `${log.length} logged · ${logCal.toLocaleString()} cal`;
   return `
-  <section class="card cathead" style="--cc:var(--c-snack)">${cicon("cookie","var(--c-snack)",44)}<div><h2>Snacks</h2><p class="small muted">${log.length ? (es ? `${logCal.toLocaleString("es")} cal de ${log.length} bocadillo${log.length===1?"":"s"} hoy` : `${logCal.toLocaleString()} cal from ${log.length} snack${log.length===1?"":"s"} today`) : tr("Nothing logged yet today")}</p></div></section>
+  <section class="card cathead" style="--cc:var(--c-snack)">${cicon("chocobar","var(--c-snack)",44)}<div><h2>Snacks</h2><p class="small muted">${log.length ? (es ? `${logCal.toLocaleString("es")} cal de ${log.length} bocadillo${log.length===1?"":"s"} hoy` : `${logCal.toLocaleString()} cal from ${log.length} snack${log.length===1?"":"s"} today`) : tr("Nothing logged yet today")}</p></div></section>
   <div class="grid g2">
     <section class="card" id="snack-today" tabindex="-1"><div class="setrow"><div class="setlabel"><div class="eyebrow">Separate from meals</div><h2 style="margin-top:4px">Today's snacks</h2></div><span class="num mid">${logCal} <span class="small muted">cal</span></span></div>
       ${log.length ? `<div class="list">${log.map(s => `<div class="li"><span class="grow">${esc(s.name)} <span class="muted small">× ${s.qty||1}</span></span><span class="tab">${s.cal} cal</span><button class="btn sm ghost" data-act="del-snack" data-id="${s.id}" aria-label="Delete">${icon("x")}</button></div>`).join("")}</div>` : `<div class="empty small">Nothing logged yet. Pick from the list or add your own.</div>`}
@@ -14440,12 +14595,49 @@ function accentSwatchHTML(k, l, c, cur){
   return `<button type="button" class="swatch-lg${dyn ? " dyn" : ""} ${checkCls}" style="--sw:${esc(c)}"
     data-act="look-accent" data-v="${k}" aria-pressed="${pressed}" aria-label="${esc(l)}" title="${esc(l)}">${icon("check","",18)}</button>`;
 }
+// ---- compact typography row (8.6.24) ----
+// The live preview opens while you change the size or typeface and folds away after 3 s (it stays open under the pointer).
+let tsPrevT = 0;
+function tsPreview(){
+  const d = document.getElementById("ui-ts-drawer"); if (!d) return;
+  d.classList.add("open"); clearTimeout(tsPrevT);
+  if (!d.matches(":hover")) tsPrevT = setTimeout(() => document.getElementById("ui-ts-drawer")?.classList.remove("open"), 3000);
+}
+function aprClose(){
+  document.querySelectorAll(".fpick.open").forEach(b => { b.classList.remove("open"); b.querySelector(".fpick-btn")?.setAttribute("aria-expanded", "false"); });
+  document.querySelectorAll(".apr-i.open").forEach(b => { b.classList.remove("open"); b.setAttribute("aria-expanded", "false"); });
+}
+document.addEventListener("click", e => { if (!e.target.closest?.(".fpick, .apr-i")) aprClose(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") aprClose(); });
+// 8.6.30: the activity "More" menu closes on an outside click or Escape, its search filters in place, and the chip and segment groups move with the arrow keys.
+function actMoreClose(){ document.querySelectorAll(".m3-more.open").forEach(m => { m.classList.remove("open"); m.querySelector(".m3-chip")?.setAttribute("aria-expanded", "false"); }); }
+document.addEventListener("click", e => { if (!e.target.closest?.(".m3-more")) actMoreClose(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { const o = document.querySelector(".m3-more.open .m3-chip"); actMoreClose(); o?.focus(); } });
+document.addEventListener("input", e => { const q = e.target.closest?.("#act-q"); if (!q) return; const v = q.value.trim().toLowerCase(), list = q.closest(".m3-menu").querySelector(".m3-list"); let any = false;
+  list.querySelectorAll(".m3-opt").forEach(o => { const hit = !v || o.dataset.q.includes(v); o.hidden = !hit; any = any || hit; });
+  list.querySelectorAll(".m3-cat").forEach(c => { let n = c.nextElementSibling, show = false; while (n && n.classList.contains("m3-opt")) { if (!n.hidden) show = true; n = n.nextElementSibling; } c.hidden = !show; });
+  list.querySelector(".m3-none").hidden = any; });
+document.addEventListener("keydown", e => {
+  if (!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) return;
+  const cur = e.target.closest?.('.m3-chips > [role="radio"], .m3-seg > [role="radio"]'); if (!cur) return;
+  const all = [...cur.parentElement.querySelectorAll(':scope > [role="radio"]')], i = all.indexOf(cur);
+  const next = all[(i + (e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : all.length - 1)) % all.length]; if (!next || next === cur) return;
+  e.preventDefault(); const v = next.dataset.v, a = next.dataset.act; next.click();
+  document.querySelector(`[data-act="${a}"][data-v="${v}"][role="radio"]`)?.focus();
+});
+document.addEventListener("mouseover", e => { if (e.target.closest?.("#ui-ts-drawer")) clearTimeout(tsPrevT); });
+document.addEventListener("mouseout", e => { const d = e.target.closest?.("#ui-ts-drawer"); if (d && !d.contains(e.relatedTarget)) tsPreview(); });
+function aprInfo(label, tip){
+  return `<button type="button" class="apr-i" data-act="apr-tip" aria-label="${esc(label)}" aria-expanded="false"><i aria-hidden="true">i</i><span class="apr-tipbox" role="tooltip">${esc(tip)}</span></button>`;
+}
+// 8.6.24: one compact row. A button shows the chosen typeface and opens a short list (replaces the grid of eight cards).
+const FONT_TAGS = { atkinson:"Readable", lora:"Editorial", dyslexic:"Readable" };
 function fontPicker(p){
   const cur = FONTS.some(f => f[0] === p.look?.font) ? p.look.font : "system";
-  return `<div class="setgroup"><div class="setlabel">${tr("Typeface")}</div>
-    <div class="font-grid" role="radiogroup" aria-label="${esc(tr("Typeface"))}">${FONTS.map(([k,l,stack]) => `<button type="button" class="font-card" role="radio" aria-checked="${cur===k}" data-act="look-font" data-v="${k}" style="font-family:${esc(stack)}">
-      <b>${esc(l)}</b><span class="fc-sample">Eat well, move well</span>${cur===k ? `<i class="fc-tick" aria-hidden="true">${icon("check","",14)}</i>` : ""}</button>`).join("")}</div>
-    <span class="tiny muted">Applies everywhere in the app. Atkinson Hyperlegible and OpenDyslexic are built for easier reading; Lora is a serif for a softer, editorial feel.</span></div>`;
+  const now = FONTS.find(f => f[0] === cur);
+  return `<div class="apr-row"><div class="apr-rl"><span id="apr-font-l">${tr("Typeface")}</span>${aprInfo("About typefaces", "Applies everywhere in the app. Atkinson Hyperlegible and OpenDyslexic are built for easier reading; Lora is a serif for a softer, editorial feel.")}</div>
+    <div class="fpick"><button type="button" class="fpick-btn" data-act="font-menu" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="apr-font-l" style="font-family:${esc(now[2])}"><span>${esc(now[1])}</span>${icon("chevD","",14)}</button>
+      <div class="fpick-menu" role="listbox" aria-label="${esc(tr("Typeface"))}">${FONTS.map(([k,l,stack]) => `<button type="button" class="fopt" role="option" aria-selected="${cur===k}" data-act="look-font" data-v="${k}"><span style="font-family:${esc(stack)}">${esc(l)}</span><span class="fopt-r">${FONT_TAGS[k] ? `<span class="fopt-tag">${FONT_TAGS[k]}</span>` : ""}<span class="fopt-tick">${cur===k ? icon("check","",14) : ""}</span></span></button>`).join("")}</div></div></div>`;
 }
 
 // v12.0: Dynamic Type-style text size. One slider re-scales every text style in the app at once
@@ -14461,18 +14653,16 @@ function textSizeRow(p){
   const idx = textSizeStep(p);
   const step = TEXT_SIZES[idx];
   const label = idx === 3 ? `${step[1]} (Default)` : step[1];
-  return `<div class="setgroup"><div class="setlabel apr-lbl"><span>${tr("Text size")}</span><span class="apr-chip" id="ui-ts-label">${esc(label)}</span></div>
+  return `<div class="apr-row apr-ts"><div class="apr-top2"><div class="apr-rl"><label for="ui-ts">${tr("Text size")}</label>${aprInfo("About text size", "Scales every piece of text in the app together, the same way Apple's Dynamic Type works -- layout and spacing stay put, only text grows or shrinks.")}</div>
+      <div class="apr-rr"><span class="apr-chip" id="ui-ts-label">${esc(label)}</span><button class="btn sm ghost" type="button" data-act="ts-reset"${idx === 3 && !allowAX ? " hidden" : ""}>Reset</button></div></div>
     <div class="tsrow">
       <span class="ts-a sm" aria-hidden="true">Aa</span>
-      <input type="range" id="ui-ts" min="0" max="${maxIdx}" step="1" value="${Math.min(idx, maxIdx)}" aria-label="Text size" aria-valuemin="0" aria-valuemax="${maxIdx}" aria-valuenow="${Math.min(idx, maxIdx)}" aria-valuetext="${esc(label)}">
+      <input type="range" id="ui-ts" min="0" max="${maxIdx}" step="1" value="${Math.min(idx, maxIdx)}" style="--pct:${maxIdx ? Math.min(idx, maxIdx) / maxIdx * 100 : 0}%" aria-label="Text size" aria-valuemin="0" aria-valuemax="${maxIdx}" aria-valuenow="${Math.min(idx, maxIdx)}" aria-valuetext="${esc(label)}">
       <span class="ts-a lg" aria-hidden="true">Aa</span>
-      <button class="btn sm" type="button" data-act="ts-reset">Reset</button>
     </div>
-    <div class="tspreview" id="ui-ts-preview" style="font-size:calc(17px * ${step[2]})">The quick brown fox jumps over the lazy dog.</div>
-    <div class="setrow" style="margin-top:2px">
-      <span class="tiny muted">Scales every piece of text in the app together, the same way Apple's Dynamic Type works -- layout and spacing stay put, only text grows or shrinks.</span>
-      <label class="tiny muted ts-ax-label"><input type="checkbox" data-act="ts-ax-toggle" ${allowAX ? "checked" : ""}> Larger accessibility sizes</label>
-    </div></div>`;
+    <div class="ts-drawer" id="ui-ts-drawer" aria-live="polite"><div class="ts-drawer-in"><div class="tspreview" id="ui-ts-preview" style="font-size:calc(17px * ${step[2]})">The quick brown fox jumps over the lazy dog.</div></div></div></div>
+  <div class="apr-row"><span class="apr-rl" id="ts-ax-l">Larger accessibility sizes</span>
+    <button type="button" class="sw setctl" role="switch" aria-checked="${allowAX}" aria-labelledby="ts-ax-l" data-act="ts-ax-toggle"></button></div>`;
 }
 
 // =================== SETTINGS ===================
@@ -14523,11 +14713,11 @@ function settingsView(p){
     <section class="card apr-card" aria-labelledby="apr-h3"><h3 class="apr-h" id="apr-h3">Glass &amp; motion</h3>
       ${glassPreview(p)}
       ${opacityRow(p)}
-      <div class="setgroup"><div class="setlabel">${tr("Motion")}</div>
-        <div class="seg" role="group" aria-label="Motion"><button data-act="look-motion" data-v="full" aria-pressed="${(p.look?.motion||"full")==="full"}">Bouncy</button><button data-act="look-motion" data-v="smooth" aria-pressed="${p.look?.motion==="smooth"}">Smooth</button><button data-act="look-motion" data-v="reduced" aria-pressed="${p.look?.motion==="reduced"}">Reduced</button></div>
+      <div class="setgroup">${gmLabel("motion", tr("Motion"))}
+        ${(() => { const m = p.look?.motion || "full", at = ["full","smooth","reduced"].indexOf(m), off = m === "reduced" || (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches);
+          return `<div class="gm-track" role="group" aria-label="Motion" style="--choice:${Math.max(at, 0)}"><button type="button" class="chip" data-act="look-motion" data-v="full" aria-pressed="${m==="full"}">Bouncy</button><button type="button" class="chip" data-act="look-motion" data-v="smooth" aria-pressed="${m==="smooth"}">Smooth</button><button type="button" class="chip" data-act="look-motion" data-v="reduced" aria-pressed="${m==="reduced"}">Reduced</button></div>
         <span class="tiny muted">Bouncy adds the spring animations. Smooth keeps the motion but glides, with no spring. Reduced turns them off, and your device's own "reduce motion" setting always wins.</span>
-        <div class="mo-demo"><span class="mo-track" aria-hidden="true"><span class="mo-puck" id="mo-puck">${icon("chevR","",14)} ${esc(tr(MOTION_NAMES[p.look?.motion || "full"] || MOTION_NAMES.full))}</span></span>
-          <button type="button" class="btn sm" data-act="mo-test">Try this motion</button></div></div>
+        <button type="button" class="btn sm gm-replay" data-act="mo-replay"${off ? " disabled" : ""}>${tr(off ? "Motion is off" : "Replay motion")}</button>`; })()}</div>
     </section>
     ${reviewBar(p)}
   </div>`;
@@ -14557,8 +14747,12 @@ function settingsView(p){
 <section class="card" id="food-focus">
     <h2>Food focus</h2>
     <p class="small muted">Sets the mix of dishes in meal plans and daily picks. The recipe library always shows everything.</p>
-    <div class="seg" role="group" aria-label="Food focus">${Object.entries(FOCUS).map(([k,f]) => `<button data-act="focus" data-v="${k}" aria-pressed="${(p.focus||"west")===k}">${f.label}</button>`).join("")}</div>
-    <p class="tiny muted tab">West Africa ${Math.round(mixOf(p).west*100)}% · rest of Africa ${Math.round(mixOf(p).africa*100)}% · rest of the world ${Math.round(mixOf(p).world*100)}% · ${DISHES.length} dishes from ${new Set(DISHES.map(d=>d.r)).size} regions</p>
+    ${(() => { const cur = p.focus || "west", m = mixOf(p), pc = n => Math.round(n * 100);
+      return `<div class="m3-seg" role="radiogroup" aria-label="Food focus">${Object.entries(FOCUS).map(([k,f]) => `<button type="button" role="radio" data-act="focus" data-v="${k}" aria-checked="${cur === k}" tabindex="${cur === k ? 0 : -1}"><span class="m3-chk" aria-hidden="true">${icon("check","",15)}</span><span>${f.label}</span></button>`).join("")}</div>
+      <div class="m3-mix">
+        <div class="m3-bar" role="img" aria-label="Dish mix: West Africa ${pc(m.west)}%, rest of Africa ${pc(m.africa)}%, rest of the world ${pc(m.world)}%"><i style="width:${pc(m.west)}%;background:var(--c-nutrition)"></i><i style="width:${pc(m.africa)}%;background:var(--c-coach)"></i><i style="width:${pc(m.world)}%;background:#6366F1"></i></div>
+        <div class="m3-foot"><div class="m3-leg"><span><i style="background:var(--c-nutrition)"></i>West Africa <b class="tab">${pc(m.west)}%</b></span><span><i style="background:var(--c-coach)"></i>Rest of Africa <b class="tab">${pc(m.africa)}%</b></span><span><i style="background:#6366F1"></i>Rest of the world <b class="tab">${pc(m.world)}%</b></span></div>
+          <span class="m3-tonal tab">${DISHES.length} dishes · ${new Set(DISHES.map(d=>d.r)).size} regions</span></div></div>`; })()}
   </section>`,
     household: `<section class="card">
     <div class="setrow"><div class="setlabel"><div class="eyebrow">Household</div><h2 style="margin-top:4px">Profiles</h2></div><button class="btn primary setctl" data-act="new-profile">${icon("plus")} Add a profile</button></div>
@@ -14610,7 +14804,7 @@ function settingsView(p){
     <p class="small muted">Each of these asked you once, the first time you tried to use it. Turn any of them back off here — the feature stops immediately and asks again next time.</p>
     ${typeof consentCenter === "function" ? consentCenter(p) : ""}
   </section>`,
-    about: `${typeof tourGuideCard === "function" ? tourGuideCard() : ""}${typeof diagCard === "function" ? diagCard() : ""}<section class="card">
+    about: `${typeof tourGuideCard === "function" ? tourGuideCard() : ""}<section class="card">
     <h2>Your data</h2>
     <div class="stats">${(() => { const c = k => entries(k).length; const vd = Object.values(S.logs[p.id] || {}).reduce((a, L) => a + Object.keys(L.vitals || {}).length, 0); const size = new Blob([JSON.stringify({ profiles:S.profiles, logs:S.logs })]).size;
       return [["Meals", c("meals")],["Snacks", c("snacks")],["Workouts", c("workouts")],["Weigh-ins", c("weights")],["Days of vitals", vd],["Profiles", S.profiles.length],["Stored size", size > 1048576 ? `${round(size/1048576,1)} MB` : `${Math.max(1, Math.round(size/1024))} KB`]].map(([l, v]) => `<div><span class="tiny muted">${l}</span><b>${v}</b></div>`).join(""); })()}</div>
@@ -14629,7 +14823,8 @@ function settingsView(p){
       <li><b>Dish calories</b> are estimates for typical home recipes and portions. For exact values, check ingredients in <a href="https://fdc.nal.usda.gov" target="_blank" rel="noopener">USDA FoodData Central</a>.</li>
     </ul>
     <p class="tiny faint">Whole Life Hub is for personal tracking and isn't medical or nutrition advice.</p>
-  </section>`
+  </section>`,
+    bugs: `${typeof diagCard === "function" ? diagCard() : ""}${faqCard()}`
   };
   return `<div class="set-layout">${rail}<div class="set-body">${sections[tab]}</div></div>`;
 }
@@ -14673,6 +14868,8 @@ document.addEventListener("click", async e => {
     case "ci-st-save": { const p2 = P();
       setDaily(p2, { done: true, intensity: currentIntensity(p2) });
       toast(`Today is ${INTENSITIES.find(i => i[0] === currentIntensity(p2))[1].toLowerCase()}.`); render(); break; }
+    case "wci-exp": { const it = t.closest(".wci-item"); if (it) { const on = it.classList.toggle("is-expanded"); t.setAttribute("aria-expanded", String(on)); } break; }
+    case "wci-all": { const d = document.getElementById("wciMore"); if (d) { const on = d.classList.toggle("is-open"); t.setAttribute("aria-expanded", String(on)); const l = t.querySelector("span"); if (l) l.textContent = on ? "Collapse" : "Show all " + (document.querySelectorAll("#checkin .wci-item").length); } break; }
     case "coach-feel": { const p2 = P(); p2.coach = p2.coach || {}; p2.coach.today = p2.coach.today === t.dataset.v ? null : t.dataset.v;
       saveProfile(); render(); break; }
     case "trophy-pop": { const el = t.querySelector("svg") || t;
@@ -14774,8 +14971,9 @@ document.addEventListener("click", async e => {
     case "ring-day": UI.ringDay = t.dataset.v; render(); document.querySelector(`.rday[data-v="${t.dataset.v}"]`)?.focus(); break;
     case "w-preset": { const i = document.getElementById("w-min"); if (i) { i.value = t.dataset.v; wEstimate(); } break; }
     case "wgoal": { const n = Math.max(1, Math.min(14, (p.workoutGoal || 0) + +t.dataset.d)); if (n !== p.workoutGoal) { p.workoutGoal = n; saveProfile(); render(); } document.querySelector(`[data-act="wgoal"][data-d="${t.dataset.d}"]:not([disabled])`)?.focus(); break; }
-    case "act-toggle": wSaveDraft(); UI.actOpen = !UI.actOpen; render(); document.querySelector('[data-act="act-toggle"]')?.focus(); break;
+    case "act-more": { const m = t.closest(".m3-more"), on = !m.classList.contains("open"); m.classList.toggle("open", on); t.setAttribute("aria-expanded", String(on)); if (on) { const q = m.querySelector("#act-q"); q?.focus({ preventScroll: true }); } break; }
     case "sc-tip": t.closest(".sc")?.classList.toggle("tipon"); break;
+    case "faq-all": UI.faqAll = !UI.faqAll; render(); break;
     case "imp-toggle": wSaveDraft(); UI.impOpen = !UI.impOpen; render(); break;
     case "pg": UI[t.dataset.k] = +t.dataset.v; UI.focus = `pg-${t.dataset.k}-${t.dataset.v}`; render(); break;
     case "dpv": UI.dpv = UI.dpv === t.dataset.id ? null : t.dataset.id; render(); break;
@@ -14845,20 +15043,22 @@ document.addEventListener("click", async e => {
     case "look-save": wlaSave(p); break;
     case "look-discard": wlaDiscard(p); break;
     case "look-scene": case "look-motion": case "look-font": {
-      p.look = { mode:"auto", accent:"blue", motion:"full", font:"system", ...(p.look||{}) }; p.look[a.slice(5)] = t.dataset.v; saveProfile(); render();
+      p.look = { mode:"auto", accent:"blue", motion:"full", font:"system", ...(p.look||{}) }; p.look[a.slice(5)] = t.dataset.v; saveProfile(); render(); if (a === "look-font") { aprClose(); tsPreview(); }
       break;
     }
+    case "font-menu": { const box = t.closest(".fpick"), open = !box.classList.contains("open"); aprClose(); box.classList.toggle("open", open); t.setAttribute("aria-expanded", String(open)); break; }
+    case "apr-tip": { const open = !t.classList.contains("open"); aprClose(); t.classList.toggle("open", open); t.setAttribute("aria-expanded", String(open)); break; }
     case "ts-reset": wlaSetLook(p, { textSize:"l", largerAX:false }); break;
     case "ts-ax-toggle": {
-      wlaSnap(p); p.look = { ...(p.look || {}), largerAX: t.checked };
+      const on = t.getAttribute("aria-checked") !== "true"; wlaSnap(p); p.look = { ...(p.look || {}), largerAX: on };
       // Turning the range back down to "Standard" while sitting on an AX step drops back to
       // xxxLarge (the top of the standard range) rather than silently keeping an AX scale that
       // the UI no longer shows a step for -- same clamp textSizeStep() already applies on read.
-      if (!t.checked && TEXT_SIZES.findIndex(s => s[0] === p.look.textSize) > TEXT_SIZE_STD_MAX) p.look.textSize = TEXT_SIZES[TEXT_SIZE_STD_MAX][0];
+      if (!on && TEXT_SIZES.findIndex(s => s[0] === p.look.textSize) > TEXT_SIZE_STD_MAX) p.look.textSize = TEXT_SIZES[TEXT_SIZE_STD_MAX][0];
       applyTextScale(p); render();
       break;
     }
-    case "pick-act": { wSaveDraft(); UI.pickAct = t.dataset.v; UI.actOpen = false; const sel = document.getElementById("w-type"); if (sel) sel.value = t.dataset.v; render(); break; }
+    case "pick-act": { wSaveDraft(); UI.pickAct = t.dataset.v; actMoreClose(); const sel = document.getElementById("w-type"); if (sel) sel.value = t.dataset.v; render(); break; }
     case "focus": p.focus = t.dataset.v; saveProfile(); render(); toast(`Food focus: ${FOCUS[p.focus].label}`); break;
     case "lock-now": lockNow(); break;
     case "erase-ask": UI.confirmErase = true; render(); break;
@@ -15039,6 +15239,9 @@ document.addEventListener("input", e => {
     t.setAttribute("aria-valuenow", String(idx)); t.setAttribute("aria-valuetext", label);
     const lbl = document.getElementById("ui-ts-label"); if (lbl) lbl.textContent = label;
     const prev = document.getElementById("ui-ts-preview"); if (prev) prev.style.fontSize = `calc(17px * ${step[2]})`;
+    t.style.setProperty("--pct", `${maxIdx ? idx / maxIdx * 100 : 0}%`);
+    tsPreview();
+    const rb = document.querySelector('[data-act="ts-reset"]'); if (rb) rb.hidden = idx === 3 && !allowAX;
     wlaRefreshBar(p); // the review list follows the slider; the profile is written on Save
   }
 });
@@ -16041,7 +16244,7 @@ function photoAiOptIn(kind){
   // 8.6.8: a compact card; the three privacy points sit in a "How privacy works" disclosure, with the key fact kept in view next to the Allow button.
   return `<section class="card shot po-card" id="${kind}-photo-optin">
     <div class="po-row"><div class="po-text">
-      <div class="mhead" style="color:var(--c-food)">${cicon("apple","var(--c-food)",18)}<b>Photo estimate</b></div><h2 style="margin-top:4px">${esc(copy.h)}</h2>
+      <div class="mhead" style="color:var(--c-body)">${cicon("imagedown","var(--c-body)",18)}<b>Photo estimate</b></div><h2 style="margin-top:4px">${esc(copy.h)}</h2>
       <p class="small muted">${esc(copy.d)}</p><p class="small muted">Nothing is sent unless you use this.</p></div>
       <div class="po-act"><button class="btn primary" data-act="photoai-optin">Allow photo estimates</button></div></div>
     <details class="po-how how"><summary>How privacy works</summary>
@@ -16059,7 +16262,7 @@ function foodPhotoCard(p){
   const st = UI.foodShot || {};
   const e = st.est;
   return `<section class="card shot" id="food-photo">
-    <div class="setrow"><div class="setlabel"><div class="mhead" style="color:var(--c-food)">${cicon("apple","var(--c-food)",18)}<b>Photo estimate</b></div>
+    <div class="setrow"><div class="setlabel"><div class="mhead" style="color:var(--c-body)">${cicon("imagedown","var(--c-body)",18)}<b>Photo estimate</b></div>
       <h2 style="margin-top:4px">Snap your plate</h2></div>
       ${UI.visionOk === false ? `<span class="guess setctl">Offline estimate</span>` : ""}</div>
     <p class="small muted">Take a picture of your food and the coach will guess what's on the plate and how many calories it is. It's a guess from a picture, not a measurement. Check it before you log it.</p>
@@ -16268,44 +16471,73 @@ function planDaysHTML(p, pl, live){
 }
 
 // ---------- B3. Weekly check-in ----------
+// 8.6.29: pace rail with a floating pointer, a status pill, three compact metrics, a two-item improve list with a drawer, and icon energy chips.
+const WCI_ENERGY = [["good","Good","#10B981",'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'],
+  ["ok","So-so","#38BDF8",'<path d="M2 12c2.4-3.2 4.8-3.2 7.2 0s4.8 3.2 7.2 0 4-2.5 5.6 0"/>'],
+  ["low","Low","#F59E0B",'<rect x="2" y="7" width="17" height="10" rx="2"/><line x1="22" x2="22" y1="11" y2="13"/><line x1="6" x2="6" y1="11" y2="13"/>'],
+  ["sore","Sore","#F97316",'<path d="M12 3l7.5 3.1v5.4c0 4.8-3.2 8.4-7.5 9.8-4.3-1.4-7.5-5-7.5-9.8V6.1z"/>'],
+  ["short","Short on time","#A78BFA",'<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/>']];
 function checkinCard(p){
   const c = weeklyCheckin(p);
   const pl = c.plan;
-  const pos = pl ? Math.min(100, Math.max(0, Math.round(((c.idx + 1) / pl.days) * 100))) : Math.round((((parseYmd(today()).getDay() + 6) % 7) + 1) / 7 * 100);
+  const dow = (parseYmd(today()).getDay() + 6) % 7;
+  const pos = pl ? Math.min(100, Math.max(0, Math.round(((c.idx + 1) / pl.days) * 100))) : Math.round((dow + 1) / 7 * 100);
   const donePos = c.donePct != null ? Math.min(100, c.donePct * pos / 100) : c.weekPlanned ? Math.min(100, c.doneWeek / c.weekPlanned * 100) : 0;
-  return `<section class="card" id="checkin">
-    <div class="setrow"><div class="setlabel"><div class="eyebrow" style="color:var(--c-coach)">Weekly check-in</div>
-      <h2 style="margin-top:4px">${pl ? `Day ${Math.max(1, c.idx + 1)} of your ${pl.days}-day plan` : `Week of ${fmtDay(c.ws)}`}</h2></div></div>
-    <div class="timeline" role="img" aria-label="${pl ? `You are ${pos}% through the plan and have completed ${c.donePct ?? 0}% of the sessions due` : `You are ${pos}% through this week`}">
-      <i class="fill" style="width:${donePos}%"></i>
-      <span class="mark${pos > 60 ? " right" : ""}" style="left:${pos}%" data-label="Should be here"></span>
+  const done = pl ? (c.doneAll ?? 0) : c.doneWeek, due = pl ? (c.dueWorkouts ?? 0) : c.weekPlanned;
+  const ok = pl ? done >= due : c.doneWeek > 0;
+  const status = pl ? (done >= due ? "On track" : `${due - done} behind`)
+    : c.doneWeek >= c.weekPlanned ? "Weekly target hit" : c.doneWeek > 0 ? `On pace · ${c.weekPlanned - c.doneWeek} to go` : `${c.weekPlanned} session${c.weekPlanned === 1 ? "" : "s"} to go`;
+  const wkDone = new Set(weekWorkouts(p).map(w => w.date));
+  const DN = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const days = DN.map((n, i) => { const d = addDays(c.ws, i); return `<div class="wci-day${i === dow ? " is-today" : ""}${wkDone.has(d) ? " is-done" : ""}"><span class="wci-day-dot" aria-hidden="true"></span><span>${n}</span></div>`; }).join("");
+  const food = Array.from({ length: 7 }, (_, i) => { const d = addDays(today(), i - 6); const on = loggedFood(d); return `<span class="wci-food-dot${on ? " is-logged" : ""}" title="${esc(fmtDay(d))}: ${on ? "food logged" : "not logged"}"></span>`; }).join("");
+  const persona = typeof coachDef === "function" ? coachDef(p).id : "strategist";
+  const rec = (r, i) => { const m = /^(.+?[.!?])\s+(.+)$/s.exec(r); const title = m ? m[1] : r, rest = m ? m[2] : "";
+    return `<div class="wci-item${rest ? "" : " no-more"}"><div class="wci-item__row"${rest ? ` data-act="wci-exp" role="button" tabindex="0" aria-expanded="false"` : ""}>
+      <span class="wci-item__num">${i + 1}</span><span class="wci-item__title">${esc(title)}</span>${rest ? `<span class="wci-expand" aria-hidden="true">${icon("chevdown","",14)}</span>` : ""}</div>
+      ${rest ? `<p class="wci-item__detail">${esc(rest)}</p>` : ""}</div>`; };
+  const top = c.recs.slice(0, 2).map((r, i) => rec(r, i)).join(""), more = c.recs.slice(2).map((r, i) => rec(r, i + 2)).join("");
+  const feel = p.coach?.today;
+  return `<section class="card wci" id="checkin">
+    <div class="wci-head"><div><div class="eyebrow" style="color:var(--c-coach)">Weekly check-in</div>
+      <h2 style="margin-top:4px">${pl ? `Day ${Math.max(1, c.idx + 1)} of your ${pl.days}-day plan` : `Week of ${fmtDay(c.ws)}`}</h2></div>
+      <span class="wci-status ${ok ? "pace" : "behind"}"><i aria-hidden="true"></i>${esc(status)}</span></div>
+    <div class="wci-pace">
+      <div class="wci-rail-wrap"><div class="wci-pointer" style="left:clamp(15%,${pos}%,85%)">Should be here${pl ? "" : ` · ${DN[dow]}`}</div>
+        <div class="wci-track" role="img" aria-label="${pl ? `You are ${pos}% through the plan and have completed ${c.donePct ?? 0}% of the sessions due` : `You are ${pos}% through this week`}">
+          <i class="wci-fill" style="width:${donePos}%"></i><span class="wci-tick" style="left:${pos}%"></span></div></div>
+      <div class="wci-days" aria-label="Workout days this week">${days}</div></div>
+    <div class="wci-metrics">
+      <div class="wci-metric"><span class="wci-lab" style="--cc:var(--c-coach)">Target pace</span>
+        <div class="wci-val">${due}</div>
+        <span class="wci-sub">${pl ? `session${due === 1 ? "" : "s"} due by today` : `session${due === 1 ? "" : "s"} planned`}</span>
+        ${c.calTarget ? `<span class="wci-sub">${c.calTarget.toLocaleString()} cal a day</span>` : ""}
+        ${c.shouldKg != null ? `<span class="wci-sub">about ${fmtWeight(c.shouldKg, p)}</span>` : ""}</div>
+      <div class="wci-metric"><span class="wci-lab" style="--cc:var(${done ? "--c-nutrition" : "--c-activity"})">Logged</span>
+        <div class="wci-val">${done}</div>
+        <span class="wci-sub">${pl ? `of ${due} session${due === 1 ? "" : "s"} so far` : `of ${due} session${due === 1 ? "" : "s"} this week`}</span>
+        ${c.avgCal != null ? `<span class="wci-sub">${c.avgCal.toLocaleString()} cal a day average</span>` : ""}
+        ${c.nowKg != null ? `<span class="wci-sub">${fmtWeight(c.nowKg, p)} at last weigh-in</span>` : ""}</div>
+      <div class="wci-metric"><span class="wci-lab" style="--cc:var(--c-nutrition)">Food tracking</span>
+        <div class="wci-val">${c.loggedDays} / 7</div>
+        <div><div class="wci-food" role="img" aria-label="${c.loggedDays} of the last 7 days have food logged">${food}</div>
+          <span class="wci-sub" style="display:block;margin-top:5px">${c.loggedDays === 0 ? "no food logged yet" : "days logged"}</span></div></div>
     </div>
-    <div class="checkin">
-      <div class="ci-col target"><div class="eyebrow">Where you should be</div>
-        <div class="num">${pl ? `${c.dueWorkouts}` : `${c.weekPlanned}`}</div>
-        <div class="small muted">${pl ? `session${c.dueWorkouts === 1 ? "" : "s"} due by today` : `session${c.weekPlanned === 1 ? "" : "s"} planned this week`}</div>
-        ${c.calTarget ? `<div class="small muted">${c.calTarget.toLocaleString()} cal a day</div>` : ""}
-        ${c.shouldKg != null ? `<div class="small muted">about ${fmtWeight(c.shouldKg, p)}</div>` : ""}</div>
-      <div class="ci-col actual"><div class="eyebrow">Where you are</div>
-        <div class="num">${pl ? `${c.doneAll ?? 0}` : `${c.doneWeek}`}</div>
-        <div class="small muted">${pl ? `session${(c.doneAll ?? 0) === 1 ? "" : "s"} logged` : `logged this week`}</div>
-        ${c.avgCal != null ? `<div class="small muted">${c.avgCal.toLocaleString()} cal a day average</div>` : `<div class="small muted">no food logged yet</div>`}
-        ${c.nowKg != null ? `<div class="small muted">${fmtWeight(c.nowKg, p)} at last weigh-in</div>` : ""}</div>
-      <div class="ci-col gap"><div class="eyebrow">${esc(typeof gapTitle === "function" ? gapTitle(p) : "The gap")}</div>
-        <div class="num">${pl && c.dueWorkouts != null ? (c.doneAll >= c.dueWorkouts ? "On track" : `${c.dueWorkouts - c.doneAll} behind`) : c.doneWeek >= c.weekPlanned ? "On track" : `${c.weekPlanned - c.doneWeek} to go`}</div>
-        <div class="small muted">${c.loggedDays} of the last 7 days ${c.loggedDays === 1 ? "has" : "have"} food logged</div>
-        ${(typeof coachDef === "function" && coachDef(p).id === "motivator") ? `<div class="nextstep">${icon("spark","",14)} <span>${esc(
-          c.loggedDays >= 5 ? "You've logged most days. Want to try keeping that run going tomorrow?"
-          : c.loggedDays > 0 ? "Want to try logging just tomorrow's breakfast? One meal keeps the run alive."
-          : "Want to try logging one meal today? That's the whole next step.")}</span></div>` : ""}</div>
+    ${persona === "motivator" ? `<div class="nextstep">${icon("spark","",14)} <span>${esc(
+      c.loggedDays >= 5 ? "You've logged most days. Want to try keeping that run going tomorrow?"
+      : c.loggedDays > 0 ? "Want to try logging just tomorrow's breakfast? One meal keeps the run alive."
+      : "Want to try logging one meal today? That's the whole next step.")}</span></div>` : ""}
+    <div class="wci-improve">
+      <div class="wci-sec"><div class="wci-sec-l"><h3>${esc(persona === "motivator" ? "What to try next" : persona === "enforcer" ? "Adjustments" : "How you can improve")}</h3><span class="wci-count">${c.recs.length} left</span></div>
+        ${more ? `<button type="button" class="wci-toggle" data-act="wci-all" aria-expanded="false" aria-controls="wciMore"><span>Show all ${c.recs.length}</span>${icon("chevdown","",14)}</button>` : ""}</div>
+      <div class="wci-list">${top}</div>
+      ${more ? `<div class="wci-drawer" id="wciMore"><div class="wci-drawer__in"><div class="wci-list" style="padding-top:8px">${more}</div></div></div>` : ""}
     </div>
-    <div><div class="eyebrow" style="margin-bottom:8px">${esc(typeof coachDef === "function" ? (coachDef(p).id === "motivator" ? "What to try next" : coachDef(p).id === "enforcer" ? "Adjustments" : "How you can improve") : "How you can improve")}</div>
-      <ul class="recs">${c.recs.map((r, i) => `<li><span class="n">${i + 1}</span><span>${esc(r)}</span></li>`).join("")}</ul>
-      ${(typeof coachDef === "function" && coachDef(p).id === "strategist") ? `<div class="coachask">
-        <b>${esc(coachVoice(p).ask)}</b>
-        <div class="chips" data-ring>${[["good","Good"],["ok","So-so"],["low","Low"],["sore","Sore"],["short","Short on time"]]
-          .map(([k, l]) => `<button class="chip${p.coach?.today === k ? " on" : ""}" data-act="coach-feel" data-v="${k}">${l}</button>`).join("")}</div>
-        <span class="tiny muted">${esc(feelAdvice(p))}</span></div>` : ""}</div>
+    ${persona === "strategist" ? `<div class="wci-energy">
+      <div class="wci-energy__head"><h3>${esc(coachVoice(p).ask)}</h3><span class="wci-sub">Scales your next session</span></div>
+      <div class="wci-chips" role="group" aria-label="Energy check-in">${WCI_ENERGY.map(([k, l, col, g]) =>
+        `<button type="button" class="chip wci-chip${feel === k ? " on" : ""}" data-act="coach-feel" data-v="${k}" aria-pressed="${feel === k}" style="--cc:${col}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${g}</svg><span>${l}</span></button>`).join("")}</div>
+      ${feel ? `<div class="wci-banner" role="status" style="--cc:${WCI_ENERGY.find(e => e[0] === feel)?.[2] || "var(--accent)"}">${esc(feelAdvice(p))}</div>` : `<span class="wci-sub" style="display:block;margin-top:10px">${esc(feelAdvice(p))}</span>`}</div>` : ""}
   </section>`;
 }
 
@@ -16916,7 +17148,7 @@ document.addEventListener("input", e => {
 // as a ring), a gradient stroke that sweeps from the metric's dark tone to its light one, a
 // travelling end cap, and the legend beside the dial rather than inside it.
 const RING_DEFS = [
-  { k:"move",  n:"Move",      unit:"cal",  color:"var(--c-nutrition)", c1:"#0E7A3C", c2:"#4CD964", icon:"apple",    href:"#/nutrition",
+  { k:"move",  n:"Move",      unit:"cal",  color:"var(--c-nutrition)", c1:"#0E7A3C", c2:"#4CD964", icon:"sportshoe", href:"#/nutrition",
     get:(p, d) => ({ v: Math.round(intakeOn(d)), goal: p.calorieGoal || suggestedGoal(p) || 0, sub:"eaten" }) },
   { k:"exercise", n:"Exercise", unit:"min", color:"var(--c-activity)", c1:"#B03A00", c2:"#FF9A4D", icon:"dumbbell", href:"#/workouts",
     get:(p, d) => ({ v: entries("workouts", p.id).filter(w => w.date >= weekStart(d) && w.date <= d).reduce((a,w) => a + (w.minutes||0), 0), goal: (p.workoutGoal || 0) * 40, sub:"that week so far" }) },
@@ -18149,6 +18381,8 @@ const WS_HANDLERS = {
     const out = document.getElementById("ui-op-val"); if (out) out.textContent = `${Math.round(o * 100)}%`;
     const gb = document.getElementById("gp-badge"); if (gb) gb.textContent = `${Math.round(o * 100)}% glass`;
     document.querySelectorAll(".op-presets .chip").forEach(c => c.setAttribute("aria-pressed", String(+c.dataset.v === Math.round(o * 100))));
+    const tr3 = document.querySelector(".op-presets"), at = [35, 70, 100].indexOf(Math.round(o * 100));
+    if (tr3) { tr3.toggleAttribute("data-none", at < 0); if (at >= 0) tr3.style.setProperty("--choice", String(at)); }
     clearTimeout(applyOpacity._t); applyOpacity._t = setTimeout(() => saveProfile(), 400);
   }
 };
@@ -18222,19 +18456,21 @@ const WS_HANDLERS = {
   scan(document.body);
 })();
 
+const GM_ICON = { glass:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></svg>', motion:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>' };
+const gmLabel = (k, text) => `<div class="setlabel gm-lbl"><span class="gm-ic" aria-hidden="true">${GM_ICON[k]}</span>${text}</div>`;
 function opacityRow(p){
   const v = Math.round(((p.look?.opacity ?? 1)) * 100);
-  return `<div class="setgroup"><div class="setlabel">Interface opacity</div>
+  const pre = [[35,"Frosted"],[70,"Balanced"],[100,"Solid"]], at = pre.findIndex(x => x[0] === v);
+  return `<div class="setgroup">${gmLabel("glass", tr("Interface opacity"))}
     <div class="oprow">
       ${glassSliderHTML({ id: "ui-op-ws", value: v, min: 35, max: 100, step: 5, label: "Interface opacity", text: `${v}%` })}
       <span class="opval" id="ui-op-val">${v}%</span>
       <button class="btn sm" data-act="op-reset">Reset</button>
     </div>
-    <div class="op-presets" role="group" aria-label="Opacity presets">${[[35,"Frosted"],[70,"Balanced"],[100,"Solid"]].map(([n, l]) => `<button type="button" class="chip" data-act="op-set" data-v="${n}" aria-pressed="${v === n}">${tr(l)} ${n}%</button>`).join("")}</div>
+    <div class="op-presets gm-track" role="group" aria-label="Opacity presets" style="--choice:${Math.max(at, 0)}"${at < 0 ? ' data-none="1"' : ""}>${pre.map(([n, l]) => `<button type="button" class="chip" data-act="op-set" data-v="${n}" aria-pressed="${v === n}">${tr(l)} <small>${n}%</small></button>`).join("")}</div>
     <span class="tiny muted">Sets how see-through the glass is on every panel, card and menu, live. Text stays at full contrast at every setting, so it never becomes hard to read.</span></div>`;
 }
 // 8.6.11: a live preview of the glass: a card over a soft backdrop that follows the slider, holding today's real calorie ring.
-const MOTION_NAMES = { full: "Bouncy spring", smooth: "Smooth glide", reduced: "Reduced (instant)" };
 function glassPreview(p){
   const eaten = intakeOn(today()), goal = p.calorieGoal, v = Math.round((p.look?.opacity ?? 1) * 100), pct = goal ? eaten / goal : 0;
   const line = goal ? `${eaten.toLocaleString()} of ${goal.toLocaleString()} cal` : eaten ? `${eaten.toLocaleString()} cal eaten` : "Nothing logged yet today";
@@ -18245,7 +18481,7 @@ function glassPreview(p){
 // ---- widget layouts (8.2.7): one engine for Summary and every page ----
 // Summary keeps its list in p.widgets, every other page in p.layouts[page]. Both are read and written through wlGet and wlSet,
 // so size, order, hide and add behave the same everywhere. A hidden widget is any widget on that page's list that is not shown.
-const EXTRA_WIDGETS = { meals:{ n:"Today's meals", icon:"apple", color:"var(--c-nutrition)" }, coach:{ n:"Coach", icon:"stopwatch", color:"var(--c-coach)" } };
+const EXTRA_WIDGETS = { meals:{ n:"Today's meals", icon:"utensils", color:"var(--c-nutrition)" }, coach:{ n:"Coach", icon:"whistle", color:"var(--c-coach)" } };
 const DEFAULT_WIDGETS = [{k:"meals",size:"m"},{k:"calories",size:"s"},{k:"estimate",size:"s"},{k:"workouts",size:"s"},{k:"steps",size:"s"},{k:"sleep",size:"s"},{k:"rhr",size:"s"},{k:"coach",size:"m"}];
 const PAGE_WIDGETS = {
   nutrition: ["water","estimate","calories","meals"],
@@ -18464,9 +18700,16 @@ document.addEventListener("click", e => {
   const t = e.target.closest('[data-act="op-set"]'); const p = t && P(); if (!p) return;
   p.look = { ...(p.look || {}), opacity: Math.max(35, Math.min(100, +t.dataset.v || 100)) / 100 }; applyOpacity(p); saveProfile(); render();
 });
-document.addEventListener("click", e => { // Try this motion: slide the puck with the easing and speed the chosen mode uses
-  const t = e.target.closest('[data-act="mo-test"]'); if (!t) return;
-  document.getElementById("mo-puck")?.classList.toggle("shifted");
+let moAnim;
+document.addEventListener("click", e => { // Replay motion: the glass preview card above comes in the way the chosen motion style moves
+  const t = e.target.closest('[data-act="mo-replay"]'); if (!t || t.disabled) return;
+  const card = document.querySelector(".gp-card"); if (!card?.animate) return;
+  moAnim?.cancel();
+  const m = P()?.look?.motion || "full";
+  const start = { transform:"translateY(14px) scale(.985)", opacity:.7 }, end = { transform:"translateY(0) scale(1)", opacity:1 };
+  moAnim = m === "full"
+    ? card.animate([start, { ...end, transform:"translateY(-6px) scale(1.012)", offset:.52 }, end], { duration:540, easing:"cubic-bezier(.2,.65,.28,1)" })
+    : card.animate([start, end], { duration:340, easing:"cubic-bezier(.2,.75,.25,1)" });
 });
 document.addEventListener("input", e => {
   if (e.target.id !== "ui-op") return;
@@ -19142,7 +19385,7 @@ function creditsView(){
 //                           bodyOptIn() in the body-progress file; listed here for completeness)
 function consentCenter(p){
   const row = (on, label, sub, act) => `<div class="setrow"><div class="setlabel"><b>${esc(label)}</b><span class="small muted">${esc(sub)}</span></div>
-    <button class="btn sm${on ? "" : " ghost"}" data-act="${act}" aria-pressed="${!!on}">${on ? "On" : "Off"}</button></div>`;
+    <button type="button" class="sw setctl" role="switch" aria-checked="${!!on}" aria-label="${esc(label)}" data-act="${act}"></button></div>`;
   return `<div class="setgroup"><div class="setlabel">Camera, photo-AI and coach chat permissions</div>
     ${row(!!p.photoAiConsent, "Photo meal logging & equipment photos", "Sends the one photo you choose to Claude for an estimate.", "consent-photoai-toggle")}
     ${row(!!p.foodSearchOk, "Food search (Open Food Facts)", "Sends the words you type in the food search box to world.openfoodfacts.org when you press Search. Nothing else.", "consent-food-toggle")}
@@ -19189,7 +19432,7 @@ function photoSyncCard(){
   const on = S.syncPhotos !== false;
   return `<section class="card" id="sync-photos"><h2>Sync photos</h2>
     <div class="setrow"><div class="setlabel"><b>Copy my photos to my account</b><span class="small muted">Meal, workout and progress photos and your profile picture go to private storage in your account, so they appear on every device you sign in on. Each is shrunk to about 200 KB and has its location data removed before it leaves this device. Only you can open them. Form-check videos are never uploaded. Turn this off to keep photos on this device only; photos already in your account stay there until you delete them.${SB.user ? "" : " This applies once you sign in."}</span></div>
-      <button class="btn sm${on ? "" : " ghost"}" data-act="sync-photos-toggle" aria-pressed="${on}">${on ? "On" : "Off"}</button></div></section>`;
+      <button type="button" class="sw setctl" role="switch" aria-checked="${on}" aria-label="Copy my photos to my account" data-act="sync-photos-toggle"></button></div></section>`;
 }
 function privacyGlance(p){
   const row = (label, val) => `<div class="setrow"><div class="setlabel"><b>${esc(label)}</b></div><span class="small">${val}</span></div>`;
@@ -25104,8 +25347,7 @@ input[type=date]::-webkit-calendar-picker-indicator{opacity:.6}
 
 /* ===================== 8.2.20 MOTION: selection ring, external links, top-right toasts, bell pulse, flip widgets ===================== */
 .seg,.seg-display,[data-ring],.rdays,.pager ul{position:relative}
-.rdays .rday[aria-pressed="true"],.pager .pg.on{border-color:transparent}
-.focus-ring{position:absolute;left:0;top:0;width:var(--w);height:var(--h);translate:var(--x) var(--y);border:1.5px solid var(--gold);pointer-events:none;z-index:1;
+.focus-ring{position:absolute;left:0;top:0;width:var(--w);height:var(--h);translate:var(--x) var(--y);border:1.5px solid transparent;pointer-events:none;z-index:1;
   transition:translate .48s cubic-bezier(.34,1.56,.64,1),width .48s cubic-bezier(.34,1.56,.64,1),height .48s cubic-bezier(.34,1.56,.64,1)}
 .focus-ring.still{transition:none}
 /* 8.3.34: Settings tabs get a sliding pill (replaces the underline); wheel pickers for short lists */
@@ -25618,7 +25860,7 @@ const TOUR_DEFS = {
     { route:"nutrition", card:"Log a meal", title:"Inside the pages you use",
       body:"Premium tools appear where they help. On Meals, subscribers get From a photo and Restaurant mode next to the normal logging buttons." },
     { title:"Still being built",
-      body:"Features that aren't ready yet are hidden from the Premium list. Testers can show them in Settings › Data & about › Diagnostics." }
+      body:"Features that aren't ready yet are hidden from the Premium list. Testers can show them in Settings › Bug reports & FAQs." }
   ]},
   privacy: { name:"Privacy & data", blurb:"Passcode, permissions, export", steps:[
     { route:"settings/privacy", sel:"#security", title:"Passcode",
@@ -25894,7 +26136,7 @@ function tourGuideCard(){
     if (t.disabled !== sel.disabled) t.disabled = sel.disabled;
   }
   function enhanceSelect(sel){
-    if (sel.multiple || sel.size > 1 || sel.hasAttribute("data-wheel")) return;
+    if (sel.multiple || sel.size > 1 || sel.hasAttribute("data-wheel") || sel.hasAttribute("data-noenhance")) return;
     if (coarse()) {
       if (sel._wl) { sel._wl.remove(); sel._wl = null; sel.classList.remove("wl-native"); sel.removeAttribute("aria-hidden"); sel.removeAttribute("tabindex"); }
       return;
@@ -26622,6 +26864,8 @@ h2.sec-title + .mgrid .mhead svg.ci{
 .wl-pill{display:inline-flex;align-items:center;border:1px solid rgba(127,127,127,.4);border-radius:999px;padding:8px 12px;font-size:13px;min-height:44px}
 .prem-stays{align-self:stretch;text-align:left}
 .advice-banner{border:1px solid rgba(127,127,127,.4);border-radius:12px;padding:10px 12px;font-size:13px}
+.faq-grp{margin:16px 0 8px;font-size:15px}
+#faqs .btn{margin-top:14px}
 .prem-faqs{align-self:stretch;text-align:left}
 .wl-faq{border-top:1px solid rgba(127,127,127,.35)}
 .wl-faq summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
@@ -26910,14 +27154,46 @@ html .side .nav a[aria-current="page"]::before,html .side .nav button.prem-trigg
 .apr-val{font-size:calc(13px * var(--text-scale,1));font-weight:600;text-transform:none;letter-spacing:0;color:var(--text)}
 .apr-chip{display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--accent) 14%,var(--surface));color:var(--text);font-size:calc(12px * var(--text-scale,1));font-weight:700;text-transform:none;letter-spacing:0}
 .apr-swatches{gap:8px 12px;padding:0}
-.font-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.font-card{position:relative;display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0;min-height:56px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--raise);color:var(--text);text-align:left;cursor:pointer}
-.font-card b{padding-right:22px;overflow-wrap:anywhere;font-size:calc(13px * var(--text-scale,1));font-weight:700;line-height:1.3}
-.font-card .fc-sample{overflow-wrap:anywhere;font-size:calc(12px * var(--text-scale,1));font-weight:400;line-height:1.3;color:var(--apr-soft)}
-.font-card[aria-checked="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
-.font-card .fc-tick{position:absolute;top:8px;right:8px;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--accent-ink,#fff)}
-.font-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-@media (hover:hover) and (pointer:fine){.font-card:not([aria-checked="true"]):hover{border-color:var(--line2)}}
+.apr-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:16px;border-top:1px solid var(--line)}
+.apr-h + .apr-row{padding-top:0;border-top:0}
+.apr-rl{display:inline-flex;align-items:center;gap:8px;min-width:0;font-size:calc(14px * var(--text-scale,1));font-weight:600}
+.apr-rl label{cursor:pointer}
+.apr-rr{display:inline-flex;align-items:center;gap:8px}
+.apr-ts{flex-direction:column;align-items:stretch;gap:12px}
+.apr-top2{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.apr-i{position:relative;display:inline-grid;place-items:center;flex:none;width:18px;height:18px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--raise);color:var(--muted);cursor:pointer}
+.apr-i i{font-size:11px;font-weight:700;line-height:1}
+.apr-i:hover,.apr-i.open{border-color:var(--accent);color:var(--accent)}
+.apr-tipbox{position:absolute;left:-8px;top:calc(100% + 9px);width:268px;max-width:calc(100vw - 48px);padding:9px 12px;border-radius:11px;background:var(--text);color:var(--surface);font-size:calc(12px * var(--text-scale,1));font-style:normal;font-weight:500;line-height:1.42;text-align:left;box-shadow:var(--shadow);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-5px);transition:opacity .16s ease,transform .18s var(--ease-spring),visibility .16s;z-index:40}
+.apr-i:hover .apr-tipbox,.apr-i:focus-visible .apr-tipbox,.apr-i.open .apr-tipbox{opacity:1;visibility:visible;transform:none}
+.fpick{position:relative;flex:none}
+.fpick-btn{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:var(--raise);color:var(--text);font-size:calc(13.5px * var(--text-scale,1));font-weight:600;cursor:pointer}
+.fpick-btn svg{color:var(--muted);transition:transform .2s var(--ease-spring)}
+.fpick.open .fpick-btn,.fpick-btn:hover{border-color:var(--accent)}
+.fpick.open .fpick-btn svg{transform:rotate(180deg)}
+.fpick-menu{position:absolute;right:0;top:calc(100% + 8px);width:300px;max-width:calc(100vw - 40px);display:flex;flex-direction:column;gap:2px;padding:6px;border-radius:14px;background:var(--surface);border:1px solid var(--line2);box-shadow:var(--shadow);z-index:50;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-6px);transition:opacity .17s ease,transform .2s var(--ease-spring),visibility .17s}
+.fpick.open .fpick-menu{opacity:1;visibility:visible;pointer-events:auto;transform:none}
+.fopt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:8px 10px;border:0;border-radius:10px;background:transparent;color:var(--text);text-align:left;font-size:calc(13.5px * var(--text-scale,1));font-weight:600;cursor:pointer}
+.fopt:hover{background:var(--raise)}
+.fopt[aria-selected="true"]{background:color-mix(in srgb,var(--accent) 12%,var(--surface));color:var(--accent)}
+.fopt-r{display:inline-flex;align-items:center;gap:6px;flex:none}
+.fopt-tag{padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--raise);color:var(--muted);font-family:var(--font,inherit);font-size:calc(10.5px * var(--text-scale,1));font-weight:600;line-height:1.3}
+.fopt-tick{display:inline-grid;place-items:center;width:14px;height:14px}
+/* The typeface list and the tips hang past the card edge, so this card must not clip, and the card holding an open one sits above its neighbours. */
+.apr-card{overflow:visible}
+.apr-card:has(.fpick.open,.apr-i.open,.apr-i:hover,.apr-i:focus-visible){z-index:6}
+/* A plain track with an accent fill and a round thumb, drawn the same in every browser (the default one showed as a white bar with a black block). */
+.tsrow input[type=range]{-webkit-appearance:none;appearance:none;height:5px;min-height:0;padding:0;border-radius:999px;background:linear-gradient(to right,var(--accent) var(--pct,50%),color-mix(in srgb,var(--text) 16%,var(--surface)) var(--pct,50%));outline:0;cursor:pointer}
+.tsrow input[type=range]::-webkit-slider-runnable-track{height:5px;background:transparent;border:0}
+.tsrow input[type=range]::-moz-range-track{height:5px;background:transparent;border:0}
+.tsrow input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;margin-top:-6.5px;border-radius:50%;background:#fff;border:2.5px solid var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.32);transition:transform .15s var(--ease-spring),box-shadow .15s ease}
+.tsrow input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:2.5px solid var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.32);cursor:pointer}
+.tsrow input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.14);box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 26%,transparent),0 2px 8px rgba(0,0,0,.32)}
+.tsrow input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:6px}
+.ts-drawer{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .26s var(--ease-spring),opacity .22s ease}
+.ts-drawer.open{grid-template-rows:1fr;opacity:1}
+.ts-drawer-in{overflow:hidden}
+:root[data-motion="reduced"] .ts-drawer,:root[data-motion="reduced"] .fpick-menu,:root[data-motion="reduced"] .apr-tipbox{transition:none}
 .apr-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding-top:20px;border-top:1px solid var(--line)}
 .apr-two .seg{display:flex;width:100%;align-self:stretch}
 .apr-two .seg button{flex:1;min-width:0}
@@ -27245,17 +27521,25 @@ a.mck:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .nm-act .btn.ghost,.gl-day .btn{min-width:44px}
 .po-how summary{display:flex;align-items:center;min-height:44px}
 /* ---- Glass & motion ---- */
-.op-presets{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
+.gm-lbl{display:flex;align-items:center;gap:9px}
+.gm-ic{display:grid;place-items:center;flex:none;width:27px;height:27px;border-radius:8px;background:var(--raise);color:var(--muted)}
+.gm-ic svg{width:16px;height:16px}
+/* A three-way track: one highlight slides to the chosen option (Glass presets and Motion). */
+.gm-track{isolation:isolate;position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:10px 0 6px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--raise)}
+.gm-track::before{content:"";position:absolute;z-index:-1;inset:4px auto 4px 4px;width:calc((100% - 8px) / 3);border-radius:8px;background:var(--surface);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 45%,var(--line)),var(--shadow);transform:translateX(calc(var(--choice,0) * 100%));transition:transform .22s cubic-bezier(.2,.75,.25,1)}
+.gm-track[data-none]::before{opacity:0}
+.gm-track .chip{display:grid;align-content:center;justify-items:center;min-height:44px;margin:0;padding:4px 2px;border:0;border-radius:8px;background:transparent;box-shadow:none;color:var(--muted);font-size:calc(14px * var(--text-scale,1));font-weight:500;line-height:1.25;text-align:center;white-space:normal}
+.gm-track .chip small{display:block;margin-top:2px;font-size:calc(12px * var(--text-scale,1));color:var(--muted)}
+.gm-track .chip[aria-pressed="true"]{color:var(--text);font-weight:650;background:transparent;animation:none}
+.gm-track[data-none] .chip[aria-pressed="true"]{color:var(--muted);font-weight:500}
+.gm-track .chip:hover{color:var(--text)}
+.gm-replay{margin-top:8px}
+:root[data-motion="reduced"] .gm-track::before{transition:none}
 .gp{border-radius:var(--r);padding:22px 18px;margin-bottom:14px;background:radial-gradient(circle at 18% 30%,color-mix(in srgb,#34D399 45%,var(--ground)) 0,transparent 55%),radial-gradient(circle at 85% 20%,color-mix(in srgb,#38BDF8 45%,var(--ground)) 0,transparent 50%),radial-gradient(circle at 60% 95%,color-mix(in srgb,#FB923C 40%,var(--ground)) 0,transparent 55%),var(--ground)}
 .gp-card{display:flex;align-items:center;gap:14px;flex-wrap:wrap;max-width:460px;margin-inline:auto;padding:14px 16px;border-radius:var(--r);border:1px solid color-mix(in srgb,var(--text) 14%,transparent);background:color-mix(in srgb,var(--surface) calc(var(--ui-op,1) * 100%),transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:var(--text)}
 .gp .rc-main{font-size:calc(14px * var(--text-scale,1))}
 .gp-txt{display:flex;flex-direction:column;gap:2px;flex:1 1 140px;min-width:0}
 .gp-badge{padding:4px 10px;border-radius:999px;background:var(--text);color:var(--surface);font-size:calc(12px * var(--text-scale,1));font-weight:600;white-space:nowrap}
-.mo-demo{display:flex;align-items:center;gap:12px;margin-top:8px}
-.mo-track{flex:1;min-width:0;display:block;padding:6px;border-radius:12px;background:var(--raise);overflow:hidden}
-.mo-puck{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:calc(13px * var(--text-scale,1));white-space:nowrap;transition:transform var(--dur-page) var(--ease-spring)}
-.mo-puck.shifted{transform:translateX(clamp(0px, calc(100cqw - 100%), 9999px))}
-.mo-track{container-type:inline-size}
 :root[data-motion="smooth"]{--ease-spring:cubic-bezier(.4,0,.2,1);--ease:cubic-bezier(.4,0,.2,1);--dur-tap:220ms;--dur-popup:300ms;--dur-menu:380ms;--dur-page:540ms}
 /* ---- Premium trust and FAQ ---- */
 .prem-store-page .prem-stays{padding:18px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
@@ -27282,5 +27566,114 @@ a.mck:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .prem-store-page .prem-feat-head{color:color-mix(in srgb,var(--text) 75%,var(--surface))}
 .prem-store-page .prem-mini button:not([aria-pressed="true"]){color:color-mix(in srgb,var(--text) 72%,var(--raise))}
 .prem-about > :not(.pa-crown){position:relative}
+/* ---- 8.6.29 Weekly check-in: pace rail, status pill, compact metrics, improve list, energy chips ---- */
+.wci{display:flex;flex-direction:column;gap:20px}
+.wci h3{margin:0}
+.wci-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px}
+.wci-status{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:999px;font-size:calc(12.5px * var(--text-scale,1));font-weight:700;border:1px solid color-mix(in srgb,var(--cc) 30%,transparent);background:color-mix(in srgb,var(--cc) 14%,transparent);color:var(--cc)}
+.wci-status i{width:7px;height:7px;border-radius:50%;background:var(--cc)}
+.wci-status.behind{--cc:#F97316}.wci-status.pace{--cc:#10B981}
+:root[data-scheme="light"] .wci-status{color:color-mix(in srgb,var(--cc) 75%,#000)}
+.wci-pace{padding:2px}
+.wci-rail-wrap{position:relative;padding-top:34px}
+.wci-pointer{position:absolute;top:0;transform:translateX(-50%);padding:4px 10px;border-radius:999px;background:var(--raise);border:1px solid var(--line);color:var(--text);font-size:calc(11px * var(--text-scale,1));font-weight:600;white-space:nowrap;box-shadow:var(--shadow);z-index:3;transition:left var(--dur-page) var(--ease-spring)}
+.wci-pointer::after{content:"";position:absolute;left:50%;bottom:-4px;width:7px;height:7px;background:var(--raise);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:translateX(-50%) rotate(45deg)}
+.wci-track{position:relative;height:10px;border-radius:999px;background:var(--raise);border:1px solid var(--line)}
+.wci-fill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--c-activity),var(--c-coach));transition:width var(--dur-page) var(--ease-spring);transform-origin:left center;animation:fillIn var(--dur-page) var(--ease-spring) both}
+.wci-tick{position:absolute;top:-4px;bottom:-4px;width:2.5px;transform:translateX(-50%);border-radius:999px;background:var(--text);z-index:2;transition:left var(--dur-page) var(--ease-spring)}
+:root[data-motion="reduced"] .wci-fill,:root[data-motion="reduced"] .wci-tick,:root[data-motion="reduced"] .wci-pointer{transition:none;animation:none}
+.wci-days{margin-top:12px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.wci-day{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:calc(11px * var(--text-scale,1));color:var(--faint)}
+.wci-day.is-today{color:var(--text);font-weight:700}
+.wci-day-dot{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.wci-day.is-done .wci-day-dot{background:#10B981;box-shadow:0 0 0 3px color-mix(in srgb,#10B981 20%,transparent)}
+.wci-day.is-today:not(.is-done) .wci-day-dot{background:transparent;border:1.5px solid var(--c-coach)}
+.wci-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.wci-metric{display:flex;flex-direction:column;gap:6px;padding:15px 16px;border-radius:var(--r-sm);background:var(--raise);border:1px solid var(--line);min-width:0}
+.wci-lab{font-size:calc(12px * var(--text-scale,1));font-weight:700;color:var(--cc)}
+:root[data-scheme="light"] .wci-lab{color:color-mix(in srgb,var(--cc) 92%,#000)}
+.wci-val{font-size:calc(28px * var(--text-scale,1));font-weight:800;line-height:1.1;letter-spacing:-.03em}
+.wci-sub{font-size:calc(12px * var(--text-scale,1));color:var(--muted);line-height:1.3}
+.wci-food{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:4px}
+.wci-food-dot{height:6px;border-radius:999px;background:var(--line)}
+.wci-food-dot.is-logged{background:#10B981}
+.wci-improve{display:flex;flex-direction:column;gap:10px}
+.wci-sec{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.wci-sec-l{display:inline-flex;align-items:center;gap:8px}
+.wci-sec h3{font-size:calc(13.5px * var(--text-scale,1))}
+.wci-count{padding:2px 8px;border-radius:999px;background:var(--raise);border:1px solid var(--line);color:var(--muted);font-size:calc(11px * var(--text-scale,1));font-weight:700}
+.wci-toggle{display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:4px 10px;border-radius:999px;border:1px solid transparent;background:transparent;color:var(--c-coach);font:inherit;font-size:calc(12px * var(--text-scale,1));font-weight:600;cursor:pointer}
+.wci-toggle:hover{background:color-mix(in srgb,var(--c-coach) 13%,transparent);border-color:color-mix(in srgb,var(--c-coach) 28%,transparent)}
+.wci-toggle svg,.wci-expand svg{transition:transform .24s var(--ease)}
+.wci-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+.wci-list{display:flex;flex-direction:column;gap:8px}
+.wci-drawer{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows .28s var(--ease),opacity .22s ease,visibility .28s}
+.wci-drawer.is-open{grid-template-rows:1fr;opacity:1;visibility:visible}
+.wci-drawer__in{overflow:hidden}
+:root[data-motion="reduced"] .wci-drawer{transition:none}
+.wci-item{border-radius:var(--r-xs);background:var(--raise);border:1px solid var(--line)}
+.wci-item__row{display:flex;align-items:center;gap:10px;padding:10px 12px;min-height:44px}
+.wci-item:not(.no-more) .wci-item__row{cursor:pointer}
+.wci-item:not(.no-more):hover{border-color:var(--text-faint,var(--muted))}
+.wci-item__num{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,#3B82F6 15%,transparent);border:1px solid color-mix(in srgb,#60A5FA 32%,transparent);color:#3B82F6;font-size:calc(11.5px * var(--text-scale,1));font-weight:700}
+.wci-item__title{flex:1;min-width:0;font-size:calc(13.5px * var(--text-scale,1));font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wci-item.is-expanded .wci-item__title{white-space:normal}
+.wci-expand{flex:none;color:var(--muted);display:grid;place-items:center}
+.wci-item.is-expanded .wci-expand svg{transform:rotate(180deg)}
+.wci-item__detail{display:none;margin:0;padding:0 14px 12px 46px;font-size:calc(12.5px * var(--text-scale,1));line-height:1.5;color:var(--muted)}
+.wci-item.is-expanded .wci-item__detail{display:block}
+.wci-energy{padding:16px 18px;border-radius:var(--r-sm);background:var(--raise);border:1px solid var(--line)}
+.wci-energy__head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 12px;margin-bottom:12px}
+.wci-energy__head h3{font-size:calc(14px * var(--text-scale,1))}
+.wci-chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.wci-chip{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;white-space:nowrap}
+.wci-chip svg{color:var(--cc)}
+.wci-chip.on{background:color-mix(in srgb,var(--cc) 15%,var(--surface));border-color:color-mix(in srgb,var(--cc) 45%,transparent);color:var(--cc)}
+:root[data-scheme="light"] .wci-chip.on{color:color-mix(in srgb,var(--cc) 75%,#000)}
+.wci-banner{margin-top:12px;padding:11px 13px;border-radius:12px;background:color-mix(in srgb,var(--cc) 14%,transparent);border:1px solid color-mix(in srgb,var(--cc) 35%,transparent);font-size:calc(12.5px * var(--text-scale,1));line-height:1.45}
+@media (max-width:640px){.wci-metrics{grid-template-columns:1fr}.wci-pointer{font-size:calc(10.5px * var(--text-scale,1))}}
+/* ---- 8.6.30 Material 3 fixes: one chip row for the workout activity, a joined segmented Food focus with a mix bar ---- */
+.m3-chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;position:relative;margin-top:6px}
+.m3-chip{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 8px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--text);font:inherit;font-size:calc(13px * var(--text-scale,1));font-weight:600;white-space:nowrap;cursor:pointer;overflow:hidden;transition:background-color var(--dur-tap),border-color var(--dur-tap)}
+.m3-chip::before{content:"";position:absolute;inset:0;background:currentColor;opacity:0;pointer-events:none;transition:opacity var(--dur-tap)}
+.m3-chip:hover::before{opacity:.07}.m3-chip:active::before{opacity:.12}
+.m3-chip[aria-checked="true"]{background:var(--accent-soft);border-color:transparent;color:var(--text)}
+.m3-chk{display:inline-grid;place-items:center;width:22px;height:22px;color:var(--accent)}
+.m3-chip.tonal{background:var(--raise);border-color:transparent;color:var(--muted);padding:0 12px}
+.m3-chip.tonal[aria-expanded="true"]{background:var(--accent-soft);color:var(--text)}
+.m3-n{opacity:.72;font-size:calc(11.5px * var(--text-scale,1))}
+.m3-chev{transition:transform var(--dur-tap)}
+.m3-chip[aria-expanded="true"] .m3-chev{transform:rotate(180deg)}
+.m3-more{display:inline-flex}
+.m3-menu{position:absolute;left:0;top:calc(100% + 8px);z-index:40;width:min(340px,100%);border-radius:16px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.97);transition:opacity var(--dur-tap),transform var(--dur-tap),visibility var(--dur-tap)}
+.m3-more.open .m3-menu{opacity:1;visibility:visible;transform:none}
+:root[data-motion="reduced"] .m3-menu{transition:none}
+.m3-search{padding:10px;border-bottom:1px solid var(--line)}
+.m3-search input{width:100%;min-height:44px;border-radius:999px;padding:0 14px;background:var(--raise);border:1px solid var(--line);color:var(--text);font:inherit;font-size:calc(13px * var(--text-scale,1))}
+.m3-list{max-height:290px;overflow-y:auto;padding:6px}
+.m3-cat{padding:8px 10px 4px;font-size:calc(10.5px * var(--text-scale,1));font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.m3-opt{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:6px 10px;border:0;border-radius:10px;background:transparent;color:var(--text);font:inherit;font-size:calc(13px * var(--text-scale,1));text-align:left;cursor:pointer}
+.m3-opt:hover{background:var(--raise)}
+.m3-opt[aria-pressed="true"]{background:var(--accent-soft);font-weight:600}
+.m3-opt[hidden],.m3-cat[hidden]{display:none}
+.m3-met{font-size:calc(11px * var(--text-scale,1));color:var(--muted)}
+.m3-none{padding:20px 12px;text-align:center;font-size:calc(12.5px * var(--text-scale,1));color:var(--muted)}
+.m3-seg{display:flex;width:100%;margin-top:12px;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.m3-seg button{flex:1 1 0;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 10px;border:0;border-left:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:calc(13px * var(--text-scale,1));font-weight:600;cursor:pointer;text-align:center;line-height:1.15}
+.m3-seg button:first-child{border-left:0}
+.m3-seg button[aria-checked="true"]{background:var(--accent-soft);color:var(--text)}
+.m3-seg .m3-chk{display:none;width:16px;height:16px;flex:none}
+.m3-seg button[aria-checked="true"] .m3-chk{display:inline-grid}
+.m3-mix{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+.m3-bar{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--raise)}
+.m3-bar i{display:block;height:100%;transition:width var(--dur-page) var(--ease-spring)}
+.m3-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px}
+.m3-leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:calc(12px * var(--text-scale,1));color:var(--muted)}
+.m3-leg span{display:inline-flex;align-items:center;gap:6px}
+.m3-leg i{width:8px;height:8px;border-radius:50%;flex:none}
+.m3-leg b{color:var(--text)}
+.m3-tonal{padding:3px 10px;border-radius:999px;background:var(--raise);color:var(--muted);font-size:calc(11.5px * var(--text-scale,1));font-weight:600;white-space:nowrap}
+/* ---- 8.6.31 icon colours: Streak orange, Minutes teal ---- */
+:root{--si-streak-a:#FB923C;--si-streak-b:#EA580C;--si-minutes-a:#2DD4BF;--si-minutes-b:#0D9488}
 </style>
 </body></html>
