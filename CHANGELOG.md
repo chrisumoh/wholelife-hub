@@ -2,9 +2,17 @@
 
 Whole Life Hub, newest first. Generated from the in-app change log (`WLH.changelog` in `index.html`), which stays the source of truth: add each new entry there first.
 
-**Current:** Update 8.6 (Dev Testing), build 8.6.35, 2026-11-25. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
+**Current:** Update 8.6 (Dev Testing), build 8.6.36, 2026-11-26. Versioning rules: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 Entries B3–B14 shipped on 2026-10-04 before weekly versioning and belong to Update 8.0.
+
+## 8.6.36 · Phone layout: Fix the switches, the sticky Daily nutrition bar, the Date field and the FAQ rows on iPhone
+
+- **Problem:** On the phone every switch was stretched into a tall pill with the thumb stuck at the top, the sticky Daily nutrition bar was offset from the cards under it, the Log a meal Date field showed its text at the top with a red error border, and the FAQ questions were indented further than the headings and dividers.
+- **Change:** Switches keep their 28px height (tap area comes from a larger invisible hit zone). The sticky title bar has the same left and right edge as the cards. The date input centres its value, and picking a future date resets it to today with a short message instead of showing an error. FAQ rows in Settings line up with the heading and dividers.
+- **Where:** index.html: the 8.6.36 phone fixes block at the end of the last style block (.sw, .vtoggle, .compact-head, input[type=date], #faqs .prem-faqs), nutritionView() (date clamp), the m-date change handler, APP_VERSION, WLH.changelog. CHANGELOG.md, README.md, docs/BUILD_PLAN.md.
+- **How to test:** On an iPhone: any switch is a short pill with the thumb centred; the sticky Daily nutrition bar lines up with the cards; Log a meal > Date is centred with no red border and a later day resets to today; Settings > Bug reports & FAQs questions line up with the headings.
+- **Known limits:** Checked in desktop Chromium only; the date field centring needs a check on a real iPhone.
 
 ## 8.6.35 · Database: A table for account-based Premium, ready for the new payment provider
 
